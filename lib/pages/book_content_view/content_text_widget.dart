@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:shudu/utils/utils.dart';
+import '../../utils/utils.dart';
 
 class ContentText extends MultiChildRenderObjectWidget {
   ContentText(

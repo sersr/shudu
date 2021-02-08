@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../bloc/book_repository.dart';
+import '../../bloc/bloc.dart';
 import '../../utils/utils.dart';
 import 'list_bandan.dart';
 import 'list_category.dart';

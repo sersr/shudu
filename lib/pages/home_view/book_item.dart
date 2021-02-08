@@ -2,8 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:shudu/pages/book_list_view/shudan_item.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
+
+import '../book_list_view/shudan_item.dart';
 
 class BookItem extends StatelessWidget {
   BookItem(
@@ -178,8 +179,10 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
     if (isNew!) {
       /// 右上角到1的距离
       innerWidth = math.sqrt(math.pow(_newPainter.width, 2) / 2);
+
       /// 右上角到4的距离
       final allWidth = math.sqrt(math.pow(_newPainter.height, 2) * 2) + innerWidth;
+
       ///4 _____ 1
       ///  \    \
       ///   \    \

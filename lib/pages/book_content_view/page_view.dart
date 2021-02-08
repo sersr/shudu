@@ -5,11 +5,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/bloc/painter_bloc.dart';
-import 'package:shudu/pages/book_content_view/context_view.dart';
-import 'package:shudu/pages/book_content_view/pannel.dart';
-import 'package:shudu/pages/book_content_view/real_page_view_controller.dart';
-import 'package:shudu/utils/utils.dart';
+
+import '../../bloc/painter_bloc.dart';
+import '../../utils/utils.dart';
+import 'context_view.dart';
+import 'pannel.dart';
+import 'real_page_view_controller.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({

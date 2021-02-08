@@ -1,19 +1,16 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:shudu/bloc/book_repository.dart';
-import 'package:shudu/data/book_list.dart';
-import 'package:shudu/pages/book_list_view/shudan_item.dart';
-import 'package:shudu/utils/utils.dart';
 
+import '../../bloc/bloc.dart';
+import '../../data/book_list.dart';
+import '../../utils/utils.dart';
 import 'list_shudan_detail.dart';
+import 'shudan_item.dart';
 
 class ListShudanPage extends StatefulWidget {
   @override
@@ -21,15 +18,6 @@ class ListShudanPage extends StatefulWidget {
 }
 
 class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProviderStateMixin {
-  // final footer = ClassicalFooter(
-  //   loadFailedText: '加载失败',
-  //   loadReadyText: '释放加载',
-  //   loadingText: '正在加载',
-  //   loadText: '加载',
-  //   loadedText: '加载完成',
-  //   noMoreText: '没有更多了',
-  // );
-  // final header = MaterialHeader();
   ShudanBloc? bloc;
   TabController? controller;
   @override

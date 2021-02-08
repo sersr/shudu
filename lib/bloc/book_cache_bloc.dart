@@ -2,21 +2,23 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/bloc/book_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'book_repository.dart';
+
 class BookCache extends Equatable {
-  BookCache(
-      {this.chapterId,
-      this.img,
-      this.lastChapter,
-      this.name,
-      this.updateTime,
-      this.id,
-      this.isTop,
-      this.sortKey,
-      this.isNew,
-      this.page});
+  BookCache({
+    this.chapterId,
+    this.img,
+    this.lastChapter,
+    this.name,
+    this.updateTime,
+    this.id,
+    this.isTop,
+    this.sortKey,
+    this.isNew,
+    this.page,
+  });
   final String? name;
   final String? img;
   final String? updateTime;
@@ -27,29 +29,29 @@ class BookCache extends Equatable {
   final int? isTop;
   final int? page;
   final int? isNew;
-  BookCache copyWith(
-      {String? name,
-      String? img,
-      String? updateTime,
-      String? lastChapter,
-      int? chapterId,
-      int? id,
-      int? sortKey,
-      int? isTop,
-      int? isNew,
-      int? page}) {
-    return BookCache(
-        name: name ?? this.name,
-        img: img ?? this.img,
-        updateTime: updateTime ?? this.updateTime,
-        lastChapter: lastChapter ?? this.lastChapter,
-        chapterId: chapterId ?? this.chapterId,
-        id: id ?? this.id,
-        sortKey: sortKey ?? this.sortKey,
-        isTop: isTop ?? this.isTop,
-        isNew: isNew ?? this.isNew,
-        page: page ?? this.page);
-  }
+  // BookCache copyWith(
+  //     {String? name,
+  //     String? img,
+  //     String? updateTime,
+  //     String? lastChapter,
+  //     int? chapterId,
+  //     int? id,
+  //     int? sortKey,
+  //     int? isTop,
+  //     int? isNew,
+  //     int? page}) {
+  //   return BookCache(
+  //       name: name ?? this.name,
+  //       img: img ?? this.img,
+  //       updateTime: updateTime ?? this.updateTime,
+  //       lastChapter: lastChapter ?? this.lastChapter,
+  //       chapterId: chapterId ?? this.chapterId,
+  //       id: id ?? this.id,
+  //       sortKey: sortKey ?? this.sortKey,
+  //       isTop: isTop ?? this.isTop,
+  //       isNew: isNew ?? this.isNew,
+  //       page: page ?? this.page);
+  // }
 
   factory BookCache.fromMap(Map<String, dynamic> map) {
     return BookCache(
@@ -131,9 +133,6 @@ class BookChapterIdState {
     final custom = _bookCaches.where((element) => element.isTop != 1);
     return BookChapterIdState(isTop: isTop, custom: custom);
   }
-  // BookChapterIdState copyWith({List<BookCache> bookCaches}) {
-  //   return BookChapterIdState(bookCaches: bookCaches ?? this.bookCaches);
-  // }
 }
 
 class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
@@ -189,30 +188,12 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     completerLoading();
   }
 
-  // Future<void> cachedb(int id, String indexs) async {
-  //   var count = 0;
-
-  //   count =
-  //       Sqflite.firstIntValue(await repository.db.rawQuery('SELECT COUNT(*) FROM BookIndex WHERE bookId = ?', [id]));
-  //   if (count > 0) {
-  //     await repository.db.rawUpdate('UPDATE BookIndex set bIndexs = ? WHERE bookId = ?', [indexs, id]);
-  //     if (count > 1) {
-  //       Log.e('count: $count,id: ${id} cache bIndexs.', stage: this, name: 'cachedb');
-  //     }
-  //   } else {
-  //     await repository.db.rawInsert(
-  //       'INSERT INTO BookIndex (bookId,bIndexs)'
-  //       ' VALUES(?,?)',
-  //       [id, indexs],
-  //     );
-  //   }
-  // }
-
   Future<void> loadFromNet(int id) async {
-    final rawData = await repository.searchWithIdForBookInfoPage(id);
-    if (rawData.data != null) {
-      final newCname = rawData.data!.lastChapter;
-      final lastTime = rawData.data!.lastTime;
+    final rawData = await repository.loadInfo(id);
+    final data = rawData.data;
+    if (data != null) {
+      final newCname = data.lastChapter;
+      final lastTime = data.lastTime;
       if (newCname != null && lastTime != null) {
         await repository.updateCname(id, newCname, lastTime);
       }
@@ -254,7 +235,6 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
         ],
       );
     }
-    // await repository.saveImageData(bookcache.img);
     yield* loadForView();
   }
 

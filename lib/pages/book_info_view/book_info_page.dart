@@ -2,18 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/bloc/book_index_bloc.dart';
-import 'package:shudu/bloc/book_repository.dart';
-import 'package:shudu/bloc/painter_bloc.dart';
-import 'package:shudu/bloc/text_styles.dart';
-import 'package:shudu/pages/book_content_view/content_main.dart';
-import 'package:shudu/pages/book_list_view/shudan_item.dart';
-import 'package:shudu/pages/embed/indexs.dart';
-import 'package:shudu/utils/utils.dart';
+import '../../bloc/bloc.dart';
 
 import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
 import '../../data/book_info.dart';
+import '../../utils/utils.dart';
+import '../book_content_view/content_main.dart';
+import '../book_list_view/shudan_item.dart';
+import '../embed/indexs.dart';
 // import '../embed/indexs.dart';
 
 class BookInfoPage extends StatefulWidget {

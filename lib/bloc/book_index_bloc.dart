@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/bloc/book_repository.dart';
-import 'package:shudu/utils/utils.dart';
 import 'package:sqflite/sqflite.dart';
+
+import '../utils/utils.dart';
+import 'book_repository.dart';
 
 abstract class BookIndexEvent extends Equatable {
   BookIndexEvent();

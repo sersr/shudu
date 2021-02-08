@@ -2,26 +2,25 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
 // import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:hive/hive.dart';
-import 'package:shudu/bloc/book_index_bloc.dart';
-import 'package:shudu/data/book_index.dart';
-import 'package:shudu/data/book_list.dart';
-import 'package:shudu/utils/utils.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/book_content.dart';
+import '../data/book_index.dart';
 import '../data/book_info.dart';
+import '../data/book_list.dart';
 import '../data/book_list_detail.dart';
+import '../utils/utils.dart';
+import 'book_index_bloc.dart';
 
 typedef DCallback<T> = Future<void> Function(T d);
 
@@ -183,7 +182,7 @@ abstract class BookRepository {
     return await sendMessage<List<List>>(MessageType.mainList, str);
   }
 
-  Future<BookInfoRoot> searchWithIdForBookInfoPage(int id) async {
+  Future<BookInfoRoot> loadInfo(int id) async {
     final url = infoUrl(id);
     return await sendMessage<BookInfoRoot>(MessageType.info, url);
   }

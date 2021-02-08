@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
-import 'package:shudu/pages/book_content_view/real_page_view_controller.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../data/book_content.dart';
+import '../pages/book_content_view/real_page_view_controller.dart';
 import '../utils/utils.dart';
 import 'book_cache_bloc.dart';
 import 'book_index_bloc.dart';

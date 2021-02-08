@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'package:shudu/data/search_data.dart';
+import '../data/search_data.dart';
 
 class SimpleBlocObserver extends BlocObserver {
   @override

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shudu/pages/book_content_view/context_view.dart';
+import 'context_view.dart';
 
 class BookContentPage extends StatelessWidget {
   static String currentRoute = '/content';

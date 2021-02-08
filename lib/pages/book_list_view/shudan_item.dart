@@ -3,10 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:shudu/bloc/book_repository.dart';
 import 'package:provider/provider.dart';
-import 'package:shudu/bloc/text_styles.dart';
+
+import '../../bloc/bloc.dart';
+
 
 class ShudanItem extends StatelessWidget {
   const ShudanItem({

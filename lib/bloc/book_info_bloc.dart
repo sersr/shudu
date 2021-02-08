@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/bloc/book_repository.dart';
-import 'package:shudu/data/book_info.dart';
+
+import '../data/book_info.dart';
+import 'book_repository.dart';
 
 abstract class BookInfoEvent extends Equatable {
   BookInfoEvent();
@@ -52,7 +53,7 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
     } else if (event is BookInfoEventSentWithId) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));
-      var data = await repository.searchWithIdForBookInfoPage(event.id);
+      var data = await repository.loadInfo(event.id);
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
@@ -65,7 +66,7 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
     } else if (event is BookInfoReloadEvent) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));
-      var data = await repository.searchWithIdForBookInfoPage(lastId);
+      var data = await repository.loadInfo(lastId);
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;

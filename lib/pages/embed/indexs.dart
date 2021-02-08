@@ -3,10 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sticky_header/flutter_sticky_header.dart';
-// import 'package:flutter_sticky_header/flutter_sticky_header.dart';
-import 'package:shudu/bloc/book_index_bloc.dart';
-import 'package:shudu/bloc/text_styles.dart';
-import 'package:shudu/utils/widget/botton.dart';
+
+import '../../bloc/bloc.dart';
+import '../../utils/widget/botton.dart';
 
 class IndexsWidget extends StatefulWidget {
   const IndexsWidget({Key? key, required this.onTap}) : super(key: key);

@@ -3,9 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../bloc/book_info_bloc.dart';
-import '../../bloc/book_repository.dart';
-import '../../bloc/text_styles.dart';
+import '../../bloc/bloc.dart';
 import '../../data/book_list_detail.dart';
 import '../../utils/utils.dart';
 import '../book_info_view/book_info_page.dart';

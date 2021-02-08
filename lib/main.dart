@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+
+import 'package:flutter/material.dart';
 import 'package:shudu/bloc/painter_bloc.dart';
 import 'package:shudu/pages/app.dart';
 import 'package:shudu/utils/debug/log.dart';
@@ -12,6 +13,5 @@ void main() {
     };
     return true;
   }());
-
-  runApp(MulProvider());
+  runApp(const MulProvider());
 }

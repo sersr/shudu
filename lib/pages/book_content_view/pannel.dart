@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shudu/pages/embed/indexs.dart';
 
 import '../../bloc/book_index_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
@@ -11,7 +10,7 @@ import '../../bloc/book_repository.dart';
 import '../../bloc/painter_bloc.dart';
 import '../../utils/utils.dart';
 import '../book_info_view/book_info_page.dart';
-// import '../embed/indexs.dart';
+import '../embed/indexs.dart';
 import 'color_picker.dart';
 import 'context_view.dart';
 import 'real_page_view_controller.dart';
