@@ -1,0 +1,71 @@
+abstract class Log {
+  static const int info = 0;
+  static const int warnning = 1;
+  static const int error = 2;
+  static const int level = 0;
+  static final List<String> _logMessage = ['Info', 'Warnning', 'Error'];
+  static bool Function(Object?) switchToPrint = (_) => false;
+  static bool i(String info, {Object? stage, Object? name, Object? data}) {
+    return log(Log.info, info, stage: stage, name: name, data: data);
+  }
+
+  static bool w(String warnning, {Object? stage, Object? name, Object? data}) {
+    return log(Log.warnning, warnning, stage: stage, name: name, data: data);
+  }
+
+  static bool e(String error, {Object? stage, Object? name, Object? data}) {
+    return log(Log.error, error, stage: stage, name: name, data: data);
+  }
+
+  static bool log(int lv, String message, {Object? stage, Object? name, Object? data}) {
+    String addMsg;
+    String l;
+    if (!switchToPrint(stage)) return true;
+    switch (level) {
+      case 0:
+        l = _logMessage[lv];
+        break;
+      case 1:
+        if (lv <= 0) return true;
+        l = _logMessage[lv];
+        break;
+      case 2:
+        if (lv <= 1) return true;
+        l = _logMessage[lv];
+        break;
+      default:
+        l = '';
+    }
+    switch (lv) {
+      case 0:
+        // addMsg = '\x1B[34m';
+        addMsg = '';
+        break;
+      case 1:
+        addMsg = '\x1B[33m';
+        break;
+      case 2:
+        addMsg = '\x1B[31m';
+        break;
+      default:
+        addMsg = '';
+    }
+    if (stage != null) {
+      addMsg += '${stage.runtimeType}';
+    }
+    if (name != null) {
+      if (stage != null) {
+        addMsg = '$addMsg.${name.toString().padRight(12)}';
+      } else {
+        addMsg = '$addMsg${name.toString().padRight(12)}';
+      }
+    }
+    addMsg = '$addMsg |';
+    addMsg = '$addMsg $l: $message.';
+    if (data != null) {
+      addMsg = '$addMsg\n<~ data: ${data.toString()} ~>';
+    }
+    print('$addMsg\x1B[0m');
+    return true;
+  }
+}

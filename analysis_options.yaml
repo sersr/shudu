@@ -1,0 +1,7 @@
+include: package:pedantic/analysis_options.yaml
+
+
+linter:
+  rules:
+    unawaited_futures: false
+    tunnecessary_null_comparison: true
