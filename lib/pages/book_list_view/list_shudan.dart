@@ -19,7 +19,7 @@ class ListShudanPage extends StatefulWidget {
 }
 
 class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProviderStateMixin {
-  ShudanBloc? bloc;
+  late ShudanBloc bloc;
   late TabController controller;
   @override
   void initState() {
@@ -27,17 +27,13 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
     controller = TabController(initialIndex: 0, length: 3, vsync: this)..addListener(listen);
   }
 
-  void listen() {
-    if (bloc != null) {
-      bloc!.add(ShudanLoadFirstEvent(controller.index));
-    }
-  }
+  void listen() => bloc.add(ShudanLoadFirstEvent(controller.index));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ShudanBloc>();
-    bloc!.add(ShudanLoadFirstEvent(0));
+    bloc.add(ShudanLoadFirstEvent(0));
   }
 
   @override
