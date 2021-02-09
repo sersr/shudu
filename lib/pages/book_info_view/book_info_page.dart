@@ -39,7 +39,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
             if (state is BookInfoStateWithoutData) {
               return Center(child: CircularProgressIndicator());
             } else if (state is BookInfoStateWithData) {
-              if (state.data == null) {
+              if (state.data!.data == null) {
                 return Center(
                   child: btn1(
                     padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -102,9 +102,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                   }
                                 }
                               }
-                              // if (contain) {
-                              //   BlocProvider.of<BookIndexBloc>(context).add(BookIndexShowEvent(id: bookid, cid: cid));
-                              // }
+
                               return Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -411,17 +409,19 @@ class _BookInfoPageState extends State<BookInfoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: Text(
-                      '$name',
-                      style: tsState.title,
-                      overflow: TextOverflow.fade,
-                      softWrap: false,
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Text(
+                        '$name',
+                        style: tsState.title,
+                        overflow: TextOverflow.fade,
+                        softWrap: false,
+                      ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: const EdgeInsets.only(top: 3.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -446,19 +446,21 @@ class _BookInfoPageState extends State<BookInfoPage> {
                       ],
                     ),
                   ),
-                  Container(
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            '评分：${bookvote.scroe}分',
-                            style: tsState.body1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
+                  Expanded(
+                    child: Container(
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 2.0),
+                            child: Text(
+                              '评分：${bookvote.scroe}分',
+                              style: tsState.body1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

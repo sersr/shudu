@@ -13,7 +13,7 @@ import '../book_info_view/book_info_page.dart';
 import '../embed/indexs.dart';
 import 'color_picker.dart';
 import 'context_view.dart';
-import 'real_page_view_controller.dart';
+import 'page_view_controller.dart';
 
 class Pannel extends StatefulWidget {
   const Pannel({
@@ -26,7 +26,7 @@ class Pannel extends StatefulWidget {
   }) : super(key: key);
 
   final ValueNotifier<bool> showPannel;
-  final RealPageViewController controller;
+  final NopPageViewController controller;
   final Future<bool> Function() willPop;
   final ValueNotifier<SettingView> showSettings;
   final ValueNotifier<bool> showCname;
@@ -67,10 +67,7 @@ class _PannelState extends State<Pannel> {
                   showSettings: widget.showSettings,
                 );
               },
-              buildWhen: (oldState, newState) {
-                if (oldState.config == newState.config) return false;
-                return true;
-              },
+              buildWhen: (oldState, newState) => oldState.config != newState.config,
             ),
           ),
         ),
@@ -280,7 +277,7 @@ class BottomEnd extends StatefulWidget {
   final ValueNotifier<SettingView> showSettings;
   final ValueNotifier<bool> showCname;
   final Future<bool> Function() willPop;
-  final RealPageViewController controller;
+  final NopPageViewController controller;
 
   @override
   _BottomEndState createState() => _BottomEndState();
@@ -445,7 +442,6 @@ class _BottomEndState extends State<BottomEnd> {
                       bloc.completerCanLoad();
                     },
                   ),
-
                   bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadFromNetEvent())),
                   bottomButton(text: '取消', onTap: () => bloc.completerResolve(Status.ignore)),
                   bottomButton(text: '删除缓存', onTap: () => bloc.add(PainterDeleteCachesEvent(bloc.bookid!))),

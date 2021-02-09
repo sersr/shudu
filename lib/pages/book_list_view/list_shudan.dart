@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
@@ -19,7 +20,7 @@ class ListShudanPage extends StatefulWidget {
 
 class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProviderStateMixin {
   ShudanBloc? bloc;
-  TabController? controller;
+  late TabController controller;
   @override
   void initState() {
     super.initState();
@@ -28,7 +29,7 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
 
   void listen() {
     if (bloc != null) {
-      bloc!.add(ShudanLoadFirstEvent(controller!.index));
+      bloc!.add(ShudanLoadFirstEvent(controller.index));
     }
   }
 
@@ -42,8 +43,8 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
   @override
   void dispose() {
     super.dispose();
-    controller!.removeListener(listen);
-    controller!.dispose();
+    controller.removeListener(listen);
+    controller.dispose();
     imageCache?.clear();
   }
 
@@ -53,7 +54,6 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
   Widget build(BuildContext context) {
     // if (show) {
     final theme = Theme.of(context);
-    final children = [WrapWidget(index: 0), WrapWidget(index: 1), WrapWidget(index: 2)];
     return Scaffold(
         appBar: AppBar(
           toolbarHeight: 80,
@@ -89,7 +89,7 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
             ),
             child: TabBarView(
               controller: controller,
-              children: children,
+              children: [WrapWidget(index: 0), WrapWidget(index: 1), WrapWidget(index: 2)],
             ),
           ),
         ));
@@ -108,7 +108,7 @@ class WrapWidget extends StatefulWidget {
   _WrapWidgetState createState() => _WrapWidgetState();
 }
 
-class _WrapWidgetState extends State<WrapWidget> {
+class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMixin {
   late RefreshController controller;
   @override
   void initState() {
@@ -118,6 +118,7 @@ class _WrapWidgetState extends State<WrapWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return RepaintBoundary(
       child: BlocBuilder<ShudanBloc, ShudanState>(
         builder: (context, state) {
@@ -132,12 +133,14 @@ class _WrapWidgetState extends State<WrapWidget> {
                   ..completer = Completer<Status>()
                   ..add(ShudanLoadEvent(widget.index));
                 final result = await bloc.completer?.future;
-                if (result == Status.done) {
-                  controller.refreshCompleted();
-                } else if (result == Status.failed) {
-                  controller.refreshFailed();
-                } else {
-                  controller.resetNoData();
+                if (mounted) {
+                  if (result == Status.done) {
+                    controller.refreshCompleted();
+                  } else if (result == Status.failed) {
+                    controller.refreshFailed();
+                  } else {
+                    controller.resetNoData();
+                  }
                 }
               },
               onLoading: () async {
@@ -147,12 +150,14 @@ class _WrapWidgetState extends State<WrapWidget> {
                   ..completer = Completer<Status>()
                   ..add(ShudanLoadEvent(widget.index));
                 final result = await bloc.completer?.future;
-                if (result == Status.done) {
-                  controller.loadComplete();
-                } else if (result == Status.failed) {
-                  controller.loadFailed();
-                } else {
-                  controller.loadNoData();
+                if (mounted) {
+                  if (result == Status.done) {
+                    controller.loadComplete();
+                  } else if (result == Status.failed) {
+                    controller.loadFailed();
+                  } else {
+                    controller.loadNoData();
+                  }
                 }
               },
               footer: CustomFooter(
@@ -181,9 +186,9 @@ class _WrapWidgetState extends State<WrapWidget> {
                       ? Center(child: CupertinoActivityIndicator())
                       : buildListView(state.all[widget.index], context, widget.index));
         },
-        buildWhen: (o, n) {
-          return widget.index == n.id;
-        },
+        // buildWhen: (o, n) {
+        //   return widget.index == n.id;
+        // },
       ),
       // child: Container(),
     );
@@ -193,7 +198,7 @@ class _WrapWidgetState extends State<WrapWidget> {
     final width = 1 / MediaQuery.of(context).devicePixelRatio;
     return ListView.builder(
       // itemExtent: 112,
-      key: PageStorageKey<String>('shudan$index'),
+      // key: PageStorageKey<String>('shudan$index'),
       itemCount: list.length,
       itemBuilder: (context, index) {
         final bookList = list[index];
@@ -242,6 +247,9 @@ class _WrapWidgetState extends State<WrapWidget> {
     controller.dispose();
     super.dispose();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 abstract class ShudanEvent extends Equatable {
@@ -293,9 +301,9 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
   Stream<ShudanState> mapEventToState(ShudanEvent event) async* {
     await Future.delayed(Duration(milliseconds: 300));
     if (event is ShudanLoadFirstEvent) {
-      if (event.id == 0 && newList.isEmpty ||
-          event.id == 1 && hotList.isEmpty ||
-          event.id == 2 && collectList.isEmpty) {
+      if ((event.id == 0 && newList.isEmpty) ||
+          (event.id == 1 && hotList.isEmpty) ||
+          (event.id == 2 && collectList.isEmpty)) {
         yield* resolve(event.id);
       }
     } else if (event is ShudanLoadEvent) {

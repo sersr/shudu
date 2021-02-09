@@ -5,9 +5,8 @@ import 'dart:isolate';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:hive/hive.dart';
-// import 'package:dio/dio.dart';
-import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
@@ -73,6 +72,7 @@ abstract class BookRepository {
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
+  final client = TimeClient();
   @mustCallSuper
   Future<void> initState() async {
     // dio ??= Dio(BaseOptions(connectTimeout: 5000, receiveTimeout: 5000, sendTimeout: 5000));
@@ -84,7 +84,7 @@ abstract class BookRepository {
       await d.create(recursive: true);
     }
     clientRP = ReceivePort();
-    _isolate = await Isolate.spawn(_isolateRe, clientRP.sendPort);
+    _isolate = await Isolate.spawn(_isolateRe, [clientRP.sendPort, appPath]);
     clientSP = await clientRP.first;
   }
 
@@ -159,11 +159,16 @@ abstract class BookRepository {
         }
       }
       try {
-        var respone = await http.get(Uri.parse(url));
+        var respone = await client.get(Uri.parse(url));
 
         if (respone.statusCode <= 304) {
-          await File(imgPath).writeAsBytes(respone.bodyBytes);
-          return respone.bodyBytes;
+          try {
+            decodeImageFromList(respone.bodyBytes);
+            await File(imgPath).writeAsBytes(respone.bodyBytes);
+            return respone.bodyBytes;
+          } catch (e) {
+            Log.e('no image !!!', stage: this, name: 'saveImage');
+          }
         } else {
           errorLoading.add(imgName);
           return '${imageLocalPath}guizhenwuji.jpg';
@@ -272,7 +277,7 @@ enum MessageType {
   shudan,
   bookList,
   mainList,
-  // imgPath,
+  imgPath,
 }
 
 class IsolateSendMessage {
@@ -293,7 +298,7 @@ class IsolateReceiveMessage {
   final Result result;
 }
 
-void _isolateRe(SendPort port) async {
+void _isolateRe(List args) async {
   assert(() {
     // Bloc.observer = SimpleBlocObserver();
     Log.switchToPrint = (stage) {
@@ -301,137 +306,65 @@ void _isolateRe(SendPort port) async {
     };
     return true;
   }());
+  final port = args[0];
+  final appPath = args[1];
   final receivePort = ReceivePort();
   port.send(receivePort.sendPort);
-  final appPath = (await getApplicationDocumentsDirectory())!.path;
   Hive.init(appPath + '/shudu/hive');
-  // String imageLocalPath() {
-  //   return '$appPath/shudu/images/';
-  // }
+  final client = TimeClient();
 
-  // var errorLoading = <String>[];
-  // var time = 0;
-  // Future<String> saveImage(String img) async {
-  //   var imgName = '';
-  //   String url;
-  //   if (img.startsWith('https://') || img.startsWith('http://')) {
-  //     var reurl = img.replaceAll('%3A', ':').replaceAll('%2F', '/').replaceAll(RegExp('https://|http://'), '');
-  //     final splist = reurl.split('/');
-  //     for (var i = splist.length - 1; i >= 0; i--) {
-  //       if (splist[i].isNotEmpty) {
-  //         imgName = splist[i];
-  //         break;
-  //       }
-  //     }
-  //     url = img;
-  //   } else {
-  //     url = BookRepository.imageUrl(img);
-  //     imgName = img;
-  //   }
 
-  //   final imgPath = '$imageLocalPath$imgName';
-  //   if (!await File(imgPath).exists()) {
-  //     if (errorLoading.contains(imgName)) {
-  //       if (time + 1000 * 120 <= DateTime.now().millisecondsSinceEpoch) {
-  //         time = DateTime.now().millisecondsSinceEpoch;
-  //         errorLoading.remove(imgName);
-  //       } else {
-  //         return '${imageLocalPath}guizhenwuji.jpg';
-  //       }
-  //     }
-  //     try {
-  //       var respone = await http.get(Uri.parse(url));
-
-  //       if (respone.statusCode <= 304) {
-  //         await File(imgPath).writeAsBytes(respone.bodyBytes);
-  //       } else {
-  //         errorLoading.add(imgName);
-  //         return '${imageLocalPath}guizhenwuji.jpg';
-  //       }
-  //     } catch (e) {
-  //       print('url:$url, e: $e');
-  //       errorLoading.add(imgName);
-  //       return '${imageLocalPath}zanwutupian.jpg';
-  //     }
-  //   }
-  //   return imgPath;
-  // }
-
-  await for (var m in receivePort) {
-    if (m is IsolateSendMessage) {
-      switch (m.type) {
-        case MessageType.info:
-          var respone = await timeLimit(
-            () => http.get(Uri.parse(m.arg)),
-            onTimeout: (e) => Log.e('url:${m.arg}, $e', name: '_isolate'),
-          );
-          if (respone != null) {
+  receivePort.listen(
+    (m) async {
+      if (m is IsolateSendMessage) {
+        switch (m.type) {
+          case MessageType.info:
             try {
+              var respone = await client.get(Uri.parse(m.arg));
               Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
               m.sp.send(IsolateReceiveMessage(data: BookInfoRoot.fromJson(map), result: Result.success));
             } catch (e) {
+              Log.e('url:${m.arg}, $e', name: '_isolate');
               m.sp.send(IsolateReceiveMessage(data: BookInfoRoot(), result: Result.error));
             }
-          } else {
-            m.sp.send(IsolateReceiveMessage(data: BookInfoRoot(), result: Result.error));
-          }
-          break;
-        case MessageType.shudanDetail:
-          var respone = await timeLimit(
-            () => http.get(Uri.parse(m.arg)),
-            onTimeout: (e) => Log.e('url:${m.arg}, $e', name: '_isolate'),
-          );
-          if (respone != null) {
+            break;
+          case MessageType.shudanDetail:
             try {
+              var respone = await client.get(Uri.parse(m.arg));
               Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
               m.sp.send(IsolateReceiveMessage(data: BookListDetailRoot.fromJson(map).data, result: Result.success));
             } catch (e) {
-              m.sp.send(IsolateReceiveMessage(data: BookListDetailData(), result: Result.success));
+              Log.e('url:${m.arg}, $e', name: '_isolate');
+              m.sp.send(IsolateReceiveMessage(data: BookListDetailData(), result: Result.error));
             }
-          } else {
-            m.sp.send(IsolateReceiveMessage(data: BookListDetailData(), result: Result.error));
-          }
-          break;
-        case MessageType.indexs:
-          var respone = await timeLimit(
-            () => http.get(Uri.parse(m.arg)),
-            onTimeout: (e) => Log.e('url:${m.arg}, $e', name: '_isolate'),
-          );
-          if (respone != null) {
-            m.sp.send(IsolateReceiveMessage(
-                data: utf8.decoder.convert(respone.bodyBytes).replaceAll('},]', '}]'), result: Result.success));
-          } else {
-            m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
-          }
-          break;
-        case MessageType.content:
-          var respone = await timeLimit(
-            () async => await http.get(Uri.parse(m.arg)),
-            onTimeout: (e) => Log.e('url:${m.arg}, $e', name: '_isolate'),
-          );
-          if (respone != null) {
+            break;
+          case MessageType.indexs:
             try {
+              var respone = await client.get(Uri.parse(m.arg));
+              m.sp.send(IsolateReceiveMessage(
+                  data: utf8.decoder.convert(respone.bodyBytes).replaceAll('},]', '}]'), result: Result.success));
+            } catch (e) {
+              Log.e('url:${m.arg}, $e', name: '_isolate');
+              m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+            }
+            break;
+          case MessageType.content:
+            try {
+              var respone = await client.get(Uri.parse(m.arg));
               m.sp.send(IsolateReceiveMessage(
                   data: BookContentRoot.fromJson(jsonDecode(utf8.decoder.convert(respone.bodyBytes))).data,
                   result: Result.success));
             } catch (e) {
+              Log.e('url:${m.arg}, $e', name: '_isolate');
+
               m.sp.send(IsolateReceiveMessage(data: BookContent(), result: Result.error));
             }
-          } else {
-            m.sp.send(IsolateReceiveMessage(data: BookContent(), result: Result.error));
-          }
-          break;
-        case MessageType.shudan:
-          final String c = m.arg[0];
-          final int index = m.arg[1];
-          var respone = await timeLimit(
-            () async => await http.get(Uri.parse(BookRepository.shudanUrl(c, index))),
-            onTimeout: (e) async => Log.e('url:${m.arg}, $e', name: '_isolate'),
-            seconds: 5,
-          );
-
-          if (respone != null) {
+            break;
+          case MessageType.shudan:
             try {
+              final String c = m.arg[0];
+              final int index = m.arg[1];
+              var respone = await client.get(Uri.parse(BookRepository.shudanUrl(c, index)));
               final data = utf8.decoder.convert(respone.bodyBytes);
               m.sp.send(IsolateReceiveMessage(
                   data: BookListRoot.fromJson(jsonDecode(data)).data ?? <BookList>[], result: Result.success));
@@ -451,70 +384,65 @@ void _isolateRe(SendPort port) async {
                 await box.close();
               }
             } catch (e) {
-              m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-            }
-          } else {
-            m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-          }
-
-          break;
-        case MessageType.bookList:
-          final String c = m.arg;
-          String? data;
-          final box = await Hive.openBox('shudanlist');
-
-          if (box.isOpen) {
-            switch (c) {
-              case 'new':
-                data = box.get('shudanNewList');
-                break;
-              case 'hot':
-                data = box.get('shudanHotList');
-                break;
-              case 'collect':
-                data = box.get('shudanCollectList');
-                break;
-            }
-          }
-          await box.close();
-          if (data == null) {
-            m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-          } else {
-            try {
-              m.sp.send(
-                  IsolateReceiveMessage(data: BookListRoot.fromJson(jsonDecode(data)).data, result: Result.success));
-            } catch (e) {
               Log.e('url:${m.arg}, $e', name: '_isolate');
               m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
             }
-          }
-          break;
-        case MessageType.mainList:
-          var bookIndexShort = <List>[];
-          BookIndex map;
-          try {
-            map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
-            for (var bookVol in map.list!) {
-              final _inl = []..add(bookVol.name);
-              for (var bookChapter in bookVol.list!) {
-                _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
+
+            break;
+          case MessageType.bookList:
+            final String c = m.arg;
+            String? data;
+            final box = await Hive.openBox('shudanlist');
+            if (box.isOpen) {
+              switch (c) {
+                case 'new':
+                  data = box.get('shudanNewList');
+                  break;
+                case 'hot':
+                  data = box.get('shudanHotList');
+                  break;
+                case 'collect':
+                  data = box.get('shudanCollectList');
+                  break;
               }
-              bookIndexShort.add(_inl);
             }
-            m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
-          } catch (e) {
-            Log.e('url:${m.arg}, $e', name: '_isolate');
-            m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
-          }
-          break;
-        // case MessageType.imgPath:
-        //   m.sp.send(IsolateReceiveMessage(data: await saveImage(m.arg as String), result: Result.success));
-        // break;
-        default:
-          m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+            await box.close();
+            if (data == null) {
+              m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
+            } else {
+              try {
+                m.sp.send(
+                    IsolateReceiveMessage(data: BookListRoot.fromJson(jsonDecode(data)).data, result: Result.success));
+              } catch (e) {
+                Log.e('url:${m.arg}, $e', name: '_isolate');
+                m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
+              }
+            }
+            break;
+          case MessageType.mainList:
+            var bookIndexShort = <List>[];
+            BookIndex map;
+            try {
+              map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
+              for (var bookVol in map.list!) {
+                final _inl = []..add(bookVol.name);
+                for (var bookChapter in bookVol.list!) {
+                  _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
+                }
+                bookIndexShort.add(_inl);
+              }
+              m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
+            } catch (e) {
+              Log.e('url:${m.arg}, $e', name: '_isolate');
+              m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
+            }
+            break;
+          default:
+            m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+        }
       }
-    }
-  }
+    },
+  );
   // receivePort.listen((m) async{
   // });
 }
@@ -544,11 +472,11 @@ void _isolateRe(SendPort port) async {
 //   });
 // }
 
-Future<T?> timeLimit<T>(Future<T> Function() fn, {int? seconds, void Function(Object)? onTimeout}) async {
-  try {
-    return await fn().timeout(Duration(seconds: seconds ?? 5));
-  } catch (e) {
-    onTimeout?.call(e);
-    return null;
-  }
-}
+// Future<T?> timeLimit<T>(Future<T> Function() fn, {int? seconds, void Function(Object)? onTimeout}) async {
+//   try {
+//     return await fn().timeout(Duration(seconds: seconds ?? 5));
+//   } catch (e) {
+//     onTimeout?.call(e);
+//     return null;
+//   }
+// }

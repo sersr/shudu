@@ -82,7 +82,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     Overlay.of(context)!.insert(entry);
     timer = Timer(Duration(seconds: 2), () {
       entry.remove();
-      timer?.cancel();
     });
     return true;
   }
@@ -127,8 +126,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       bottomNavigationBar: BottomNavigationBar(
         elevation: 3.0,
         items: [
-          BottomNavigationBarItem(label: '1', icon: Icon(Icons.access_alarm)),
-          BottomNavigationBarItem(label: '2', icon: Icon(Icons.accessibility))
+          BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
+          BottomNavigationBarItem(label: '书城', icon: Icon(Icons.shop_rounded))
         ],
         onTap: (index) {
           if (index == currentIndex) {
@@ -137,9 +136,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             }
             return;
           }
-          setState(() {
-            currentIndex = index;
-          });
+          setState(() => currentIndex = index);
         },
         currentIndex: currentIndex,
       ),
@@ -317,54 +314,58 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           }
           return false;
         },
-        child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
-          builder: (context, state) {
-            final children = state.isTop.toList()..addAll(state.custom);
-            return ListView.builder(
-              itemCount: children.length,
-              padding: const EdgeInsets.all(0.0),
-              itemBuilder: (context, index) {
-                final item = children[index];
-                return Container(
-                  decoration: index != children.length - 1
-                      ? BoxDecoration(
-                          border: BorderDirectional(
-                            bottom: BorderSide(
-                                width: 1 / MediaQuery.of(context).devicePixelRatio,
-                                color: Color.fromRGBO(210, 210, 210, 1)),
-                          ),
-                        )
-                      : null,
-                  child: btn1(
-                    background: false,
-                    child: BookItem(
-                      img: item.img,
-                      bookName: item.name,
-                      bookUdateItem: item.lastChapter,
-                      bookUpdateTime: item.updateTime,
-                      isTop: item.isTop == 1,
-                      isNew: item.isNew == 1,
-                    ),
-                    radius: 6.0,
-                    bgColor: bgColor,
-                    splashColor: spalColor,
-                    padding: const EdgeInsets.all(0),
-                    onTap: () {
-                      context.read<BookCacheBloc>().completerLoading();
-                      painterBloc
-                        ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-                        ..add(PainterNotifyIdEvent(item.id, item.chapterId, item.page ?? 1))
-                        ..canLoad = Completer<void>();
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return BlocBuilder<BookCacheBloc, BookChapterIdState>(
+              builder: (context, state) {
+                final children = state.isTop.toList()..addAll(state.custom);
+                return ListView.builder(
+                  itemCount: children.length,
+                  padding: const EdgeInsets.all(0.0),
+                  itemBuilder: (context, index) {
+                    final item = children[index];
+                    return Container(
+                      decoration: index != children.length - 1
+                          ? BoxDecoration(
+                              border: BorderDirectional(
+                                bottom: BorderSide(
+                                    width: 1 / MediaQuery.of(context).devicePixelRatio,
+                                    color: Color.fromRGBO(210, 210, 210, 1)),
+                              ),
+                            )
+                          : null,
+                      child: btn1(
+                        background: false,
+                        child: BookItem(
+                          img: item.img,
+                          bookName: item.name,
+                          bookUdateItem: item.lastChapter,
+                          bookUpdateTime: item.updateTime,
+                          isTop: item.isTop == 1,
+                          isNew: item.isNew == 1,
+                        ),
+                        radius: 6.0,
+                        bgColor: bgColor,
+                        splashColor: spalColor,
+                        padding: const EdgeInsets.all(0),
+                        onTap: () {
+                          context.read<BookCacheBloc>().completerLoading();
+                          painterBloc
+                            ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
+                            ..add(PainterNotifyIdEvent(item.id, item.chapterId, item.page ?? 1))
+                            ..canLoad = Completer<void>();
 
-                      Navigator.of(context).pushNamed(BookContentPage.currentRoute);
-                    },
-                    onLongPress: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => bottomSheet(context, item),
-                      );
-                    },
-                  ),
+                          Navigator.of(context).pushNamed(BookContentPage.currentRoute);
+                        },
+                        onLongPress: () {
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) => bottomSheet(context, item),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             );

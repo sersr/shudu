@@ -11,7 +11,7 @@ import 'package:hive/hive.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../data/book_content.dart';
-import '../pages/book_content_view/real_page_view_controller.dart';
+import '../pages/book_content_view/page_view_controller.dart';
 import '../utils/utils.dart';
 import 'book_cache_bloc.dart';
 import 'book_index_bloc.dart';
@@ -183,10 +183,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNotifySizeEvent) {
+      // print(event.size);
       final _size = Size(event.size.width - 32.0, event.size.height);
       if (size != _size) {
         size = _size;
         sizeChanged = true;
+      } else {
+        sizeChanged = false;
       }
     } else if (event is PainterNotifyIdEvent) {
       yield* newBook(event);
@@ -213,16 +216,18 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
       }
     } else if (event is PainterMetricsChangeEvent) {
-      reset(clearCache: true);
-      sizeChanged = false;
-      yield painter(ignore: true);
-      if (!completer.isCompleted) {
-        inBookView = false;
-        await completer.future;
-        inBookView = true;
+      if (sizeChanged) {
+        reset(clearCache: true);
+        sizeChanged = false;
+        yield painter(ignore: true);
+        if (!completer.isCompleted) {
+          inBookView = false;
+          await completer.future;
+          inBookView = true;
+        }
+        await loadFirst();
+        yield painter();
       }
-      await loadFirst();
-      yield painter();
     }
   }
 
@@ -394,7 +399,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   Completer<void>? canLoad;
   bool inBookView = false;
-  RealPageViewController? controller;
+  NopPageViewController? controller;
   Stream<PainterState> newBook(PainterNotifyIdEvent event) async* {
     inBookView = true;
     if (event.id == null || event.cid == -1) return;

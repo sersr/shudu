@@ -50,7 +50,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void didChangeMetrics() {
     super.didChangeMetrics();
     bloc
-      ..add(PainterNotifySizeEvent(size: WidgetsBinding.instance!.window.physicalSize))
+      ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
       ..add(PainterMetricsChangeEvent());
   }
 
@@ -63,7 +63,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final child = BlocBuilder<PainterBloc, PainterState>(
+    Widget child = BlocBuilder<PainterBloc, PainterState>(
       builder: (context, state) {
         if (state.config?.bgcolor == null) {
           return Container();
@@ -83,7 +83,11 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
         );
       },
     );
-
+    // child = LayoutBuilder(builder: (context, constraints) {
+    //   print('..............xxxx');
+    //   bloc..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))..add(PainterMetricsChangeEvent());
+    //   return child;
+    // });
     return WillPopScope(
       onWillPop: () async {
         showCname.value = false;

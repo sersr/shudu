@@ -1,16 +1,29 @@
 # shudu
 
-A new Flutter project.
+## 介绍
 
-## Getting Started
+一个小说阅读app。
 
-This project is a starting point for a Flutter application.
+## 支持功能
 
-A few resources to get you started if this is your first Flutter project:
+* 滑动翻页
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+  > 优化：重新设计，布局重写，不选择通用Widget(PageView...)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+* 数据缓存
+
+  > 使用 sqflite3、Hive 实现
+
+* 背景、字体颜色
+
+  > HSV: 自由选择、调节颜色
+
+## 关于 packages
+
+由于 [flutter_sticky_header](https://pub.flutter-io.cn/packages/flutter_sticky_header), [pull_to_refresh](https://pub.flutter-io.cn/packages/pull_to_refresh) 还未进行空安全迁移，
+所以这两个package 只是简单的用dart的迁移工具进行本地迁移，不是pub版本！！！
+
+pub -> 本地
+
+* flutter_sticky_header -> sticky_header
+* pull-to_refresh -> pull-to_refresh

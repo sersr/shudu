@@ -10,8 +10,8 @@ import '../../utils/utils.dart';
 
 typedef BoolCallback = bool Function();
 
-class RealPageViewController extends ChangeNotifier with ActivityDelegate {
-  RealPageViewController({
+class NopPageViewController extends ChangeNotifier with ActivityDelegate {
+  NopPageViewController({
     required this.vsync,
     required this.scrollingNotify,
     required this.getDragState,
@@ -248,7 +248,7 @@ class RealPageViewController extends ChangeNotifier with ActivityDelegate {
 class ContentPreNextWidget extends RenderObjectWidget {
   ContentPreNextWidget({this.builder, this.offset});
   final WidgetCallback? builder;
-  final RealPageViewController? offset;
+  final NopPageViewController? offset;
   @override
   ContentPreNextElement createElement() => ContentPreNextElement(this);
 
@@ -375,7 +375,7 @@ class RealPageViewParenData extends BoxParentData {
 }
 
 class ContentPreNextRenderObject extends RenderBox {
-  ContentPreNextRenderObject({RealPageViewController? vpOffset}) : _vpOffset = vpOffset;
+  ContentPreNextRenderObject({NopPageViewController? vpOffset}) : _vpOffset = vpOffset;
 
   ContentPreNextElement? _element;
   final childlist = <int, RenderBox>{};
@@ -408,11 +408,11 @@ class ContentPreNextRenderObject extends RenderBox {
     });
   }
 
-  RealPageViewController? _vpOffset;
+  NopPageViewController? _vpOffset;
 
-  RealPageViewController? get vpOffset => _vpOffset;
+  NopPageViewController? get vpOffset => _vpOffset;
 
-  set vpOffset(RealPageViewController? v) {
+  set vpOffset(NopPageViewController? v) {
     if (_vpOffset == v) return;
     if (attached) {
       _vpOffset!.removeListener(markNeedsLayout);

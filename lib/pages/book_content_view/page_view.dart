@@ -10,7 +10,7 @@ import '../../bloc/painter_bloc.dart';
 import '../../utils/utils.dart';
 import 'context_view.dart';
 import 'pannel.dart';
-import 'real_page_view_controller.dart';
+import 'page_view_controller.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({
@@ -33,13 +33,13 @@ class ContentPageView extends StatefulWidget {
 }
 
 class _ContentPageViewState extends State<ContentPageView> with TickerProviderStateMixin {
-  late RealPageViewController offsetPosition;
+  late NopPageViewController offsetPosition;
   late PainterBloc bloc;
 
   @override
   void initState() {
     super.initState();
-    offsetPosition = RealPageViewController(
+    offsetPosition = NopPageViewController(
       vsync: this,
       scrollingNotify: isScrolling,
       getDragState: canDrag,
@@ -210,10 +210,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
 }
 
 /// [NopPageView]
-/// 无固定方向
-/// 以0为起始点，支持负增长；
-/// note: 边界问题需用户判断
-///
+/// 无端
+/// 可以任意值为起始点，支持负增长；
+/// 提供端点判定；
+/// 无缓存，状态由用户管理
 class NopPageView extends StatefulWidget {
   const NopPageView({
     Key? key,
@@ -221,7 +221,7 @@ class NopPageView extends StatefulWidget {
     required this.builder,
   }) : super(key: key);
 
-  final RealPageViewController offsetPosition;
+  final NopPageViewController offsetPosition;
   final WidgetCallback builder;
   @override
   _NopPageViewState createState() => _NopPageViewState();
@@ -330,22 +330,3 @@ class _NopPageViewState extends State<NopPageView> {
     super.dispose();
   }
 }
-
-/// 占用UI 重复布局
-// class VerticalViewBuilder extends MultiChildLayoutDelegate {
-//   @override
-//   void performLayout(Size size) {
-//     final constraints = BoxConstraints.loose(Size(size.width, size.height - 62));
-//     layoutChild('header', constraints);
-//     positionChild('header', const Offset(16.0, 8.0));
-//     layoutChild('body', constraints);
-//     positionChild('body', const Offset(0.0, 33));
-//     final footleft = layoutChild('footleft', constraints);
-//     positionChild('footleft', Offset(16, size.height - footleft.height - 4.0));
-//     final footright = layoutChild('footright', constraints);
-//     positionChild('footright', Offset(size.width - 16 - footright.width, size.height - footright.height - 4.0));
-//   }
-
-//   @override
-//   bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) => false;
-// }
