@@ -7,17 +7,8 @@ import 'package:provider/provider.dart';
 
 import '../../bloc/bloc.dart';
 
-
 class ShudanItem extends StatelessWidget {
-  const ShudanItem({
-    Key? key,
-    this.img,
-    this.name,
-    this.desc,
-    this.total,
-    this.title,
-    this.height
-  }) : super(key: key);
+  const ShudanItem({Key? key, this.img, this.name, this.desc, this.total, this.title, this.height}) : super(key: key);
   final String? img;
   final String? name;
   final String? desc;
@@ -91,7 +82,7 @@ class ImageResolve extends StatelessWidget {
     final _future = Provider.of<BookRepository>(context).saveImage(img!);
     return FutureBuilder(
         future: _future,
-        builder: (context, AsyncSnapshot<dynamic> snap) {
+        builder: (context, AsyncSnapshot<String> snap) {
           if (snap.hasData) {
             if (snap.data!.isEmpty) {
               return Container(
@@ -124,10 +115,9 @@ class ImageResolve extends StatelessWidget {
               }
             }
 
-            ;
             Widget errorbuilder(context, e, t) {
               return FutureBuilder(
-                builder: (context, AsyncSnapshot<dynamic> s) {
+                builder: (context, AsyncSnapshot<String> s) {
                   if (s.hasData) {
                     Widget eframebuilder(context, image, frame, done) {
                       if (frame != null) {
@@ -149,36 +139,21 @@ class ImageResolve extends StatelessWidget {
                       }
                     }
 
-                    if (s.data is String) {
-                      return Image.file(File(s.data!),
-                          fit: BoxFit.fitWidth, cacheWidth: 112, frameBuilder: eframebuilder);
-                    } else if (s.data is Uint8List) {
-                      return Image.memory(s.data, fit: BoxFit.fitWidth, cacheWidth: 112, frameBuilder: eframebuilder);
-                    }
+                    return Image.file(File(s.data!),
+                        fit: BoxFit.fitWidth, cacheWidth: 112, frameBuilder: eframebuilder);
                   }
                   return Container();
                 },
                 future: Provider.of<BookRepository>(context).saveImage('guizhenwuji.jpg'),
               );
             }
-
-            if (snap.data is String) {
-              return Image.file(
-                File(snap.data!),
-                fit: BoxFit.fitWidth,
-                cacheWidth: 112,
-                frameBuilder: framebuilder,
-                errorBuilder: errorbuilder,
-              );
-            } else if (snap.data is Uint8List) {
-              return Image.memory(
-                snap.data,
-                fit: BoxFit.fitWidth,
-                cacheWidth: 112,
-                frameBuilder: framebuilder,
-                errorBuilder: errorbuilder,
-              );
-            }
+            return Image.file(
+              File(snap.data!),
+              fit: BoxFit.fitWidth,
+              cacheWidth: 112,
+              frameBuilder: framebuilder,
+              errorBuilder: errorbuilder,
+            );
           }
           return Container();
         });

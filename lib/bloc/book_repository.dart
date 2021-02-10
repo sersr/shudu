@@ -2,17 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
+import 'package:flutter/painting.dart';
 import '../data/book_content.dart';
 import '../data/book_index.dart';
 import '../data/book_info.dart';
@@ -39,6 +39,7 @@ abstract class BookRepository {
   late Database db;
   // late SharedPreferences prefs;
   late String appPath;
+  late Box<int> imageUpdate;
   final _init = ValueNotifier<bool>(false);
   ValueNotifier<bool> get init => _init;
   static int shortid(int id) => (id / 1000 + 1).toInt();
@@ -79,6 +80,7 @@ abstract class BookRepository {
     // prefs = await SharedPreferences.getInstance();
     appPath = (await getApplicationDocumentsDirectory())!.path;
     Hive.init('$appPath/shudu/hive');
+    imageUpdate = await Hive.openBox<int>('imageUpdate');
     final d = Directory('$appPath/shudu/images');
     if (!await d.exists()) {
       await d.create(recursive: true);
@@ -129,14 +131,15 @@ abstract class BookRepository {
     return await sendMessage<BookContent>(MessageType.content, url);
   }
 
+  static const int oneWeek = 1000 * 60 * 60 * 24 * 7;
   String get imageLocalPath => '$appPath/shudu/images/';
   var errorLoading = <String>[];
   int time = 0;
-  Future<dynamic> saveImage(String img) async {
+  Future<String> saveImage(String img) async {
     var imgName = '';
     String url;
     if (img.startsWith('https://') || img.startsWith('http://')) {
-      var reurl = img.replaceAll('%3A', ':').replaceAll('%2F', '/').replaceAll(RegExp('https://|http://'), '');
+      var reurl = img.replaceAll('%2F', '/');
       final splist = reurl.split('/');
       for (var i = splist.length - 1; i >= 0; i--) {
         if (splist[i].isNotEmpty) {
@@ -149,38 +152,41 @@ abstract class BookRepository {
       url = imageUrl(img);
       imgName = img;
     }
-
     final imgPath = '$imageLocalPath$imgName';
-    if (!await File(imgPath).exists()) {
-      if (errorLoading.contains(imgName)) {
-        if (time + 1000 * 120 <= DateTime.now().millisecondsSinceEpoch) {
-          time = DateTime.now().millisecondsSinceEpoch;
-          errorLoading.remove(imgName);
-        } else {
-          return '${imageLocalPath}guizhenwuji.jpg';
-        }
-      }
-      try {
-        var respone = await client.get(Uri.parse(url));
-
-        if (respone.statusCode <= 304) {
-          try {
-            decodeImageFromList(respone.bodyBytes);
-            await File(imgPath).writeAsBytes(respone.bodyBytes);
-            return respone.bodyBytes;
-          } catch (e) {
-            Log.e('no image !!!', stage: this, name: 'saveImage');
-          }
-        } else {
-          errorLoading.add(imgName);
-          return '${imageLocalPath}guizhenwuji.jpg';
-        }
-      } catch (e) {
-        print('url:$url, e: $e');
-        errorLoading.add(imgName);
-        return '${imageLocalPath}zanwutupian.jpg';
+    final exist = await File(imgPath).exists();
+    if (exist) {
+      if ((imageUpdate.get(imgName.hashCode) ?? 0) + oneWeek > DateTime.now().millisecondsSinceEpoch) {
+        return imgPath;
       }
     }
+
+    if (errorLoading.contains(imgName)) {
+      if (time + 1000 * 30 <= DateTime.now().millisecondsSinceEpoch) {
+        time = DateTime.now().millisecondsSinceEpoch;
+        errorLoading.remove(imgName);
+      } else {
+        return '${imageLocalPath}guizhenwuji.jpg';
+      }
+    }
+
+    try {
+      var respone = await client.get(Uri.parse(url));
+      // 验证是否为图片
+      final buffer = await ImmutableBuffer.fromUint8List(respone.bodyBytes);
+      await ImageDescriptor.encoded(buffer);
+      errorLoading.remove(imgName);
+      await imageUpdate.put(imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+      await File(imgPath).writeAsBytes(respone.bodyBytes);
+    } catch (e) {
+      print('$imgName, $e !!!');
+      if (!exist) {
+        // 本地已存在的话，不是 [Exception: Invalid image data]
+        errorLoading.add(imgName);
+        return '${imageLocalPath}guizhenwuji.jpg';
+      }
+    }
+    // print(' ${errorLoading},,$exist, ${imgPath}');
+    // success
     return imgPath;
   }
 

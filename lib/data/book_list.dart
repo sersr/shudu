@@ -43,7 +43,7 @@ class BookList {
   final String? updateTime;
   @JsonKey(name: 'UserName')
   final String? userName;
-  @JsonKey(name: 'CommendImage',nullable: true)
+  @JsonKey(name: 'CommendImage')
   final String? commendImage;
 
   factory BookList.fromJson(Map<String, dynamic> json) => _$BookListFromJson(json);
