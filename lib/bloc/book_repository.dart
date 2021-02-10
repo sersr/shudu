@@ -88,11 +88,13 @@ abstract class BookRepository {
     clientSP = await clientRP.first;
   }
 
+  // 启动app时等待初始化完成
   void afterInit() {
     _init.value = true;
   }
 
   void dipose() async {
+    client.close();
     _isolate.kill();
     await db.close();
   }
@@ -280,6 +282,132 @@ enum MessageType {
   imgPath,
 }
 
+class MessageFunc {
+  static Future<void> mainList(dynamic m, TimeClient client) async {
+    var bookIndexShort = <List>[];
+    BookIndex map;
+    try {
+      map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
+      for (var bookVol in map.list!) {
+        final _inl = []..add(bookVol.name);
+        for (var bookChapter in bookVol.list!) {
+          _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
+        }
+        bookIndexShort.add(_inl);
+      }
+      m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+      m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
+    }
+  }
+
+  static Future<void> bookList(dynamic m, TimeClient client) async {
+    final String c = m.arg;
+    String? data;
+    final box = await Hive.openBox('shudanlist');
+    if (box.isOpen) {
+      switch (c) {
+        case 'new':
+          data = box.get('shudanNewList');
+          break;
+        case 'hot':
+          data = box.get('shudanHotList');
+          break;
+        case 'collect':
+          data = box.get('shudanCollectList');
+          break;
+      }
+    }
+    await box.close();
+    if (data == null) {
+      m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
+    } else {
+      try {
+        m.sp.send(IsolateReceiveMessage(data: BookListRoot.fromJson(jsonDecode(data)).data, result: Result.success));
+      } catch (e) {
+        Log.e('url:${m.arg}, $e', name: '_isolate');
+        m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
+      }
+    }
+  }
+
+  static Future<void> info(dynamic m, TimeClient client) async {
+    try {
+      var respone = await client.get(Uri.parse(m.arg));
+      Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
+      m.sp.send(IsolateReceiveMessage(data: BookInfoRoot.fromJson(map), result: Result.success));
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+      m.sp.send(IsolateReceiveMessage(data: BookInfoRoot(), result: Result.error));
+    }
+  }
+
+  static Future<void> shudanDetail(dynamic m, TimeClient client) async {
+    try {
+      var respone = await client.get(Uri.parse(m.arg));
+      Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
+      m.sp.send(IsolateReceiveMessage(data: BookListDetailRoot.fromJson(map).data, result: Result.success));
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+      m.sp.send(IsolateReceiveMessage(data: BookListDetailData(), result: Result.error));
+    }
+  }
+
+  static Future<void> indexs(dynamic m, TimeClient client) async {
+    try {
+      var respone = await client.get(Uri.parse(m.arg));
+      m.sp.send(IsolateReceiveMessage(
+          data: utf8.decoder.convert(respone.bodyBytes).replaceAll('},]', '}]'), result: Result.success));
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+      m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+    }
+  }
+
+  static Future<void> content(dynamic m, TimeClient client) async {
+    try {
+      var respone = await client.get(Uri.parse(m.arg));
+      m.sp.send(IsolateReceiveMessage(
+          data: BookContentRoot.fromJson(jsonDecode(utf8.decoder.convert(respone.bodyBytes))).data,
+          result: Result.success));
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+
+      m.sp.send(IsolateReceiveMessage(data: BookContent(), result: Result.error));
+    }
+  }
+
+  static Future<void> shudan(dynamic m, TimeClient client) async {
+    try {
+      final String c = m.arg[0];
+      final int index = m.arg[1];
+      var respone = await client.get(Uri.parse(BookRepository.shudanUrl(c, index)));
+      final data = utf8.decoder.convert(respone.bodyBytes);
+      m.sp.send(IsolateReceiveMessage(
+          data: BookListRoot.fromJson(jsonDecode(data)).data ?? <BookList>[], result: Result.success));
+      if (index == 1) {
+        final box = await Hive.openBox('shudanlist');
+        switch (c) {
+          case 'new':
+            await box.put('shudanNewList', data);
+            break;
+          case 'hot':
+            await box.put('shudanHotList', data);
+            break;
+          case 'collect':
+            await box.put('shudanCollectList', data);
+            break;
+        }
+        await box.close();
+      }
+    } catch (e) {
+      Log.e('url:${m.arg}, $e', name: '_isolate');
+      m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
+    }
+  }
+}
+
 class IsolateSendMessage {
   IsolateSendMessage(this.type, this.arg, this.sp);
   final MessageType type;
@@ -307,135 +435,49 @@ void _isolateRe(List args) async {
     return true;
   }());
   final port = args[0];
-  final appPath = args[1];
+  final appPath = '${args[1]}/shudu';
   final receivePort = ReceivePort();
   port.send(receivePort.sendPort);
-  Hive.init(appPath + '/shudu/hive');
+  Hive.init(appPath + '/hive');
   final client = TimeClient();
-
+  // final db = await databaseFactoryFfi.openDatabase(
+  //   'book_view_cache_test.db',
+  //   options: OpenDatabaseOptions(
+  //     version: 1,
+  //     onCreate: (Database db, int version) async {
+  //       await db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
+  //           'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
+  //       await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
+  //           'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
+  //       await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER, bIndexs TEXT)');
+  //     },
+  //   ),
+  // );
 
   receivePort.listen(
-    (m) async {
+    (m) {
       if (m is IsolateSendMessage) {
         switch (m.type) {
           case MessageType.info:
-            try {
-              var respone = await client.get(Uri.parse(m.arg));
-              Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
-              m.sp.send(IsolateReceiveMessage(data: BookInfoRoot.fromJson(map), result: Result.success));
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-              m.sp.send(IsolateReceiveMessage(data: BookInfoRoot(), result: Result.error));
-            }
+            MessageFunc.info(m, client);
             break;
           case MessageType.shudanDetail:
-            try {
-              var respone = await client.get(Uri.parse(m.arg));
-              Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
-              m.sp.send(IsolateReceiveMessage(data: BookListDetailRoot.fromJson(map).data, result: Result.success));
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-              m.sp.send(IsolateReceiveMessage(data: BookListDetailData(), result: Result.error));
-            }
+            MessageFunc.shudanDetail(m, client);
             break;
           case MessageType.indexs:
-            try {
-              var respone = await client.get(Uri.parse(m.arg));
-              m.sp.send(IsolateReceiveMessage(
-                  data: utf8.decoder.convert(respone.bodyBytes).replaceAll('},]', '}]'), result: Result.success));
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-              m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
-            }
+            MessageFunc.indexs(m, client);
             break;
           case MessageType.content:
-            try {
-              var respone = await client.get(Uri.parse(m.arg));
-              m.sp.send(IsolateReceiveMessage(
-                  data: BookContentRoot.fromJson(jsonDecode(utf8.decoder.convert(respone.bodyBytes))).data,
-                  result: Result.success));
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-
-              m.sp.send(IsolateReceiveMessage(data: BookContent(), result: Result.error));
-            }
+            MessageFunc.content(m, client);
             break;
           case MessageType.shudan:
-            try {
-              final String c = m.arg[0];
-              final int index = m.arg[1];
-              var respone = await client.get(Uri.parse(BookRepository.shudanUrl(c, index)));
-              final data = utf8.decoder.convert(respone.bodyBytes);
-              m.sp.send(IsolateReceiveMessage(
-                  data: BookListRoot.fromJson(jsonDecode(data)).data ?? <BookList>[], result: Result.success));
-              if (index == 1) {
-                final box = await Hive.openBox('shudanlist');
-                switch (c) {
-                  case 'new':
-                    await box.put('shudanNewList', data);
-                    break;
-                  case 'hot':
-                    await box.put('shudanHotList', data);
-                    break;
-                  case 'collect':
-                    await box.put('shudanCollectList', data);
-                    break;
-                }
-                await box.close();
-              }
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-              m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-            }
-
+            MessageFunc.shudan(m, client);
             break;
           case MessageType.bookList:
-            final String c = m.arg;
-            String? data;
-            final box = await Hive.openBox('shudanlist');
-            if (box.isOpen) {
-              switch (c) {
-                case 'new':
-                  data = box.get('shudanNewList');
-                  break;
-                case 'hot':
-                  data = box.get('shudanHotList');
-                  break;
-                case 'collect':
-                  data = box.get('shudanCollectList');
-                  break;
-              }
-            }
-            await box.close();
-            if (data == null) {
-              m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-            } else {
-              try {
-                m.sp.send(
-                    IsolateReceiveMessage(data: BookListRoot.fromJson(jsonDecode(data)).data, result: Result.success));
-              } catch (e) {
-                Log.e('url:${m.arg}, $e', name: '_isolate');
-                m.sp.send(IsolateReceiveMessage(data: <BookList>[], result: Result.error));
-              }
-            }
+            MessageFunc.bookList(m, client);
             break;
           case MessageType.mainList:
-            var bookIndexShort = <List>[];
-            BookIndex map;
-            try {
-              map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
-              for (var bookVol in map.list!) {
-                final _inl = []..add(bookVol.name);
-                for (var bookChapter in bookVol.list!) {
-                  _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
-                }
-                bookIndexShort.add(_inl);
-              }
-              m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
-            } catch (e) {
-              Log.e('url:${m.arg}, $e', name: '_isolate');
-              m.sp.send(IsolateReceiveMessage(data: bookIndexShort, result: Result.success));
-            }
+            MessageFunc.mainList(m, client);
             break;
           default:
             m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
@@ -443,40 +485,4 @@ void _isolateRe(List args) async {
       }
     },
   );
-  // receivePort.listen((m) async{
-  // });
 }
-
-// Future<http.Response> http.get(Uri url, {Map<String, String>? headers}) {
-//   return _withClient((client) => client.get(url, headers: headers));
-// }
-
-// Future<T> _withClient<T>(Future<T> Function(http.Client) fn) async {
-//   var client = http.Client();
-
-//   final result = await fn(client);
-//   // client.close();
-//   return result;
-// }
-
-// Future<HttpClientResponse> wrapClient(Uri uri, {Map<String, Object>? headers}) async {
-//   var client = HttpClient();
-//   client.connectionTimeout = const Duration(seconds: 15);
-//   return await client.http.get(uri).then((request) async {
-//     if (headers != null) {
-//       headers.forEach((key, value) {
-//         request.headers.add(key, value);
-//       });
-//     }
-//     return request.close();
-//   });
-// }
-
-// Future<T?> timeLimit<T>(Future<T> Function() fn, {int? seconds, void Function(Object)? onTimeout}) async {
-//   try {
-//     return await fn().timeout(Duration(seconds: seconds ?? 5));
-//   } catch (e) {
-//     onTimeout?.call(e);
-//     return null;
-//   }
-// }

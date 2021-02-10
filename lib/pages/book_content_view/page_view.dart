@@ -324,9 +324,4 @@ class _NopPageViewState extends State<NopPageView> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

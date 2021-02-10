@@ -584,7 +584,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (queryList.isNotEmpty) {
       final map = queryList.first;
       if (map.contentIsNotEmpty) {
-        if (map['hasContent'] != 1 || map['pid'] == -1 || map['nid'] == -1) {
+        if (map['hasContent'] != 1 || map['nid'] == -1) {
+          // assert(map['pid'] == -1);
+          print('no content: ${map['cname']}');
           await downFromNet(contentid, _bookid);
         } else {
           assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));

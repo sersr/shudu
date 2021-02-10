@@ -334,11 +334,11 @@ class ContentPreNextElement extends RenderObjectElement {
     });
   }
 
-  void collectGarbage(int? leadingGarbage, int? trailingGarbage) {
+  void collectGarbage(int leadingGarbage, int trailingGarbage) {
     owner!.buildScope(this, () {
       try {
         childElement.removeWhere((key, value) {
-          final clear = key < leadingGarbage! || key > trailingGarbage!;
+          final clear = key < leadingGarbage || key > trailingGarbage;
           if (clear) {
             final el = updateChild(value, null, key);
             assert(el == null);
@@ -438,6 +438,9 @@ class ContentPreNextRenderObject extends RenderBox {
 
   int? firstIndex;
   int? lastIndex;
+
+  bool get canPaintContent => firstIndex != null && lastIndex != null;
+
   @override
   void performResize() {
     size = constraints.biggest;
@@ -456,15 +459,14 @@ class ContentPreNextRenderObject extends RenderBox {
     }
     vpOffset!.applyViewPortDimension(extent);
     final pixels = vpOffset!.pixels!;
-
+    firstIndex = lastIndex = null;
     final _firstIndex = getMinChildIndexForScrollOffset(pixels, extent);
     final _lastIndex = getMaxChildIndexForScrollOffset(pixels + extent, extent);
     for (var i = _firstIndex; i <= _lastIndex; i++) {
       if (!childlist.containsKey(i)) {
         layoutChild(i);
 
-        /// 我们不需要child重新布局，textPainter.layout 太消耗性能了，
-        /// 当child需要重新layout时，一般是重建（bloc控制状态更改）
+        /// 不需要child重新布局，状态管理已经转移了
         childlist[i]?.layout(constraints, parentUsesSize: true);
       }
     }
@@ -481,16 +483,17 @@ class ContentPreNextRenderObject extends RenderBox {
       }
     }
 
-    for (var i = firstIndex!; i <= lastIndex!; i++) {
-      if (childlist.containsKey(i)) {
-        final data = childlist[i]!.parentData as RealPageViewParenData;
-        data.layoutOffset = computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
-      }
-    }
-    collectGarbage(firstIndex, lastIndex);
+    assert(firstIndex != null && lastIndex != null); // user error
 
     /// 更正
-    if (childlist.isNotEmpty) {
+    if (canPaintContent) {
+      for (var i = firstIndex!; i <= lastIndex!; i++) {
+        if (childlist.containsKey(i)) {
+          final data = childlist[i]!.parentData as RealPageViewParenData;
+          data.layoutOffset = computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
+        }
+      }
+      collectGarbage(firstIndex!, lastIndex!);
       final leftChild = vpOffset!.hasContent(1, firstIndex!);
       final rightChild = vpOffset!.hasContent(0, lastIndex!);
       vpOffset!.applyConentDimension(
@@ -519,7 +522,7 @@ class ContentPreNextRenderObject extends RenderBox {
     return childParentData.layoutOffset;
   }
 
-  /// 渲染节点（paint node)
+  /// 渲染节点
   @override
   bool get isRepaintBoundary => true;
 
@@ -533,10 +536,12 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
-    for (var i = firstIndex!; i <= lastIndex!; i++) {
-      if (childlist.containsKey(i)) {
-        final child = childlist[i]!;
-        context.paintChild(child, offset + childScrollOffset(child)!);
+    if (canPaintContent) {
+      for (var i = firstIndex!; i <= lastIndex!; i++) {
+        if (childlist.containsKey(i)) {
+          final child = childlist[i]!;
+          context.paintChild(child, offset + childScrollOffset(child)!);
+        }
       }
     }
   }
@@ -559,7 +564,7 @@ class ContentPreNextRenderObject extends RenderBox {
 
   double indexToLayoutOffset(double itemExtent, int index) => itemExtent * index;
 
-  void collectGarbage(int? leadingGarbage, int? trailingGarbage) {
+  void collectGarbage(int leadingGarbage, int trailingGarbage) {
     invokeLayoutCallback<BoxConstraints>((_) {
       _element!.collectGarbage(leadingGarbage, trailingGarbage);
     });

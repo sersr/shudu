@@ -35,6 +35,7 @@ dependencies:
   logger: ^1.0.0-nullsafety.0
   # logger: ^1.0.0-nullsafety.0
   # animated_text_kit: ^2.5.4
+  # shimmer: ^2.0.0-nullsafety.0
   # flutter_easyrefresh: ^2.1.7
   # pull_to_refresh: ^1.6.4
   # integration_test: ^1.0.1
@@ -45,7 +46,6 @@ dependencies:
     path: ../plugins/sticky_header
   pull_to_refresh:
     path: ../plugins/pull_to_refresh
-  # hive_flutter: ^0.3.1
   
 dev_dependencies:
   flutter_test:

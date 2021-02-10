@@ -18,6 +18,7 @@ class ShuduApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
           platform: state.platform,
+          fontFamily: 'NotoSansSC',
         ),
         home: MyHomePage(),
         routes: {
