@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -94,7 +95,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     return RepaintBoundary(child: child);
   }
 
-  Widget wrapChild() {
+  Widget wrapChild(Size size, EdgeInsets padding) {
     final child = NopPageView(
       offsetPosition: offsetPosition,
       builder: getChild,
@@ -124,10 +125,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
       return Center(
         child: Stack(
           children: [
-            Positioned(top: 8.0, left: 16.0, child: head),
-            Positioned(bottom: 4.0, left: 16.0, child: footleft),
-            Positioned(bottom: 4.0, right: 16.0, child: footright),
-            Positioned.fill(top: 33, bottom: 33, right: 16.0, child: child),
+            Positioned(top: 8.0 + padding.top, left: 16.0, child: head),
+            Positioned(bottom: 4.0 + padding.bottom, left: 16.0, child: footleft),
+            Positioned(bottom: 4.0 + padding.bottom, right: 16.0, child: footright),
+            Positioned.fill(top: 33 + padding.top, bottom: 33 + padding.bottom, right: 16.0, child: child),
           ],
         ),
       );
@@ -139,7 +140,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     final size = MediaQuery.of(context).size;
     final child = bloc.tData.contentIsNotEmpty
         ? GestureDetector(
-            child: wrapChild(),
+            child: wrapChild(size, EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)),
             onTapUp: (d) {
               if (offsetPosition.page == 0 ||
                   offsetPosition.page % offsetPosition.page.toInt() == 0 ||

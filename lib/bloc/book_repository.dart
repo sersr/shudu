@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -21,7 +21,7 @@ import '../data/book_list_detail.dart';
 import '../utils/utils.dart';
 import 'book_index_bloc.dart';
 
-typedef DCallback<T> = Future<void> Function(T d);
+typedef DCallback<T> = Future<void> Function(T);
 
 // class SecondData extends Object {
 //   SecondData(this.db, this.bloc);
@@ -39,6 +39,7 @@ abstract class BookRepository {
   late Database db;
   // late SharedPreferences prefs;
   late String appPath;
+  late Box<int> imageUpdate;
   final _init = ValueNotifier<bool>(false);
   ValueNotifier<bool> get init => _init;
   static int shortid(int id) => (id / 1000 + 1).toInt();
@@ -69,16 +70,23 @@ abstract class BookRepository {
     return 'https://scxs.pigqq.com/shudan/detail/$index.html';
   }
 
+  Future<void> onCreate(Database _db) async {
+    await _db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
+        'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
+    await _db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
+        'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
+    await _db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
+  }
+
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
   final client = TimeClient();
   @mustCallSuper
   Future<void> initState() async {
-    // dio ??= Dio(BaseOptions(connectTimeout: 5000, receiveTimeout: 5000, sendTimeout: 5000));
-    // prefs = await SharedPreferences.getInstance();
     appPath = (await getApplicationDocumentsDirectory())!.path;
     Hive.init('$appPath/shudu/hive');
+    imageUpdate = await Hive.openBox<int>('imageUpdate');
     final d = Directory('$appPath/shudu/images');
     if (!await d.exists()) {
       await d.create(recursive: true);
@@ -129,14 +137,15 @@ abstract class BookRepository {
     return await sendMessage<BookContent>(MessageType.content, url);
   }
 
+  static const int oneWeek = 1000 * 60 * 60 * 24 * 7;
   String get imageLocalPath => '$appPath/shudu/images/';
   var errorLoading = <String>[];
   int time = 0;
-  Future<dynamic> saveImage(String img) async {
+  Future<String> saveImage(String img) async {
     var imgName = '';
     String url;
     if (img.startsWith('https://') || img.startsWith('http://')) {
-      var reurl = img.replaceAll('%3A', ':').replaceAll('%2F', '/').replaceAll(RegExp('https://|http://'), '');
+      var reurl = img.replaceAll('%2F', '/');
       final splist = reurl.split('/');
       for (var i = splist.length - 1; i >= 0; i--) {
         if (splist[i].isNotEmpty) {
@@ -149,38 +158,40 @@ abstract class BookRepository {
       url = imageUrl(img);
       imgName = img;
     }
-
     final imgPath = '$imageLocalPath$imgName';
-    if (!await File(imgPath).exists()) {
-      if (errorLoading.contains(imgName)) {
-        if (time + 1000 * 120 <= DateTime.now().millisecondsSinceEpoch) {
-          time = DateTime.now().millisecondsSinceEpoch;
-          errorLoading.remove(imgName);
-        } else {
-          return '${imageLocalPath}guizhenwuji.jpg';
-        }
-      }
-      try {
-        var respone = await client.get(Uri.parse(url));
-
-        if (respone.statusCode <= 304) {
-          try {
-            decodeImageFromList(respone.bodyBytes);
-            await File(imgPath).writeAsBytes(respone.bodyBytes);
-            return respone.bodyBytes;
-          } catch (e) {
-            Log.e('no image !!!', stage: this, name: 'saveImage');
-          }
-        } else {
-          errorLoading.add(imgName);
-          return '${imageLocalPath}guizhenwuji.jpg';
-        }
-      } catch (e) {
-        print('url:$url, e: $e');
-        errorLoading.add(imgName);
-        return '${imageLocalPath}zanwutupian.jpg';
+    final exist = await File(imgPath).exists();
+    if (exist) {
+      if ((imageUpdate.get(imgName.hashCode) ?? 0) + oneWeek > DateTime.now().millisecondsSinceEpoch) {
+        return imgPath;
       }
     }
+
+    if (errorLoading.contains(imgName)) {
+      if (time + 1000 * 30 <= DateTime.now().millisecondsSinceEpoch) {
+        time = DateTime.now().millisecondsSinceEpoch;
+        errorLoading.remove(imgName);
+      } else {
+        return '${imageLocalPath}guizhenwuji.jpg';
+      }
+    }
+
+    try {
+      var respone = await client.get(Uri.parse(url));
+      // 验证是否为图片格式
+      final buffer = await ImmutableBuffer.fromUint8List(respone.bodyBytes);
+      await ImageDescriptor.encoded(buffer);
+      errorLoading.remove(imgName);
+      await imageUpdate.put(imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+      await File(imgPath).writeAsBytes(respone.bodyBytes);
+    } catch (e) {
+      print('$imgName, $e !!!');
+      if (!exist) {
+        // 本地已存在的话，不添加到 errorLoading 中
+        errorLoading.add(imgName);
+        return '${imageLocalPath}guizhenwuji.jpg';
+      }
+    }
+    // success
     return imgPath;
   }
 
@@ -198,12 +209,6 @@ abstract class BookRepository {
 
   Future<List<BookList>> loadShudan(String c, int index) async {
     return await sendMessage<List<BookList>>(MessageType.shudan, [c, index]);
-    // if (result.isNotEmpty) {
-    //   return [result, 302];
-    // } else {
-    //   return ['', 404];
-    // }
-    // return result;
   }
 
   Future<BookListDetailData> loadShudanDetail(int? index) async {
@@ -226,14 +231,9 @@ class BookRepositoryImpl extends BookRepository {
   @override
   Future<void> initState() async {
     await super.initState();
-    db = await openDatabase(dataPath, version: 1, onCreate: (Database db, int version) async {
-      await db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-          'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-      await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-          'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-      await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
-    });
+    db = await openDatabase(dataPath, version: 1, onCreate: (Database db, int version) async => await onCreate(db));
     // await db.execute('ALTER TABLE BookContent ADD COLUMN hasContent INTEGER');
+
     afterInit();
   }
 }
@@ -252,14 +252,7 @@ class BookRepositoryWinImpl extends BookRepository {
       dataPath,
       options: OpenDatabaseOptions(
         version: 1,
-        onCreate: (Database db, int version) async {
-          await db.execute(
-              'CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-              'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-          await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-              'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-          await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER, bIndexs TEXT)');
-        },
+        onCreate: (Database db, int version) async => await onCreate(db),
       ),
     );
     afterInit();
@@ -417,7 +410,9 @@ class IsolateSendMessage {
 
 enum Result {
   success,
+  failed,
   error,
+
 }
 
 class IsolateReceiveMessage {
@@ -480,7 +475,7 @@ void _isolateRe(List args) async {
             MessageFunc.mainList(m, client);
             break;
           default:
-            m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+            m.sp.send(IsolateReceiveMessage(data: '', result: Result.failed));
         }
       }
     },

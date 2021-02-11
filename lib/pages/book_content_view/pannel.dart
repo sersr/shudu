@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -312,7 +312,11 @@ class _BottomEndState extends State<BottomEnd> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 6.0, bottom: 12.0, left: 10.0, right: 10.0),
+      padding: EdgeInsets.only(
+          top: 6.0,
+          bottom: 12.0 + (ui.window.padding.bottom / ui.window.devicePixelRatio / 2),
+          left: 10.0,
+          right: 10.0),
       child: Row(
         children: [
           btn1(
@@ -503,7 +507,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           ),
         ),
         Positioned(
-          top: 34.0,
+          top: 12 + ui.window.padding.top / ui.window.devicePixelRatio,
           left: 24.0,
           right: 24.0,
           bottom: 10.0,

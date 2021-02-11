@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/bloc.dart';
@@ -73,17 +73,25 @@ class _BookInfoPageState extends State<BookInfoPage> {
                           itemCount: children.length,
                         ),
                       ),
-                      Container(
-                        height: 56,
-                        child: Material(
-                          color: Colors.cyan,
-                          child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
-                            builder: (context, cState) {
-                              final bookid = state.data!.data!.id!;
-                              var contain = false;
-                              int? cid;
-                              int? currentPage;
-                              for (var l in cState.custom) {
+                      Material(
+                        color: Colors.cyan,
+                        child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
+                          builder: (context, cState) {
+                            final bookid = state.data!.data!.id!;
+                            var contain = false;
+                            int? cid;
+                            int? currentPage;
+                            for (var l in cState.custom) {
+                              if (l.id == bookid) {
+                                contain = true;
+                                cid = l.chapterId;
+                                currentPage = l.page;
+                                break;
+                              }
+                            }
+
+                            if (!contain) {
+                              for (var l in cState.isTop) {
                                 if (l.id == bookid) {
                                   contain = true;
                                   cid = l.chapterId;
@@ -91,79 +99,84 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                   break;
                                 }
                               }
+                            }
 
-                              if (!contain) {
-                                for (var l in cState.isTop) {
-                                  if (l.id == bookid) {
-                                    contain = true;
-                                    cid = l.chapterId;
-                                    currentPage = l.page;
-                                    break;
-                                  }
-                                }
-                              }
-
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  Expanded(
-                                    child: btn1(
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Expanded(
+                                  child: btn1(
+                                    child: Container(
+                                      height: 56,
+                                      padding: EdgeInsets.only(
+                                          bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
                                       child: Center(
                                         child: Text('${contain ? '阅读' : '试读'}'),
                                       ),
-                                      onTap: () {
-                                        final data = state.data!.data;
-                                        final _cid = cid ?? data!.firstChapterId!;
-                                        final page = currentPage ?? 1;
-                                        context.read<PainterBloc>()
-                                          ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-                                          ..add(PainterNotifyIdEvent(bookid, _cid, page))
-                                          ..canLoad = Completer<void>();
-                                        Navigator.of(context).pushNamed(BookContentPage.currentRoute);
-                                      },
-                                      background: false,
                                     ),
+                                    onTap: () {
+                                      final data = state.data!.data;
+                                      final _cid = cid ?? data!.firstChapterId!;
+                                      final page = currentPage ?? 1;
+                                      context.read<PainterBloc>()
+                                        ..add(PainterNotifySizeEvent(
+                                            size: ui.window.physicalSize / ui.window.devicePixelRatio,
+                                            padding: EdgeInsets.fromWindowPadding(
+                                                ui.window.padding, ui.window.devicePixelRatio)))
+                                        ..add(PainterNotifyIdEvent(bookid, _cid, page))
+                                        ..canLoad = Completer<void>();
+                                      Navigator.of(context).pushNamed(BookContentPage.currentRoute);
+                                    },
+                                    background: false,
                                   ),
-                                  Expanded(
-                                      child: btn1(
-                                          background: false,
-                                          onTap: () {
-                                            if (contain) {
-                                              context.read<BookCacheBloc>()
-                                                ..add(BookChapterIdDeleteEvent(id: bookid))
-                                                ..add(BookChapterIdLoadEvent());
-                                              context.read<BookCacheBloc>().add(BookChapterIdLoadEvent());
-                                            } else {
-                                              var addCache = BookCache(
-                                                name: info.name,
-                                                img: info.img,
-                                                updateTime: info.lastTime,
-                                                lastChapter: info.lastChapter,
-                                                chapterId: info.firstChapterId,
-                                                id: info.id,
-                                                sortKey: DateTime.now().millisecondsSinceEpoch,
-                                                isTop: 0,
-                                                page: 1,
-                                                isNew: 1,
-                                              );
-                                              context
-                                                  .read<BookCacheBloc>()
-                                                  .add(BookChapterIdAddEvent(bookCache: addCache));
-                                            }
-                                          },
-                                          child: Center(child: Text('${contain ? '移除' : '添加到'}书架')))),
-                                  Expanded(
+                                ),
+                                Expanded(
                                     child: btn1(
-                                      child: Center(child: Text('action')),
-                                      onTap: () {},
-                                      background: false,
-                                    ),
+                                        background: false,
+                                        onTap: () {
+                                          if (contain) {
+                                            context.read<BookCacheBloc>()
+                                              ..add(BookChapterIdDeleteEvent(id: bookid))
+                                              ..add(BookChapterIdLoadEvent());
+                                            context.read<BookCacheBloc>().add(BookChapterIdLoadEvent());
+                                          } else {
+                                            var addCache = BookCache(
+                                              name: info.name,
+                                              img: info.img,
+                                              updateTime: info.lastTime,
+                                              lastChapter: info.lastChapter,
+                                              chapterId: info.firstChapterId,
+                                              id: info.id,
+                                              sortKey: DateTime.now().millisecondsSinceEpoch,
+                                              isTop: 0,
+                                              page: 1,
+                                              isNew: 1,
+                                            );
+                                            context
+                                                .read<BookCacheBloc>()
+                                                .add(BookChapterIdAddEvent(bookCache: addCache));
+                                          }
+                                        },
+                                        child: Container(
+                                            height: 56,
+                                            padding: EdgeInsets.only(
+                                                bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
+                                            child: Center(child: Text('${contain ? '移除' : '添加到'}书架'))))),
+                                Expanded(
+                                  child: btn1(
+                                    child: Container(
+                                        height: 56,
+                                        padding: EdgeInsets.only(
+                                            bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
+                                        child: Center(child: Text('action'))),
+                                    onTap: () {},
+                                    background: false,
                                   ),
-                                ],
-                              );
-                            },
-                          ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -212,7 +225,9 @@ class _BookInfoPageState extends State<BookInfoPage> {
           if (widget.bookid != null && widget.cid != null && widget.page != null) {
             context.read<PainterBloc>()
               ..canLoad = Completer<void>()
-              ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
+              ..add(PainterNotifySizeEvent(
+                  size: ui.window.physicalSize / ui.window.devicePixelRatio,
+                  padding: EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)))
               ..add(PainterNotifyIdEvent(widget.bookid, widget.cid, widget.page));
 
             // Navigator.of(context).pushNamed(BookContentPage.currentRoute);

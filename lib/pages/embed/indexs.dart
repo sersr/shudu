@@ -50,67 +50,72 @@ class _IndexsWidgetState extends State<IndexsWidget> {
             max += state.bookIndexs.length * headerextent;
             offset = math.max(0.0, math.min(offset, max - height));
             controller = ScrollController(initialScrollOffset: offset);
-            return Scrollbar(
-              controller: controller,
-              thickness: 10,
-              radius: Radius.circular(5),
-              child: CustomScrollView(
+            return MediaQuery.removePadding(
+              removeTop: true,
+              removeBottom: true,
+              context: context,
+              child: Scrollbar(
                 controller: controller,
-                // key: Key('$max'),
-                slivers: [
-                  for (var l in state.bookIndexs)
-                    // Container(),
-                    SliverStickyHeader.builder(
-                      builder: (context, st) {
-                        return Container(
-                          padding: const EdgeInsets.only(top: 4.0, bottom: 1.0),
-                          child: Center(child: Text('${l.first as String}')),
-                          decoration: BoxDecoration(
-                            color: Color.fromRGBO(150, 180, 140, 1),
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(st.isPinned ? 6.0 : 0.0)),
-                          ),
-                          // height: headerextent,
-                        );
-                      },
-                      sliver: SliverFixedExtentList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final _index = index + 1;
-                            return btn1(
-                              padding: const EdgeInsets.only(left: 10, right: 10),
-                              radius: 6,
-                              child: Row(
-                                textBaseline: TextBaseline.ideographic,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${l[_index].cname}',
-                                      softWrap: false,
-                                      overflow: TextOverflow.ellipsis,
+                thickness: 10,
+                radius: Radius.circular(5),
+                child: CustomScrollView(
+                  controller: controller,
+                  // key: Key('$max'),
+                  slivers: [
+                    for (var l in state.bookIndexs)
+                      // Container(),
+                      SliverStickyHeader.builder(
+                        builder: (context, st) {
+                          return Container(
+                            padding: const EdgeInsets.only(top: 4.0, bottom: 1.0),
+                            child: Center(child: Text('${l.first as String}')),
+                            decoration: BoxDecoration(
+                              color: Color.fromRGBO(150, 180, 140, 1),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(st.isPinned ? 6.0 : 0.0)),
+                            ),
+                            // height: headerextent,
+                          );
+                        },
+                        sliver: SliverFixedExtentList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final _index = index + 1;
+                              return btn1(
+                                padding: const EdgeInsets.only(left: 10, right: 10),
+                                radius: 6,
+                                child: Row(
+                                  textBaseline: TextBaseline.ideographic,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${l[_index].cname}',
+                                        softWrap: false,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                  if (state.cacheList.contains((l[_index] as BookIndexShort).cid))
-                                    Text(
-                                      '已缓存',
-                                      softWrap: false,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: BlocProvider.of<TextStylesBloc>(context).state.body3,
-                                    )
-                                ],
-                              ),
-                              splashColor: Colors.grey[500],
-                              background: false,
-                              onTap: () {
-                                widget.onTap(context, state.id, l[_index].cid);
-                              },
-                            );
-                          },
-                          childCount: l.length - 1,
+                                    if (state.cacheList.contains((l[_index] as BookIndexShort).cid))
+                                      Text(
+                                        '已缓存',
+                                        softWrap: false,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: BlocProvider.of<TextStylesBloc>(context).state.body3,
+                                      )
+                                  ],
+                                ),
+                                splashColor: Colors.grey[500],
+                                background: false,
+                                onTap: () {
+                                  widget.onTap(context, state.id, l[_index].cid);
+                                },
+                              );
+                            },
+                            childCount: l.length - 1,
+                          ),
+                          itemExtent: extent,
                         ),
-                        itemExtent: extent,
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             );
             // },

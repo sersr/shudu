@@ -76,8 +76,9 @@ class PainterNotifyIdEvent extends PainterEvent {
 }
 
 class PainterNotifySizeEvent extends PainterEvent {
-  PainterNotifySizeEvent({required this.size});
+  PainterNotifySizeEvent({required this.size, this.padding = EdgeInsets.zero});
   final Size size;
+  final EdgeInsets padding;
 
   @override
   List<Object> get props => [size];
@@ -100,7 +101,10 @@ class PainterDeleteCachesEvent extends PainterEvent {
 
 class PainterNotifyLoadEvent extends PainterEvent {}
 
-class PainterSaveEvent extends PainterEvent {}
+class PainterSaveEvent extends PainterEvent {
+  PainterSaveEvent({this.changeState = true});
+  final bool changeState;
+}
 
 class PainterPreEvent extends PainterEvent {}
 
@@ -156,7 +160,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   final BookIndexBloc bookIndexBloc;
 
   /// ----------   状态   --------------------------
-  Size? size;
+  Size size = Size.zero;
 
   int? bookid;
 
@@ -179,14 +183,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   var completer = Completer<Status>();
 
   var sizeChanged = true;
-
+  var padding = EdgeInsets.zero;
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNotifySizeEvent) {
-      // print(event.size);
-      final _size = Size(event.size.width - 32.0, event.size.height);
-      if (size != _size) {
-        size = _size;
+      if (padding != event.padding || size != event.size) {
+        padding = event.padding;
+        size = event.size;
         sizeChanged = true;
       } else {
         sizeChanged = false;
@@ -203,7 +206,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     } else if (event is PainterSetPreferencesEvent) {
       yield* setPrefs(event);
     } else if (event is PainterSaveEvent) {
-      inBookView = false;
+      if (event.changeState) {
+        inBookView = false;
+      }
       memoryToDatabase();
     } else if (event is PainterPreEvent) {
       yield* goPre();
@@ -592,7 +597,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
           await awaitCompute(() async {
             if (_bookid != bookid) return;
-            final list = await divText(map['content'] as String, size!, config, map['cname'] as String);
+            final list = await divText(map['content'] as String, map['cname'] as String);
             assert(list.isNotEmpty);
             final _cnpid = TextData(
               cid: map['cid'] as int,
@@ -613,7 +618,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       final map = memoryCache[contentid];
       await awaitCompute(() async {
         if (_bookid != bookid) return;
-        final list = await divText(map!.content!, size!, config, map.cname!);
+        final list = await divText(map!.content!, map.cname!);
         assert(list.isNotEmpty);
         final _cnpid = TextData(content: list, nid: map.nid, pid: map.pid, cid: map.cid, cname: map.cname);
         cacheGbg(_cnpid);
@@ -798,6 +803,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
             secstyle: secstyle,
             style: style,
             isHorizontal: config.axis == Axis.horizontal,
+            topPadding: padding.top,
+            botPadding: padding.bottom,
           );
         }
         if (config.axis == Axis.vertical) {
@@ -830,15 +837,18 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Completer<void>? canCompute;
   int computeCount = 0;
   static const topPad = 8.0;
-  static const padding = 12.0;
+  static const ePadding = 12.0;
   static const botPad = 4.0;
   final reg = RegExp('\u0009|\u000B|\u000C|\u000D|\u0020|'
       '\u00A0|\u1680|\uFEFF|\u205F|\u202F|\u2028|\u2000|\u2001|\u2002|'
       '\u2003|\u2004|\u2005|\u2006|\u2007|\u2008|\u2009|\u200A+');
 
-  Future<List<ui.Picture>> divText(String text, Size size, ContentViewConfig config, String cname) async {
+  Future<List<ui.Picture>> divText(String text, String cname) async {
     assert(text.isNotEmpty);
-    final leftPadding = (size.width % style.fontSize!) / 2;
+    final _size = Size(size.width - 32.0, size.height - padding.top - padding.bottom);
+    final otherHeight = ePadding * 2 + topPad + botPad + 26;
+
+    final leftPadding = (_size.width % style.fontSize!) / 2;
     final left = 16.0 + leftPadding;
     final pages = <List<String>>[];
 
@@ -855,12 +865,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
 
     final _textPainter = TextPainter(text: TextSpan(text: _text, style: style), textDirection: TextDirection.ltr)
-      ..layout(maxWidth: size.width);
+      ..layout(maxWidth: _size.width);
     final _cPainter = TextPainter(
         text: TextSpan(
             text: cname, style: TextStyle(fontSize: 22, color: Color(config.fontColor!), fontWeight: FontWeight.bold)),
         textDirection: TextDirection.ltr)
-      ..layout(maxWidth: size.width);
+      ..layout(maxWidth: _size.width);
     final nowx = Timeline.now;
 
     // lines
@@ -873,8 +883,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final topHeight = (_cPainter.height / lineMcs.first.height).floor();
     // 额外空间（首页上部空白空间，空白行）
     var ex = style.fontSize! * (topHeight + 3);
-    final otherHeight = padding * 2 + topPad + botPad + 26;
-    final contentHeight = (size.height - otherHeight) / config.lineBwHeight!;
+    final contentHeight = (_size.height - otherHeight) / config.lineBwHeight!;
     for (var mcs in lineMcs) {
       final end = _textPainter.getPositionForOffset(Offset(_textPainter.width, hx));
       hx += mcs.height;
@@ -926,11 +935,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       final isHorizontal = config.axis == Axis.horizontal;
       if (isHorizontal) {
         cnamePainter = TextPainter(text: TextSpan(text: cname, style: secstyle), textDirection: TextDirection.ltr)
-          ..layout(maxWidth: size.width);
+          ..layout(maxWidth: _size.width);
         bottomRight = TextPainter(
             text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle), textDirection: TextDirection.ltr)
-          ..layout(maxWidth: size.width);
-        right = size.width - bottomRight.width - leftPadding * 2;
+          ..layout(maxWidth: _size.width);
+        right = _size.width - bottomRight.width - leftPadding * 2;
       }
 
       var lineCounts = pages[r].length;
@@ -946,7 +955,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           exh = lastPageExh;
         }
       } else {
-        exh = (size.height - otherHeight) / lineCounts - style.fontSize!;
+        exh = (_size.height - otherHeight) / lineCounts - style.fontSize!;
         lastPageExh = exh;
       }
 
@@ -960,18 +969,18 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
       if (r == 0) {
         if (!isHorizontal) {
-          h -= padding;
+          h -= ePadding;
         }
         h += (style.fontSize! + exh) * (topHeight + 3);
         _cPainter.paint(canvas, Offset(0.0, h - _cPainter.height));
         if (!isHorizontal) {
-          h += padding;
+          h += ePadding;
         }
       }
       // canvas.drawRect(
       // Offset(0.0, h) & Size(size.width, padding + exh / 2), Paint()..color = Colors.black.withAlpha(100));
       if (isHorizontal) {
-        h += padding;
+        h += ePadding;
       }
       h += exh / 2;
       for (var l in pages[r]) {
@@ -980,7 +989,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           textDirection: TextDirection.ltr,
           // strutStyle: StrutStyle(height: (ax / style.fontSize + config.lineBwHeight - 1))
         )
-          ..layout(maxWidth: size.width)
+          ..layout(maxWidth: _size.width)
           ..paint(canvas, Offset(0.0, h));
         // canvas.drawRect(Offset(0.0, h) & Size(_tep.width, _tep.height), Paint()..color = Colors.black.withAlpha(100));
         h += _tep.height + exh;
@@ -988,7 +997,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       // canvas.drawRect(
       //     Offset(0.0, h - exh) & Size(size.width, padding + exh / 2), Paint()..color = Colors.black.withAlpha(100));
       if (isHorizontal) {
-        bottomRight.paint(canvas, Offset(right, size.height - bottomRight.height - botPad));
+        bottomRight.paint(canvas, Offset(right, _size.height - bottomRight.height - botPad));
       }
 
       canvas.restore();
@@ -1003,12 +1012,20 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 }
 
 class ContentView extends LeafRenderObjectWidget {
-  ContentView({this.pic, this.secstyle, this.style, this.isHorizontal = true});
+  ContentView(
+      {required this.topPadding,
+      required this.botPadding,
+      this.pic,
+      this.secstyle,
+      this.style,
+      this.isHorizontal = true});
 
   final TextStyle? secstyle;
   final TextStyle? style;
   final ui.Picture? pic;
   final bool isHorizontal;
+  final double topPadding;
+  final double botPadding;
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderContentView(
@@ -1016,6 +1033,8 @@ class ContentView extends LeafRenderObjectWidget {
       style: style,
       secstyle: secstyle,
       isHorizontal: isHorizontal,
+      topPadding: topPadding,
+      botPadding: botPadding,
     );
   }
 
@@ -1024,16 +1043,26 @@ class ContentView extends LeafRenderObjectWidget {
     renderObject
       ..pic = pic
       ..style = style
+      ..botPadding = botPadding
+      ..topPadding = topPadding
       ..isHorizontal = isHorizontal
       ..secstyle = secstyle;
   }
 }
 
 class RenderContentView extends RenderBox {
-  RenderContentView({ui.Picture? pic, TextStyle? secstyle, TextStyle? style, bool? isHorizontal})
-      : _pic = pic,
+  RenderContentView({
+    ui.Picture? pic,
+    TextStyle? secstyle,
+    TextStyle? style,
+    bool? isHorizontal,
+    double? topPadding,
+    double? botPadding,
+  })  : _pic = pic,
         _secstyle = secstyle,
         _style = style,
+        _topPadding = topPadding,
+        _botPadding = botPadding,
         _isHorizontal = isHorizontal {
     bottomLeft = TextPainter(text: TextSpan(), textDirection: TextDirection.ltr);
   }
@@ -1070,6 +1099,22 @@ class RenderContentView extends RenderBox {
     markNeedsPaint();
   }
 
+  double? _topPadding;
+  double? get topPadding => _topPadding;
+  set topPadding(double? v) {
+    if (_topPadding == v) return;
+    _topPadding = v;
+    markNeedsLayout();
+  }
+
+  double? _botPadding;
+  double? get botPadding => _botPadding;
+  set botPadding(double? v) {
+    if (_botPadding == v) return;
+    _botPadding = v;
+    markNeedsLayout();
+  }
+
   @override
   void performLayout() {
     size = constraints.biggest;
@@ -1084,13 +1129,14 @@ class RenderContentView extends RenderBox {
   void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
     canvas.save();
-    canvas.translate(offset.dx, offset.dy);
+    canvas.translate(offset.dx, offset.dy + topPadding!);
     final leftPadding = ((size.width - 32) % style!.fontSize!) / 2;
     // final right = size.width - bottomRight.width + leftPadding;
 
     context.canvas.drawPicture(pic!);
     if (isHorizontal!) {
-      bottomLeft.paint(context.canvas, Offset(leftPadding + 16.0, size.height - bottomLeft.height - 4.0));
+      bottomLeft.paint(context.canvas,
+          Offset(leftPadding + 16.0, size.height - bottomLeft.height - topPadding! - botPadding! - 4.0));
     }
     // bottomRight.paint(context.canvas, Offset(right, size.height - bottomRight.height - 4.0));
     canvas.restore();

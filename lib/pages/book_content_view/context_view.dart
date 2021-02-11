@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,12 +46,17 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     }
   }
 
+  Timer? timer;
   @override
   void didChangeMetrics() {
-    super.didChangeMetrics();
-    bloc
-      ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-      ..add(PainterMetricsChangeEvent());
+    timer?.cancel();
+    timer = Timer(Duration(milliseconds: 100), () {
+      bloc
+        ..add(PainterNotifySizeEvent(
+            size: ui.window.physicalSize / ui.window.devicePixelRatio,
+            padding: EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)))
+        ..add(PainterMetricsChangeEvent());
+    });
   }
 
   @override
