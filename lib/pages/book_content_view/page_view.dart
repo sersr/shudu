@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shudu/bloc/bloc.dart';
 
 import '../../bloc/painter_bloc.dart';
 import '../../utils/utils.dart';
@@ -78,7 +79,9 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   void isScrolling(bool scrolling) {
     if (!scrolling) {
       if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
-        bloc.canCompute!.complete();
+        bloc
+          ..canCompute!.complete()
+          ..dump();
       }
     } else {
       if (bloc.canCompute == null || bloc.canCompute!.isCompleted) {
@@ -153,7 +156,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                 if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
                   widget.show.value = !widget.show.value;
                   if (widget.show.value) {
-                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+                    final values = defaultTargetPlatform == TargetPlatform.android
+                        ? [SystemUiOverlay.top]
+                        : SystemUiOverlay.values;
+                    SystemChrome.setEnabledSystemUIOverlays(values);
                   } else {
                     widget.showCname.value = false;
                     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -168,24 +174,20 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
             onTap: () {
               widget.show.value = !widget.show.value;
             },
-            child: widget.ignore!
-                ? Container(
-                    color: Colors.cyan.withAlpha(0),
-                  )
-                : Container(
-                    color: Colors.cyan.withAlpha(0),
-                    child: Center(
+            child: Container(
+              color: Colors.cyan.withAlpha(0),
+              child: widget.ignore!
+                  ? null
+                  : Center(
                       child: btn1(
                           bgColor: Colors.blue,
                           splashColor: Colors.blue[200],
                           radius: 40,
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           child: Text('重新加载'),
-                          onTap: () {
-                            bloc.add(PainterNotifyLoadEvent());
-                          }),
+                          onTap: () => bloc.add(PainterLoadEvent())),
                     ),
-                  ),
+            ),
           );
     ;
     return Stack(

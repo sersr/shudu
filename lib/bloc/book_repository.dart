@@ -138,6 +138,8 @@ abstract class BookRepository {
   }
 
   static const int oneWeek = 1000 * 60 * 60 * 24 * 7;
+  static const int thirtySeconds = 1000 * 30;
+  // var inLocal = <String>[];
   String get imageLocalPath => '$appPath/shudu/images/';
   var errorLoading = <String>[];
   int time = 0;
@@ -159,16 +161,16 @@ abstract class BookRepository {
       imgName = img;
     }
     final imgPath = '$imageLocalPath$imgName';
-    final exist = await File(imgPath).exists();
-    if (exist) {
-      if ((imageUpdate.get(imgName.hashCode) ?? 0) + oneWeek > DateTime.now().millisecondsSinceEpoch) {
-        return imgPath;
-      }
+    final imgdateTime = imageUpdate.get(imgName.hashCode);
+    final shouldUpdate = imgdateTime == null ? true : imgdateTime + oneWeek < DateTime.now().millisecondsSinceEpoch;
+    if (!shouldUpdate) {
+      return imgPath;
     }
-
+    
     if (errorLoading.contains(imgName)) {
-      if (time + 1000 * 30 <= DateTime.now().millisecondsSinceEpoch) {
+      if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
         time = DateTime.now().millisecondsSinceEpoch;
+        // 再次发送网络请求
         errorLoading.remove(imgName);
       } else {
         return '${imageLocalPath}guizhenwuji.jpg';
@@ -185,8 +187,9 @@ abstract class BookRepository {
       await File(imgPath).writeAsBytes(respone.bodyBytes);
     } catch (e) {
       print('$imgName, $e !!!');
-      if (!exist) {
-        // 本地已存在的话，不添加到 errorLoading 中
+      // 本地已经存在资源；
+      // 网络请求出现错误，使用本地资源（旧图片）
+      if (imgdateTime == null) {
         errorLoading.add(imgName);
         return '${imageLocalPath}guizhenwuji.jpg';
       }
@@ -195,7 +198,6 @@ abstract class BookRepository {
     return imgPath;
   }
 
-  /// bookIndexBloc.loadFromList
   Future<List<List>> loadIndexsList(String str) async {
     return await sendMessage<List<List>>(MessageType.mainList, str);
   }
@@ -412,7 +414,6 @@ enum Result {
   success,
   failed,
   error,
-
 }
 
 class IsolateReceiveMessage {

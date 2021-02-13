@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,21 +41,22 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
   void canLoad() {
     if (animation.isCompleted) {
-      SystemChrome.setEnabledSystemUIOverlays([]);
-      bloc.completerCanLoad();
+      SystemChrome.setEnabledSystemUIOverlays([]).then((value) {
+        bloc.completerCanLoad();
+      });
     }
   }
 
   Timer? timer;
   @override
   void didChangeMetrics() {
-    timer?.cancel();
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      timer?.cancel();
+    }
     timer = Timer(Duration(milliseconds: 100), () {
-      bloc
-        ..add(PainterNotifySizeEvent(
-            size: ui.window.physicalSize / ui.window.devicePixelRatio,
-            padding: EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)))
-        ..add(PainterMetricsChangeEvent());
+      if (mounted) {
+        bloc.add(PainterMetricsChangeEvent());
+      }
     });
   }
 
@@ -127,7 +128,6 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     //---------------------------
     bloc.add(PainterSaveEvent());
     bloc.completerCanLoad();
-    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
       ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage!))
@@ -144,6 +144,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     await cbloc.loading!.future;
     await Future.delayed(Duration(milliseconds: 200));
     //-------------------------
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     absorbPointer.value = false;
     return true;
   }

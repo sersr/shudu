@@ -112,7 +112,7 @@ class _PannelState extends State<Pannel> {
                                 onTap: () {
                                   timer?.cancel();
                                   widget.showCname.value = false;
-                                  context.read<PainterBloc>().add(PainterNotifyIdEvent(state.id, cid, 1));
+                                  context.read<PainterBloc>().add(PainterNewBookIdEvent(state.id, cid, 1));
                                 },
                               );
                             },
@@ -446,7 +446,7 @@ class _BottomEndState extends State<BottomEnd> {
                       bloc.completerCanLoad();
                     },
                   ),
-                  bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadFromNetEvent())),
+                  bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadEvent())),
                   bottomButton(text: '取消', onTap: () => bloc.completerResolve(Status.ignore)),
                   bottomButton(text: '删除缓存', onTap: () => bloc.add(PainterDeleteCachesEvent(bloc.bookid!))),
                 ]),
@@ -799,7 +799,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               child: IndexsWidget(
                 onTap: (context, id, cid) {
                   context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
-                  context.read<PainterBloc>().add(PainterNotifyIdEvent(id, cid, 1));
+                  context.read<PainterBloc>().add(PainterNewBookIdEvent(id, cid, 1));
                   widget.showSettings.value = SettingView.none;
                 },
               ),

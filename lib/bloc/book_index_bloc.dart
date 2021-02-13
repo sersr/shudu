@@ -74,7 +74,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   int lastUpdateTime = 0;
 
   /// 更新时间的间隔
-  int updateInterval = 600000;
+  static const int updateInterval = 1000 * 60 * 3;
 
   /// 记录所有访问的书籍的更新时间
   Map<int?, int> bookUpDateTime = {};
@@ -174,8 +174,9 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
         }
       }
     }
-    if (indexs.isEmpty ||
-        !inIndexs ||
+
+    if (indexs.isEmpty || // immediate
+        !inIndexs || // immediate
         (bookUpDateTime[bookid] ?? 0) + updateInterval <= DateTime.now().millisecondsSinceEpoch) {
       final rawData = await repository!.getIndexsFromNet(bookid);
       if (rawData.isEmpty) {
@@ -190,18 +191,18 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
 
       final bookIndexShort = await loadFromList(rawData);
 
-      /// indexs 改变了
-      if (indexs.length != bookIndexShort.length ||
-          indexs.last.last.cname != bookIndexShort.last.last.cname ||
-          indexs.last.last.cid != bookIndexShort.last.last.cid) {
-        // var index = bookIndexShort.length - 1;
-        indexs = bookIndexShort;
+      if (bookIndexShort.isNotEmpty) {
+        // 网络请求成功
+        bookUpDateTime[bookid] = DateTime.now().millisecondsSinceEpoch;
 
-        final newCname = bookIndexShort.last.last.cname;
+        /// indexs 改变了
+        if (indexs.length != bookIndexShort.length ||
+            indexs.last.last.cname != bookIndexShort.last.last.cname ||
+            indexs.last.last.cid != bookIndexShort.last.last.cid) {
+          final newCname = bookIndexShort.last.last.cname;
 
-        await repository!.updateCname(bookid, newCname, DateTime.now().toStringFormat);
-
-        if (bookIndexShort.isNotEmpty) {
+          await repository!.updateCname(bookid, newCname, DateTime.now().toStringFormat);
+          indexs = bookIndexShort;
           index = 0;
           volIndex = 0;
           for (var i = 0; i < indexs.length; i++) {
@@ -213,13 +214,11 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
               }
             }
           }
-          final lastUpdateTime = DateTime.now().millisecondsSinceEpoch;
-          bookUpDateTime[bookid] = lastUpdateTime;
           assert(Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
           yield BookIndexWidthData(
               id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
+          await cachedb(id, rawData);
         }
-        await cachedb(id, rawData);
       }
     }
   }

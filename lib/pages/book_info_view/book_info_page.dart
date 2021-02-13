@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/bloc.dart';
+import 'package:shudu/pages/embed/images.dart';
 
+import '../../bloc/bloc.dart';
 import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
 import '../../data/book_info.dart';
 import '../../utils/utils.dart';
 import '../book_content_view/content_main.dart';
-import '../book_list_view/shudan_item.dart';
 import '../embed/indexs.dart';
 // import '../embed/indexs.dart';
 
@@ -120,11 +121,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                       final _cid = cid ?? data!.firstChapterId!;
                                       final page = currentPage ?? 1;
                                       context.read<PainterBloc>()
-                                        ..add(PainterNotifySizeEvent(
-                                            size: ui.window.physicalSize / ui.window.devicePixelRatio,
-                                            padding: EdgeInsets.fromWindowPadding(
-                                                ui.window.padding, ui.window.devicePixelRatio)))
-                                        ..add(PainterNotifyIdEvent(bookid, _cid, page))
+                                        ..add(PainterNewBookIdEvent(bookid, _cid, page))
                                         ..canLoad = Completer<void>();
                                       Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                                     },
@@ -194,11 +191,8 @@ class _BookInfoPageState extends State<BookInfoPage> {
                             child: IndexsWidget(
                               onTap: (context, id, cid) {
                                 context.read<PainterBloc>()
-                                  ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-                                  ..add(PainterNotifyIdEvent(id, cid, 1));
-
+                                  ..add(PainterNewBookIdEvent(id, cid, 1));
                                 Navigator.of(context).pushNamed(BookContentPage.currentRoute);
-
                                 showIndexs.value = !showIndexs.value;
                                 context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
                               },
@@ -225,10 +219,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
           if (widget.bookid != null && widget.cid != null && widget.page != null) {
             context.read<PainterBloc>()
               ..canLoad = Completer<void>()
-              ..add(PainterNotifySizeEvent(
-                  size: ui.window.physicalSize / ui.window.devicePixelRatio,
-                  padding: EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)))
-              ..add(PainterNotifyIdEvent(widget.bookid, widget.cid, widget.page));
+              ..add(PainterNewBookIdEvent(widget.bookid, widget.cid, widget.page));
 
             // Navigator.of(context).pushNamed(BookContentPage.currentRoute);
           }
@@ -409,80 +400,74 @@ class _BookInfoPageState extends State<BookInfoPage> {
   Widget header(String? author, String? bookStatus, String? name, BookVote bookvote, String? cName, String? desc,
       String? img, TextStylesState tsState) {
     return Container(
-      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 20.0),
-      child: Row(
-        children: [
-          Container(
-            height: 140,
-            child: ImageResolve(img: img),
-          ),
-          Expanded(
-            child: Container(
-              height: 140,
-              // color: Colors.black,
-              padding: const EdgeInsets.only(left: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                        '$name',
-                        style: tsState.title,
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.only(top: 3.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '作者：$author',
-                          style: tsState.body1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                        Text(
-                          '类型：$cName',
-                          style: tsState.body1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                        Text(
-                          '状态：$bookStatus',
-                          style: tsState.body1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 2.0),
-                            child: Text(
-                              '评分：${bookvote.scroe}分',
-                              style: tsState.body1,
-                              overflow: TextOverflow.ellipsis,
-                              softWrap: false,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 16.0),
+      child: Container(
+        height: 130,
+        child: Row(
+          children: [
+            Container(
+              child: ImageResolve(
+                img: img,
               ),
+              height: 130,
             ),
-          )
-        ],
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.only(left: 12.0),
+                child: DefaultTextStyle(
+                  style: tsState.body1!,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
+                        child: Text(
+                          '$name',
+                          style: tsState.title,
+                          overflow: TextOverflow.fade,
+                          softWrap: false,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Text(
+                                '作者：$author',
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                              ),
+                              Text(
+                                '类型：$cName',
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                              ),
+                              Text(
+                                '状态：$bookStatus',
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2.0),
+                                child: Text(
+                                  '评分：${bookvote.scroe}分',
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -520,8 +505,8 @@ class BookInfoSameItemWidget extends StatelessWidget {
         },
         child: Row(children: [
           Container(
-            width: 70,
-            child: ImageResolve(img: l.img),
+            width: 72,
+            child: ImageResolve(img: l.img, width: 72),
           ),
           Expanded(
             child: Padding(

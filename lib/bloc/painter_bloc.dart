@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui' as ui;
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -56,50 +55,34 @@ class ContentViewConfig {
   }
 }
 
-abstract class PainterEvent extends Equatable {
+abstract class PainterEvent {
   PainterEvent();
-  @override
-  List<Object?> get props => [];
 }
 
 class _PainterInnerEvent extends PainterEvent {}
 
-class PainterReloadFromNetEvent extends PainterEvent {}
+class PainterReloadEvent extends PainterEvent {}
 
-class PainterNotifyIdEvent extends PainterEvent {
-  PainterNotifyIdEvent(this.id, this.cid, this.page);
+class PainterNewBookIdEvent extends PainterEvent {
+  PainterNewBookIdEvent(this.id, this.cid, this.page);
   final int? id;
   final int? cid;
   final int? page;
-  @override
-  List<Object?> get props => [id, cid, page];
 }
 
-class PainterNotifySizeEvent extends PainterEvent {
-  PainterNotifySizeEvent({required this.size, this.padding = EdgeInsets.zero});
-  final Size size;
-  final EdgeInsets padding;
-
-  @override
-  List<Object> get props => [size];
-}
+// class PainterNotifySizeEvent extends PainterEvent {}
 
 class PainterSetPreferencesEvent extends PainterEvent {
   PainterSetPreferencesEvent({this.config});
   final ContentViewConfig? config;
-  @override
-  List<Object?> get props => [config];
 }
 
 class PainterDeleteCachesEvent extends PainterEvent {
   PainterDeleteCachesEvent(this.bookId);
   final int bookId;
-
-  @override
-  List<Object?> get props => [bookId];
 }
 
-class PainterNotifyLoadEvent extends PainterEvent {}
+class PainterLoadEvent extends PainterEvent {}
 
 class PainterSaveEvent extends PainterEvent {
   PainterSaveEvent({this.changeState = true});
@@ -109,8 +92,6 @@ class PainterSaveEvent extends PainterEvent {
 class PainterPreEvent extends PainterEvent {}
 
 class PainterNextEvent extends PainterEvent {}
-
-// class PainterGCEvent extends PainterEvent {}
 
 class PainterMetricsChangeEvent extends PainterEvent {}
 
@@ -186,53 +167,59 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   var padding = EdgeInsets.zero;
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
-    if (event is PainterNotifySizeEvent) {
-      if (padding != event.padding || size != event.size) {
-        padding = event.padding;
-        size = event.size;
-        sizeChanged = true;
-      } else {
-        sizeChanged = false;
-      }
-    } else if (event is PainterNotifyIdEvent) {
+    final w = ui.window;
+    final _size = w.physicalSize / w.devicePixelRatio;
+    final _padding = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
+    if (padding != _padding || size != _size) {
+      padding = _padding;
+      size = _size;
+      sizeChanged = true;
+    } else {
+      sizeChanged = false;
+    }
+    if (event is PainterNewBookIdEvent) {
       yield* newBook(event);
-    } else if (event is PainterNotifyLoadEvent) {
-      yield painter(loading: true);
-      await loadFirst();
-      await Future.delayed(Duration(milliseconds: 400));
-      yield painter();
-    } else if (event is PainterDeleteCachesEvent) {
-      await deleteCache(event.bookId);
+    } else if (event is PainterMetricsChangeEvent) {
+      yield* metricsChange();
     } else if (event is PainterSetPreferencesEvent) {
       yield* setPrefs(event);
-    } else if (event is PainterSaveEvent) {
-      if (event.changeState) {
-        inBookView = false;
-      }
-      memoryToDatabase();
+    } else if (event is PainterDeleteCachesEvent) {
+      await deleteCache(event.bookId);
     } else if (event is PainterPreEvent) {
       yield* goPre();
     } else if (event is PainterNextEvent) {
       yield* goNext();
     } else if (event is _PainterInnerEvent) {
       yield painter();
-    } else if (event is PainterReloadFromNetEvent) {
+    } else if (event is PainterLoadEvent) {
+      yield painter(loading: true);
+      await loadFirst();
+      await Future.delayed(Duration(milliseconds: 400));
+      yield painter();
+    } else if (event is PainterReloadEvent) {
       if (inBookView && tData.contentIsNotEmpty) {
         loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
       }
-    } else if (event is PainterMetricsChangeEvent) {
-      if (sizeChanged) {
-        reset(clearCache: true);
-        sizeChanged = false;
-        yield painter(ignore: true);
-        if (!completer.isCompleted) {
-          inBookView = false;
-          await completer.future;
-          inBookView = true;
-        }
-        await loadFirst();
-        yield painter();
+    } else if (event is PainterSaveEvent) {
+      if (event.changeState) {
+        inBookView = false;
       }
+      memoryToDatabase();
+    }
+  }
+
+  Stream<PainterState> metricsChange() async* {
+    if (sizeChanged) {
+      reset(clearCache: true);
+      sizeChanged = false;
+      yield painter(ignore: true);
+      if (!completer.isCompleted) {
+        inBookView = false;
+        await completer.future;
+        inBookView = true;
+      }
+      await loadFirst();
+      yield painter();
     }
   }
 
@@ -405,7 +392,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Completer<void>? canLoad;
   bool inBookView = false;
   NopPageViewController? controller;
-  Stream<PainterState> newBook(PainterNotifyIdEvent event) async* {
+  Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
     inBookView = true;
     if (event.id == null || event.cid == -1) return;
     if (config.bgcolor == null) {
@@ -429,7 +416,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
       /// 文本已清空，页面显示空白
       yield painter(ignore: true, loading: true);
-
+      dump();
       await completer.future;
 
       await canLoad?.future;
@@ -832,6 +819,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
     }
     return child;
+  }
+
+  void dump() {
+    bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage!));
   }
 
   Completer<void>? canCompute;

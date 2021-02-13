@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -44,8 +43,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     print(state);
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.inactive && painterBloc.bookid != null) {
       painterBloc.add(PainterSaveEvent(changeState: false));
+      context.read<BookCacheBloc>()
+        ..add(BookChapterIdUpdateCidEvent(
+            id: painterBloc.bookid!, cid: painterBloc.tData.cid!, page: painterBloc.currentPage!));
     }
   }
 
@@ -360,10 +362,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         onTap: () {
                           context.read<BookCacheBloc>().completerLoading();
                           painterBloc
-                            ..add(PainterNotifySizeEvent(
-                                size: ui.window.physicalSize / ui.window.devicePixelRatio,
-                                padding: EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)))
-                            ..add(PainterNotifyIdEvent(item.id, item.chapterId, item.page ?? 1))
+                            ..add(PainterNewBookIdEvent(item.id, item.chapterId, item.page ?? 1))
                             ..canLoad = Completer<void>();
 
                           Navigator.of(context).pushNamed(BookContentPage.currentRoute);
