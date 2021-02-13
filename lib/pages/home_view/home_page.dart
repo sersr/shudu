@@ -362,8 +362,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         onTap: () {
                           context.read<BookCacheBloc>().completerLoading();
                           painterBloc
-                            ..add(PainterNewBookIdEvent(item.id, item.chapterId, item.page ?? 1))
-                            ..canLoad = Completer<void>();
+                            ..canLoad = Completer<void>()
+                            ..add(PainterNewBookIdEvent(item.id, item.chapterId, item.page ?? 1));
 
                           Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                         },

@@ -98,7 +98,11 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     return RepaintBoundary(child: child);
   }
 
-  Widget wrapChild(Size size, EdgeInsets padding) {
+  Widget wrapChild() {
+    // final size = ui.window.physicalSize / ui.window.devicePixelRatio;
+    final padding = defaultTargetPlatform == TargetPlatform.android
+        ? EdgeInsets.zero
+        : EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio);
     final child = NopPageView(
       offsetPosition: offsetPosition,
       builder: getChild,
@@ -143,8 +147,9 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     final size = MediaQuery.of(context).size;
     final child = bloc.tData.contentIsNotEmpty
         ? GestureDetector(
-            child: wrapChild(size, EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio)),
+            child: wrapChild(),
             onTapUp: (d) {
+              print(offsetPosition.aaa);
               if (offsetPosition.page == 0 ||
                   offsetPosition.page % offsetPosition.page.toInt() == 0 ||
                   !offsetPosition.isScrolling) {
@@ -155,14 +160,20 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                 final sixW = size.width / 5;
                 if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
                   widget.show.value = !widget.show.value;
-                  if (widget.show.value) {
-                    final values = defaultTargetPlatform == TargetPlatform.android
-                        ? [SystemUiOverlay.top]
-                        : SystemUiOverlay.values;
-                    SystemChrome.setEnabledSystemUIOverlays(values);
-                  } else {
+                  if (!widget.show.value) {
+                    // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
                     widget.showCname.value = false;
-                    SystemChrome.setEnabledSystemUIOverlays([]);
+
+                    /// android: 保持底部不变；因为底部的显/隐 动画太难看了？？？
+                    /// ios: 新版iPhone 可以隐藏，----- 不会触发changMetrics（bottom 不变）
+                    SystemChrome.setSystemUIOverlayStyle(
+                        SystemUiOverlayStyle.dark.copyWith(systemNavigationBarColor: Color(bloc.config.bgcolor!)));
+                    SystemChrome.setEnabledSystemUIOverlays(
+                        [if (defaultTargetPlatform == TargetPlatform.android) SystemUiOverlay.bottom]);
+                  } else {
+                    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+                    // SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft]);
+                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
                   }
                 } else {
                   offsetPosition.nextPage();
@@ -287,7 +298,7 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void onDown(DragDownDetails d) {
-    SystemChrome.restoreSystemUIOverlays();
+    // SystemChrome.restoreSystemUIOverlays();
     hold = widget.offsetPosition.hold(() {
       hold = null;
     });

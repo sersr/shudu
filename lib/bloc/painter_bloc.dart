@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:ui' as ui;
-
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:sqflite/sqflite.dart';
@@ -167,16 +168,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   var padding = EdgeInsets.zero;
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
-    final w = ui.window;
-    final _size = w.physicalSize / w.devicePixelRatio;
-    final _padding = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
-    if (padding != _padding || size != _size) {
-      padding = _padding;
-      size = _size;
-      sizeChanged = true;
-    } else {
-      sizeChanged = false;
-    }
     if (event is PainterNewBookIdEvent) {
       yield* newBook(event);
     } else if (event is PainterMetricsChangeEvent) {
@@ -209,7 +200,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   Stream<PainterState> metricsChange() async* {
-    if (sizeChanged) {
+    sizeChange();
+    if (sizeChanged && inBookView) {
       reset(clearCache: true);
       sizeChanged = false;
       yield painter(ignore: true);
@@ -398,6 +390,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (config.bgcolor == null) {
       await getPrefs();
     }
+    SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle.dark.copyWith(systemNavigationBarColor: Color(config.bgcolor!)));
     if (controller != null) {
       controller!.setPixelsWithoutNtf(0.0);
     }
@@ -411,7 +405,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       currentPage = event.page;
       tData.cid = event.cid;
       reset(clearCache: clear);
-      sizeChanged = false;
       bookid = event.id;
 
       /// 文本已清空，页面显示空白
@@ -420,9 +413,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await completer.future;
 
       await canLoad?.future;
+      await Future.delayed(Duration(milliseconds: 400));
       // yield painter(ignore: true);
 
       computeCount++;
+      sizeChange();
+      sizeChanged = false;
       loadFirst();
       await completer.future;
       computeCount--;
@@ -430,6 +426,36 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (config.axis == Axis.vertical) {
         resetController();
       }
+    }
+  }
+
+  void sizeChange() {
+    /// 显/隐状态栏 （沉浸式？？）
+    /// iPhone 刘海屏：top,bottom 都是固定的；老版iPhone：top会改变，bottom 不变。
+    final w = ui.window;
+    final _size = w.physicalSize / w.devicePixelRatio;
+    final _p = w.padding;
+    final _padding = EdgeInsets.fromLTRB(
+      _p.left / w.devicePixelRatio,
+      _p.top / w.devicePixelRatio,
+      _p.right / w.devicePixelRatio,
+      math.max(_p.bottom / w.devicePixelRatio - 10.0, 0.0),
+    );
+    if ((_padding.top == 0.0 && padding.top != _padding.top) ||
+        padding.bottom != _padding.bottom ||
+        size.width != _size.width ||
+        size.height != _size.height) {
+      // if (defaultTargetPlatform == TargetPlatform.android) {
+      //   padding = EdgeInsets.zero;
+      // } else {
+      // }
+      print(_padding);
+      size = _size;
+      padding = _padding;
+      // print('$size: $_size; $padding: $_padding');
+      sizeChanged = true;
+    } else {
+      sizeChanged = false;
     }
   }
 

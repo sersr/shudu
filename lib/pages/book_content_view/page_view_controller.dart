@@ -106,6 +106,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     }
   }
 
+  Activity? get aaa => _activity;
   bool get isScrolling => _activity is! IdleActivity;
   void scrollingnotifier(bool value) {
     scrollingNotify(value);
@@ -134,7 +135,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goPageResolve() {
-    if (axis == Axis.vertical || pixels! % viewPortDimension! == 0.0) {
+    final la = pixels! % viewPortDimension!;
+    if (axis == Axis.vertical || la <= 1.0 || la + 1.0 >= viewPortDimension!) {
       _lastvelocity = 0.0;
       goIdle();
     }
@@ -204,7 +206,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void applyUserOffset(double delta) {
     if (delta == 0.0) return;
-    setPixels(pixels! + delta);
+    setPixels(pixels! - delta);
   }
 
   PreNextDragController? _currentDrag;

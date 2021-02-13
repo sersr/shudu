@@ -146,7 +146,7 @@ abstract class BookRepository {
   Future<String> saveImage(String img) async {
     var imgName = '';
     String url;
-    if (img.startsWith('https://') || img.startsWith('http://')) {
+    if (img.startsWith(RegExp(r'https://|http://'))) {
       var reurl = img.replaceAll('%2F', '/');
       final splist = reurl.split('/');
       for (var i = splist.length - 1; i >= 0; i--) {
@@ -166,7 +166,7 @@ abstract class BookRepository {
     if (!shouldUpdate) {
       return imgPath;
     }
-    
+
     if (errorLoading.contains(imgName)) {
       if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
         time = DateTime.now().millisecondsSinceEpoch;

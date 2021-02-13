@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +30,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
+    absorbPointer.value = true;
   }
 
   @override
@@ -41,7 +42,8 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
   void canLoad() {
     if (animation.isCompleted) {
-      SystemChrome.setEnabledSystemUIOverlays([]).then((value) {
+      SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]).then((value) {
+        absorbPointer.value = false;
         bloc.completerCanLoad();
       });
     }
@@ -50,14 +52,16 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   Timer? timer;
   @override
   void didChangeMetrics() {
-    if (defaultTargetPlatform != TargetPlatform.android) {
+    final w = ui.window;
+    print('viewpadding: ${w.viewPadding}, viewinsets: ${w.viewInsets}, padding: ${w.padding}, ${w.physicalSize}');
+    if (w.padding.top == 0.0) {
       timer?.cancel();
+      timer = Timer(Duration(milliseconds: 100), () {
+        if (mounted) {
+          bloc.add(PainterMetricsChangeEvent());
+        }
+      });
     }
-    timer = Timer(Duration(milliseconds: 100), () {
-      if (mounted) {
-        bloc.add(PainterMetricsChangeEvent());
-      }
-    });
   }
 
   @override
@@ -89,11 +93,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
         );
       },
     );
-    // child = LayoutBuilder(builder: (context, constraints) {
-    //   print('..............xxxx');
-    //   bloc..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))..add(PainterMetricsChangeEvent());
-    //   return child;
-    // });
+
     return WillPopScope(
       onWillPop: () async {
         showCname.value = false;
@@ -101,11 +101,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
           showSettings.value = SettingView.none;
           return false;
         }
-        if (showPannel.value) {
-          showPannel.value = false;
-          SystemChrome.setEnabledSystemUIOverlays([]);
-          return false;
-        }
+
         return willPop();
       },
       child: AnimatedBuilder(
@@ -124,6 +120,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
+
     absorbPointer.value = true;
     //---------------------------
     bloc.add(PainterSaveEvent());
@@ -142,9 +139,10 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     }
     print('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}');
     await cbloc.loading!.future;
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     await Future.delayed(Duration(milliseconds: 200));
     //-------------------------
-    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     absorbPointer.value = false;
     return true;
   }
