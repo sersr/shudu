@@ -165,7 +165,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   var completer = Completer<Status>();
 
   var sizeChanged = true;
-  var padding = EdgeInsets.zero;
+  var padding = EdgeInsets.all(-1);
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNewBookIdEvent) {
@@ -188,27 +188,27 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await Future.delayed(Duration(milliseconds: 400));
       yield painter();
     } else if (event is PainterReloadEvent) {
-      if (inBookView && tData.contentIsNotEmpty) {
+      if (_inBookView && tData.contentIsNotEmpty) {
         loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
       }
     } else if (event is PainterSaveEvent) {
       if (event.changeState) {
-        inBookView = false;
+        _inBookView = false;
       }
       memoryToDatabase();
     }
   }
 
   Stream<PainterState> metricsChange() async* {
-    sizeChange();
-    if (sizeChanged && inBookView) {
+    await sizeChange();
+    if (sizeChanged && _inBookView) {
       reset(clearCache: true);
       sizeChanged = false;
       yield painter(ignore: true);
       if (!completer.isCompleted) {
-        inBookView = false;
+        _inBookView = false;
         await completer.future;
-        inBookView = true;
+        _inBookView = true;
       }
       await loadFirst();
       yield painter();
@@ -225,7 +225,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     await Future.delayed(Duration(milliseconds: 100));
     if (!cache.containsKey(tData.pid)) {
       await completer.future;
-      loadPN(_pid, _cid!, _nid!, _bookid);
+      await loadPN(_pid, _cid!, _nid!, _bookid);
       if (!cache.containsKey(tData.pid)) {
         yield painter();
         return;
@@ -267,7 +267,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     await Future.delayed(Duration(milliseconds: 100));
     if (!cache.containsKey(tData.nid)) {
       await completer.future;
-      loadPN(_pid!, _cid!, _nid, _bookid);
+      await loadPN(_pid!, _cid!, _nid, _bookid);
       if (!cache.containsKey(tData.nid)) {
         yield painter();
         return;
@@ -347,6 +347,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _fontSize = box.get('fontSize') ?? 18.0;
     final _height = box.get('lineBwHeight') ?? 1.4;
     final _fontFamily = box.get('fontFamily') ?? '';
+    liuhai = box.get('android_liuhai') ?? false;
     await box.close();
     config.fontSize = _fontSize;
     config.lineBwHeight = _height;
@@ -382,16 +383,31 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   Completer<void>? canLoad;
-  bool inBookView = false;
+  bool _inBookView = false;
   NopPageViewController? controller;
   Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
-    inBookView = true;
+    Future<void> _inner() async {
+      if (liuhai) {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
+              systemNavigationBarColor: Color(config.bgcolor!), statusBarColor: Colors.grey.shade600.withOpacity(0)));
+        }
+      } else {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          SystemChrome.setSystemUIOverlayStyle(
+              SystemUiOverlayStyle.dark.copyWith(systemNavigationBarColor: Color(config.bgcolor!)));
+        }
+        await SystemChrome.setEnabledSystemUIOverlays(
+            [if (defaultTargetPlatform == TargetPlatform.android) SystemUiOverlay.bottom]);
+      }
+    }
+
+    _inBookView = true;
     if (event.id == null || event.cid == -1) return;
     if (config.bgcolor == null) {
       await getPrefs();
     }
-    SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle.dark.copyWith(systemNavigationBarColor: Color(config.bgcolor!)));
+
     if (controller != null) {
       controller!.setPixelsWithoutNtf(0.0);
     }
@@ -402,22 +418,30 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
       /// 等待[load](异步)执行完成
       /// 避免数据竞争
+      yield painter(ignore: true, loading: true);
+      // 尽快退出其他任务；
+      _inBookView = false;
+      await completer.future;
+      // 没有后台任务了
+      _inBookView = true;
+
       currentPage = event.page;
       tData.cid = event.cid;
       reset(clearCache: clear);
       bookid = event.id;
 
       /// 文本已清空，页面显示空白
-      yield painter(ignore: true, loading: true);
-      dump();
-      await completer.future;
 
+      dump();
       await canLoad?.future;
-      await Future.delayed(Duration(milliseconds: 400));
+      print('liuhai: $liuhai');
+      await _inner();
+      // Android 底部导航栏颜色不统一
+      await Future.delayed(Duration(milliseconds: 300));
       // yield painter(ignore: true);
 
       computeCount++;
-      sizeChange();
+      await sizeChange();
       sizeChanged = false;
       loadFirst();
       await completer.future;
@@ -426,37 +450,78 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (config.axis == Axis.vertical) {
         resetController();
       }
+    } else {
+      await canLoad?.future;
+      await _inner();
     }
   }
 
-  void sizeChange() {
+  // 设置页面添加按钮，切换
+  bool liuhai = false;
+
+  /// 待优化：（Android）
+  /// 提供刘海屏检测，android 各家对刘海的处理不一致（对于flutter来说，padding.top影响到size.height，意味着要重新布局）
+  /// 有的和iPhone一致，有的裁剪；
+  /// 裁剪：始终显示状态栏；和iPhone一致：完美！！！不处理，
+  /// 好处：刘海 不被系统裁剪（黑掉），不引发size.height 改变，重新布局；
+  Future<void> sizeChange() async {
     /// 显/隐状态栏 （沉浸式？？）
-    /// iPhone 刘海屏：top,bottom 都是固定的；老版iPhone：top会改变，bottom 不变。
+    /// iPhone 刘海屏：top,bottom 都是固定的；老版iPhone：top会改变， bottom == 0.0。
     final w = ui.window;
-    final _size = w.physicalSize / w.devicePixelRatio;
-    final _p = w.padding;
-    final _padding = EdgeInsets.fromLTRB(
+    var _size = w.physicalSize / w.devicePixelRatio;
+    var _p = w.padding;
+    var _padding = EdgeInsets.fromLTRB(
       _p.left / w.devicePixelRatio,
       _p.top / w.devicePixelRatio,
       _p.right / w.devicePixelRatio,
       math.max(_p.bottom / w.devicePixelRatio - 10.0, 0.0),
     );
-    if ((_padding.top == 0.0 && padding.top != _padding.top) ||
+    print('view: ${w.viewInsets}, viewpadding: ${w.viewPadding}');
+    print('size: $size, _size: $_size');
+    print('padding: $padding, _padding: $_padding');
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // ------------------------：？？？
+      // 刘海屏
+      // 系统可能直接占用（黑掉）刘海部分，
+      // 状态栏可见时，top 不为0，size.height 最大（包括刘海）
+      // 不可见时，top 为0，size.height 变小（减去刘海了）
+      // note: 不隐藏底部虚拟导航栏，size.height 会改变，体验太差了，
+      // if ((_padding.top == 0.0 && padding.top != _padding.top) ||
+      //     padding.bottom != _padding.bottom ||
+      //     size.width != _size.width ||
+      //     size.height != _size.height) {
+      //   padding = _padding;
+      //   size = _size;
+      //   sizeChanged = true;
+      // } else {
+      //   sizeChanged = false;
+      // }
+      // 此时，状态栏已隐藏，在状态栏显示时进行检测，判断在状态栏隐藏时，被系统裁剪空间
+      // 条件：刘海屏，并且会被系统裁剪
+      if (padding.top == 0.0 && _padding.top != 0.0 && size.height + _padding.top == _size.height) {
+        print('.....刘海屏。。。。‘）');
+        if (!liuhai) {
+          final box = await Hive.openBox('settings');
+          await box.put('android_liuhai', true);
+          await box.close();
+          liuhai = true;
+        }
+      }
+      // ------------------------
+    }
+    // iPhone适配完成；（老版iPhone）
+    // 只要padding.top 有可能为0，并且size.height 始终不变，就使用
+    if ((_padding.top == 0.0 && padding.top != _padding.top) || // top既然能等于0，且size不变，意味着状态栏可以占用；
         padding.bottom != _padding.bottom ||
         size.width != _size.width ||
         size.height != _size.height) {
-      // if (defaultTargetPlatform == TargetPlatform.android) {
-      //   padding = EdgeInsets.zero;
-      // } else {
-      // }
-      print(_padding);
       size = _size;
       padding = _padding;
-      // print('$size: $_size; $padding: $_padding');
       sizeChanged = true;
     } else {
       sizeChanged = false;
     }
+    // }
   }
 
   /// 持久化本地
@@ -503,7 +568,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       Log.i('awaiting >>', stage: this, name: 'awaitCompute');
       await canCompute!.future;
     }
-    if (!inBookView) return;
+    if (!_inBookView) return;
 
     computeCount += 1;
     await call();
@@ -603,8 +668,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       final map = queryList.first;
       if (map.contentIsNotEmpty) {
         if (map['hasContent'] != 1 || map['nid'] == -1) {
-          // assert(map['pid'] == -1);
-          print('no content: ${map['cname']}');
           await downFromNet(contentid, _bookid);
         } else {
           assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
@@ -671,10 +734,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   /// [loadFirst]
   /// [loadPN]
   /// 数据加载状态:[completer]
-  /// 当频繁地进行页面切换时，已进行了相关优化；
-  /// 在退出页面时，没有绝对的等待[completer]的完成，
-  /// 即在[completer]没有完成时，再次进入页面[newBook]，
-  /// 会修改数据，[cache],[bookid],[tData]
   int loadCount = 0;
   Future<void> load(Future<void> Function() callback) async {
     if (loadCount != 0) return;
@@ -693,7 +752,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         : Status.error);
   }
 
-  final resolveFromNet = <int?>[];
+  final errorID = <int?>[];
 
   // /// pid/nid == -1的解决方案
   Future<void> reloadFromNet(int _cid, int _bookid) async {
@@ -717,24 +776,24 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     await load(() async {
       if (_nid == -1 || _pid == -1 || update) {
         if (update) {
-          resolveFromNet.remove(_cid);
+          errorID.remove(_cid);
         }
-        if (!resolveFromNet.contains(_cid)) {
-          resolveFromNet.add(_cid);
+        if (!errorID.contains(_cid)) {
+          errorID.add(_cid);
           nexttime = DateTime.now().millisecondsSinceEpoch;
           await reloadFromNet(_cid, _bookid);
-          if (_bookid == bookid && _cid == tData.cid) {
+          if (tData.contentIsNotEmpty && _bookid == bookid && _cid == tData.cid) {
             _nid = tData.nid!;
             _pid = tData.pid!;
           }
         }
       }
-      // 进行异步任务时，需要检查是否要退出，以免等待过长时间。
-      if (!inBookView) return;
+      // 进行异步任务时，需要检查页面是否已退出，以免等待过长时间。
+      if (!_inBookView) return;
       if (!cache.containsKey(_nid) && _nid != -1) {
         await loadData(_nid, _bookid);
       }
-      if (!inBookView) return;
+      if (!_inBookView) return;
       if (!cache.containsKey(_pid) && _pid != -1) {
         await loadData(_pid, _bookid);
       }
@@ -747,12 +806,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   int nexttime = 0;
   Future<void> loadPNCb() async {
-    if (inBookView) {
+    if (_inBookView) {
       if (tData.nid == -1 || tData.pid == -1) {
         final now = DateTime.now().millisecondsSinceEpoch;
         if (nexttime + 1000 * 180 <= now) {
           nexttime = now;
-          resolveFromNet.remove(tData.cid);
+          errorID.remove(tData.cid);
         }
       }
       if (tData.contentIsNotEmpty) {
@@ -816,7 +875,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
             secstyle: secstyle,
             style: style,
             isHorizontal: config.axis == Axis.horizontal,
-            topPadding: padding.top,
+            topPadding: config.axis == Axis.horizontal ? padding.top : 0.0,
             botPadding: padding.bottom,
           );
         }
@@ -848,7 +907,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   void dump() {
-    bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage!));
+    if (tData.cid != null) {
+      bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage!));
+    }
   }
 
   Completer<void>? canCompute;
@@ -903,14 +964,17 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final contentHeight = (_size.height - otherHeight) / config.lineBwHeight!;
     for (var mcs in lineMcs) {
       final end = _textPainter.getPositionForOffset(Offset(_textPainter.width, hx));
+      final l = _text.substring(start, end.offset).replaceAll('\n', '');
       hx += mcs.height;
+      if (mcs.height > style.fontSize!) {
+        ex -= (mcs.height - style.fontSize!);
+      }
       if (hx > contentHeight * lineCount - ex) {
         hx -= mcs.height;
         ex = contentHeight * lineCount - hx;
         lineCount += 1;
         pages.add(page);
         page = <String>[];
-        final l = _text.substring(start, end.offset).replaceAll('\n', '');
         if (l.isEmpty) {
           // 文本为空，但是逻辑中还是占用着空间，所以要移到[ex](额外空间)
           ex += mcs.height;
@@ -919,7 +983,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
         hx += mcs.height;
       } else {
-        page.add(_text.substring(start, end.offset).replaceAll('\n', ''));
+        page.add(l);
       }
       start = end.offset;
     }
@@ -928,6 +992,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     page.removeWhere((element) {
       return element.replaceAll(RegExp(' |\u3000+'), '').isEmpty;
     });
+    // 避免空白页
     if (page.isNotEmpty) {
       pages.add(page);
     }
@@ -940,6 +1005,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     /// 最后一页行数可能不会占满，因此保留上一个额外高度[exh]
     var lastPageExh = 0.0;
     for (var r = 0; r < pages.length; r++) {
+      final _pnow = Timeline.now;
       var exh = 0.0;
       var h = 0.0;
       final recoder = ui.PictureRecorder();
@@ -1001,6 +1067,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
       h += exh / 2;
       for (var l in pages[r]) {
+        if (l.isEmpty) {
+          print('empty:....');
+        }
         final _tep = TextPainter(
           text: TextSpan(text: l, style: style),
           textDirection: TextDirection.ltr,
@@ -1016,11 +1085,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (isHorizontal) {
         bottomRight.paint(canvas, Offset(right, _size.height - bottomRight.height - botPad));
       }
+      print('pictures:  ${((Timeline.now - _pnow) / 1000).toStringAsFixed(1)}ms');
 
       canvas.restore();
       pics.add(recoder.endRecording());
     }
-
+    final _n = Timeline.now;
+    print('print:  ${((Timeline.now - _n) / 1000).toStringAsFixed(1)}ms');
     print('用时: ${((Timeline.now - now) / 1000).toStringAsFixed(1)}ms');
     print('work done <<<');
 

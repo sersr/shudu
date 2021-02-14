@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -11,8 +10,8 @@ import 'package:shudu/bloc/bloc.dart';
 import '../../bloc/painter_bloc.dart';
 import '../../utils/utils.dart';
 import 'context_view.dart';
-import 'pannel.dart';
 import 'page_view_controller.dart';
+import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({
@@ -99,10 +98,6 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   }
 
   Widget wrapChild() {
-    // final size = ui.window.physicalSize / ui.window.devicePixelRatio;
-    final padding = defaultTargetPlatform == TargetPlatform.android
-        ? EdgeInsets.zero
-        : EdgeInsets.fromWindowPadding(ui.window.padding, ui.window.devicePixelRatio);
     final child = NopPageView(
       offsetPosition: offsetPosition,
       builder: getChild,
@@ -132,10 +127,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
       return Center(
         child: Stack(
           children: [
-            Positioned(top: 8.0 + padding.top, left: 16.0, child: head),
-            Positioned(bottom: 4.0 + padding.bottom, left: 16.0, child: footleft),
-            Positioned(bottom: 4.0 + padding.bottom, right: 16.0, child: footright),
-            Positioned.fill(top: 33 + padding.top, bottom: 33 + padding.bottom, right: 16.0, child: child),
+            Positioned(top: 8.0 + bloc.padding.top, left: 16.0, child: head),
+            Positioned(bottom: 4.0 + bloc.padding.bottom, left: 16.0, child: footleft),
+            Positioned(bottom: 4.0 + bloc.padding.bottom, right: 16.0, child: footright),
+            Positioned.fill(top: 33 + bloc.padding.top, bottom: 33 + bloc.padding.bottom, right: 16.0, child: child),
           ],
         ),
       );
@@ -149,7 +144,6 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
         ? GestureDetector(
             child: wrapChild(),
             onTapUp: (d) {
-              print(offsetPosition.aaa);
               if (offsetPosition.page == 0 ||
                   offsetPosition.page % offsetPosition.page.toInt() == 0 ||
                   !offsetPosition.isScrolling) {
@@ -159,21 +153,43 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                 final halfW = size.width / 2;
                 final sixW = size.width / 5;
                 if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
-                  widget.show.value = !widget.show.value;
-                  if (!widget.show.value) {
+                  // widget.show.value = !widget.show.value;
+                  if (widget.show.value) {
                     // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
                     widget.showCname.value = false;
 
                     /// android: 保持底部不变；因为底部的显/隐 动画太难看了？？？
                     /// ios: 新版iPhone 可以隐藏，----- 不会触发changMetrics（bottom 不变）
-                    SystemChrome.setSystemUIOverlayStyle(
-                        SystemUiOverlayStyle.dark.copyWith(systemNavigationBarColor: Color(bloc.config.bgcolor!)));
-                    SystemChrome.setEnabledSystemUIOverlays(
-                        [if (defaultTargetPlatform == TargetPlatform.android) SystemUiOverlay.bottom]);
+
+                    widget.show.value = false;
+                    // Future.delayed(Duration(milliseconds: 100), () {
+                    if (!bloc.liuhai) {
+                      SystemChrome.setEnabledSystemUIOverlays(
+                          [if (defaultTargetPlatform == TargetPlatform.android) SystemUiOverlay.bottom]);
+                      if (defaultTargetPlatform == TargetPlatform.android) {
+                        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
+                          systemNavigationBarColor: Color(bloc.config.bgcolor!),
+                        ));
+                      }
+                    } else {
+                      if (defaultTargetPlatform == TargetPlatform.android) {
+                        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
+                          systemNavigationBarColor: Color(bloc.config.bgcolor!),
+                          statusBarColor: Color(0xFFFFFF),
+                        ));
+                      }
+                    }
+                    // });
                   } else {
-                    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+                    if (defaultTargetPlatform == TargetPlatform.android) {
+                      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+                    }
+                    if (!bloc.liuhai) {
+                      SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+                    }
+                    widget.show.value = true;
+
                     // SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft]);
-                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
                   }
                 } else {
                   offsetPosition.nextPage();

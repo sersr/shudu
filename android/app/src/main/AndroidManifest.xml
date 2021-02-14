@@ -4,6 +4,9 @@
    <application
         android:label="shudu"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+        android:name="android.notch_support"
+        android:value="true" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

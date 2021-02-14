@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -51,7 +51,7 @@ class ImageResolve extends StatelessWidget {
                     }
 
                     return Image.file(File(es.data!),
-                        fit: BoxFit.fitWidth, cacheWidth: width, frameBuilder: eframebuilder);
+                        fit: BoxFit.fitWidth, cacheWidth: width * 2, frameBuilder: eframebuilder);
                   }
                   return Container();
                 },
@@ -62,7 +62,7 @@ class ImageResolve extends StatelessWidget {
             return Image.file(
               File(snap.data!),
               fit: BoxFit.fitWidth,
-              cacheWidth: width,
+              cacheWidth: width * ui.window.devicePixelRatio.round(),
               frameBuilder: framebuilder,
               errorBuilder: errorbuilder,
             );

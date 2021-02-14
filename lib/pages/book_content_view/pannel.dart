@@ -663,44 +663,43 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(9),
-                                  color: Colors.blueGrey.shade600,
-                                ),
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: fontvalue,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        activeColor: Colors.cyan,
-                                        inactiveColor: Colors.cyan.shade600,
-                                        value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
-                                        onChanged: (double value) {
-                                          fontvalue.value = value;
-                                        },
-                                        min: 10.0,
-                                        max: 30.0,
-                                      );
-                                    },
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(9),
+                                    color: Colors.blueGrey.shade600,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: AnimatedBuilder(
+                                      animation: fontvalue,
+                                      builder: (context, child) {
+                                        return Slider(
+                                          activeColor: Colors.cyan,
+                                          inactiveColor: Colors.cyan.shade600,
+                                          value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
+                                          onChanged: (double value) {
+                                            fontvalue.value = value;
+                                          },
+                                          min: 10.0,
+                                          max: 40.0,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                      animation: fontvalue,
-                                      builder: (context, child) {
-                                        return Container(
-                                          child: Center(
-                                            child: Text(
-                                              '字体大小: ${fontvalue.value.toInt()}',
-                                              softWrap: false,
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                ),
+                              RepaintBoundary(
+                                child: AnimatedBuilder(
+                                    animation: fontvalue,
+                                    builder: (context, child) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Text(
+                                          '字体大小: ${fontvalue.value.toInt()}',
+                                          softWrap: false,
+                                        ),
+                                      );
+                                    }),
                               ),
                             ],
                           ),
@@ -708,45 +707,45 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Row(
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(9),
-                                    color: Colors.blueGrey.shade600,
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: AnimatedBuilder(
-                                      animation: fontHvalue,
-                                      builder: (context, child) {
-                                        return Slider(
-                                          activeColor: Colors.indigo.shade300,
-                                          inactiveColor: Colors.indigo,
-                                          value: fontHvalue.value,
-                                          onChanged: (double value) {
-                                            fontHvalue.value = value;
-                                          },
-                                          min: 1.0,
-                                          max: 2.0,
-                                        );
-                                      },
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(9),
+                                      color: Colors.blueGrey.shade600,
+                                    ),
+                                    child: RepaintBoundary(
+                                      child: AnimatedBuilder(
+                                        animation: fontHvalue,
+                                        builder: (context, child) {
+                                          return Slider(
+                                            activeColor: Colors.indigo.shade300,
+                                            inactiveColor: Colors.indigo,
+                                            value: fontHvalue.value,
+                                            onChanged: (double value) {
+                                              fontHvalue.value = value;
+                                            },
+                                            min: 1.0,
+                                            max: 3.0,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: RepaintBoundary(
-                                    child: AnimatedBuilder(
-                                        animation: fontHvalue,
-                                        builder: (context, child) {
-                                          return Container(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Center(
-                                              child: Text(
-                                                '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
-                                                softWrap: false,
-                                              ),
+                                RepaintBoundary(
+                                  child: AnimatedBuilder(
+                                      animation: fontHvalue,
+                                      builder: (context, child) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                          child: Center(
+                                            child: Text(
+                                              '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
+                                              softWrap: false,
                                             ),
-                                          );
-                                        }),
-                                  ),
+                                          ),
+                                        );
+                                      }),
                                 ),
                               ],
                             ),

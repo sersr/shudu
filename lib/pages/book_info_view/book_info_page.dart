@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
-
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shudu/pages/embed/images.dart';
@@ -101,6 +101,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                 }
                               }
                             }
+                            final eh = math.max(ui.window.padding.bottom / ui.window.devicePixelRatio / 3, 0.0);
 
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -109,9 +110,8 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                 Expanded(
                                   child: btn1(
                                     child: Container(
-                                      height: 56,
-                                      padding: EdgeInsets.only(
-                                          bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
+                                      height: 56 + eh,
+                                      padding: EdgeInsets.only(bottom: eh),
                                       child: Center(
                                         child: Text('${contain ? '阅读' : '试读'}'),
                                       ),
@@ -156,16 +156,14 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                           }
                                         },
                                         child: Container(
-                                            height: 56,
-                                            padding: EdgeInsets.only(
-                                                bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
+                                            height: 56 + eh,
+                                            padding: EdgeInsets.only(bottom: eh),
                                             child: Center(child: Text('${contain ? '移除' : '添加到'}书架'))))),
                                 Expanded(
                                   child: btn1(
                                     child: Container(
-                                        height: 56,
-                                        padding: EdgeInsets.only(
-                                            bottom: ui.window.padding.bottom / ui.window.devicePixelRatio / 3),
+                                        height: 56 + eh,
+                                        padding: EdgeInsets.only(bottom: eh),
                                         child: Center(child: Text('action'))),
                                     onTap: () {},
                                     background: false,
@@ -190,8 +188,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                           return background(
                             child: IndexsWidget(
                               onTap: (context, id, cid) {
-                                context.read<PainterBloc>()
-                                  ..add(PainterNewBookIdEvent(id, cid, 1));
+                                context.read<PainterBloc>()..add(PainterNewBookIdEvent(id, cid, 1));
                                 Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                                 showIndexs.value = !showIndexs.value;
                                 context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
@@ -241,7 +238,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
               top: 10.0,
               left: 24.0,
               right: 24.0,
-              bottom: 66.0,
+              bottom: 66 + math.max(ui.window.padding.bottom / ui.window.devicePixelRatio / 3, 0.0),
               child: Material(
                 borderRadius: BorderRadius.circular(6.0),
                 color: Color.fromRGBO(210, 210, 210, 1),
@@ -274,6 +271,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                   setstate(() => hide = !hide);
                 },
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       info.desc!,
@@ -332,6 +330,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
               children: [
                 Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -354,17 +353,13 @@ class _BookInfoPageState extends State<BookInfoPage> {
                       ),
                       Container(
                         padding: const EdgeInsets.only(top: 6.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              info.lastChapter!,
-                              style: tsState.body2,
-                              overflow: TextOverflow.ellipsis,
-                              softWrap: false,
-                            ),
-                          ],
+                        child: Text(
+                          info.lastChapter!,
+                          style: tsState.body2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),

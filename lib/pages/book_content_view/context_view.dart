@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,20 +41,18 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
   void canLoad() {
     if (animation.isCompleted) {
-      SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]).then((value) {
-        absorbPointer.value = false;
-        bloc.completerCanLoad();
-      });
+      bloc.completerCanLoad();
+      absorbPointer.value = false;
+      out = false;
     }
   }
 
   Timer? timer;
+  bool out = true;
   @override
   void didChangeMetrics() {
-    final w = ui.window;
-    print('viewpadding: ${w.viewPadding}, viewinsets: ${w.viewInsets}, padding: ${w.padding}, ${w.physicalSize}');
-    if (w.padding.top == 0.0) {
-      timer?.cancel();
+    timer?.cancel();
+    if (!out) {
       timer = Timer(Duration(milliseconds: 100), () {
         if (mounted) {
           bloc.add(PainterMetricsChangeEvent());
@@ -120,7 +117,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
-
+    out = true;
     absorbPointer.value = true;
     //---------------------------
     bloc.add(PainterSaveEvent());
@@ -132,15 +129,16 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
       bloc.canCompute!.complete();
     }
-    // bloc.computeCount != 0; 说明正在进行textPainter.layout... (UI耗时任务)
-    // 而网络任务是在另一个Isolate进行的，不用等待。
+
+    // 占用UI资源时，等待；
     if (bloc.computeCount != 0) {
       await bloc.completer.future;
     }
     print('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}');
     await cbloc.loading!.future;
+    SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.grey.shade600.withOpacity(0.1)));
     await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     await Future.delayed(Duration(milliseconds: 200));
     //-------------------------
     absorbPointer.value = false;

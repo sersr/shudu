@@ -205,7 +205,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
+                    padding: const EdgeInsets.only(top: 12.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -229,25 +229,40 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6.0),
-                    child: Text(
-                      '${l.categoryName} | ${l.author}',
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                      maxLines: 2,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[900]),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: .0),
+                      child: Column(
+                        // alignment: Alignment.centerLeft,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${l.categoryName} | ${l.author}',
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            maxLines: 2,
+                            style: TextStyle(fontSize: 13, color: Colors.grey[900]),
+                          ),
+                          Text(
+                            '${l.description}',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      '${l.description}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.only(bottom: .0),
+                  //     child: Align(
+                  //       alignment: Alignment.centerLeft,
+                  //       child:
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
