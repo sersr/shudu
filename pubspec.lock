@@ -228,11 +228,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_web_plugins:
-    dependency: transitive
-    description: flutter
-    source: sdk
-    version: "0.0.0"
   glob:
     dependency: transitive
     description:
@@ -481,7 +476,7 @@ packages:
   pull_to_refresh:
     dependency: "direct main"
     description:
-      path: "../plugins/pull_to_refresh"
+      path: "plugins/pull_to_refresh"
       relative: true
     source: path
     version: "1.6.4"
@@ -563,7 +558,7 @@ packages:
   sticky_header:
     dependency: "direct main"
     description:
-      path: "../plugins/sticky_header"
+      path: "plugins/sticky_header"
       relative: true
     source: path
     version: "0.7.0"
@@ -630,27 +625,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.0-nullsafety.5"
-  video_player:
-    dependency: "direct main"
-    description:
-      name: video_player
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.0.0-nullsafety.7"
-  video_player_platform_interface:
-    dependency: transitive
-    description:
-      name: video_player_platform_interface
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "3.0.0-nullsafety.3"
-  video_player_web:
-    dependency: transitive
-    description:
-      name: video_player_web
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.0.0-nullsafety.2"
   watcher:
     dependency: transitive
     description:

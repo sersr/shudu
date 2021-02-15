@@ -10,84 +10,36 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  json_annotation: ^4.0.0-nullsafety.0
-  # vector_math: ^2.0.8
-
-  sqflite: ^2.0.0-nullsafety.3
-
-  sqflite_common_ffi: ^2.0.0-nullsafety.6
-  # google_fonts: ^1.1.0  
-  video_player: ^2.0.0-nullsafety.7
-
-  flutter_bloc: ^7.0.0-nullsafety.1
-
-  http: ^0.13.0-nullsafety.0
-  # equatable: ^1.2.5
-  equatable: ^2.0.0-nullsafety.2
-  # rxdart: ^0.24.1
-  # rxdart: ^ 0.26.0-nullsafety.0
-  # dio: ^3.0.10
-  # flutter_cache_manager: ^1.4.2
-  # provider: ^4.3.2+2
-  provider: ^5.0.0-nullsafety.3
   cupertino_icons: ^1.0.0 
+  json_annotation: ^4.0.0-nullsafety.0
+  sqflite: ^2.0.0-nullsafety.3
+  sqflite_common_ffi: ^2.0.0-nullsafety.6 
+  # video_player: ^2.0.0-nullsafety.7
+  flutter_bloc: ^7.0.0-nullsafety.1
+  http: ^0.13.0-nullsafety.0
+  equatable: ^2.0.0-nullsafety.2
+  provider: ^5.0.0-nullsafety.3
   intl: 0.17.0-nullsafety.2
   logger: ^1.0.0-nullsafety.0
-  # logger: ^1.0.0-nullsafety.0
-  # animated_text_kit: ^2.5.4
-  # shimmer: ^2.0.0-nullsafety.0
-  # flutter_easyrefresh: ^2.1.7
-  # pull_to_refresh: ^1.6.4
-  # integration_test: ^1.0.1
-  # flutter_sticky_header: ^0.5.0
   path_provider: ^2.0.0-nullsafety
   hive: ^1.6.0-nullsafety.2
   sticky_header:
-    path: ../plugins/sticky_header
+    path: plugins/sticky_header
   pull_to_refresh:
-    path: ../plugins/pull_to_refresh
+    path: plugins/pull_to_refresh
   
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: ^1.11.1
   hive_generator: ^0.9.0-nullsafety.1
-  # pedantic: ^1.9.2
   json_serializable: ^4.0.0-nullsafety.0
-  # pigeon: ^0.1.15
-  # sqflite_common_ffi: ^1.1.0
-  # bloc_test: ^7.1.0
   
 flutter:
   uses-material-design: true
   fonts:
-    # - family: SourceHanSerif
-    #   fonts:
-    #     - asset: assets/fonts/SourceHanSerif-Regular.ttc
-    #     - asset: assets/fonts/SourceHanSerif-Bold.ttc
-    #       weight: 700
     - family: NotoSansSC
       fonts:
         - asset: assets/fonts/NotoSansSC-Regular.otf
         - asset: assets/fonts/NotoSansSC-Bold.otf
           weight: 700
-    # - family: 思源
-    #   fonts:
-    #     - asset: assets/fonts/SourceHanSerif-Regular.ttc
-    #     - asset: assets/fonts/SourceHanSerif-Bold.ttc
-    #       weight: 700
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages

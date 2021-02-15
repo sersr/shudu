@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shudu/data/search_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:sqflite_common/sqlite_api.dart';
@@ -47,23 +48,27 @@ abstract class BookRepository {
 
   // e.g.: https://imgapixs.pigqq.com/BookFiles/BookImages/$img
   static String imageUrl(String img) => '';
-  // e.g.: https://contentxs.pigqq.com/BookFiles/Html/$sd/$id/$cid.html 
+  // e.g.: https://contentxs.pigqq.com/BookFiles/Html/$sd/$id/$cid.html
   static String contentUrl(int id, int? cid) {
+    // ignore: unused_local_variable
     final sd = shortid(id);
     return '';
   }
 
   // e.g.: https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/index.html
   static String indexUrl(int id) {
+    // ignore: unused_local_variable
     final sid = shortid(id);
     return '';
   }
 
   // e.g.: https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/info.html
   static String infoUrl(int id) {
+    // ignore: unused_local_variable
     final sid = shortid(id);
     return '';
   }
+
   // e.g.: https://scxs.pigqq.com/shudan/man/all/$c/$index.html
   static String shudanUrl(String c, int index) {
     return '';
@@ -72,6 +77,11 @@ abstract class BookRepository {
   // e.g.: https://scxs.pigqq.com/shudan/detail/$index.html
   static String shudanDetailUrl(int? index) {
     assert(index != null);
+    return '';
+  }
+
+  // e.g.: https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2
+  static String searchUrl(String key) {
     return '';
   }
 
@@ -222,6 +232,17 @@ abstract class BookRepository {
     final url = shudanDetailUrl(index);
     return await sendMessage(MessageType.shudanDetail, url);
   }
+
+  Future<SearchList> searchWithKey(String? key) async {
+    var url = BookRepository.searchUrl(key!);
+    try {
+      var respone = await client.get(Uri.parse(url));
+      Map<String, dynamic> map = jsonDecode(respone.body);
+      return SearchList.fromJson(map);
+    } catch (e) {
+      return Future.value();
+    }
+  }
 }
 
 class ImagePathData {
@@ -279,7 +300,7 @@ enum MessageType {
   shudan,
   bookList,
   mainList,
-  imgPath,
+  // imgPath,
 }
 
 class MessageFunc {
