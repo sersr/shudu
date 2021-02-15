@@ -66,9 +66,9 @@ class PainterReloadEvent extends PainterEvent {}
 
 class PainterNewBookIdEvent extends PainterEvent {
   PainterNewBookIdEvent(this.id, this.cid, this.page);
-  final int? id;
-  final int? cid;
-  final int? page;
+  final int id;
+  final int cid;
+  final int page;
 }
 
 // class PainterNotifySizeEvent extends PainterEvent {}
@@ -146,7 +146,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   int? bookid;
 
-  int? currentPage = 1;
+  int currentPage = 1;
 
   // bool showRect = false;
 
@@ -236,9 +236,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
     tData = cache[tData.pid] ?? TextData();
     currentPage = 1;
-    if (controller != null) {
-      controller!.setPixelsWithoutNtf(0.0);
-    }
+    controller?.setPixelsWithoutNtf(0.0);
     virtualIndex = 0;
 
     yield painter();
@@ -278,9 +276,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
     tData = cache[tData.nid] ?? TextData();
     currentPage = 1;
-    if (controller != null) {
-      controller!.setPixelsWithoutNtf(0.0);
-    }
+    controller?.setPixelsWithoutNtf(0.0);
     virtualIndex = 0;
 
     yield painter();
@@ -403,14 +399,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
 
     _inBookView = true;
-    if (event.id == null || event.cid == -1) return;
+    if (event.cid == -1) return;
     if (config.bgcolor == null) {
       await getPrefs();
     }
 
-    if (controller != null) {
-      controller!.setPixelsWithoutNtf(0.0);
-    }
+    controller?.setPixelsWithoutNtf(0.0);
+
     virtualIndex = 0;
     if (tData.cid == null || tData.cid != event.cid || sizeChanged) {
       assert(Log.i('page: ${event.page}', stage: this, name: 'newBook'));
@@ -725,7 +720,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
     });
     if (bookid == _bookid && tData.contentIsNotEmpty && _cid == tData.cid) {
-      if (currentPage! > tData.content!.length) {
+      if (currentPage > tData.content!.length) {
         currentPage = tData.content!.length;
       }
     }
@@ -762,7 +757,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     await awaitCompute(() async {
       if (_bookid == bookid && tData.cid == _cid && result.contentIsNotEmpty) {
         tData = result;
-        if (currentPage! > tData.content!.length) {
+        if (currentPage > tData.content!.length) {
           currentPage = tData.content!.length;
         }
         add(_PainterInnerEvent());
@@ -835,9 +830,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final exPage = index - virtualIndex;
     var result = true;
     if (key == 0) {
-      result = currentPage! + exPage < tData.content!.length || cache.containsKey(tData.nid);
+      result = currentPage + exPage < tData.content!.length || cache.containsKey(tData.nid);
     } else {
-      result = currentPage! + exPage > 1 || cache.containsKey(tData.pid);
+      result = currentPage + exPage > 1 || cache.containsKey(tData.pid);
     }
     if (!delayed) {
       delayed = true;
@@ -860,7 +855,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   Widget? getWidget(int page, {bool changeState = false}) {
     if (changeState && page == virtualIndex) return null;
-    var currentContentFirstIndex = virtualIndex - currentPage! + 1;
+    var currentContentFirstIndex = virtualIndex - currentPage + 1;
     TextData? text = tData;
     Widget? child;
     while (text != null && text.contentIsNotEmpty) {
@@ -871,7 +866,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         currentPage = tol + 1;
         if (!changeState) {
           child = ContentView(
-            pic: text.content![currentPage! - 1],
+            pic: text.content![currentPage - 1],
             secstyle: secstyle,
             style: style,
             isHorizontal: config.axis == Axis.horizontal,
@@ -908,7 +903,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   void dump() {
     if (tData.cid != null) {
-      bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage!));
+      bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage));
     }
   }
 
@@ -1005,7 +1000,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     /// 最后一页行数可能不会占满，因此保留上一个额外高度[exh]
     var lastPageExh = 0.0;
     for (var r = 0; r < pages.length; r++) {
-      final _pnow = Timeline.now;
       var exh = 0.0;
       var h = 0.0;
       final recoder = ui.PictureRecorder();
@@ -1067,9 +1061,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
       h += exh / 2;
       for (var l in pages[r]) {
-        if (l.isEmpty) {
-          print('empty:....');
-        }
         final _tep = TextPainter(
           text: TextSpan(text: l, style: style),
           textDirection: TextDirection.ltr,
@@ -1085,19 +1076,37 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (isHorizontal) {
         bottomRight.paint(canvas, Offset(right, _size.height - bottomRight.height - botPad));
       }
-      print('pictures:  ${((Timeline.now - _pnow) / 1000).toStringAsFixed(1)}ms');
-
       canvas.restore();
       pics.add(recoder.endRecording());
     }
-    final _n = Timeline.now;
-    print('print:  ${((Timeline.now - _n) / 1000).toStringAsFixed(1)}ms');
     print('用时: ${((Timeline.now - now) / 1000).toStringAsFixed(1)}ms');
     print('work done <<<');
 
     return pics;
   }
 }
+
+// Future<void> awaitEveryFrame(Future<bool> Function() fn) async {
+//   var result = false;
+//   while (!result) {
+//     result = await fn();
+//   }
+// }
+
+// Future<bool> layoutEveryFrame(void Function() fn) async {
+//   final completer = Completer<bool>();
+//   final scheduler = SchedulerBinding.instance!;
+//   if (scheduler.schedulerPhase == SchedulerPhase.idle) scheduler.scheduleFrame();
+//   scheduler.addPostFrameCallback((timeStamp) {
+//     // if (timeStamp >= Duration(milliseconds: 5)) {
+//     //   completer.complete(false);
+//     // } else {
+//     fn();
+//     completer.complete(true);
+//     // }
+//   });
+//   return completer.future;
+// }
 
 class ContentView extends LeafRenderObjectWidget {
   ContentView(
@@ -1214,6 +1223,9 @@ class RenderContentView extends RenderBox {
   }
 
   @override
+  bool get isRepaintBoundary => true;
+
+  @override
   void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
     canvas.save();
@@ -1221,10 +1233,10 @@ class RenderContentView extends RenderBox {
     final leftPadding = ((size.width - 32) % style!.fontSize!) / 2;
     // final right = size.width - bottomRight.width + leftPadding;
 
-    context.canvas.drawPicture(pic!);
+    canvas.drawPicture(pic!);
     if (isHorizontal!) {
-      bottomLeft.paint(context.canvas,
-          Offset(leftPadding + 16.0, size.height - bottomLeft.height - topPadding! - botPadding! - 4.0));
+      bottomLeft.paint(
+          canvas, Offset(leftPadding + 16.0, size.height - bottomLeft.height - topPadding! - botPadding! - 4.0));
     }
     // bottomRight.paint(context.canvas, Offset(right, size.height - bottomRight.height - 4.0));
     canvas.restore();

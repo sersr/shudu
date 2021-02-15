@@ -92,9 +92,8 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   bool canDrag() => bloc.computeCount == 0;
 
   Widget? getChild(int index, {required bool changeState}) {
-    final child = bloc.getWidget(index, changeState: changeState);
-    if (child == null) return null;
-    return RepaintBoundary(child: child);
+    return bloc.getWidget(index, changeState: changeState);
+    // return child;
   }
 
   Widget wrapChild() {

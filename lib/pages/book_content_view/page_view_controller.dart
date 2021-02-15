@@ -68,7 +68,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void nextPage() {
-    if (_lastActivityIsIdleActivity) {
+    if (_lastActivityIsIdle) {
       final nextPage = page.round();
       if (axis == Axis.horizontal) {
         if (hasContent(0, nextPage)) {
@@ -155,14 +155,14 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     int to;
     if (velocity < -200.0) {
       to = (page - 0.5).round();
-      velocity = math.min(-600, velocity);
+      velocity = math.max(-600, velocity);
     } else if (velocity > 200.0) {
       to = (page + 0.5).round();
-      velocity = math.max(600, velocity);
+      velocity = math.min(600, velocity);
     } else {
       to = page.round();
     }
-    final end = to * viewPortDimension!;
+    final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
     if (axis == Axis.horizontal) {
       beginActivity(BallisticActivity(
         delegate: this,
@@ -220,19 +220,20 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
     _canDrag = getDragState();
     if (!_canDrag) {
+      print('....can not drag....');
       return null;
     }
     scrollingnotifier(true);
-    final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
+    final _drag = PreNextDragController(delegate: this, details: details, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
     _currentDrag = _drag;
     return _drag;
   }
 
-  var _lastActivityIsIdleActivity = true;
+  var _lastActivityIsIdle = true;
   ScrollHoldController hold(VoidCallback cancel) {
     final _hold = HoldActivity(this, call: cancel);
-    _lastActivityIsIdleActivity = _activity is IdleActivity;
+    _lastActivityIsIdle = _activity is IdleActivity;
     beginActivity(_hold);
     return _hold;
   }
@@ -532,9 +533,9 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    context.setIsComplexHint();
     _clipRectLayer =
         context.pushClipRect(needsCompositing, Offset.zero, Offset.zero & size, defaultPaint, oldLayer: _clipRectLayer);
+    // context.canvas.clipRect(Offset.zero & size);
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {

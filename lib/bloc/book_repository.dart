@@ -42,32 +42,37 @@ abstract class BookRepository {
   late Box<int> imageUpdate;
   final _init = ValueNotifier<bool>(false);
   ValueNotifier<bool> get init => _init;
+  // ??
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
-  static String imageUrl(String img) => 'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
-
+  // e.g.: https://imgapixs.pigqq.com/BookFiles/BookImages/$img
+  static String imageUrl(String img) => '';
+  // e.g.: https://contentxs.pigqq.com/BookFiles/Html/$sd/$id/$cid.html 
   static String contentUrl(int id, int? cid) {
     final sd = shortid(id);
-    return 'https://contentxs.pigqq.com/BookFiles/Html/$sd/$id/$cid.html';
+    return '';
   }
 
+  // e.g.: https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/index.html
   static String indexUrl(int id) {
     final sid = shortid(id);
-    return 'https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/index.html';
+    return '';
   }
 
+  // e.g.: https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/info.html
   static String infoUrl(int id) {
     final sid = shortid(id);
-    return 'https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/info.html';
+    return '';
   }
-
+  // e.g.: https://scxs.pigqq.com/shudan/man/all/$c/$index.html
   static String shudanUrl(String c, int index) {
-    return 'https://scxs.pigqq.com/shudan/man/all/$c/$index.html';
+    return '';
   }
 
+  // e.g.: https://scxs.pigqq.com/shudan/detail/$index.html
   static String shudanDetailUrl(int? index) {
     assert(index != null);
-    return 'https://scxs.pigqq.com/shudan/detail/$index.html';
+    return '';
   }
 
   Future<void> onCreate(Database _db) async {

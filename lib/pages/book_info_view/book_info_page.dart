@@ -216,7 +216,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
           if (widget.bookid != null && widget.cid != null && widget.page != null) {
             context.read<PainterBloc>()
               ..canLoad = Completer<void>()
-              ..add(PainterNewBookIdEvent(widget.bookid, widget.cid, widget.page));
+              ..add(PainterNewBookIdEvent(widget.bookid!, widget.cid!, widget.page!));
 
             // Navigator.of(context).pushNamed(BookContentPage.currentRoute);
           }

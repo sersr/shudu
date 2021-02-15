@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -72,7 +73,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     Widget child = BlocBuilder<PainterBloc, PainterState>(
       builder: (context, state) {
-        if (state.config?.bgcolor == null) {
+        if (bloc.config.bgcolor == null) {
           return Container();
         }
         return Stack(
@@ -85,7 +86,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
               showSettings: showSettings,
               ignore: state.ignore,
             ),
-            if (state.loading!) Center(child: CircularProgressIndicator()),
+            if (state.loading!) IgnorePointer(ignoring: true, child: Center(child: CircularProgressIndicator())),
           ],
         );
       },
@@ -124,7 +125,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     bloc.completerCanLoad();
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
-      ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage!))
+      ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage))
       ..add(BookChapterIdLoadEvent());
     if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
       bloc.canCompute!.complete();

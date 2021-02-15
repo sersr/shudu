@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       painterBloc.add(PainterSaveEvent(changeState: false));
       context.read<BookCacheBloc>()
         ..add(BookChapterIdUpdateCidEvent(
-            id: painterBloc.bookid!, cid: painterBloc.tData.cid!, page: painterBloc.currentPage!));
+            id: painterBloc.bookid!, cid: painterBloc.tData.cid!, page: painterBloc.currentPage));
     }
   }
 
@@ -381,7 +381,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           context.read<BookCacheBloc>().completerLoading();
                           painterBloc
                             ..canLoad = Completer<void>()
-                            ..add(PainterNewBookIdEvent(item.id, item.chapterId, item.page ?? 1));
+                            ..add(PainterNewBookIdEvent(item.id!, item.chapterId!, item.page!));
 
                           Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                         },
