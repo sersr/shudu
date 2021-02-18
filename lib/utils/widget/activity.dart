@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 abstract class Activity {
   Activity(this.delegate);
@@ -87,7 +88,7 @@ class BallisticActivity extends Activity {
     required ActivityDelegate delegate,
     required TickerProvider vsync,
     required this.simulation,
-    this.end,
+    required this.end,
     this.magnetic = true,
   }) : super(delegate) {
     _controller = AnimationController.unbounded(vsync: vsync)
@@ -95,17 +96,19 @@ class BallisticActivity extends Activity {
       ..animateWith(simulation).whenComplete(done);
   }
   bool magnetic;
-  double? end;
+  double end;
   Simulation simulation;
   late AnimationController _controller;
   void _tick() {
-    if (magnetic && end != null) {
-      if ((_controller.value - end!).abs() < 1) {
-        delegate.setPixels(end!);
-        done();
-      } else {
-        delegate.setPixels(_controller.value);
-      }
+    final p = (_controller.value - end).abs();
+    if (p == 0.0) {
+      delegate.setPixels(_controller.value);
+      done();
+      return;
+    }
+    if (magnetic && p < 1) {
+      delegate.setPixels(end);
+      done();
     } else {
       delegate.setPixels(_controller.value);
     }
@@ -125,18 +128,31 @@ class BallisticActivity extends Activity {
   }
 }
 
+/// copy from [ScrollDragController]
 class PreNextDragController extends Drag {
-  PreNextDragController({this.cancelCallback, required this.delegate});
+  PreNextDragController({
+    this.cancelCallback,
+    this.motionStartDistanceThreshold,
+    required this.delegate,
+    required DragStartDetails details,
+  })   : _lastNonStationaryTimestamp = details.sourceTimeStamp,
+        _offsetSinceLastStop = motionStartDistanceThreshold == null ? null : 0.0;
+
   final ActivityDelegate delegate;
   final VoidCallback? cancelCallback;
+
   @override
   void update(DragUpdateDetails details) {
-    final offset = details.primaryDelta!;
-    if (offset == 0) return;
+    var offset = details.primaryDelta!;
+    if (offset != 0.0) {
+      _lastNonStationaryTimestamp = details.sourceTimeStamp;
+    }
+    offset = _adjustForScrollStartThreshold(offset, details.sourceTimeStamp);
+    if (offset == 0.0) {
+      return;
+    }
     delegate.applyUserOffset(offset);
   }
-
-  
 
   @override
   void cancel() {
@@ -145,7 +161,51 @@ class PreNextDragController extends Drag {
   }
 
   void dispose() {
-    if (cancelCallback != null) cancelCallback!();
+    cancelCallback?.call();
+  }
+
+  double? _offsetSinceLastStop;
+
+  final double? motionStartDistanceThreshold;
+
+  Duration? _lastNonStationaryTimestamp;
+
+  static const Duration motionStoppedDurationThreshold = Duration(milliseconds: 50);
+
+  static const double _bigThresholdBreakDistance = 24.0;
+
+  double _adjustForScrollStartThreshold(double offset, Duration? timestamp) {
+    if (timestamp == null) {
+      return offset;
+    }
+    if (offset == 0.0) {
+      if (motionStartDistanceThreshold != null &&
+          _offsetSinceLastStop == null &&
+          timestamp - _lastNonStationaryTimestamp! > motionStoppedDurationThreshold) {
+        _offsetSinceLastStop = 0.0;
+      }
+      return 0.0;
+    } else {
+      if (_offsetSinceLastStop == null) {
+        return offset;
+      } else {
+        _offsetSinceLastStop = _offsetSinceLastStop! + offset;
+        if (_offsetSinceLastStop!.abs() > motionStartDistanceThreshold!) {
+          _offsetSinceLastStop = null;
+          if (offset.abs() > _bigThresholdBreakDistance) {
+            return offset;
+          } else {
+            return math.min(
+                  motionStartDistanceThreshold! / 3.0,
+                  offset.abs(),
+                ) *
+                offset.sign;
+          }
+        } else {
+          return 0.0;
+        }
+      }
+    }
   }
 }
 

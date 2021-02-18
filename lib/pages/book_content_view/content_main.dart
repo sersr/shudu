@@ -6,7 +6,13 @@ class BookContentPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PainterPage(),
+      resizeToAvoidBottomInset: false,
+      body: MediaQuery.removePadding(
+        context: context,
+        child: PainterPage(),
+        removeTop: true,
+        removeBottom: true,
+      ),
       // color: Colors.grey[900],
     );
   }

@@ -5,12 +5,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/bloc.dart';
 
 import '../../bloc/painter_bloc.dart';
 import '../../utils/utils.dart';
 import 'context_view.dart';
-import 'pannel.dart';
 import 'page_view_controller.dart';
+import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({
@@ -77,7 +78,9 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   void isScrolling(bool scrolling) {
     if (!scrolling) {
       if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
-        bloc.canCompute!.complete();
+        bloc
+          ..canCompute!.complete()
+          ..dump();
       }
     } else {
       if (bloc.canCompute == null || bloc.canCompute!.isCompleted) {
@@ -89,9 +92,8 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   bool canDrag() => bloc.computeCount == 0;
 
   Widget? getChild(int index, {required bool changeState}) {
-    final child = bloc.getWidget(index, changeState: changeState);
-    if (child == null) return null;
-    return RepaintBoundary(child: child);
+    return bloc.getWidget(index, changeState: changeState);
+    // return child;
   }
 
   Widget wrapChild() {
@@ -124,10 +126,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
       return Center(
         child: Stack(
           children: [
-            Positioned(top: 8.0, left: 16.0, child: head),
-            Positioned(bottom: 4.0, left: 16.0, child: footleft),
-            Positioned(bottom: 4.0, right: 16.0, child: footright),
-            Positioned.fill(top: 33, bottom: 33, right: 16.0, child: child),
+            Positioned(top: 8.0 + bloc.padding.top, left: 16.0, child: head),
+            Positioned(bottom: 4.0 + bloc.padding.bottom, left: 16.0, child: footleft),
+            Positioned(bottom: 4.0 + bloc.padding.bottom, right: 16.0, child: footright),
+            Positioned.fill(top: 33 + bloc.padding.top, bottom: 33 + bloc.padding.bottom, right: 16.0, child: child),
           ],
         ),
       );
@@ -150,13 +152,17 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                 final halfW = size.width / 2;
                 final sixW = size.width / 5;
                 if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
-                  widget.show.value = !widget.show.value;
                   if (widget.show.value) {
-                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-                  } else {
                     widget.showCname.value = false;
+                    // if (defaultTargetPlatform == TargetPlatform.iOS) {
                     SystemChrome.setEnabledSystemUIOverlays([]);
+                    // } else if (!bloc.liuhai) {
+                    //   SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+                    // }
+                  } else {
+                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
                   }
+                  widget.show.value = !widget.show.value;
                 } else {
                   offsetPosition.nextPage();
                 }
@@ -167,24 +173,20 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
             onTap: () {
               widget.show.value = !widget.show.value;
             },
-            child: widget.ignore!
-                ? Container(
-                    color: Colors.cyan.withAlpha(0),
-                  )
-                : Container(
-                    color: Colors.cyan.withAlpha(0),
-                    child: Center(
+            child: Container(
+              color: Colors.cyan.withAlpha(0),
+              child: widget.ignore!
+                  ? null
+                  : Center(
                       child: btn1(
                           bgColor: Colors.blue,
                           splashColor: Colors.blue[200],
                           radius: 40,
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           child: Text('重新加载'),
-                          onTap: () {
-                            bloc.add(PainterNotifyLoadEvent());
-                          }),
+                          onTap: () => bloc.add(PainterLoadEvent())),
                     ),
-                  ),
+            ),
           );
     ;
     return Stack(
@@ -284,7 +286,7 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void onDown(DragDownDetails d) {
-    SystemChrome.restoreSystemUIOverlays();
+    // SystemChrome.restoreSystemUIOverlays();
     hold = widget.offsetPosition.hold(() {
       hold = null;
     });

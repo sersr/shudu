@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
+import 'bloc.dart';
+
 import '../data/search_data.dart';
 
 class SimpleBlocObserver extends BlocObserver {
@@ -59,33 +59,16 @@ class SearchResultWithData extends SearchResult {
 }
 
 class SearchBloc extends Bloc<SearchEvent, SearchResult> {
-  SearchBloc() : super(SearchWithoutData());
-
+  SearchBloc(this.repository) : super(SearchWithoutData());
+  final BookRepository repository;
   @override
   Stream<SearchResult> mapEventToState(SearchEvent event) async* {
     if (event is SearchEventEnterPageWithoutKey) {
       yield SearchWithoutData();
     } else if (event is SearchEventWithKey) {
       yield SearchWithoutData();
-      var list = await searchWithKey(event.key);
+      var list = await repository.searchWithKey(event.key);
       yield SearchResultWithData(searchList: list);
     }
-  }
-
-  Future<SearchList> searchWithKey(String? key) async {
-    var url = 'https://souxs.syqcnfj.com/search.aspx?key=$key&page=1&siteid=app2';
-    var respone = await http.get(Uri.parse(url));
-    if (respone.statusCode == 200) {
-      Map<String, dynamic> map = jsonDecode(respone.body);
-      return SearchList.fromJson(map);
-    } else {
-      return Future.value();
-    }
-  }
-
-  Future<Uint8List> getImageData(String img) async {
-    var url = 'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
-    var respone = http.readBytes(Uri.dataFromString(url));
-    return respone;
   }
 }

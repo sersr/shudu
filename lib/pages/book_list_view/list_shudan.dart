@@ -156,6 +156,30 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
                   }
                 }
               },
+              header:
+                  // CustomHeader(
+                  //   builder: (context, RefreshStatus? mode) {
+                  //     Widget body;
+                  //     if (mode == RefreshStatus.idle) {
+                  //       body = Text('下拉加载');
+                  //     } else if (mode == RefreshStatus.refreshing) {
+                  //       body = CupertinoActivityIndicator();
+                  //     } else if (mode == RefreshStatus.failed) {
+                  //       body = Text('加载失败');
+                  //     } else if (mode == RefreshStatus.canRefresh) {
+                  //       body = Text('释放加载');
+                  //     } else if (mode == RefreshStatus.completed) {
+                  //       body = Text('刷新成功!');
+                  //     } else {
+                  //       body = Text('');
+                  //     }
+                  //     return Container(
+                  //       height: 55.0,
+                  //       child: DefaultTextStyle(style: TextStyle(color: Colors.grey[800]), child: Center(child: body)),
+                  //     );
+                  //   },
+                  // ),
+                  WaterDropHeader(),
               footer: CustomFooter(
                 builder: (BuildContext context, LoadStatus? mode) {
                   Widget body;
@@ -176,11 +200,31 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
                   );
                 },
               ),
-              child:
-                  // return
-                  state.all[widget.index].isEmpty
-                      ? Center(child: CupertinoActivityIndicator())
-                      : buildListView(state.all[widget.index], context, widget.index));
+              child: () {
+                if (state.all[widget.index].isEmpty) {
+                  if (state.status == Status.failed) {
+                    return Center(
+                      child: btn1(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        bgColor: Colors.blue,
+                        splashColor: Colors.blue[200],
+                        radius: 40,
+                        child: Text(
+                          '重新加载',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                        onTap: () {
+                          BlocProvider.of<BookInfoBloc>(context).add(BookInfoReloadEvent());
+                        },
+                      ),
+                    );
+                  } else {
+                    return Center(child: CupertinoActivityIndicator());
+                  }
+                }
+                return buildListView(state.all[widget.index], context, widget.index);
+              }());
+          // return
         },
         // buildWhen: (o, n) {
         //   return widget.index == n.id;
@@ -272,9 +316,10 @@ class ShudanRefreshEvent extends ShudanEvent {
 }
 
 class ShudanState {
-  ShudanState({this.all = const [[], [], []], this.id = 0});
+  ShudanState({this.all = const [[], [], []], this.id = 0, this.status = Status.done});
   final List<List<BookList>> all;
   final int id;
+  final Status status;
 }
 
 enum Status {
@@ -328,6 +373,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
   Stream<ShudanState> resolve(int id) async* {
     // box = await Hive.openLazyBox('shudanlist');
     var status = Status.done;
+    yield shudan(id, status);
     if (id == 0) {
       if (newList.isEmpty) {
         // final first = await box.get('shudanNewList');
@@ -335,7 +381,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         if (data.isNotEmpty) {
           newList = data;
           newCount = 1;
-          yield shudan(id);
+          yield shudan(id, status);
           completerResolve(status);
         }
         data = await repository.loadShudan(c[id], 1);
@@ -360,7 +406,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         if (data.isNotEmpty) {
           hotList = data;
           hotCount = 1;
-          yield shudan(id);
+          yield shudan(id, status);
           completerResolve(status);
         }
         data = await repository.loadShudan(c[id], 1);
@@ -385,7 +431,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         if (data.isNotEmpty) {
           collectList = data;
           collectCount = 1;
-          yield shudan(id);
+          yield shudan(id, status);
           completerResolve(status);
         }
         data = await repository.loadShudan(c[id], 1);
@@ -404,11 +450,11 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         }
       }
     }
-    yield shudan(id);
+    yield shudan(id, status);
     completerResolve(status);
   }
 
-  ShudanState shudan(int id) {
-    return ShudanState(all: [newList, hotList, collectList], id: id);
+  ShudanState shudan(int id, Status status) {
+    return ShudanState(all: [newList, hotList, collectList], id: id, status: status);
   }
 }

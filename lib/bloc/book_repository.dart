@@ -8,11 +8,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import '../data/search_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:flutter/painting.dart';
+
 import '../data/book_content.dart';
 import '../data/book_index.dart';
 import '../data/book_info.dart';
@@ -21,7 +22,7 @@ import '../data/book_list_detail.dart';
 import '../utils/utils.dart';
 import 'book_index_bloc.dart';
 
-typedef DCallback<T> = Future<void> Function(T d);
+typedef DCallback<T> = Future<void> Function(T);
 
 // class SecondData extends Object {
 //   SecondData(this.db, this.bloc);
@@ -42,6 +43,8 @@ abstract class BookRepository {
   late Box<int> imageUpdate;
   final _init = ValueNotifier<bool>(false);
   ValueNotifier<bool> get init => _init;
+
+  ///API------------------------------------------------
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
   static String imageUrl(String img) => 'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
@@ -70,14 +73,26 @@ abstract class BookRepository {
     return 'https://scxs.pigqq.com/shudan/detail/$index.html';
   }
 
+  static String searchUrl(String key) {
+    return 'https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2';
+  }
+
+  ///API------------------------------------------------
+
+  Future<void> onCreate(Database _db) async {
+    await _db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
+        'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
+    await _db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
+        'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
+    await _db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
+  }
+
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
   final client = TimeClient();
   @mustCallSuper
   Future<void> initState() async {
-    // dio ??= Dio(BaseOptions(connectTimeout: 5000, receiveTimeout: 5000, sendTimeout: 5000));
-    // prefs = await SharedPreferences.getInstance();
     appPath = (await getApplicationDocumentsDirectory())!.path;
     Hive.init('$appPath/shudu/hive');
     imageUpdate = await Hive.openBox<int>('imageUpdate');
@@ -97,7 +112,8 @@ abstract class BookRepository {
 
   void dipose() async {
     client.close();
-    _isolate.kill();
+    clientRP.close();
+    _isolate.kill(priority: 0);
     await db.close();
   }
 
@@ -109,6 +125,17 @@ abstract class BookRepository {
         await db.rawUpdate('update BookInfo set lastChapter = ?, isNew = ?, updateTime = ? where bookId = ?',
             [cname, 1, updateTime, id]);
       }
+    }
+  }
+
+  Future<SearchList> searchWithKey(String? key) async {
+    var url = BookRepository.searchUrl(key!);
+    try {
+      var respone = await client.get(Uri.parse(url));
+      Map<String, dynamic> map = jsonDecode(respone.body);
+      return SearchList.fromJson(map);
+    } catch (e) {
+      return Future.value();
     }
   }
 
@@ -132,13 +159,15 @@ abstract class BookRepository {
   }
 
   static const int oneWeek = 1000 * 60 * 60 * 24 * 7;
+  static const int thirtySeconds = 1000 * 30;
+  // var inLocal = <String>[];
   String get imageLocalPath => '$appPath/shudu/images/';
   var errorLoading = <String>[];
   int time = 0;
   Future<String> saveImage(String img) async {
     var imgName = '';
     String url;
-    if (img.startsWith('https://') || img.startsWith('http://')) {
+    if (img.startsWith(RegExp(r'https://|http://'))) {
       var reurl = img.replaceAll('%2F', '/');
       final splist = reurl.split('/');
       for (var i = splist.length - 1; i >= 0; i--) {
@@ -153,16 +182,16 @@ abstract class BookRepository {
       imgName = img;
     }
     final imgPath = '$imageLocalPath$imgName';
-    final exist = await File(imgPath).exists();
-    if (exist) {
-      if ((imageUpdate.get(imgName.hashCode) ?? 0) + oneWeek > DateTime.now().millisecondsSinceEpoch) {
-        return imgPath;
-      }
+    final imgdateTime = imageUpdate.get(imgName.hashCode);
+    final shouldUpdate = imgdateTime == null ? true : imgdateTime + oneWeek < DateTime.now().millisecondsSinceEpoch;
+    if (!shouldUpdate) {
+      return imgPath;
     }
 
     if (errorLoading.contains(imgName)) {
-      if (time + 1000 * 30 <= DateTime.now().millisecondsSinceEpoch) {
+      if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
         time = DateTime.now().millisecondsSinceEpoch;
+        // 再次发送网络请求
         errorLoading.remove(imgName);
       } else {
         return '${imageLocalPath}guizhenwuji.jpg';
@@ -171,7 +200,7 @@ abstract class BookRepository {
 
     try {
       var respone = await client.get(Uri.parse(url));
-      // 验证是否为图片
+      // 验证是否为图片格式
       final buffer = await ImmutableBuffer.fromUint8List(respone.bodyBytes);
       await ImageDescriptor.encoded(buffer);
       errorLoading.remove(imgName);
@@ -179,18 +208,17 @@ abstract class BookRepository {
       await File(imgPath).writeAsBytes(respone.bodyBytes);
     } catch (e) {
       print('$imgName, $e !!!');
-      if (!exist) {
-        // 本地已存在的话，不是 [Exception: Invalid image data]
-        errorLoading.add(imgName);
-        return '${imageLocalPath}guizhenwuji.jpg';
-      }
+      // 本地已经存在资源；
+      // 网络请求出现错误，使用本地资源（旧图片）
+      // if (imgdateTime == null) {
+      //   errorLoading.add(imgName);
+      //   return '${imageLocalPath}guizhenwuji.jpg';
+      // }
     }
-    // print(' ${errorLoading},,$exist, ${imgPath}');
     // success
     return imgPath;
   }
 
-  /// bookIndexBloc.loadFromList
   Future<List<List>> loadIndexsList(String str) async {
     return await sendMessage<List<List>>(MessageType.mainList, str);
   }
@@ -200,28 +228,22 @@ abstract class BookRepository {
     return await sendMessage<BookInfoRoot>(MessageType.info, url);
   }
 
-  Future<List<BookList>> getBookList(String c) async => await sendMessage<List<BookList>>(MessageType.bookList, c);
+  Future<List<BookList>> getBookList(String c) async {
+    return await sendMessage<List<BookList>>(MessageType.bookList, c);
+  }
 
   Future<List<BookList>> loadShudan(String c, int index) async {
     return await sendMessage<List<BookList>>(MessageType.shudan, [c, index]);
-    // if (result.isNotEmpty) {
-    //   return [result, 302];
-    // } else {
-    //   return ['', 404];
-    // }
-    // return result;
   }
 
   Future<BookListDetailData> loadShudanDetail(int? index) async {
     final url = shudanDetailUrl(index);
     return await sendMessage(MessageType.shudanDetail, url);
   }
-}
 
-class ImagePathData {
-  const ImagePathData({this.path = '', this.error = false});
-  final String path;
-  final bool error;
+  Future<void> restartClient() async {
+    await sendMessage(MessageType.restartClient, '');
+  }
 }
 
 class BookRepositoryImpl extends BookRepository {
@@ -232,14 +254,9 @@ class BookRepositoryImpl extends BookRepository {
   @override
   Future<void> initState() async {
     await super.initState();
-    db = await openDatabase(dataPath, version: 1, onCreate: (Database db, int version) async {
-      await db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-          'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-      await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-          'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-      await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
-    });
+    db = await openDatabase(dataPath, version: 1, onCreate: (Database db, int version) async => await onCreate(db));
     // await db.execute('ALTER TABLE BookContent ADD COLUMN hasContent INTEGER');
+
     afterInit();
   }
 }
@@ -258,14 +275,7 @@ class BookRepositoryWinImpl extends BookRepository {
       dataPath,
       options: OpenDatabaseOptions(
         version: 1,
-        onCreate: (Database db, int version) async {
-          await db.execute(
-              'CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-              'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-          await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-              'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-          await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER, bIndexs TEXT)');
-        },
+        onCreate: (Database db, int version) async => await onCreate(db),
       ),
     );
     afterInit();
@@ -285,7 +295,7 @@ enum MessageType {
   shudan,
   bookList,
   mainList,
-  imgPath,
+  restartClient,
 }
 
 class MessageFunc {
@@ -423,6 +433,7 @@ class IsolateSendMessage {
 
 enum Result {
   success,
+  failed,
   error,
 }
 
@@ -445,20 +456,7 @@ void _isolateRe(List args) async {
   final receivePort = ReceivePort();
   port.send(receivePort.sendPort);
   Hive.init(appPath + '/hive');
-  final client = TimeClient();
-  // final db = await databaseFactoryFfi.openDatabase(
-  //   'book_view_cache_test.db',
-  //   options: OpenDatabaseOptions(
-  //     version: 1,
-  //     onCreate: (Database db, int version) async {
-  //       await db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-  //           'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-  //       await db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-  //           'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-  //       await db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER, bIndexs TEXT)');
-  //     },
-  //   ),
-  // );
+  var client = TimeClient();
 
   receivePort.listen(
     (m) {
@@ -485,8 +483,13 @@ void _isolateRe(List args) async {
           case MessageType.mainList:
             MessageFunc.mainList(m, client);
             break;
+          case MessageType.restartClient:
+            client.close();
+            client = TimeClient();
+            m.sp.send(IsolateReceiveMessage(data: '', result: Result.success));
+            break;
           default:
-            m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
+            m.sp.send(IsolateReceiveMessage(data: '', result: Result.failed));
         }
       }
     },

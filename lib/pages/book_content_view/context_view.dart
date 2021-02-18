@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,6 +30,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
+    absorbPointer.value = true;
   }
 
   @override
@@ -41,17 +42,24 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
   void canLoad() {
     if (animation.isCompleted) {
-      SystemChrome.setEnabledSystemUIOverlays([]);
       bloc.completerCanLoad();
+      absorbPointer.value = false;
+      out = false;
     }
   }
 
+  Timer? timer;
+  bool out = true;
   @override
   void didChangeMetrics() {
-    super.didChangeMetrics();
-    bloc
-      ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-      ..add(PainterMetricsChangeEvent());
+    timer?.cancel();
+    if (!out) {
+      timer = Timer(Duration(milliseconds: 100), () {
+        if (mounted) {
+          bloc.add(PainterMetricsChangeEvent());
+        }
+      });
+    }
   }
 
   @override
@@ -65,7 +73,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     Widget child = BlocBuilder<PainterBloc, PainterState>(
       builder: (context, state) {
-        if (state.config?.bgcolor == null) {
+        if (bloc.config.bgcolor == null) {
           return Container();
         }
         return Stack(
@@ -78,16 +86,12 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
               showSettings: showSettings,
               ignore: state.ignore,
             ),
-            if (state.loading!) Center(child: CircularProgressIndicator()),
+            if (state.loading!) IgnorePointer(ignoring: true, child: Center(child: CircularProgressIndicator())),
           ],
         );
       },
     );
-    // child = LayoutBuilder(builder: (context, constraints) {
-    //   print('..............xxxx');
-    //   bloc..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))..add(PainterMetricsChangeEvent());
-    //   return child;
-    // });
+
     return WillPopScope(
       onWillPop: () async {
         showCname.value = false;
@@ -95,11 +99,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
           showSettings.value = SettingView.none;
           return false;
         }
-        if (showPannel.value) {
-          showPannel.value = false;
-          SystemChrome.setEnabledSystemUIOverlays([]);
-          return false;
-        }
+
         return willPop();
       },
       child: AnimatedBuilder(
@@ -118,25 +118,29 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
+    out = true;
     absorbPointer.value = true;
     //---------------------------
-    bloc.add(PainterSaveEvent());
+    bloc.add(PainterOutEvent());
     bloc.completerCanLoad();
-    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+
+    /// 优化: 移动端
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
-      ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage!))
+      ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage))
       ..add(BookChapterIdLoadEvent());
     if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
       bloc.canCompute!.complete();
     }
-    // bloc.computeCount != 0; 说明正在进行textPainter.layout... (UI耗时任务)
-    // 而网络任务是在另一个Isolate进行的，不用等待。
+
+    // 占用UI资源时，等待；
     if (bloc.computeCount != 0) {
       await bloc.completer.future;
     }
     print('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}');
     await cbloc.loading!.future;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(systemNavigationBarColor: Colors.white));
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     await Future.delayed(Duration(milliseconds: 200));
     //-------------------------
     absorbPointer.value = false;

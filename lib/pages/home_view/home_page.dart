@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -42,8 +41,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+    if (state == AppLifecycleState.inactive) {
+      final bcb = context.read<BookCacheBloc>();
+      // if (painterBloc.bookid != null) {
+      //   bcb.add(BookChapterIdUpdateCidEvent(
+      //       id: painterBloc.bookid!, cid: painterBloc.tData.cid!, page: painterBloc.currentPage));
+      // }
+      bcb.add(BookChapterSaveEvent());
+    } else if (state == AppLifecycleState.detached) {
+      painterBloc.repository.dipose();
+    }
+  }
+
+  /// 不会发生？？
+  @override
   void dispose() {
-    painterBloc.add(PainterSaveEvent());
+    painterBloc.add(PainterOutEvent(changeState: false));
     WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
@@ -51,8 +66,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Timer? timer;
   @override
   Future<bool> didPopRoute() async {
-    final active = timer == null ? false : timer!.isActive;
-    if (active) {
+    final inTime = timer == null ? false : timer!.isActive;
+    if (inTime) {
+      // 退出 app
       return false;
     }
     final entry = OverlayEntry(builder: (context) {
@@ -65,12 +81,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             child: Center(
               child: Material(
                 borderRadius: BorderRadius.circular(6.0),
-                color: Colors.grey[900]!.withAlpha(210),
+                color: Colors.grey.shade900.withAlpha(210),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                   child: Text(
                     '再按一次退出',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 15.0),
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
                   ),
                 ),
               ),
@@ -91,36 +107,53 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final child = Scaffold(
       appBar: AppBar(
         title: Text('hello world'),
-        elevation: 1.0,
+        // elevation: 1.0,
         centerTitle: true,
         actions: [
-          InkWell(
-            borderRadius: BorderRadius.circular(50.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Icon(Icons.search),
-            ),
-            onTap: () {
-              showSearch(context: context, delegate: MySearchPage());
-            },
-          )
-        ],
-        leading: InkWell(
-          borderRadius: BorderRadius.circular(50.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Icon(Icons.menu),
+          Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, contraints) {
+                    final height = contraints.maxHeight;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(height / 2),
+                      child: Container(
+                        height: height,
+                        width: height,
+                        child: Icon(Icons.search),
+                      ),
+                      onTap: () => showSearch(context: context, delegate: MySearchPage()),
+                    );
+                  },
+                ),
+              )
+            ],
           ),
-          onTap: () {
-            showdlg(context);
-          },
+        ],
+        leading: Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, contraints) {
+                  final height = contraints.maxHeight;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(height / 2),
+                    child: Container(
+                      height: height,
+                      width: height,
+                      child: Icon(Icons.menu),
+                    ),
+                    onTap: () => showdlg(context),
+                  );
+                },
+              ),
+            )
+          ],
         ),
       ),
       body: IndexedStack(
-        children: <Widget>[
-          buildBlocBuilder(),
-          ListMainPage(),
-        ],
+        children: <Widget>[buildBlocBuilder(), ListMainPage()],
         index: currentIndex,
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -185,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           bgColor: Colors.cyan[400],
                           splashColor: Colors.cyan[200],
                           onTap: () {
-                            context.read<OptionsBloc>().add(OptionsEvent(TargetPlatform.android));
+                            context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.android));
                             Future.delayed(Duration(milliseconds: 200), () {
                               Navigator.of(context).pop();
                             });
@@ -200,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           bgColor: Colors.cyan[400],
                           splashColor: Colors.cyan[200],
                           onTap: () {
-                            context.read<OptionsBloc>().add(OptionsEvent(TargetPlatform.iOS));
+                            context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.iOS));
                             Future.delayed(Duration(milliseconds: 200), () {
                               Navigator.of(context).pop();
                             });
@@ -351,9 +384,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         onTap: () {
                           context.read<BookCacheBloc>().completerLoading();
                           painterBloc
-                            ..add(PainterNotifySizeEvent(size: MediaQuery.of(context).size))
-                            ..add(PainterNotifyIdEvent(item.id, item.chapterId, item.page ?? 1))
-                            ..canLoad = Completer<void>();
+                            ..canLoad = Completer<void>()
+                            ..add(PainterNewBookIdEvent(item.id!, item.chapterId!, item.page!));
 
                           Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                         },
@@ -497,6 +529,7 @@ class MySearchPage extends SearchDelegate<void> {
       ];
 }
 
+/// no throws
 extension ContextRead on BuildContext {
   T rd<T>() {
     return Provider.of<T>(this, listen: false);

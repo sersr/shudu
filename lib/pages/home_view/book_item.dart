@@ -2,9 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import '../embed/images.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
-
-import '../book_list_view/shudan_item.dart';
 
 class BookItem extends StatelessWidget {
   BookItem(
@@ -42,6 +41,7 @@ class BookItem extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
             child: ImageResolve(
               img: img,
+              width: 60,
               builder: (child) {
                 return UpdateIcon(
                   child: child,

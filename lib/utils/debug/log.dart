@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 abstract class Log {
   static const int info = 0;
   static const int warnning = 1;
@@ -36,19 +38,23 @@ abstract class Log {
       default:
         l = '';
     }
-    switch (lv) {
-      case 0:
-        // addMsg = '\x1B[34m';
-        addMsg = '';
-        break;
-      case 1:
-        addMsg = '\x1B[33m';
-        break;
-      case 2:
-        addMsg = '\x1B[31m';
-        break;
-      default:
-        addMsg = '';
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      switch (lv) {
+        case 0:
+          // addMsg = '\x1B[34m';
+          addMsg = '';
+          break;
+        case 1:
+          addMsg = '\x1B[33m';
+          break;
+        case 2:
+          addMsg = '\x1B[31m';
+          break;
+        default:
+          addMsg = '';
+      }
+    } else {
+      addMsg = '';
     }
     if (stage != null) {
       addMsg += '${stage.runtimeType}';
@@ -65,7 +71,10 @@ abstract class Log {
     if (data != null) {
       addMsg = '$addMsg\n<~ data: ${data.toString()} ~>';
     }
-    print('$addMsg\x1B[0m');
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      addMsg += '\x1B[0m';
+    }
+    print(addMsg);
     return true;
   }
 }

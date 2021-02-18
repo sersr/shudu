@@ -5,3 +5,8 @@ linter:
   rules:
     unawaited_futures: false
     tunnecessary_null_comparison: true
+    prefer_relative_imports: true
+
+analyzer:
+  errors:
+    prefer_relative_imports: warning

@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/bloc.dart';
 
 import '../../bloc/book_index_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
@@ -112,7 +113,7 @@ class _PannelState extends State<Pannel> {
                                 onTap: () {
                                   timer?.cancel();
                                   widget.showCname.value = false;
-                                  context.read<PainterBloc>().add(PainterNotifyIdEvent(state.id, cid, 1));
+                                  context.read<PainterBloc>().add(PainterNewBookIdEvent(state.id, cid, 1));
                                 },
                               );
                             },
@@ -312,7 +313,11 @@ class _BottomEndState extends State<BottomEnd> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 6.0, bottom: 12.0, left: 10.0, right: 10.0),
+      padding: EdgeInsets.only(
+          top: 6.0,
+          bottom: 12.0 + (ui.window.padding.bottom / ui.window.devicePixelRatio / 2),
+          left: 10.0,
+          right: 10.0),
       child: Row(
         children: [
           btn1(
@@ -442,7 +447,14 @@ class _BottomEndState extends State<BottomEnd> {
                       bloc.completerCanLoad();
                     },
                   ),
-                  bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadFromNetEvent())),
+                  bottomButton(
+                      text: '性能图层',
+                      onTap: () {
+                        final opt = context.read<OptionsBloc>();
+                        opt.add(OptionsEvent(showPerformmanceOverlay: !opt.showPerformmanceOverlay));
+                      }),
+                  bottomButton(text: '阴影', onTap: () => bloc.add(PainterShowShadowEvent())),
+                  bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadEvent())),
                   bottomButton(text: '取消', onTap: () => bloc.completerResolve(Status.ignore)),
                   bottomButton(text: '删除缓存', onTap: () => bloc.add(PainterDeleteCachesEvent(bloc.bookid!))),
                 ]),
@@ -503,7 +515,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           ),
         ),
         Positioned(
-          top: 34.0,
+          top: 12 + ui.window.padding.top / ui.window.devicePixelRatio,
           left: 24.0,
           right: 24.0,
           bottom: 10.0,
@@ -659,44 +671,43 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(9),
-                                  color: Colors.blueGrey.shade600,
-                                ),
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: fontvalue,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        activeColor: Colors.cyan,
-                                        inactiveColor: Colors.cyan.shade600,
-                                        value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
-                                        onChanged: (double value) {
-                                          fontvalue.value = value;
-                                        },
-                                        min: 10.0,
-                                        max: 30.0,
-                                      );
-                                    },
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(9),
+                                    color: Colors.blueGrey.shade600,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: AnimatedBuilder(
+                                      animation: fontvalue,
+                                      builder: (context, child) {
+                                        return Slider(
+                                          activeColor: Colors.cyan,
+                                          inactiveColor: Colors.cyan.shade600,
+                                          value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
+                                          onChanged: (double value) {
+                                            fontvalue.value = value;
+                                          },
+                                          min: 10.0,
+                                          max: 40.0,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                      animation: fontvalue,
-                                      builder: (context, child) {
-                                        return Container(
-                                          child: Center(
-                                            child: Text(
-                                              '字体大小: ${fontvalue.value.toInt()}',
-                                              softWrap: false,
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                ),
+                              RepaintBoundary(
+                                child: AnimatedBuilder(
+                                    animation: fontvalue,
+                                    builder: (context, child) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Text(
+                                          '字体大小: ${fontvalue.value.toInt()}',
+                                          softWrap: false,
+                                        ),
+                                      );
+                                    }),
                               ),
                             ],
                           ),
@@ -704,45 +715,45 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Row(
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(9),
-                                    color: Colors.blueGrey.shade600,
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: AnimatedBuilder(
-                                      animation: fontHvalue,
-                                      builder: (context, child) {
-                                        return Slider(
-                                          activeColor: Colors.indigo.shade300,
-                                          inactiveColor: Colors.indigo,
-                                          value: fontHvalue.value,
-                                          onChanged: (double value) {
-                                            fontHvalue.value = value;
-                                          },
-                                          min: 1.0,
-                                          max: 2.0,
-                                        );
-                                      },
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(9),
+                                      color: Colors.blueGrey.shade600,
+                                    ),
+                                    child: RepaintBoundary(
+                                      child: AnimatedBuilder(
+                                        animation: fontHvalue,
+                                        builder: (context, child) {
+                                          return Slider(
+                                            activeColor: Colors.indigo.shade300,
+                                            inactiveColor: Colors.indigo,
+                                            value: fontHvalue.value,
+                                            onChanged: (double value) {
+                                              fontHvalue.value = value;
+                                            },
+                                            min: 1.0,
+                                            max: 3.0,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: RepaintBoundary(
-                                    child: AnimatedBuilder(
-                                        animation: fontHvalue,
-                                        builder: (context, child) {
-                                          return Container(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Center(
-                                              child: Text(
-                                                '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
-                                                softWrap: false,
-                                              ),
+                                RepaintBoundary(
+                                  child: AnimatedBuilder(
+                                      animation: fontHvalue,
+                                      builder: (context, child) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                          child: Center(
+                                            child: Text(
+                                              '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
+                                              softWrap: false,
                                             ),
-                                          );
-                                        }),
-                                  ),
+                                          ),
+                                        );
+                                      }),
                                 ),
                               ],
                             ),
@@ -795,7 +806,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               child: IndexsWidget(
                 onTap: (context, id, cid) {
                   context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
-                  context.read<PainterBloc>().add(PainterNotifyIdEvent(id, cid, 1));
+                  context.read<PainterBloc>().add(PainterNewBookIdEvent(id, cid, 1));
                   widget.showSettings.value = SettingView.none;
                 },
               ),

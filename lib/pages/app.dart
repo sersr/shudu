@@ -21,6 +21,7 @@ class ShuduApp extends StatelessWidget {
           fontFamily: 'NotoSansSC',
         ),
         home: MyHomePage(),
+        showPerformanceOverlay: state.showPerformmanceOverlay ?? false,
         routes: {
           BookInfoPage.currentRoute: (_) => BookInfoPage(),
           BookContentPage.currentRoute: (_) => BookContentPage(),
@@ -48,7 +49,7 @@ class MulProvider extends StatelessWidget {
         BlocProvider(create: (context) {
           return BookIndexBloc(repository: context.read<BookRepository>());
         }),
-        BlocProvider(create: (_) => SearchBloc()),
+        BlocProvider(create: (context) => SearchBloc(context.read<BookRepository>())),
         BlocProvider(create: (context) => BookInfoBloc(context.read<BookRepository>())),
         BlocProvider(
           create: (context) {

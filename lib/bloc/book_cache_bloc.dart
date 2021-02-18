@@ -78,6 +78,8 @@ abstract class BookChapterIdEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class BookChapterSaveEvent extends BookChapterIdEvent {}
+
 class BookChapterIdAddEvent extends BookChapterIdEvent {
   BookChapterIdAddEvent({required this.bookCache});
   final BookCache bookCache;
@@ -139,6 +141,9 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   BookCacheBloc(this.repository) : super(BookChapterIdState());
   BookRepository repository;
 
+  // AppLifecycleState
+  final currentContentId = <int, Map<String, int>>{};
+
   @override
   Stream<BookChapterIdState> mapEventToState(BookChapterIdEvent event) async* {
     if (event is BookChapterIdFirstLoadEvent) {
@@ -149,11 +154,13 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     } else if (event is BookChapterIdAddEvent) {
       yield* addBook(event);
     } else if (event is BookChapterIdUpdateCidEvent) {
-      await updateMainInfo(event.id, event.cid, event.page);
+      currentContentId[event.id] = {'cid': event.cid, 'page': event.page};
     } else if (event is BookChapterIdDeleteEvent) {
       await deleteBook(event);
     } else if (event is BookChapterIdIsTopEvent) {
       updateBookIsTop(event.id, event.isTop);
+    } else if (event is BookChapterSaveEvent) {
+      await save();
     }
   }
 
@@ -165,9 +172,18 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     }
   }
 
-  Stream<BookChapterIdState> loadForView({bool load = false}) async* {
-    var list = <Map<String, dynamic>>[];
+  Future<void> save() async {
+    if (currentContentId.isEmpty) return;
+    final _current = Map.of(currentContentId).entries;
+    currentContentId.clear();
+    for (var el in _current) {
+      await updateMainInfo(el.key, el.value['cid']!, el.value['page']!);
+    }
+  }
 
+  Stream<BookChapterIdState> loadForView({bool load = false}) async* {
+    await save();
+    var list = <Map<String, dynamic>>[];
     list = await repository.db.rawQuery('SELECT * FROM BookInfo');
     if (list.isNotEmpty) {
       final s = BookChapterIdState.fromMap(list);

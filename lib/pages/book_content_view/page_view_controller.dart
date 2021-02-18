@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -68,7 +69,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void nextPage() {
-    if (_lastActivityIsIdleActivity) {
+    if (_lastActivityIsIdle) {
       final nextPage = page.round();
       if (axis == Axis.horizontal) {
         if (hasContent(0, nextPage)) {
@@ -106,6 +107,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     }
   }
 
+  Activity? get aaa => _activity;
   bool get isScrolling => _activity is! IdleActivity;
   void scrollingnotifier(bool value) {
     scrollingNotify(value);
@@ -134,7 +136,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goPageResolve() {
-    if (axis == Axis.vertical || pixels! % viewPortDimension! == 0.0) {
+    final la = pixels! % viewPortDimension!;
+    if (axis == Axis.vertical || la <= 1.0 || la + 1.0 >= viewPortDimension!) {
       _lastvelocity = 0.0;
       goIdle();
     }
@@ -151,17 +154,18 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       return;
     }
     int to;
-    if (velocity < -200.0) {
-      to = (page - 0.5).round();
-      velocity = math.min(-600, velocity);
-    } else if (velocity > 200.0) {
-      to = (page + 0.5).round();
-      velocity = math.max(600, velocity);
-    } else {
-      to = page.round();
-    }
-    final end = to * viewPortDimension!;
+
     if (axis == Axis.horizontal) {
+      if (velocity < -200.0) {
+        to = (page - 0.5).round();
+        velocity = math.max(-500, velocity);
+      } else if (velocity > 200.0) {
+        to = (page + 0.5).round();
+        velocity = math.min(500, velocity);
+      } else {
+        to = page.round();
+      }
+      final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
@@ -169,6 +173,15 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
         simulation: getSpringSimulation(velocity, end),
       ));
     } else {
+      if (velocity < -200.0) {
+        to = (page - 0.5).round();
+      } else if (velocity > 200.0) {
+        to = (page + 0.5).round();
+      } else {
+        to = page.round();
+      }
+      final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
+
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
@@ -218,34 +231,20 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
     _canDrag = getDragState();
     if (!_canDrag) {
+      print('....can not drag....');
       return null;
     }
     scrollingnotifier(true);
-    final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
+    final _drag = PreNextDragController(delegate: this, details: details, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
     _currentDrag = _drag;
     return _drag;
   }
-    // PreNextDragController? drag(DragStartDetails details, VoidCallback cancelCallback) {
-  //   if (pixels == minExtent || pixels == maxExtent) {
-  //     scrollingnotifier(false);
-  //   }
 
-  //   _canDrag = getDragState();
-  //   if (!_canDrag) {
-  //     return null;
-  //   }
-  //   scrollingnotifier(true);
-  //   final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
-  //   beginActivity(DragActivity(delegate: this, controller: _drag));
-  //   _currentDrag = _drag;
-  //   return _drag;
-  // }
-
-  var _lastActivityIsIdleActivity = true;
+  var _lastActivityIsIdle = true;
   ScrollHoldController hold(VoidCallback cancel) {
     final _hold = HoldActivity(this, call: cancel);
-    _lastActivityIsIdleActivity = _activity is IdleActivity;
+    _lastActivityIsIdle = _activity is IdleActivity;
     beginActivity(_hold);
     return _hold;
   }
@@ -286,7 +285,7 @@ class ContentPreNextElement extends RenderObjectElement {
   @override
   ContentPreNextRenderObject get renderObject => super.renderObject as ContentPreNextRenderObject;
 
-  final childElement = <int, Element>{};
+  final childElement = SplayTreeMap<int, Element>();
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -393,7 +392,7 @@ class ContentPreNextRenderObject extends RenderBox {
   ContentPreNextRenderObject({NopPageViewController? vpOffset}) : _vpOffset = vpOffset;
 
   ContentPreNextElement? _element;
-  final childlist = <int, RenderBox>{};
+  final childlist = SplayTreeMap<int, RenderBox>();
 
   void add(RenderBox child, index) {
     assert(index is int);
@@ -482,7 +481,10 @@ class ContentPreNextRenderObject extends RenderBox {
         layoutChild(i);
 
         /// 不需要child重新布局，状态管理已经转移了
-        childlist[i]?.layout(constraints, parentUsesSize: true);
+        childlist[i]?.layout(
+          constraints,
+          // parentUsesSize: true,
+        );
       }
     }
     for (var i = _firstIndex; i <= _lastIndex; i++) {
@@ -509,6 +511,7 @@ class ContentPreNextRenderObject extends RenderBox {
         }
       }
       collectGarbage(firstIndex!, lastIndex!);
+      // ??
       final leftChild = vpOffset!.hasContent(1, firstIndex!);
       final rightChild = vpOffset!.hasContent(0, lastIndex!);
       vpOffset!.applyConentDimension(
@@ -545,9 +548,13 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    context.setIsComplexHint();
-    _clipRectLayer =
-        context.pushClipRect(needsCompositing, Offset.zero, Offset.zero & size, defaultPaint, oldLayer: _clipRectLayer);
+    // if (defaultTargetPlatform == TargetPlatform.android && axis == Axis.horizontal) {
+      // context.clipRectAndPaint(Offset.zero & size, Clip.none,() => defaultPaint(context,offset));
+      // defaultPaint(context, offset);
+    // } else {
+      _clipRectLayer = context.pushClipRect(needsCompositing, Offset.zero, Offset.zero & size, defaultPaint,
+          oldLayer: _clipRectLayer);
+    // }
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {

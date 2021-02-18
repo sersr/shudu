@@ -1,9 +1,9 @@
 
 import 'package:flutter/material.dart';
-import 'package:shudu/bloc/painter_bloc.dart';
-import 'package:shudu/pages/app.dart';
-import 'package:shudu/utils/debug/log.dart';
-import 'package:shudu/utils/widget/shader_warmup.dart';
+import 'bloc/painter_bloc.dart';
+import 'pages/app.dart';
+import 'utils/debug/log.dart';
+import 'utils/widget/shader_warmup.dart';
 
 void main() {
   assert(() {
