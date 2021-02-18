@@ -131,8 +131,12 @@ class PreNextDragController extends Drag {
   final VoidCallback? cancelCallback;
   @override
   void update(DragUpdateDetails details) {
-    delegate.applyUserOffset(-details.primaryDelta!);
+    final offset = details.primaryDelta!;
+    if (offset == 0) return;
+    delegate.applyUserOffset(offset);
   }
+
+  
 
   @override
   void cancel() {

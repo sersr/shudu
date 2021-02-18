@@ -204,7 +204,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void applyUserOffset(double delta) {
     if (delta == 0.0) return;
-    setPixels(pixels! + delta);
+    setPixels(pixels! - delta);
   }
 
   PreNextDragController? _currentDrag;
@@ -226,6 +226,21 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     _currentDrag = _drag;
     return _drag;
   }
+    // PreNextDragController? drag(DragStartDetails details, VoidCallback cancelCallback) {
+  //   if (pixels == minExtent || pixels == maxExtent) {
+  //     scrollingnotifier(false);
+  //   }
+
+  //   _canDrag = getDragState();
+  //   if (!_canDrag) {
+  //     return null;
+  //   }
+  //   scrollingnotifier(true);
+  //   final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
+  //   beginActivity(DragActivity(delegate: this, controller: _drag));
+  //   _currentDrag = _drag;
+  //   return _drag;
+  // }
 
   var _lastActivityIsIdleActivity = true;
   ScrollHoldController hold(VoidCallback cancel) {
