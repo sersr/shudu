@@ -72,7 +72,6 @@ class PainterNewBookIdEvent extends PainterEvent {
   final int page;
 }
 
-// class PainterNotifySizeEvent extends PainterEvent {}
 
 class PainterSetPreferencesEvent extends PainterEvent {
   PainterSetPreferencesEvent({this.config});
@@ -99,9 +98,6 @@ class PainterMetricsChangeEvent extends PainterEvent {}
 
 class PainterState {
   PainterState({this.empty});
-
-  // final ContentViewConfig? config;
-  // final bool? loading;
   final bool? empty;
   bool get isNull => empty == null;
 }
