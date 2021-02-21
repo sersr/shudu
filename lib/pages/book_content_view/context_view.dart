@@ -1,9 +1,10 @@
 import 'dart:async';
-
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../utils/utils.dart';
 
 import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/painter_bloc.dart';
@@ -43,23 +44,22 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void canLoad() {
     if (animation.isCompleted) {
       bloc.completerCanLoad();
+      // SystemChrome.setEnabledSystemUIOverlays([]);
       absorbPointer.value = false;
-      out = false;
     }
   }
 
   Timer? timer;
-  bool out = true;
   @override
   void didChangeMetrics() {
     timer?.cancel();
-    if (!out) {
-      timer = Timer(Duration(milliseconds: 100), () {
-        if (mounted) {
-          bloc.add(PainterMetricsChangeEvent());
-        }
-      });
-    }
+    timer = Timer(Duration(milliseconds: 100), () {
+      if (mounted) {
+        final w = ui.window;
+        assert(Log.i('${w.systemGestureInsets}${w.viewPadding}${w.padding}${w.viewInsets}${w.physicalGeometry}'));
+        bloc.add(PainterMetricsChangeEvent());
+      }
+    });
   }
 
   @override
@@ -75,20 +75,29 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
       builder: (context, state) {
         if (bloc.config.bgcolor == null) {
           return Container();
+        } else {
+          return Stack(
+            children: [
+              Container(color: Color(bloc.config.bgcolor!)),
+              ContentPageView(
+                show: showPannel,
+                willPop: willPop,
+                showCname: showCname,
+                showSettings: showSettings,
+              ),
+              RepaintBoundary(
+                  child: AnimatedBuilder(
+                      animation: bloc.loading,
+                      builder: (context, child) {
+                        if (bloc.loading.value) {
+                          return child!;
+                        }
+                        return Container();
+                      },
+                      child: Center(child: CircularProgressIndicator())))
+            ],
+          );
         }
-        return Stack(
-          children: [
-            Container(color: Color(state.config!.bgcolor!)),
-            ContentPageView(
-              show: showPannel,
-              willPop: willPop,
-              showCname: showCname,
-              showSettings: showSettings,
-              ignore: state.ignore,
-            ),
-            if (state.loading!) IgnorePointer(ignoring: true, child: Center(child: CircularProgressIndicator())),
-          ],
-        );
       },
     );
 
@@ -118,32 +127,31 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
-    out = true;
     absorbPointer.value = true;
     //---------------------------
-    bloc.add(PainterOutEvent());
+    // bloc.add(PainterOutEvent());
+    bloc.out();
     bloc.completerCanLoad();
+    if (!bloc.completer.isCompleted) {
+      // 尽快退出其他任务；
+      await bloc.repository.restartClient();
+      // await bloc.completer.future;
+    }
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+    bloc.completercanCompute();
+    await bloc.dump();
 
     /// 优化: 移动端
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
-      ..add(BookChapterIdUpdateCidEvent(id: bloc.bookid!, cid: bloc.tData.cid!, page: bloc.currentPage))
       ..add(BookChapterIdLoadEvent());
-    if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
-      bloc.canCompute!.complete();
-    }
 
-    // 占用UI资源时，等待；
-    if (bloc.computeCount != 0) {
-      await bloc.completer.future;
-    }
-    print('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}');
+    await bloc.completer.future;
+    assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));
     await cbloc.loading!.future;
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(systemNavigationBarColor: Colors.white));
-    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-    await Future.delayed(Duration(milliseconds: 200));
     //-------------------------
     absorbPointer.value = false;
+    await Future.delayed(Duration(milliseconds: 300));
     return true;
   }
 }

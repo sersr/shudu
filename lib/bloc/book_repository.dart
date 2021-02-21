@@ -32,12 +32,12 @@ typedef DCallback<T> = Future<void> Function(T);
 //   final BookCacheBloc bloc;
 // }
 
-abstract class BookRepository {
+class BookRepository {
   BookRepository();
 
   late String dataPath;
+  late InnerDatabase innerdb;
   // Dio dio;
-  late Database db;
   // late SharedPreferences prefs;
   late String appPath;
   late Box<int> imageUpdate;
@@ -79,14 +79,6 @@ abstract class BookRepository {
 
   ///API------------------------------------------------
 
-  Future<void> onCreate(Database _db) async {
-    await _db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
-        'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
-    await _db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
-        'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
-    await _db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
-  }
-
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
@@ -103,6 +95,20 @@ abstract class BookRepository {
     clientRP = ReceivePort();
     _isolate = await Isolate.spawn(_isolateRe, [clientRP.sendPort, appPath]);
     clientSP = await clientRP.first;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.fuchsia:
+        innerdb = InnerDatabaseImpl();
+        break;
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+        innerdb = InnerDatabaseWinImpl();
+        break;
+    }
+    await innerdb.initState();
+    afterInit();
   }
 
   // 启动app时等待初始化完成
@@ -114,18 +120,7 @@ abstract class BookRepository {
     client.close();
     clientRP.close();
     _isolate.kill(priority: 0);
-    await db.close();
-  }
-
-  /// isNew == 1
-  Future<void> updateCname(int id, String cname, String updateTime) async {
-    final _ocname = await db.rawQuery('SELECT lastChapter from BookInfo where bookId = ?', [id]);
-    if (_ocname.isNotEmpty) {
-      if (_ocname.first['lastChapter'] != cname) {
-        await db.rawUpdate('update BookInfo set lastChapter = ?, isNew = ?, updateTime = ? where bookId = ?',
-            [cname, 1, updateTime, id]);
-      }
-    }
+    // await db.close();
   }
 
   Future<SearchList> searchWithKey(String? key) async {
@@ -207,7 +202,7 @@ abstract class BookRepository {
       await imageUpdate.put(imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
       await File(imgPath).writeAsBytes(respone.bodyBytes);
     } catch (e) {
-      print('$imgName, $e !!!');
+      assert(Log.i('$imgName, $e !!!'));
       // 本地已经存在资源；
       // 网络请求出现错误，使用本地资源（旧图片）
       // if (imgdateTime == null) {
@@ -246,23 +241,56 @@ abstract class BookRepository {
   }
 }
 
-class BookRepositoryImpl extends BookRepository {
-  BookRepositoryImpl();
+abstract class InnerDatabase {
+  late Database db;
+  late String dataPath;
+  Future<void> initState();
+
+  /// isNew == 1
+  Future<void> updateCname(int id, String cname, String updateTime) async {
+    final _ocname = await db.rawQuery('SELECT lastChapter from BookInfo where bookId = ?', [id]);
+    if (_ocname.isNotEmpty) {
+      if (_ocname.first['lastChapter'] != cname) {
+        await db.rawUpdate('update BookInfo set lastChapter = ?, isNew = ?, updateTime = ? where bookId = ?',
+            [cname, 1, updateTime, id]);
+      }
+    }
+  }
+
+  Future<void> onCreate(Database _db, int version) async {
+    await _db.execute('CREATE TABLE BookInfo (id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
+        'img TEXT, updateTime TEXT, lastChapter TEXT, sortKey INTEGER, isTop INTEGER, cPage INTEGER, isNew INTEGER)');
+    await _db.execute('CREATE TABLE BookContent (id INTEGER PRIMARY KEY, bookId INTEGER, cid INTEGER, cname TEXT,'
+        'nid INTEGER, pid INTEGER, content TEXT, hasContent INTEGER)');
+    await _db.execute('CREATE TABLE BookIndex (id INTEGER PRIMARY KEY, bookId INTEGER,bIndexs TEXT)');
+  }
+
+  /// isNew == 0
+  Future<void> updateMainInfo(int id, int cid, int page) async {
+    await db.rawUpdate('update BookInfo set chapterId = ?, cPage = ?, isNew = ?,sortKey = ? where bookId = ?',
+        [cid, page, 0, DateTime.now().millisecondsSinceEpoch, id]);
+  }
+
+  void updateBookIsTop(int id, int isTop) async {
+    await db.rawUpdate('update BookInfo set isTop = ?,sortKey = ?  where bookId = ?',
+        [isTop, DateTime.now().millisecondsSinceEpoch, id]);
+  }
+}
+
+class InnerDatabaseImpl extends InnerDatabase {
+  InnerDatabaseImpl();
   @override
   String dataPath = 'book_view_cache.db';
 
   @override
   Future<void> initState() async {
-    await super.initState();
-    db = await openDatabase(dataPath, version: 1, onCreate: (Database db, int version) async => await onCreate(db));
+    db = await openDatabase(dataPath, version: 1, onCreate: onCreate);
     // await db.execute('ALTER TABLE BookContent ADD COLUMN hasContent INTEGER');
-
-    afterInit();
   }
 }
 
-class BookRepositoryWinImpl extends BookRepository {
-  BookRepositoryWinImpl() {
+class InnerDatabaseWinImpl extends InnerDatabase {
+  InnerDatabaseWinImpl() {
     sqfliteFfiInit();
   }
 
@@ -270,15 +298,7 @@ class BookRepositoryWinImpl extends BookRepository {
   String dataPath = 'book_view_cache_test.db';
   @override
   Future<void> initState() async {
-    await super.initState();
-    db = await databaseFactoryFfi.openDatabase(
-      dataPath,
-      options: OpenDatabaseOptions(
-        version: 1,
-        onCreate: (Database db, int version) async => await onCreate(db),
-      ),
-    );
-    afterInit();
+    db = await databaseFactoryFfi.openDatabase(dataPath, options: OpenDatabaseOptions(version: 1, onCreate: onCreate));
     // await db.execute('ALTER TABLE BookContent ADD COLUMN hasContent INTEGER');
     // await db.rawDelete(
     //   'DELETE FROM BookContent WHERE bookId = ?',
@@ -301,9 +321,8 @@ enum MessageType {
 class MessageFunc {
   static Future<void> mainList(dynamic m, TimeClient client) async {
     var bookIndexShort = <List>[];
-    BookIndex map;
     try {
-      map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
+      final map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
       for (var bookVol in map.list!) {
         final _inl = []..add(bookVol.name);
         for (var bookChapter in bookVol.list!) {
@@ -459,7 +478,7 @@ void _isolateRe(List args) async {
   var client = TimeClient();
 
   receivePort.listen(
-    (m) {
+    (m) async {
       if (m is IsolateSendMessage) {
         switch (m.type) {
           case MessageType.info:

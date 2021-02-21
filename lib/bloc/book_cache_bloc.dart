@@ -78,7 +78,7 @@ abstract class BookChapterIdEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class BookChapterSaveEvent extends BookChapterIdEvent {}
+// class BookChapterSaveEvent extends BookChapterIdEvent {}
 
 class BookChapterIdAddEvent extends BookChapterIdEvent {
   BookChapterIdAddEvent({required this.bookCache});
@@ -108,15 +108,15 @@ class BookChapterIdIsTopEvent extends BookChapterIdEvent {
   List<Object?> get props => [isTop, id];
 }
 
-class BookChapterIdUpdateCidEvent extends BookChapterIdEvent {
-  BookChapterIdUpdateCidEvent({required this.id, required this.cid, required this.page});
-  final int id;
-  final int cid;
-  final int page;
+// class BookChapterIdUpdateCidEvent extends BookChapterIdEvent {
+//   BookChapterIdUpdateCidEvent({required this.id, required this.cid, required this.page});
+//   final int id;
+//   final int cid;
+//   final int page;
 
-  @override
-  List<Object?> get props => [id, cid, page];
-}
+//   @override
+//   List<Object?> get props => [id, cid, page];
+// }
 
 class BookChapterIdFirstLoadEvent extends BookChapterIdEvent {}
 
@@ -142,7 +142,7 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   BookRepository repository;
 
   // AppLifecycleState
-  final currentContentId = <int, Map<String, int>>{};
+  // final currentContentId = <int, Map<String, int>>{};
 
   @override
   Stream<BookChapterIdState> mapEventToState(BookChapterIdEvent event) async* {
@@ -153,14 +153,14 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
       yield* loadForView(load: event.load);
     } else if (event is BookChapterIdAddEvent) {
       yield* addBook(event);
-    } else if (event is BookChapterIdUpdateCidEvent) {
-      currentContentId[event.id] = {'cid': event.cid, 'page': event.page};
+    // } else if (event is BookChapterIdUpdateCidEvent) {
+      //   currentContentId[event.id] = {'cid': event.cid, 'page': event.page};
     } else if (event is BookChapterIdDeleteEvent) {
       await deleteBook(event);
     } else if (event is BookChapterIdIsTopEvent) {
-      updateBookIsTop(event.id, event.isTop);
-    } else if (event is BookChapterSaveEvent) {
-      await save();
+      repository.innerdb.updateBookIsTop(event.id, event.isTop);
+      // } else if (event is BookChapterSaveEvent) {
+      //   await save();
     }
   }
 
@@ -172,19 +172,19 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     }
   }
 
-  Future<void> save() async {
-    if (currentContentId.isEmpty) return;
-    final _current = Map.of(currentContentId).entries;
-    currentContentId.clear();
-    for (var el in _current) {
-      await updateMainInfo(el.key, el.value['cid']!, el.value['page']!);
-    }
-  }
+  // Future<void> save() async {
+  //   if (currentContentId.isEmpty) return;
+  //   final _current = Map.of(currentContentId).entries;
+  //   currentContentId.clear();
+  //   for (var el in _current) {
+  //     await repository.innerdb.updateMainInfo(el.key, el.value['cid']!, el.value['page']!);
+  //   }
+  // }
 
   Stream<BookChapterIdState> loadForView({bool load = false}) async* {
-    await save();
+    // await save();
     var list = <Map<String, dynamic>>[];
-    list = await repository.db.rawQuery('SELECT * FROM BookInfo');
+    list = await repository.innerdb.db.rawQuery('SELECT * FROM BookInfo');
     if (list.isNotEmpty) {
       final s = BookChapterIdState.fromMap(list);
       yield s;
@@ -197,7 +197,7 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
           await Future.delayed(Duration(milliseconds: 200));
           await loadFromNet(item.id!);
         }
-        list = await repository.db.rawQuery('SELECT * FROM BookInfo');
+        list = await repository.innerdb.db.rawQuery('SELECT * FROM BookInfo');
         yield BookChapterIdState.fromMap(list);
       }
     }
@@ -211,30 +211,18 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
       final newCname = data.lastChapter;
       final lastTime = data.lastTime;
       if (newCname != null && lastTime != null) {
-        await repository.updateCname(id, newCname, lastTime);
+        await repository.innerdb.updateCname(id, newCname, lastTime);
       }
     }
-  }
-
-  /// isNew == 0
-  Future<void> updateMainInfo(int id, int cid, int page) async {
-    await repository.db.rawUpdate(
-        'update BookInfo set chapterId = ?, cPage = ?, isNew = ?,sortKey = ? where bookId = ?',
-        [cid, page, 0, DateTime.now().millisecondsSinceEpoch, id]);
-  }
-
-  void updateBookIsTop(int id, int isTop) async {
-    await repository.db.rawUpdate('update BookInfo set isTop = ?,sortKey = ?  where bookId = ?',
-        [isTop, DateTime.now().millisecondsSinceEpoch, id]);
   }
 
   Stream<BookChapterIdState> addBook(BookChapterIdAddEvent event) async* {
     int? count = 0;
     final bookcache = event.bookCache;
     count = Sqflite.firstIntValue(
-        await repository.db.rawQuery('SELECT COUNT(*) FROM BookInfo where bookid = ?', [bookcache.id]));
+        await repository.innerdb.db.rawQuery('SELECT COUNT(*) FROM BookInfo where bookid = ?', [bookcache.id]));
     if (count == 0) {
-      await repository.db.rawInsert(
+      await repository.innerdb.db.rawInsert(
         'INSERT INTO BookInfo(name, bookId, chapterId, img, updateTime, lastChapter, sortKey, isTop,cPage,isNew)'
         ' VALUES(?,?,?,?,?,?,?,?,?,?)',
         [
@@ -255,6 +243,6 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Future<void> deleteBook(BookChapterIdDeleteEvent event) async {
-    await repository.db.rawDelete('DELETE FROM BookInfo WHERE bookId = ?', [event.id]);
+    await repository.innerdb.db.rawDelete('DELETE FROM BookInfo WHERE bookId = ?', [event.id]);
   }
 }

@@ -7,18 +7,14 @@ import 'package:sqflite/sqflite.dart';
 import '../utils/utils.dart';
 import 'book_repository.dart';
 
-abstract class BookIndexEvent extends Equatable {
+abstract class BookIndexEvent {
   BookIndexEvent();
-  @override
-  List<Object?> get props => [];
 }
 
 class BookIndexShowEvent extends BookIndexEvent {
   BookIndexShowEvent({this.id, this.cid});
   final int? id;
   final int? cid;
-  @override
-  List<Object?> get props => [id, cid];
 }
 
 class BookIndexReloadEvent extends BookIndexEvent {}
@@ -95,17 +91,18 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     }
   }
 
-  Future<void> cachedb(int? id, String indexs) async {
+  Future<void> cacheinnerdb(int? id, String indexs) async {
     int? count = 0;
 
     count =
-        Sqflite.firstIntValue(await repository!.db.rawQuery('SELECT COUNT(*) FROM BookIndex WHERE bookId = ?', [id]));
+        Sqflite.firstIntValue(
+        await repository!.innerdb.db.rawQuery('SELECT COUNT(*) FROM BookIndex WHERE bookId = ?', [id]));
     if (count! > 0) {
-      await repository!.db.rawUpdate('UPDATE BookIndex set bIndexs = ? WHERE bookId = ?', [indexs, id]);
+      await repository!.innerdb.db.rawUpdate('UPDATE BookIndex set bIndexs = ? WHERE bookId = ?', [indexs, id]);
       assert(Log.log(count > 1 ? Log.error : Log.info, 'count: $count,id: ${id} cache bIndexs.',
-          stage: this, name: 'cachedb'));
+          stage: this, name: 'cacheinnerdb'));
     } else {
-      await repository!.db.rawInsert(
+      await repository!.innerdb.db.rawInsert(
         'INSERT INTO BookIndex (bookId,bIndexs)'
         ' VALUES(?,?)',
         [id, indexs],
@@ -119,7 +116,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     var volIndex = 0;
     var inIndexs = false;
     var cacheList = <int>[];
-    var queryList = await repository!.db.rawQuery('SELECT cid FROM BookContent WHERE bookId =?', [bookid]);
+    var queryList = await repository!.innerdb.db.rawQuery('SELECT cid FROM BookContent WHERE bookId =?', [bookid]);
     for (var l in queryList) {
       cacheList.add(l['cid'] as int);
     }
@@ -136,7 +133,6 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
         }
       }
       if (inIndexs) {
-        assert(Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
         yield BookIndexWidthData(
             id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
       }
@@ -146,7 +142,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
       id = bookid;
       cid = contentid;
       var bookList = [];
-      bookList = await repository!.db.rawQuery('SELECT * FROM BookIndex WHERE bookId = ?', [bookid]);
+      bookList = await repository!.innerdb.db.rawQuery('SELECT * FROM BookIndex WHERE bookId = ?', [bookid]);
       if (bookList.isNotEmpty) {
         final restr = bookList.first['bIndexs'] as String?;
         if (restr != null && restr.isNotEmpty) {
@@ -201,7 +197,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             indexs.last.last.cid != bookIndexShort.last.last.cid) {
           final newCname = bookIndexShort.last.last.cname;
 
-          await repository!.updateCname(bookid, newCname, DateTime.now().toStringFormat);
+          await repository!.innerdb.updateCname(bookid, newCname, DateTime.now().toStringFormat);
           indexs = bookIndexShort;
           index = 0;
           volIndex = 0;
@@ -217,7 +213,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
           assert(Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
           yield BookIndexWidthData(
               id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
-          await cachedb(id, rawData);
+          await cacheinnerdb(id, rawData);
         }
       }
     }

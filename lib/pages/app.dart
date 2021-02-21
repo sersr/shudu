@@ -40,8 +40,7 @@ class MulProvider extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider(
-          create: (_) =>
-              defaultTargetPlatform == TargetPlatform.windows ? BookRepositoryWinImpl() : BookRepositoryImpl(),
+          create: (_) => BookRepository(),
         ),
         BlocProvider(create: (context) {
           return BookCacheBloc(context.read<BookRepository>())..add(BookChapterIdFirstLoadEvent());
@@ -55,7 +54,6 @@ class MulProvider extends StatelessWidget {
           create: (context) {
             return PainterBloc(
                 repository: context.read<BookRepository>(),
-                bookCacheBloc: context.read<BookCacheBloc>(),
                 bookIndexBloc: context.read<BookIndexBloc>());
           },
         ),

@@ -11,7 +11,7 @@ class ImageShadow extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             offset: const Offset(-4, 2),
-            color: Color.fromRGBO(150, 150, 150, 1),
+            color: Color.fromRGBO(180, 180, 180, 1),
             blurRadius: 2.6,
             spreadRadius: 2,
           ),

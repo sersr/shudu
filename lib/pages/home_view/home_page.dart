@@ -43,14 +43,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     print(state);
-    if (state == AppLifecycleState.inactive) {
-      final bcb = context.read<BookCacheBloc>();
-      // if (painterBloc.bookid != null) {
-      //   bcb.add(BookChapterIdUpdateCidEvent(
-      //       id: painterBloc.bookid!, cid: painterBloc.tData.cid!, page: painterBloc.currentPage));
-      // }
-      bcb.add(BookChapterSaveEvent());
-    } else if (state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.detached) {
       painterBloc.repository.dipose();
     }
   }
@@ -180,6 +173,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         animation: painterBloc.repository.init,
         child: RepaintBoundary(child: child),
         builder: (context, child) {
+          if (painterBloc.repository.init.value) {
+            painterBloc.add(PainterInitEvent());
+          }
           return AbsorbPointer(
             child: child,
             absorbing: !painterBloc.repository.init.value,

@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-
+import 'dart:ui' as ui;
 abstract class Activity {
   Activity(this.delegate);
   ActivityDelegate delegate;
@@ -106,7 +106,7 @@ class BallisticActivity extends Activity {
       done();
       return;
     }
-    if (magnetic && p < 1) {
+    if (magnetic && p < 1 / ui.window.devicePixelRatio) {
       delegate.setPixels(end);
       done();
     } else {

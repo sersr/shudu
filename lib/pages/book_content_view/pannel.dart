@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/bloc.dart';
 
@@ -61,14 +62,8 @@ class _PannelState extends State<Pannel> {
       children: [
         Expanded(
           child: RepaintBoundary(
-            child: BlocBuilder<PainterBloc, PainterState>(
-              builder: (context, state) {
-                return BookSettingsView(
-                  config: state.config,
-                  showSettings: widget.showSettings,
-                );
-              },
-              buildWhen: (oldState, newState) => oldState.config != newState.config,
+            child: BookSettingsView(
+              showSettings: widget.showSettings,
             ),
           ),
         ),
@@ -111,9 +106,12 @@ class _PannelState extends State<Pannel> {
                                   padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                                 ),
                                 onTap: () {
-                                  timer?.cancel();
-                                  widget.showCname.value = false;
-                                  context.read<PainterBloc>().add(PainterNewBookIdEvent(state.id, cid, 1));
+                                  if (!bloc.loading.value) {
+                                    // timer?.cancel();
+                                    widget.showCname.value = false;
+                                    final bloc = context.read<PainterBloc>();
+                                    bloc.add(PainterNewBookIdEvent(state.id, cid, 1));
+                                  }
                                 },
                               );
                             },
@@ -144,9 +142,11 @@ class _PannelState extends State<Pannel> {
                       child: btn1(
                           radius: 40,
                           onTap: () {
-                            widget.showSettings.value = SettingView.none;
-                            final bloc = context.read<PainterBloc>();
-                            bloc.add(PainterPreEvent());
+                            if (!bloc.loading.value) {
+                              widget.showSettings.value = SettingView.none;
+                              final bloc = context.read<PainterBloc>();
+                              bloc.add(PainterPreEvent());
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -219,11 +219,11 @@ class _PannelState extends State<Pannel> {
                       child: btn1(
                           radius: 40,
                           onTap: () {
-                            // if (!widget.controller.isScrolling) {
-                            widget.showSettings.value = SettingView.none;
-                            final bloc = context.read<PainterBloc>();
-                            bloc.add(PainterNextEvent());
-                            // }
+                            if (!bloc.loading.value) {
+                              widget.showSettings.value = SettingView.none;
+                              final bloc = context.read<PainterBloc>();
+                              bloc.add(PainterNextEvent());
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -252,16 +252,35 @@ class _PannelState extends State<Pannel> {
         ),
       ],
     );
+    // 初始不显示
+    var end = ValueNotifier<bool>(true);
     return AnimatedBuilder(
       animation: widget.showPannel,
       builder: (context, child) {
-        if (!widget.showPannel.value) {
-          return Container();
+        if (widget.showPannel.value) {
+          end.value = false;
+          indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
         }
-        indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
-        return child!;
+        return AnimatedOpacity(
+          opacity: widget.showPannel.value ? 1.0 : 0.0,
+          duration: Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: AnimatedBuilder(
+              animation: end,
+              builder: (context, _) {
+                return IgnorePointer(ignoring: end.value, child: child!);
+              }),
+          onEnd: () {
+            end.value = !widget.showPannel.value;
+            if (widget.showPannel.value) {
+              SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+            } else {
+              SystemChrome.setEnabledSystemUIOverlays([]);
+            }
+          },
+        );
       },
-      child: child,
+      child: RepaintBoundary(child: child),
     );
   }
 }
@@ -315,7 +334,9 @@ class _BottomEndState extends State<BottomEnd> {
     return Padding(
       padding: EdgeInsets.only(
           top: 6.0,
-          bottom: 12.0 + (ui.window.padding.bottom / ui.window.devicePixelRatio / 2),
+          bottom: 12.0 +
+              (ui.window.padding.bottom / ui.window.devicePixelRatio +
+                  ui.window.systemGestureInsets.bottom / ui.window.devicePixelRatio),
           left: 10.0,
           right: 10.0),
       child: Row(
@@ -401,11 +422,10 @@ class _BottomEndState extends State<BottomEnd> {
                       child: BlocBuilder<PainterBloc, PainterState>(
                         builder: (context, state) {
                           return Text(
-                            '${state.config!.axis == Axis.horizontal ? '上下' : '左右'}',
+                            '${bloc.config.axis == Axis.horizontal ? '上下' : '左右'}',
                             style: TextStyle(fontSize: 12, color: Colors.grey.shade300),
                           );
                         },
-                        buildWhen: (oldState, newState) => oldState.config != newState.config,
                       ),
                     ),
                     onTap: () {
@@ -468,9 +488,8 @@ class _BottomEndState extends State<BottomEnd> {
 }
 
 class BookSettingsView extends StatefulWidget {
-  const BookSettingsView({Key? key, required this.showSettings, this.config}) : super(key: key);
+  const BookSettingsView({Key? key, required this.showSettings}) : super(key: key);
   final ValueNotifier<SettingView> showSettings;
-  final ContentViewConfig? config;
   @override
   _BookSettingsViewState createState() => _BookSettingsViewState();
 }
@@ -484,20 +503,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   ValueNotifier<bool> bgcolor = ValueNotifier(false);
   late ValueNotifier<HSVColor> bgColor;
   late ValueNotifier<HSVColor> ftColor;
-
-  void updateState() {
-    final color = Color(widget.config!.bgcolor!);
-    final fcolor = Color(widget.config!.fontColor!);
-    fontvalue.value = widget.config!.fontSize!;
-    fontHvalue.value = widget.config!.lineBwHeight!;
-    final hsv = HSVColor.fromColor(color);
-    final hsvf = HSVColor.fromColor(fcolor);
-    bgColor = ValueNotifier(hsv);
-    ftColor = ValueNotifier(hsvf);
-    bgBrightness.value = hsv.value;
-    ftBrightness.value = hsvf.value;
-  }
-
   @override
   void dispose() {
     super.dispose();
@@ -773,13 +778,14 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               radius: 40,
               onTap: () {
-                context.read<PainterBloc>().add(PainterSetPreferencesEvent(
-                        config: widget.config!.copyWith(
-                      bgcolor: bgColor.value.toColor().value,
-                      fontSize: fontvalue.value.floorToDouble(),
-                      lineBwHeight: fontHvalue.value,
-                      fontColor: ftColor.value.toColor().value,
-                    )));
+                final bloc = context.read<PainterBloc>();
+                bloc.add(PainterSetPreferencesEvent(
+                    config: bloc.config.copyWith(
+                  bgcolor: bgColor.value.toColor().value,
+                  fontSize: fontvalue.value.floorToDouble(),
+                  lineBwHeight: fontHvalue.value,
+                  fontColor: ftColor.value.toColor().value,
+                )));
               },
               child: Center(
                   child: Text(
@@ -813,7 +819,17 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               // child: Container(),
             );
           case SettingView.setting:
-            updateState();
+            final bloc = context.read<PainterBloc>();
+            final color = Color(bloc.config.bgcolor!);
+            final fcolor = Color(bloc.config.fontColor!);
+            fontvalue.value = bloc.config.fontSize!;
+            fontHvalue.value = bloc.config.lineBwHeight!;
+            final hsv = HSVColor.fromColor(color);
+            final hsvf = HSVColor.fromColor(fcolor);
+            bgColor = ValueNotifier(hsv);
+            ftColor = ValueNotifier(hsvf);
+            bgBrightness.value = hsv.value;
+            ftBrightness.value = hsvf.value;
             return settings();
           default:
             return Container();

@@ -28,35 +28,35 @@ class _IndexsWidgetState extends State<IndexsWidget> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {},
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final height = constraints.maxHeight;
-          final extent = 32.0;
-          final headerextent = 21.0;
-          return BlocBuilder<BookIndexBloc, BookIndexState>(builder: (context, state) {
-            if (state is BookIndexWidthData) {
-              final indexs = state.bookIndexs;
-              final volIndex = state.volIndex;
-              controller?.dispose();
-              var offset = 0.0;
-              final halfHeight = (height - headerextent) / 2 - extent / 2;
-              for (var i = 0; i < volIndex; i++) {
-                offset += headerextent;
-                offset += (indexs[i].length - 1) * extent;
-              }
-              offset += state.index * extent - halfHeight;
-              var max = 0.0;
-              for (var l in indexs) {
-                max += (l.length - 1) * extent;
-              }
-              max += state.bookIndexs.length * headerextent;
-              offset = math.max(0.0, math.min(offset, max - height));
-              controller = ScrollController(initialScrollOffset: offset);
-              return MediaQuery.removePadding(
-                removeTop: true,
-                removeBottom: true,
-                context: context,
-                child: Scrollbar(
+      child: MediaQuery.removePadding(
+        removeTop: true,
+        removeBottom: true,
+        context: context,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final height = constraints.maxHeight;
+            final extent = 32.0;
+            final headerextent = 21.0;
+            return BlocBuilder<BookIndexBloc, BookIndexState>(builder: (context, state) {
+              if (state is BookIndexWidthData) {
+                final indexs = state.bookIndexs;
+                final volIndex = state.volIndex;
+                controller?.dispose();
+                var offset = 0.0;
+                final halfHeight = (height - headerextent) / 2 - extent / 2;
+                for (var i = 0; i < volIndex; i++) {
+                  offset += headerextent;
+                  offset += (indexs[i].length - 1) * extent;
+                }
+                offset += state.index * extent - halfHeight;
+                var max = 0.0;
+                for (var l in indexs) {
+                  max += (l.length - 1) * extent;
+                }
+                max += state.bookIndexs.length * headerextent;
+                offset = math.max(0.0, math.min(offset, max - height));
+                controller = ScrollController(initialScrollOffset: offset);
+                return Scrollbar(
                   controller: controller,
                   thickness: 10,
                   radius: Radius.circular(5),
@@ -65,7 +65,6 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                     // key: Key('$max'),
                     slivers: [
                       for (var l in state.bookIndexs)
-                        // Container(),
                         SliverStickyHeader.builder(
                           builder: (context, st) {
                             return Container(
@@ -118,27 +117,27 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                         ),
                     ],
                   ),
-                ),
-              );
-              // },
-              // );
-            } else if (state is BookIndexErrorState) {
-              return Center(
-                child: btn1(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                  bgColor: Colors.blue,
-                  splashColor: Colors.blue[200],
-                  radius: 40,
-                  child: Text('重新加载'),
-                  onTap: () {
-                    BlocProvider.of<BookIndexBloc>(context).add(BookIndexReloadEvent());
-                  },
-                ),
-              );
-            }
-            return Center(child: CircularProgressIndicator());
-          });
-        },
+                );
+                // },
+                // );
+              } else if (state is BookIndexErrorState) {
+                return Center(
+                  child: btn1(
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    bgColor: Colors.blue,
+                    splashColor: Colors.blue[200],
+                    radius: 40,
+                    child: Text('重新加载'),
+                    onTap: () {
+                      BlocProvider.of<BookIndexBloc>(context).add(BookIndexReloadEvent());
+                    },
+                  ),
+                );
+              }
+              return Center(child: CircularProgressIndicator());
+            });
+          },
+        ),
       ),
     );
   }

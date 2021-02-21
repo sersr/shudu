@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:developer';
 import 'dart:ui' as ui;
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -15,7 +13,6 @@ import 'package:sqflite/sqflite.dart';
 import '../data/book_content.dart';
 import '../pages/book_content_view/page_view_controller.dart';
 import '../utils/utils.dart';
-import 'book_cache_bloc.dart';
 import 'book_index_bloc.dart';
 import 'book_repository.dart';
 
@@ -66,6 +63,8 @@ class PainterShowShadowEvent extends PainterEvent {}
 
 class PainterReloadEvent extends PainterEvent {}
 
+class PainterInitEvent extends PainterEvent {}
+
 class PainterNewBookIdEvent extends PainterEvent {
   PainterNewBookIdEvent(this.id, this.cid, this.page);
   final int id;
@@ -99,13 +98,12 @@ class PainterNextEvent extends PainterEvent {}
 class PainterMetricsChangeEvent extends PainterEvent {}
 
 class PainterState {
-  PainterState({this.config, this.loading, this.empty, this.ignore});
+  PainterState({this.empty});
 
-  final ContentViewConfig? config;
-  final bool? loading;
+  // final ContentViewConfig? config;
+  // final bool? loading;
   final bool? empty;
-  final bool? ignore;
-  bool get isNull => config == null || loading == null || empty == null;
+  bool get isNull => empty == null;
 }
 
 enum Status { ignore, error, done }
@@ -133,14 +131,14 @@ class TextData {
 }
 
 class PainterBloc extends Bloc<PainterEvent, PainterState> {
-  PainterBloc({required this.bookCacheBloc, required this.repository, required this.bookIndexBloc})
-      : super(PainterState(loading: false, ignore: true, empty: true)) {
+  PainterBloc({required this.repository, required this.bookIndexBloc}) : super(PainterState(empty: true)) {
     completer.complete(Status.ignore);
+    sizeChange();
     // Fps.instance.start();
   }
 
   final BookRepository repository;
-  final BookCacheBloc bookCacheBloc;
+  // final BookCacheBloc bookCacheBloc;
   final BookIndexBloc bookIndexBloc;
 
   /// ----------   状态   --------------------------
@@ -157,7 +155,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   TextData tData = TextData();
   ContentViewConfig config = ContentViewConfig();
 
-  var cache = SplayTreeMap<int, TextData>();
+  var cache = <int, TextData>{};
 
   // Map<int, BookContent> memoryCache = {};
 
@@ -168,31 +166,39 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   var completer = Completer<Status>();
 
   var sizeChanged = true;
-  var padding = const EdgeInsets.all(-1);
+  var padding = const EdgeInsets.all(0.0);
+  var realPadding = const EdgeInsets.all(0.0);
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNewBookIdEvent) {
-      yield* newBook(event);
+      yield* await newBook(event);
+    } else if (event is PainterInitEvent) {
+      if (config.bgcolor == null) {
+        await getPrefs();
+      }
     } else if (event is PainterMetricsChangeEvent) {
-      yield* metricsChange();
+      yield* await metricsChange();
     } else if (event is PainterSetPreferencesEvent) {
-      yield* setPrefs(event);
+      yield* await setPrefs(event);
     } else if (event is PainterDeleteCachesEvent) {
       await deleteCache(event.bookId);
     } else if (event is PainterPreEvent) {
-      yield* goPre();
+      yield* await goPre();
     } else if (event is PainterNextEvent) {
-      yield* goNext();
+      yield* await goNext();
     } else if (event is PainterShowShadowEvent) {
-      yield* showdow();
+      yield* await showdow();
     } else if (event is PainterLoadEvent) {
-      yield painter(loading: true, ignore: true);
+      yield painter(ign: true);
+      loading.value = true;
+      await completer.future;
       await loadFirst();
       await Future.delayed(Duration(milliseconds: 400));
       yield painter();
+      loading.value = false;
     } else if (event is PainterReloadEvent) {
       if (_inBookView && tData.contentIsNotEmpty) {
-        loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
+        await loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
       }
     } else if (event is PainterOutEvent) {
       if (event.changeState) {
@@ -203,11 +209,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   Stream<PainterState> metricsChange() async* {
-    await sizeChange();
+    sizeChange();
     if (sizeChanged && _inBookView) {
       reset(clearCache: true);
       sizeChanged = false;
-      yield painter(ignore: true);
+      yield painter(ign: true);
       if (!completer.isCompleted) {
         _inBookView = false;
         await completer.future;
@@ -224,13 +230,15 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _cid = tData.cid;
     final _nid = tData.nid;
     final _bookid = bookid!;
-    yield painter(loading: true);
+    yield painter();
+    loading.value = true;
     await Future.delayed(Duration(milliseconds: 100));
     if (!cache.containsKey(tData.pid)) {
       await completer.future;
       await loadPN(_pid, _cid!, _nid!, _bookid);
       if (!cache.containsKey(tData.pid)) {
         yield painter();
+        loading.value = false;
         return;
       }
     }
@@ -243,6 +251,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     _innerIndex = 0;
 
     yield painter();
+    loading.value = false;
     loadPNCb();
     bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
   }
@@ -253,13 +262,14 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _pid = tData.pid;
     final _cid = tData.cid;
     final _bookid = bookid!;
-    yield painter(loading: true);
-    await Future.delayed(Duration(milliseconds: 100));
+    yield painter();
+    loading.value = true;
     if (!cache.containsKey(tData.nid)) {
       await completer.future;
       await loadPN(_pid!, _cid!, _nid, _bookid);
       if (!cache.containsKey(tData.nid)) {
         yield painter();
+        loading.value = false;
         return;
       }
     }
@@ -273,6 +283,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
     yield painter();
     bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
+    loading.value = false;
     loadPNCb();
   }
 
@@ -288,16 +299,26 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
+  void completercanCompute() {
+    if (canCompute != null && !canCompute!.isCompleted) {
+      canCompute!.complete();
+    }
+  }
+
+  void out() {
+    _inBookView = false;
+  }
+
   bool showrect = false;
   Stream<PainterState> showdow() async* {
     showrect = !showrect;
     reset(clearCache: true);
-    yield painter(loading: true, ignore: true);
-    await Future.delayed(Duration(milliseconds: 300));
-    yield painter(ignore: true);
+    yield painter(ign: true);
+    loading.value = true;
     await completer.future;
     await loadFirst();
     yield painter();
+    loading.value = false;
   }
 
   Stream<PainterState> setPrefs(PainterSetPreferencesEvent event) async* {
@@ -324,12 +345,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (_height >= 1.0) await box.put('lineBwHeight', _height);
       if (_fontFamily.isNotEmpty) await box.put('fontFamily', _fontFamily);
     });
-
+  print(config);
     if (flush) {
       reset(clearCache: true);
-      yield painter(loading: true, ignore: true);
-      await Future.delayed(Duration(milliseconds: 300));
-      yield painter(ignore: true);
+      yield painter(ign: true);
+      loading.value = true;
       await completer.future;
       await loadFirst();
     }
@@ -341,13 +361,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (callback != null) {
       await callback(box);
     }
-    final _bgcolor = box.get('bgcolor') ?? 4288787622;
-    final _fontColor = box.get('fontColor') ?? 4283716948;
+    final _bgcolor = box.get('bgcolor') ?? 4293120424;
+    final _fontColor = box.get('fontColor') ?? 4283321934;
     final axis = box.get('axis') ?? Axis.horizontal.index;
     final _fontSize = box.get('fontSize') ?? 18.0;
     final _height = box.get('lineBwHeight') ?? 1.4;
     final _fontFamily = box.get('fontFamily') ?? '';
-    liuhai = box.get('android_liuhai') ?? false;
     await box.close();
     config.fontSize = _fontSize;
     config.lineBwHeight = _height;
@@ -363,13 +382,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   void reset({bool clearCache = false}) {
     loadingId.clear();
-
-    /// 重置对象引用
-    ///
-    /// [cid]... 存储在[TextData]对象中，
-    /// 在接下的步骤中可能会更改 cid,以重新加载数据，
-    /// 如果没有新建实例，[tData] 的更改也会是[cache] 改变，
-    /// [tData] 和 [cache] 中都有一个引用
     tData = TextData()..cid = tData.cid;
     if (clearCache) {
       cache.clear();
@@ -385,13 +397,14 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Completer<void>? canLoad;
   bool _inBookView = false;
   NopPageViewController? controller;
+  ValueNotifier<bool> loading = ValueNotifier<bool>(false);
+  ValueNotifier<bool> ignore = ValueNotifier<bool>(false);
+
   Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
     if (event.cid == -1) return;
-    if (config.bgcolor == null) {
-      await getPrefs();
-    }
 
     controller?.setPixelsWithoutNtf(0.0);
+    final _lastIbv = _inBookView;
 
     _innerIndex = 0;
     if (tData.cid == null || tData.cid != event.cid || sizeChanged) {
@@ -400,34 +413,45 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
       /// 等待[load](异步)执行完成
       /// 避免数据竞争
-      yield painter(ignore: true, loading: true);
-      // 尽快退出其他任务；
+      // yield painter(ignore: true);
+      ignore.value = true;
       _inBookView = false;
+      if (!clear) {
+        loading.value = true;
+      }
       if (!completer.isCompleted) {
+        // 尽快退出其他任务；
         await repository.restartClient();
         await completer.future;
       }
-      // 没有后台任务了
-      _inBookView = true;
 
       currentPage = event.page;
       tData.cid = event.cid;
       reset(clearCache: clear);
       bookid = event.id;
-
+      // 没有后台任务了
+      _inBookView = true;
+      if (!clear) {
+        loading.value = true;
+      }
       // 更新信息
       dump();
       await canLoad?.future;
-      await SystemChrome.setEnabledSystemUIOverlays([]);
-      yield painter(ignore: true);
-      await sizeChange();
-      await Future.delayed(Duration(milliseconds: 300));
-      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+      // 非沉浸式取得padding，size
 
-      // computeCount++;
+      if (!_lastIbv) {
+        await SystemChrome.setEnabledSystemUIOverlays([]);
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+      // 再对比
+      sizeChange();
+
       sizeChanged = false;
+      computeCount++;
+      bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
+
       await loadFirst();
-      // computeCount--;
+      computeCount--;
       yield painter();
       if (config.axis == Axis.vertical) {
         resetController();
@@ -435,103 +459,81 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     } else {
       _inBookView = true;
       await canLoad?.future;
-      await SystemChrome.setEnabledSystemUIOverlays([]);
+      if (!_lastIbv) {
+        await SystemChrome.setEnabledSystemUIOverlays([]);
+      }
     }
+    loading.value = false;
+    ignore.value = false;
   }
 
-  // 设置页面添加按钮，切换
-  bool liuhai = false;
-
-  /// 待优化：（Android）
-  /// 提供刘海屏检测，android 各家对刘海的处理不一致（对于flutter来说，padding.top影响到size.height，意味着要重新布局）
-  /// 有的和iPhone一致，有的裁剪；
-  /// 裁剪：始终显示状态栏；和iPhone一致：完美！！！不处理，
-  /// 好处：刘海 不被系统裁剪（黑掉），不引发size.height 改变，重新布局；
-  Future<void> sizeChange() async {
-    /// 显/隐状态栏 （沉浸式？？）
-    /// iPhone 刘海屏：top,bottom 都是固定的；老版iPhone：top会改变， bottom == 0.0。
+  void sizeChange() {
     final w = ui.window;
     var _size = w.physicalSize / w.devicePixelRatio;
-    var _p = w.padding;
-    var _padding = EdgeInsets.fromLTRB(
-      _p.left / w.devicePixelRatio,
-      _p.top / w.devicePixelRatio,
-      _p.right / w.devicePixelRatio,
-      math.max(_p.bottom / w.devicePixelRatio - 10.0, 0.0),
-    );
-    print('view: ${w.viewInsets}, viewpadding: ${w.viewPadding}');
-    print('size: $size, _size: $_size');
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      if (padding.top == 0.0 && _padding.top != 0.0 && size.height > _size.height) {
-        if (!liuhai) {
-          final box = await Hive.openBox('settings');
-          await box.put('android_liuhai', true);
-          await box.close();
-          liuhai = true;
-        }
-      }
-      if (liuhai) {
-        print('size: $size, _size: $_size, padding: $padding, _padding: $_padding');
-        print('ges: ${w.systemGestureInsets.bottom / w.devicePixelRatio}');
-        final top = w.systemGestureInsets.top / w.devicePixelRatio;
-        if (padding.top != top && top != 0.0) {
-          padding = _padding.copyWith(
-            top: top,
-            bottom: w.systemGestureInsets.bottom != 0.0 ? 10.0 : 0.0,
-          );
-          print('....');
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final sysinsets = w.systemGestureInsets;
+        var _padding = EdgeInsets.fromWindowPadding(sysinsets, w.devicePixelRatio);
+        // 虚拟导航栏
+
+        if (padding.top != _padding.top) {
+          padding = _padding.copyWith(bottom: 0.0);
           sizeChanged = true;
         }
+        if (padding.bottom > _padding.bottom || _padding.bottom > 0.0) {
+          // 虚拟导航栏 bottom += 8.0; 底部非直角；
+          if (padding.bottom != 8.0) {
+            padding = padding.copyWith(bottom: 8.0);
+            sizeChanged = true;
+          }
+        }
+        assert(Log.i('size: $size, $_size, $padding'));
+        // 检测底部导航栏是否是虚拟的
+        if (size != _size) {
+          if (_size.height != size.height - realPadding.bottom) {
+            size = _size;
+            sizeChanged = true;
+            realPadding = _padding;
+          }
+        }
+        break;
 
-        // await SystemChrome.setEnabledSystemUIOverlays([]);
-        // _size = w.physicalSize / w.devicePixelRatio;
-
-        if (size.height < _size.height || size.width != _size.width) {
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        var _padding = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
+        if (size != _size || padding != _padding) {
           size = _size;
+          padding = _padding;
           sizeChanged = true;
         }
-        print(padding);
-      } else {
-        print('size: $size, _size: $_size, padding: $padding, _padding: $_padding');
-        print('ges: ${w.systemGestureInsets.bottom / w.devicePixelRatio}');
-        if ((_padding.top == 0.0 && padding.top != _padding.top) || // top既然能等于0，且size不变，意味着状态栏可以占用；
-            // padding.bottom != _padding.bottom ||
+        break;
+      case TargetPlatform.fuchsia:
+      // 不清楚，暂时和iOS一样
+      case TargetPlatform.iOS:
+        // ios 全面屏：padding，size 不变,待测试
+        var _padding = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
+        if ((_padding.top == 0.0 && padding.top != _padding.top) ||
+            // padding.bottom != _padding.bottom || // iPhone 不用检测底部
             size.height < _size.height ||
             size.width != _size.width) {
           size = _size;
-          padding = _padding.copyWith(
-            top: padding.top != 0 ? _padding.top : padding.top,
-            bottom: w.systemGestureInsets.bottom != 0.0 ? 10.0 : 0.0,
-          );
+          padding = _padding.copyWith(bottom: _padding.bottom != 0.0 ? 10.0 : 0.0);
           sizeChanged = true;
         } else {
           sizeChanged = false;
         }
-        // await SystemChrome.setEnabledSystemUIOverlays([]);
-      }
-      // ------------------------
-    } else {
-      // await SystemChrome.setEnabledSystemUIOverlays([]);
-      // iPhone
-      if ((_padding.top == 0.0 && padding.top != _padding.top) ||
-          // padding.bottom != _padding.bottom ||
-          size.height < _size.height ||
-          size.width != _size.width) {
-        size = _size;
-        padding = _padding.copyWith(bottom: _padding.bottom != 0.0 ? 10.0 : 0.0);
-        sizeChanged = true;
-      } else {
-        sizeChanged = false;
-      }
+        break;
     }
   }
 
   /// 持久化本地
   Future<void> memoryToDatabase(BookContent bookContent) async {
-    final count = Sqflite.firstIntValue(await repository.db
+    final count = Sqflite.firstIntValue(await repository.innerdb.db
         .rawQuery('SELECT COUNT(*) FROM BookContent WHERE bookId =? AND cid = ?', [bookContent.id, bookContent.cid]));
     if (count! > 0) {
-      await repository.db.rawUpdate(
+      await repository.innerdb.db.rawUpdate(
           'UPDATE BookContent SET pid = ?, nid = ?, hasContent = ?,content = ? WHERE bookId = ? AND cid = ?', [
         bookContent.pid,
         bookContent.nid,
@@ -541,7 +543,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         bookContent.cid
       ]);
     } else {
-      await repository.db.rawInsert(
+      await repository.innerdb.db.rawInsert(
         'INSERT INTO BookContent (bookId, cid, cname, nid, pid, content, hasContent)'
         ' VALUES(?,?,?,?,?,?,?)',
         [
@@ -563,8 +565,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await canCompute!.future;
     }
     if (!_inBookView) return;
-
     computeCount++;
+    if (loading.value) {
+      loading.value = false;
+      await Future.delayed(Duration(milliseconds: 50));
+    }
     await call();
     computeCount--;
   }
@@ -581,7 +586,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     loadingId.remove(contentid);
     if (_bookid != bookid) return;
     if (bookContent.content != null) {
-      await memoryToDatabase(bookContent);
       await awaitCompute(() async {
         if (_bookid != bookid) return;
         final list = await divText(bookContent.content!, bookContent.cname!);
@@ -595,6 +599,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         );
         cacheGbg(_cnpid);
       });
+      await memoryToDatabase(bookContent);
+    } else {
+      loading.value = false;
     }
   }
 
@@ -632,34 +639,35 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   void cacheGbg(TextData _cnpid) {
     if (cache.length >= 6) {
       final _tData = cache[tData.cid];
-      assert(_tData != null);
-      if (cache.containsKey(_tData!.cid)) {
-        final _cache = SplayTreeMap<int, TextData>();
+      if (_tData != null) {
+        if (cache.containsKey(_tData.cid)) {
+          final _cache = <int, TextData>{};
 
-        if (cache.containsKey(_tData.pid)) {
-          final _cp = cache[_tData.pid]!;
-          _cache[_cp.cid!] = _cp;
-          if (cache.containsKey(_cp.pid)) {
-            _cache[_cp.pid!] = cache[_cp.pid]!;
+          if (cache.containsKey(_tData.pid)) {
+            final _cp = cache[_tData.pid]!;
+            _cache[_cp.cid!] = _cp;
+            if (cache.containsKey(_cp.pid)) {
+              _cache[_cp.pid!] = cache[_cp.pid]!;
+            }
+            // cache = _cache;
           }
-          // cache = _cache;
-        }
-        if (cache.containsKey(_tData.nid)) {
-          final _cn = cache[_tData.nid]!;
-          _cache[_cn.cid!] = _cn;
-          if (cache.containsKey(_cn.nid)) {
-            _cache[_cn.nid!] = cache[_cn.nid]!;
+          if (cache.containsKey(_tData.nid)) {
+            final _cn = cache[_tData.nid]!;
+            _cache[_cn.cid!] = _cn;
+            if (cache.containsKey(_cn.nid)) {
+              _cache[_cn.nid!] = cache[_cn.nid]!;
+            }
           }
+          _cache[_tData.cid!] = _tData;
+          cache = _cache;
         }
-        _cache[_tData.cid!] = _tData;
-        cache = _cache;
       }
     }
     cache[_cnpid.cid!] = _cnpid;
   }
 
   Future<void> loadFromDb(int contentid, int _bookid) async {
-    var queryList = await repository.db.rawQuery(
+    var queryList = await repository.innerdb.db.rawQuery(
         'SELECT content,nid,pid,cid,cname,hasContent FROM BookContent WHERE bookId =? AND cid = ?',
         [_bookid, contentid]);
     if (queryList.isNotEmpty) {
@@ -687,14 +695,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
-  PainterState painter({bool loading = false, bool ignore = false}) {
-    final result = PainterState(
-      config: config,
-      ignore: ignore,
-      loading: loading,
+  PainterState painter({bool ign = false}) {
+    ignore.value = ign;
+    return PainterState(
       empty: tData.isNotEmpty,
     );
-    return result;
   }
 
   /// 首次（重置）加载
@@ -731,11 +736,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (!completer.isCompleted) return;
 
     completer = Completer<Status>();
-    print('load: start >');
+    assert(Log.i('load: start >'));
     loadCount += 1;
     await callback();
     loadCount -= 1;
-    print('load: done  <\n——————————————————————');
+    assert(Log.i('load: done  <\n——————————————————————'));
     completerResolve(tData.contentIsNotEmpty && cache.containsKey(tData.nid) && cache.containsKey(tData.pid)
         ? Status.done
         : Status.error);
@@ -753,22 +758,28 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Future<void> loadPN(int _pid, int _cid, int _nid, int _bookid, {bool update = false}) async {
     await load(() async {
       if (_nid == -1 || update) {
-        await reloadFromNet(_cid, _bookid);
+        if (!errorID.contains(_cid) || update) {
+          errorID.add(_cid);
+          await reloadFromNet(_cid, _bookid);
+          final _tdata = await loadData(_cid, _bookid);
+          if (_tdata.contentIsNotEmpty && tData.cid == _cid) {
+            tData = _tdata;
+            if (_nid == -1 && tData.nid != null) _nid = tData.nid!;
+          }
+        }
       }
       // 进行异步任务时，需要检查页面是否已退出，以免等待过长时间。
-      if (!_inBookView) return;
-      if (!cache.containsKey(_nid) && _nid != -1) {
+      if (_inBookView && !cache.containsKey(_nid) && _nid != -1) {
         await loadData(_nid, _bookid);
       }
-      if (!_inBookView) return;
-      if (!cache.containsKey(_pid) && _pid != -1) {
+      if (_inBookView && !cache.containsKey(_pid) && _pid != -1) {
         await loadData(_pid, _bookid);
       }
     });
   }
 
   Future<void> deleteCache(int bookId) async {
-    await repository.db.rawDelete('DELETE FROM BookContent WHERE bookId = ?', [bookId]);
+    await repository.innerdb.db.rawDelete('DELETE FROM BookContent WHERE bookId = ?', [bookId]);
   }
 
   int nexttime = 0;
@@ -792,7 +803,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       fontSize: config.fontSize,
       color: Color(config.fontColor!),
       height: 1.0,
-      fontFamily: 'NotoSansSC',
+      fontFamily: 'NotoSansSC', // SourceHanSansSC
     );
   }
 
@@ -868,9 +879,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     return child;
   }
 
-  void dump() {
+  Future<void> dump() async {
     if (tData.cid != null) {
-      bookCacheBloc.add(BookChapterIdUpdateCidEvent(id: bookid!, cid: tData.cid!, page: currentPage));
+      await repository.innerdb.updateMainInfo(bookid!, tData.cid!, currentPage);
     }
   }
 
@@ -892,7 +903,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final left = 16.0 + leftExtraPadding;
     final pages = <List<String>>[];
 
-    print('working   >>>');
+    assert(Log.i('working   >>>'));
     final now = Timeline.now;
 
     /// layout
@@ -958,7 +969,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (page.isNotEmpty) {
       pages.add(page);
     }
-    print('div : ${(Timeline.now - nowx) / 1000}ms');
+    assert(Log.i('div : ${(Timeline.now - nowx) / 1000}ms'));
     // end: div string--------------------------------------
 
     /// pictures -------------------------------------------
@@ -1026,8 +1037,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       );
       textPages.add(met);
     }
-    print('用时: ${((Timeline.now - now) / 1000).toStringAsFixed(1)}ms');
-    print('work done <<<');
+    assert(Log.i('用时: ${((Timeline.now - now) / 1000).toStringAsFixed(1)}ms'));
+    assert(Log.i('work done <<<'));
     return textPages;
   }
 }

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/bloc.dart';
 
@@ -20,14 +19,12 @@ class ContentPageView extends StatefulWidget {
     required this.willPop,
     required this.showCname,
     required this.showSettings,
-    this.ignore = false,
   }) : super(key: key);
 
   final ValueNotifier<bool> show;
   final Future<bool> Function() willPop;
   final ValueNotifier<SettingView> showSettings;
   final ValueNotifier<bool> showCname;
-  final bool? ignore;
 
   @override
   _ContentPageViewState createState() => _ContentPageViewState();
@@ -77,11 +74,9 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
 
   void isScrolling(bool scrolling) {
     if (!scrolling) {
-      if (bloc.canCompute != null && !bloc.canCompute!.isCompleted) {
-        bloc
-          ..canCompute!.complete()
-          ..dump();
-      }
+      bloc
+        ..completercanCompute()
+        ..dump();
     } else {
       if (bloc.canCompute == null || bloc.canCompute!.isCompleted) {
         bloc.canCompute = Completer();
@@ -139,56 +134,68 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final child = bloc.tData.contentIsNotEmpty
-        ? GestureDetector(
-            child: wrapChild(),
-            onTapUp: (d) {
-              if (offsetPosition.page == 0 ||
-                  offsetPosition.page % offsetPosition.page.toInt() == 0 ||
-                  !offsetPosition.isScrolling) {
-                final l = d.globalPosition;
-                final halfH = size.height / 2;
-                final sixH = size.height / 5;
-                final halfW = size.width / 2;
-                final sixW = size.width / 5;
-                if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
-                  if (widget.show.value) {
-                    widget.showCname.value = false;
-                    // if (defaultTargetPlatform == TargetPlatform.iOS) {
-                    SystemChrome.setEnabledSystemUIOverlays([]);
-                    // } else if (!bloc.liuhai) {
-                    //   SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-                    // }
-                  } else {
-                    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-                  }
-                  widget.show.value = !widget.show.value;
-                } else {
-                  offsetPosition.nextPage();
-                }
-              }
-            },
-          )
-        : GestureDetector(
-            onTap: () {
-              widget.show.value = !widget.show.value;
-            },
-            child: Container(
-              color: Colors.cyan.withAlpha(0),
-              child: widget.ignore!
-                  ? null
-                  : Center(
-                      child: btn1(
-                          bgColor: Colors.blue,
-                          splashColor: Colors.blue[200],
-                          radius: 40,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          child: Text('重新加载'),
-                          onTap: () => bloc.add(PainterLoadEvent())),
-                    ),
-            ),
-          );
-    ;
+    final child = AnimatedBuilder(
+        animation: bloc.ignore,
+        builder: (context, child) {
+          return !bloc.ignore.value
+              ? bloc.tData.contentIsNotEmpty
+                  ? GestureDetector(
+                      child: wrapChild(),
+                      onTapUp: (d) {
+                        if (offsetPosition.page == 0 ||
+                            offsetPosition.page % offsetPosition.page.toInt() == 0 ||
+                            !offsetPosition.isScrolling) {
+                          final l = d.globalPosition;
+                          final halfH = size.height / 2;
+                          final halfW = size.width / 2;
+                          final sixH = size.height / 5;
+                          final sixW = size.width / 5;
+                          final x = l.dx - halfW;
+                          final y = l.dy - halfH;
+                          if (x.abs() < sixW && y.abs() < sixH) {
+                            // if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
+                            widget.show.value = !widget.show.value;
+                            if (!widget.show.value) {
+                              widget.showCname.value = false;
+                            }
+                          } else {
+                            offsetPosition.nextPage();
+                          }
+                        }
+                      },
+                    )
+                  : GestureDetector(
+                      onTap: () {
+                        if (widget.show.value) {
+                          widget.showCname.value = false;
+                        }
+                        widget.show.value = !widget.show.value;
+                      },
+                      child: Container(
+                        color: Colors.cyan.withAlpha(0),
+                        child: Center(
+                          child: btn1(
+                              bgColor: Colors.blue,
+                              splashColor: Colors.blue[200],
+                              radius: 40,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Text('重新加载'),
+                              onTap: () => bloc.add(PainterLoadEvent())),
+                        ),
+                      ))
+              : GestureDetector(
+                  onTap: () {
+                    if (widget.show.value) {
+                      widget.showCname.value = false;
+                    }
+                    widget.show.value = !widget.show.value;
+                  },
+                  child: Container(
+                    color: Colors.cyan.withAlpha(0),
+                  ),
+                );
+        });
+
     return Stack(
       children: [
         child,

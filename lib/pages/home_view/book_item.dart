@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/text_styles.dart';
 import '../embed/images.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
 
@@ -31,6 +33,7 @@ class BookItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ts = BlocProvider.of<TextStylesBloc>(context);
     return Container(
       height: 98,
       padding: const EdgeInsets.only(left: 12.0, right: 10.0),
@@ -38,7 +41,7 @@ class BookItem extends StatelessWidget {
         children: [
           Container(
             width: 60,
-            padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+            // padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
             child: ImageResolve(
               img: img,
               width: 60,
@@ -59,22 +62,25 @@ class BookItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       bookName!,
-                      style: lgsty,
+                      style: ts.state.title2,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    '最新：$bookUdateItem',
-                    style: mdsty,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Text(
+                      '最新：$bookUdateItem',
+                      style: ts.state.body1,
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                    ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 6.0),
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       bookUpdateTime!,
                       style: ltsty,

@@ -156,30 +156,7 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
                   }
                 }
               },
-              header:
-                  // CustomHeader(
-                  //   builder: (context, RefreshStatus? mode) {
-                  //     Widget body;
-                  //     if (mode == RefreshStatus.idle) {
-                  //       body = Text('下拉加载');
-                  //     } else if (mode == RefreshStatus.refreshing) {
-                  //       body = CupertinoActivityIndicator();
-                  //     } else if (mode == RefreshStatus.failed) {
-                  //       body = Text('加载失败');
-                  //     } else if (mode == RefreshStatus.canRefresh) {
-                  //       body = Text('释放加载');
-                  //     } else if (mode == RefreshStatus.completed) {
-                  //       body = Text('刷新成功!');
-                  //     } else {
-                  //       body = Text('');
-                  //     }
-                  //     return Container(
-                  //       height: 55.0,
-                  //       child: DefaultTextStyle(style: TextStyle(color: Colors.grey[800]), child: Center(child: body)),
-                  //     );
-                  //   },
-                  // ),
-                  WaterDropHeader(),
+              header: WaterDropHeader(),
               footer: CustomFooter(
                 builder: (BuildContext context, LoadStatus? mode) {
                   Widget body;

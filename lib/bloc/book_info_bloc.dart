@@ -58,7 +58,7 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.updateCname(event.id, newCname, lastTime);
+          await repository.innerdb.updateCname(event.id, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);
@@ -71,7 +71,7 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.updateCname(lastId, newCname, lastTime);
+          await repository.innerdb.updateCname(lastId, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);

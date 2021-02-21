@@ -1,4 +1,4 @@
-import 'dart:collection';
+
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -285,7 +285,7 @@ class ContentPreNextElement extends RenderObjectElement {
   @override
   ContentPreNextRenderObject get renderObject => super.renderObject as ContentPreNextRenderObject;
 
-  final childElement = SplayTreeMap<int, Element>();
+  final childElement = <int, Element>{};
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -378,7 +378,7 @@ class ContentPreNextElement extends RenderObjectElement {
   }
 }
 
-class RealPageViewParenData extends BoxParentData {
+class NopPageViewParenData extends BoxParentData {
   Offset? layoutOffset;
   RenderBox? pre;
   RenderBox? next;
@@ -392,7 +392,7 @@ class ContentPreNextRenderObject extends RenderBox {
   ContentPreNextRenderObject({NopPageViewController? vpOffset}) : _vpOffset = vpOffset;
 
   ContentPreNextElement? _element;
-  final childlist = SplayTreeMap<int, RenderBox>();
+  final childlist = <int, RenderBox>{};
 
   void add(RenderBox child, index) {
     assert(index is int);
@@ -411,8 +411,8 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! RealPageViewParenData) {
-      child.parentData = RealPageViewParenData();
+    if (child.parentData is! NopPageViewParenData) {
+      child.parentData = NopPageViewParenData();
     }
   }
 
@@ -500,18 +500,15 @@ class ContentPreNextRenderObject extends RenderBox {
       }
     }
 
-    assert(firstIndex != null && lastIndex != null); // user error
-
     /// 更正
     if (canPaintContent) {
       for (var i = firstIndex!; i <= lastIndex!; i++) {
-        if (childlist.containsKey(i)) {
-          final data = childlist[i]!.parentData as RealPageViewParenData;
-          data.layoutOffset = computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
-        }
+        assert(childlist.containsKey(i));
+        final data = childlist[i]!.parentData as NopPageViewParenData;
+        data.layoutOffset = computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
       }
       collectGarbage(firstIndex!, lastIndex!);
-      // ??
+
       final leftChild = vpOffset!.hasContent(1, firstIndex!);
       final rightChild = vpOffset!.hasContent(0, lastIndex!);
       vpOffset!.applyConentDimension(
@@ -536,7 +533,7 @@ class ContentPreNextRenderObject extends RenderBox {
 
   Offset? childScrollOffset(RenderObject child) {
     assert(child.parent == this);
-    final childParentData = child.parentData as RealPageViewParenData;
+    final childParentData = child.parentData as NopPageViewParenData;
     return childParentData.layoutOffset;
   }
 
@@ -548,22 +545,16 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    // if (defaultTargetPlatform == TargetPlatform.android && axis == Axis.horizontal) {
-      // context.clipRectAndPaint(Offset.zero & size, Clip.none,() => defaultPaint(context,offset));
-      // defaultPaint(context, offset);
-    // } else {
-      _clipRectLayer = context.pushClipRect(needsCompositing, Offset.zero, Offset.zero & size, defaultPaint,
-          oldLayer: _clipRectLayer);
-    // }
+    _clipRectLayer =
+        context.pushClipRect(needsCompositing, offset, Offset.zero & size, defaultPaint, oldLayer: _clipRectLayer);
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
     if (canPaintContent) {
       for (var i = firstIndex!; i <= lastIndex!; i++) {
-        if (childlist.containsKey(i)) {
-          final child = childlist[i]!;
-          context.paintChild(child, offset + childScrollOffset(child)!);
-        }
+        assert(childlist.containsKey(i));
+        final child = childlist[i]!;
+        context.paintChild(child, offset + childScrollOffset(child)!);
       }
     }
   }

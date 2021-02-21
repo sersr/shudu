@@ -23,7 +23,7 @@ class ShudanItem extends StatelessWidget {
           children: [
             Container(
               width: 72,
-              padding: EdgeInsets.symmetric(vertical: 10.0),
+              padding: EdgeInsets.symmetric(vertical: .0),
               child: RepaintBoundary(child: ImageResolve(img: img, width: 72)),
             ),
             Expanded(
@@ -34,24 +34,25 @@ class ShudanItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.only(bottom: 4.0),
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
                       child: Text(
                         title!,
-                        style: ts.state.title,
+                        style: ts.state.title2,
                         softWrap: false,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Container(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
                       child: Text(
                         desc!,
-                        style: ts.state.body1,
+                        style: ts.state.body1!.copyWith(color: Color.fromRGBO(100, 100, 100, 1)),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 6.0),
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
                       child: Text(
                         '总共${total}本书',
                         style: ts.state.body3,
