@@ -127,9 +127,17 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
+    if (absorbPointer.value) {
+      return false;
+    }
     absorbPointer.value = true;
     //---------------------------
     // bloc.add(PainterOutEvent());
+        await bloc.dump();
+    final cbloc = context.read<BookCacheBloc>()
+      ..loading = Completer<void>()
+      ..add(BookChapterIdLoadEvent());
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     bloc.out();
     bloc.completerCanLoad();
     if (!bloc.completer.isCompleted) {
@@ -137,14 +145,9 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
       await bloc.repository.restartClient();
       // await bloc.completer.future;
     }
-    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     bloc.completercanCompute();
-    await bloc.dump();
 
     /// 优化: 移动端
-    final cbloc = context.read<BookCacheBloc>()
-      ..loading = Completer<void>()
-      ..add(BookChapterIdLoadEvent());
 
     await bloc.completer.future;
     assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));

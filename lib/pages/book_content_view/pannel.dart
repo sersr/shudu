@@ -329,6 +329,8 @@ class _BottomEndState extends State<BottomEnd> {
     );
   }
 
+  bool isback = false;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -399,6 +401,8 @@ class _BottomEndState extends State<BottomEnd> {
                     widget.showSettings.value = SettingView.none;
                     return;
                   }
+                  if (isback) return;
+                  isback = true;
                   await widget.willPop();
                   Navigator.of(context).pop();
                 },
