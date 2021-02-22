@@ -145,9 +145,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ],
         ),
       ),
-      body: IndexedStack(
-        children: <Widget>[buildBlocBuilder(), ListMainPage()],
-        index: currentIndex,
+      body: RepaintBoundary(
+        child: IndexedStack(
+          children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
+          index: currentIndex,
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         elevation: 3.0,
@@ -381,9 +383,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           context.read<BookCacheBloc>().completerLoading();
                           painterBloc
                             ..canLoad = Completer<void>()
+                            ..ignore.value = true
                             ..add(PainterNewBookIdEvent(item.id!, item.chapterId!, item.page!));
-
-                          Navigator.of(context).pushNamed(BookContentPage.currentRoute);
+                        
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                            return BookContentPage();
+                          }));
                         },
                         onLongPress: () {
                           showModalBottomSheet(

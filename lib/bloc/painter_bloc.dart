@@ -72,7 +72,6 @@ class PainterNewBookIdEvent extends PainterEvent {
   final int page;
 }
 
-
 class PainterSetPreferencesEvent extends PainterEvent {
   PainterSetPreferencesEvent({this.config});
   final ContentViewConfig? config;
@@ -303,6 +302,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   void out() {
     _inBookView = false;
+    if (tData.contentIsEmpty) {
+      ignore.value = true;
+    }
   }
 
   bool showrect = false;
@@ -341,7 +343,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (_height >= 1.0) await box.put('lineBwHeight', _height);
       if (_fontFamily.isNotEmpty) await box.put('fontFamily', _fontFamily);
     });
-  print(config);
+    print(config);
     if (flush) {
       reset(clearCache: true);
       yield painter(ign: true);
@@ -398,7 +400,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
     if (event.cid == -1) return;
-
+    ignore.value = true;
     controller?.setPixelsWithoutNtf(0.0);
     final _lastIbv = _inBookView;
 
@@ -410,14 +412,15 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       /// 等待[load](异步)执行完成
       /// 避免数据竞争
       // yield painter(ignore: true);
-      ignore.value = true;
       _inBookView = false;
       if (!clear) {
         loading.value = true;
       }
       if (!completer.isCompleted) {
         // 尽快退出其他任务；
-        await repository.restartClient();
+        if (loadingId.isNotEmpty) {
+          await repository.restartClient();
+        }
         await completer.future;
       }
 
@@ -605,7 +608,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Future<TextData> loadData(int _contentid, int _bookid) async {
     var result = TextData();
     var contain = false;
-    void cacheReturn(int? _contentid) {
+    void cacheReturn(int _contentid) {
       if (cache.containsKey(_contentid)) {
         result = cache[_contentid]!;
         contain = true;
@@ -765,10 +768,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
       }
       // 进行异步任务时，需要检查页面是否已退出，以免等待过长时间。
-      if (_inBookView && !cache.containsKey(_nid) && _nid != -1) {
+      if (_inBookView && _nid != -1 && !cache.containsKey(_nid)) {
         await loadData(_nid, _bookid);
       }
-      if (_inBookView && !cache.containsKey(_pid) && _pid != -1) {
+      if (_inBookView && _pid != -1 && !cache.containsKey(_pid)) {
         await loadData(_pid, _bookid);
       }
     });

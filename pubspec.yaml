@@ -46,6 +46,8 @@ dependencies:
     path: ../plugins/sticky_header
   pull_to_refresh:
     path: ../plugins/pull_to_refresh
+  flutter_hooks:
+    git: https://github.com/rrousselGit/flutter_hooks
   
 dev_dependencies:
   flutter_test:

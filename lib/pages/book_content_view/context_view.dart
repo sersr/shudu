@@ -21,7 +21,7 @@ class PainterPage extends StatefulWidget {
 
 class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   ValueNotifier<bool> showPannel = ValueNotifier(false);
-  final absorbPointer = ValueNotifier(false);
+
   final showSettings = ValueNotifier(SettingView.none);
   final showCname = ValueNotifier(false);
   late PainterBloc bloc;
@@ -31,7 +31,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    absorbPointer.value = true;
+    // absorbPointer.value = true;
   }
 
   @override
@@ -45,7 +45,6 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (animation.isCompleted) {
       bloc.completerCanLoad();
       // SystemChrome.setEnabledSystemUIOverlays([]);
-      absorbPointer.value = false;
     }
   }
 
@@ -94,7 +93,12 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
                         }
                         return Container();
                       },
-                      child: Center(child: CircularProgressIndicator())))
+                      child: Center(child: CircularProgressIndicator()))),
+              // AnimatedBuilder(
+              //     animation: absorbPointer,
+              //     builder: (context, child) {
+              //       return Container(color: absorbPointer.value ? Colors.white.withAlpha(0) : null);
+              //     }),
             ],
           );
         }
@@ -111,15 +115,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
 
         return willPop();
       },
-      child: AnimatedBuilder(
-          animation: absorbPointer,
-          child: RepaintBoundary(child: child),
-          builder: (context, child) {
-            return AbsorbPointer(
-              child: child,
-              absorbing: absorbPointer.value,
-            );
-          }),
+      child: RepaintBoundary(child: child),
     );
   }
 
@@ -127,18 +123,12 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     if (!animation.isCompleted) {
       return false;
     }
-    if (absorbPointer.value) {
-      return false;
-    }
-    absorbPointer.value = true;
-    //---------------------------
-    // bloc.add(PainterOutEvent());
-        await bloc.dump();
+    await bloc.dump();
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
       ..add(BookChapterIdLoadEvent());
-    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     bloc.out();
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     bloc.completerCanLoad();
     if (!bloc.completer.isCompleted) {
       // 尽快退出其他任务；
@@ -153,8 +143,8 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));
     await cbloc.loading!.future;
     //-------------------------
-    absorbPointer.value = false;
     await Future.delayed(Duration(milliseconds: 300));
+    // absorbPointer.value = false;
     return true;
   }
 }
