@@ -436,13 +436,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       // 更新信息
       dump();
       await canLoad?.future;
-      // 非沉浸式取得padding，size
 
+      await Future.delayed(Duration(milliseconds: 100));
       if (!_lastIbv) {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
-      await Future.delayed(Duration(milliseconds: 100));
-      // 再对比
       sizeChange();
 
       sizeChanged = false;
@@ -1225,6 +1223,6 @@ class RenderContentView extends RenderBox {
     canvas.restore();
   }
 
-  @override
-  bool hitTestSelf(ui.Offset position) => true;
+  // @override
+  // bool hitTestSelf(ui.Offset position) => true;
 }

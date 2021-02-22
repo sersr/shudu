@@ -128,7 +128,6 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
       ..loading = Completer<void>()
       ..add(BookChapterIdLoadEvent());
     bloc.out();
-    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     bloc.completerCanLoad();
     if (!bloc.completer.isCompleted) {
       // 尽快退出其他任务；
@@ -140,6 +139,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     /// 优化: 移动端
 
     await bloc.completer.future;
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));
     await cbloc.loading!.future;
     //-------------------------

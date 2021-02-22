@@ -97,8 +97,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final child = Scaffold(
-      appBar: AppBar(
+    final child = Column(children: [
+      AppBar(
         title: Text('hello world'),
         // elevation: 1.0,
         centerTitle: true,
@@ -145,13 +145,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ],
         ),
       ),
-      body: RepaintBoundary(
-        child: IndexedStack(
-          children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
-          index: currentIndex,
+      Expanded(
+        child: RepaintBoundary(
+          child: IndexedStack(
+            children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
+            index: currentIndex,
+          ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      BottomNavigationBar(
         elevation: 3.0,
         items: [
           BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
@@ -168,7 +170,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         },
         currentIndex: currentIndex,
       ),
-    );
+    ]);
 
     /// 安全地初始化
     return AnimatedBuilder(
@@ -179,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             painterBloc.add(PainterInitEvent());
           }
           return AbsorbPointer(
-            child: child,
+            child: Material(child: child),
             absorbing: !painterBloc.repository.init.value,
           );
         });
@@ -385,7 +387,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                             ..canLoad = Completer<void>()
                             ..ignore.value = true
                             ..add(PainterNewBookIdEvent(item.id!, item.chapterId!, item.page!));
-                        
+
                           Navigator.of(context).push(MaterialPageRoute(builder: (context) {
                             return BookContentPage();
                           }));
