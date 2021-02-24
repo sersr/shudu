@@ -380,8 +380,6 @@ class ContentPreNextElement extends RenderObjectElement {
 
 class NopPageViewParenData extends BoxParentData {
   Offset? layoutOffset;
-  RenderBox? pre;
-  RenderBox? next;
   @override
   String toString() {
     return '$runtimeType: $layoutOffset';
@@ -453,7 +451,7 @@ class ContentPreNextRenderObject extends RenderBox {
   int? firstIndex;
   int? lastIndex;
 
-  bool get canPaintContent => firstIndex != null && lastIndex != null;
+  bool get canPaint => firstIndex != null && lastIndex != null;
 
   @override
   void performResize() {
@@ -501,7 +499,7 @@ class ContentPreNextRenderObject extends RenderBox {
     }
 
     /// 更正
-    if (canPaintContent) {
+    if (canPaint) {
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         assert(childlist.containsKey(i));
         final data = childlist[i]!.parentData as NopPageViewParenData;
@@ -550,7 +548,7 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
-    if (canPaintContent) {
+    if (canPaint) {
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         assert(childlist.containsKey(i));
         final child = childlist[i]!;

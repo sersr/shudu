@@ -23,7 +23,7 @@ dependencies:
 
   http: ^0.13.0-nullsafety.0
   # equatable: ^1.2.5
-  equatable: ^2.0.0-nullsafety.2
+  equatable: ^2.0.0-nullsafety.3
   # rxdart: ^0.24.1
   # rxdart: ^ 0.26.0-nullsafety.0
   # dio: ^3.0.10
@@ -43,9 +43,9 @@ dependencies:
   path_provider: ^2.0.0-nullsafety
   hive: ^1.6.0-nullsafety.2
   sticky_header:
-    path: ../plugins/sticky_header
+    path: ./plugins/sticky_header
   pull_to_refresh:
-    path: ../plugins/pull_to_refresh
+    path: ./plugins/pull_to_refresh
   flutter_hooks:
     git: https://github.com/rrousselGit/flutter_hooks
   

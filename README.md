@@ -14,10 +14,10 @@ release 版本
 ## 构建
 
     flutter --version  
-> Flutter 1.26.0-17.2.pre • channel dev • <https://github.com/flutter/flutter>  
-> Framework • revision 79b49b9e10 (11 天前) • 2021-02-03 15:33:39 -0800  
-> Engine • revision 2c527d6c7e  
-> Tools • Dart 2.12.0 (build 2.12.0-259.8.beta)  
+> Flutter 1.27.0-4.0.pre • channel dev • <https://github.com/flutter/flutter.git>
+> Framework • revision f8cd24de95 (7 days ago) • 2021-02-16 11:24:17 -0800  
+> Engine • revision 1d537824d6  
+> Tools • Dart 2.13.0 (build 2.13.0-30.0.dev)  
 
 ## 全面屏
 
