@@ -333,12 +333,14 @@ class _BottomEndState extends State<BottomEnd> {
 
   @override
   Widget build(BuildContext context) {
+    final w = ui.window;
     return Padding(
       padding: EdgeInsets.only(
           top: 6.0,
           bottom: 12.0 +
-              (ui.window.padding.bottom / ui.window.devicePixelRatio +
-                  ui.window.systemGestureInsets.bottom / ui.window.devicePixelRatio),
+              (w.padding.bottom == 0.0
+                  ? w.systemGestureInsets.bottom / w.devicePixelRatio
+                  : w.padding.bottom / w.devicePixelRatio),
           left: 10.0,
           right: 10.0),
       child: Row(
@@ -741,7 +743,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                             onChanged: (double value) {
                                               fontHvalue.value = value;
                                             },
-                                            min: 1.0,
+                                            min: 1.1,
                                             max: 3.0,
                                           );
                                         },

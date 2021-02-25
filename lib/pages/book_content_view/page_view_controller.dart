@@ -1,4 +1,4 @@
-
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -35,6 +35,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   double? _viewPortDimension;
   double? get viewPortDimension => _viewPortDimension;
+
+  void update() {
+    notifyListeners();
+  }
 
   static final Tolerance kDefaultTolerance = Tolerance(
     velocity: 1.0 / (0.050 * WidgetsBinding.instance!.window.devicePixelRatio), // logical pixels per second
@@ -231,7 +235,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
     _canDrag = getDragState();
     if (!_canDrag) {
-      print('....can not drag....');
       return null;
     }
     scrollingnotifier(true);
@@ -285,7 +288,7 @@ class ContentPreNextElement extends RenderObjectElement {
   @override
   ContentPreNextRenderObject get renderObject => super.renderObject as ContentPreNextRenderObject;
 
-  final childElement = <int, Element>{};
+  final childElement = SplayTreeMap<int, Element>();
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -390,7 +393,7 @@ class ContentPreNextRenderObject extends RenderBox {
   ContentPreNextRenderObject({NopPageViewController? vpOffset}) : _vpOffset = vpOffset;
 
   ContentPreNextElement? _element;
-  final childlist = <int, RenderBox>{};
+  final childlist = SplayTreeMap<int, RenderBox>();
 
   void add(RenderBox child, index) {
     assert(index is int);

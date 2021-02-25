@@ -5,13 +5,8 @@ class BookContentPage extends StatelessWidget {
   static String currentRoute = '/content';
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: MediaQuery.removePadding(
-        context: context,
-        child: PainterPage(),
-        removeTop: true,
-        removeBottom: true,
-      ),
+    return Material(
+      child: PainterPage(),
       // color: Colors.grey[900],
     );
   }

@@ -67,7 +67,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
-
+Timer? errorTimer;
   @override
   Widget build(BuildContext context) {
     Widget child = BlocBuilder<PainterBloc, PainterState>(
@@ -94,6 +94,38 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
                         return Container();
                       },
                       child: Center(child: CircularProgressIndicator()))),
+              RepaintBoundary(
+                  child: AnimatedBuilder(
+                      animation: bloc.error,
+                      builder: (context, child) {
+                        if (bloc.error.value) {
+                          errorTimer?.cancel();
+                          errorTimer = Timer(Duration(seconds: 2), () {
+                            bloc.error.value = false;
+                          });
+                          return child!;
+                        }
+                        return Container();
+                      },
+                      child: GestureDetector(
+                        onTap: () {
+                          bloc.error.value = false;
+                        },
+                        child: Center(
+                          child: Container(
+                            child: Text(
+                              '网络加载出错',
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13.0),
+                              overflow: TextOverflow.fade,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6.0),
+                              color: Colors.grey.shade100.withAlpha(250),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          ),
+                        ),
+                      ))),
               // AnimatedBuilder(
               //     animation: absorbPointer,
               //     builder: (context, child) {

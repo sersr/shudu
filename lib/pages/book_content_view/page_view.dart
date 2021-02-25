@@ -415,12 +415,7 @@ class SlideElement extends RenderObjectElement {
   @override
   void update(covariant SlideWidget newWidget) {
     super.update(newWidget);
-    if (widget.body != newWidget.body ||
-        widget.header != newWidget.header ||
-        widget.leftFooter != newWidget.leftFooter ||
-        widget.rightFooter != newWidget.rightFooter) {
       ud();
-    }
   }
 
   @override

@@ -133,7 +133,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   final BookRepository repository;
-  // final BookCacheBloc bookCacheBloc;
   final BookIndexBloc bookIndexBloc;
 
   /// ----------   状态   --------------------------
@@ -151,8 +150,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   ContentViewConfig config = ContentViewConfig();
 
   var cache = <int, TextData>{};
-
-  // Map<int, BookContent> memoryCache = {};
 
   /// download ID
   List<int> loadingId = [];
@@ -234,6 +231,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (!cache.containsKey(tData.pid)) {
         yield painter();
         loading.value = false;
+        error.value = true;
         return;
       }
     }
@@ -265,6 +263,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (!cache.containsKey(tData.nid)) {
         yield painter();
         loading.value = false;
+        error.value = true;
         return;
       }
     }
@@ -397,7 +396,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   NopPageViewController? controller;
   ValueNotifier<bool> loading = ValueNotifier<bool>(false);
   ValueNotifier<bool> ignore = ValueNotifier<bool>(false);
-
+  ValueNotifier<bool> error = ValueNotifier(false);
   Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
     if (event.cid == -1) return;
     ignore.value = true;
@@ -437,10 +436,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       dump();
       await canLoad?.future;
 
-      await Future.delayed(Duration(milliseconds: 100));
       if (!_lastIbv) {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
+      await Future.delayed(Duration(milliseconds: 100));
       sizeChange();
 
       sizeChanged = false;
@@ -1002,6 +1001,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
       } else {
         exh = (_size.height - otherHeight) / lineCounts - style.fontSize!;
+        exh = exh - exh / ((lineCounts + 1) * 2);
         lastPageExh = exh;
       }
       final _teps = <TextPainter>[];
@@ -1155,17 +1155,14 @@ class RenderContentView extends RenderBox {
 
   @override
   bool get isRepaintBoundary => true;
-  // ClipRectLayer? _clipRectLayer;
 
   @override
   void paint(PaintingContext context, Offset offset) {
     dpaint(context, offset);
-    // _clipRectLayer =
-    //     context.pushClipRect(needsCompositing, offset, Offset.zero & size, dpaint, oldLayer: _clipRectLayer);
   }
 
   void dpaint(PaintingContext context, Offset offset) {
-    context.setIsComplexHint();
+    // context.setIsComplexHint();
     final canvas = context.canvas;
     final isHorizontal = contentMetrics!.isHorizontal;
     final topPad = contentMetrics!.topPad;
@@ -1206,14 +1203,15 @@ class RenderContentView extends RenderBox {
     if (isHorizontal) {
       h += extraPadding;
     }
-    h += exh / 2;
+    h += exh;
     final xh = h;
     for (var _tep in _teps) {
       _tep.paint(canvas, Offset(0.0, h));
       h += _tep.height + exh;
     }
     if (contentMetrics!.showrect) {
-      canvas.drawRect(Offset(0.0, xh) & Size(_size.width, h - xh - exh), Paint()..color = Colors.black.withAlpha(100));
+      canvas.drawRect(
+          Offset(0.0, xh) & Size(_size.width, h - xh - exh - 1), Paint()..color = Colors.black.withAlpha(100));
     }
 
     if (isHorizontal) {
