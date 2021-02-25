@@ -215,6 +215,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
         onWillPop: () async {
           if (widget.bookid != null && widget.cid != null && widget.page != null) {
             context.read<PainterBloc>()
+              ..inbook()
               ..canLoad = Completer<void>()
               ..add(PainterNewBookIdEvent(widget.bookid!, widget.cid!, widget.page!));
 

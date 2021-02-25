@@ -305,7 +305,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       ignore.value = true;
     }
   }
-
+  void inbook() {
+    _inBookView = true;
+  }
   bool showrect = false;
   Stream<PainterState> showdow() async* {
     showrect = !showrect;
