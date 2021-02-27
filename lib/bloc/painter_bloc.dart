@@ -305,9 +305,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       ignore.value = true;
     }
   }
+
   void inbook() {
     _inBookView = true;
   }
+
   bool showrect = false;
   Stream<PainterState> showdow() async* {
     showrect = !showrect;
@@ -377,6 +379,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
     style = getStyle(config);
     secstyle = getStyle(config.copyWith(fontSize: 13));
+    otherHeight = ePadding * 2 + topPad + botPad + secstyle.fontSize! * 2;
   }
 
   void reset({bool clearCache = false}) {
@@ -888,6 +891,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   static const topPad = 8.0;
   static const ePadding = 12.0;
   static const botPad = 4.0;
+  late double otherHeight;
   final reg = RegExp('\u0009|\u000B|\u000C|\u000D|\u0020|'
       '\u00A0|\u1680|\uFEFF|\u205F|\u202F|\u2028|\u2000|\u2001|\u2002|'
       '\u2003|\u2004|\u2005|\u2006|\u2007|\u2008|\u2009|\u200A+');
@@ -895,7 +899,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Future<List<ContentMetrics>> divText(String text, String cname) async {
     assert(text.isNotEmpty);
     final _size = Size(size.width - 32.0, size.height - padding.top - padding.bottom);
-    final otherHeight = ePadding * 2 + topPad + botPad + 26;
 
     final leftExtraPadding = (_size.width % style.fontSize!) / 2;
     final left = 16.0 + leftExtraPadding;
@@ -970,10 +973,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     assert(Log.i('div : ${(Timeline.now - nowx) / 1000}ms'));
     // end: div string--------------------------------------
 
-    /// pictures -------------------------------------------
-    /// 可能的优化：弃用Picture,直接以textPainter为参数传递？
-    // final pics = <ui.Picture>[];
-
     /// 最后一页行数可能不会占满，因此保留上一个额外高度[exh]
     var lastPageExh = 0.0;
     var textPages = <ContentMetrics>[];
@@ -1003,7 +1002,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
       } else {
         exh = (_size.height - otherHeight) / lineCounts - style.fontSize!;
-        exh = exh - exh / ((lineCounts + 1) * 2);
+        print('_size: ${_size.height - otherHeight}');
+
+        exh = exh;
         lastPageExh = exh;
       }
       final _teps = <TextPainter>[];
@@ -1041,28 +1042,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     return textPages;
   }
 }
-
-// Future<void> awaitEveryFrame(Future<bool> Function() fn) async {
-//   var result = false;
-//   while (!result) {
-//     result = await fn();
-//   }
-// }
-
-// Future<bool> layoutEveryFrame(void Function() fn) async {
-//   final completer = Completer<bool>();
-//   final scheduler = SchedulerBinding.instance!;
-//   if (scheduler.schedulerPhase == SchedulerPhase.idle) scheduler.scheduleFrame();
-//   scheduler.addPostFrameCallback((timeStamp) {
-//     // if (timeStamp >= Duration(milliseconds: 5)) {
-//     //   completer.complete(false);
-//     // } else {
-//     fn();
-//     completer.complete(true);
-//     // }
-//   });
-//   return completer.future;
-// }
 
 class ContentMetrics {
   const ContentMetrics({
@@ -1171,7 +1150,7 @@ class RenderContentView extends RenderBox {
     final bottomRight = contentMetrics!.botRightPainter;
     final right = contentMetrics!.right;
     final botPad = contentMetrics!.botPad;
-    final exh = contentMetrics!.extraHeightInLines;
+    final e = contentMetrics!.extraHeightInLines;
     final fontSize = contentMetrics!.fontSize;
     final extraPadding = 12.0;
     final topHeight = contentMetrics!.topHeight;
@@ -1195,7 +1174,7 @@ class RenderContentView extends RenderBox {
       if (!isHorizontal) {
         h -= extraPadding;
       }
-      h += (fontSize + exh) * (topHeight + 3);
+      h += (fontSize + e) * (topHeight + 3);
       cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
       if (!isHorizontal) {
         h += extraPadding;
@@ -1205,17 +1184,21 @@ class RenderContentView extends RenderBox {
     if (isHorizontal) {
       h += extraPadding;
     }
-    h += exh;
+    // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
     final xh = h;
     for (var _tep in _teps) {
+      h += e / 2;
       _tep.paint(canvas, Offset(0.0, h));
-      h += _tep.height + exh;
+      h += fontSize + e / 2;
     }
+    // h -= e / 2;
     if (contentMetrics!.showrect) {
       canvas.drawRect(
-          Offset(0.0, xh) & Size(_size.width, h - xh - exh - 1), Paint()..color = Colors.black.withAlpha(100));
+          Offset(0.0, xh + e / 2) & Size(_size.width, h - xh - e - 1), Paint()..color = Colors.black.withAlpha(100));
     }
-
+    // canvas.drawRect(
+    //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
+    // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
     if (isHorizontal) {
       bottomRight.paint(canvas, Offset(right, _size.height - bottomRight.height - botPad));
       bottomLeft.paint(canvas, Offset(0.0, _size.height - bottomLeft.height - botPad));

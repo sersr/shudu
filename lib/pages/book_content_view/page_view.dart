@@ -124,6 +124,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
         },
       );
       return SlideWidget(
+        otherHieght: bloc.otherHeight,
         esize: bloc.size,
         epadding: bloc.padding,
         header: RepaintBoundary(child: head),
@@ -353,6 +354,7 @@ class SlideWidget extends RenderObjectWidget {
       required this.header,
       required this.body,
       required this.leftFooter,
+      required this.otherHieght,
       required this.rightFooter});
   final Widget header;
   final Widget body;
@@ -360,7 +362,7 @@ class SlideWidget extends RenderObjectWidget {
   final Widget rightFooter;
   final Size esize;
   final EdgeInsets epadding;
-
+  final double otherHieght;
   @override
   SlideElement createElement() {
     return SlideElement(this);
@@ -368,13 +370,14 @@ class SlideWidget extends RenderObjectWidget {
 
   @override
   SliderRenderObject createRenderObject(BuildContext context) {
-    return SliderRenderObject(esize, epadding);
+    return SliderRenderObject(esize, epadding, otherHieght);
   }
 
   @override
   void updateRenderObject(BuildContext context, covariant SliderRenderObject renderObject) {
     renderObject
       ..epadding = epadding
+      ..otherHeight = otherHieght
       ..esize = esize;
   }
 }
@@ -415,7 +418,7 @@ class SlideElement extends RenderObjectElement {
   @override
   void update(covariant SlideWidget newWidget) {
     super.update(newWidget);
-      ud();
+    ud();
   }
 
   @override
@@ -443,8 +446,9 @@ class SlideElement extends RenderObjectElement {
 }
 
 class SliderRenderObject extends RenderBox {
-  SliderRenderObject(Size esize, EdgeInsets epadding)
+  SliderRenderObject(Size esize, EdgeInsets epadding, double otherHeight)
       : _esize = esize,
+      _otherHeight = otherHeight,
         _epadding = epadding;
   RenderBox? _header;
   RenderBox? _body;
@@ -510,6 +514,14 @@ class SliderRenderObject extends RenderBox {
     markNeedsLayout();
   }
 
+  double? _otherHeight;
+  double? get otherHeight => _otherHeight;
+  set otherHeight(double? v) {
+    if (_otherHeight == v) return;
+    _otherHeight = v;
+    markNeedsLayout();
+  }
+
   @override
   void performLayout() {
     size = esize!;
@@ -533,7 +545,7 @@ class SliderRenderObject extends RenderBox {
     }
     if (_body != null) {
       final _constraints =
-          BoxConstraints.tight(Size(esize!.width, esize!.height - 66 - epadding!.top - epadding!.bottom));
+          BoxConstraints.tight(Size(esize!.width, esize!.height - 62 - epadding!.top - epadding!.bottom));
       _body!.layout(_constraints);
       final parendata = _body!.parentData as BoxParentData;
       parendata.offset = Offset(.0, 33 + epadding!.top);
