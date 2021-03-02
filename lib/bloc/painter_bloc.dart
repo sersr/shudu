@@ -1002,8 +1002,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
       } else {
         exh = (_size.height - otherHeight) / lineCounts - style.fontSize!;
-        print('_size: ${_size.height - otherHeight}');
-
         exh = exh;
         lastPageExh = exh;
       }

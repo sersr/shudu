@@ -52,7 +52,7 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   @override
   void didChangeMetrics() {
     timer?.cancel();
-    timer = Timer(Duration(milliseconds: 100), () {
+    timer = Timer(Duration(milliseconds: 150), () {
       if (mounted) {
         final w = ui.window;
         assert(Log.i('${w.systemGestureInsets}${w.viewPadding}${w.padding}${w.viewInsets}${w.physicalGeometry}'));
@@ -168,14 +168,12 @@ Timer? errorTimer;
     }
     bloc.completercanCompute();
 
-    /// 优化: 移动端
-
     await bloc.completer.future;
     await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));
     await cbloc.loading!.future;
     //-------------------------
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(Duration(milliseconds: 500));
     // absorbPointer.value = false;
     return true;
   }

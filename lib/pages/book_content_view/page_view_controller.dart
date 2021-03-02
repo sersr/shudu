@@ -456,9 +456,14 @@ class ContentPreNextRenderObject extends RenderBox {
 
   bool get canPaint => firstIndex != null && lastIndex != null;
 
+  // @override
+  // void performResize() {
+  //   size = constraints.biggest;
+  // }
+
   @override
-  void performResize() {
-    size = constraints.biggest;
+  Size computeDryLayout(BoxConstraints constraints) {
+    return constraints.biggest;
   }
 
   Axis axis = Axis.horizontal;
@@ -480,12 +485,7 @@ class ContentPreNextRenderObject extends RenderBox {
     for (var i = _firstIndex; i <= _lastIndex; i++) {
       if (!childlist.containsKey(i)) {
         layoutChild(i);
-
-        /// 不需要child重新布局，状态管理已经转移了
-        childlist[i]?.layout(
-          constraints,
-          // parentUsesSize: true,
-        );
+        childlist[i]?.layout(constraints);
       }
     }
     for (var i = _firstIndex; i <= _lastIndex; i++) {
@@ -518,7 +518,6 @@ class ContentPreNextRenderObject extends RenderBox {
       );
       _element!._build(vpOffset!.page.round(), changeState: true);
     }
-    // print('layout 用时: ${(Timeline.now - now) / 1000}ms');
   }
 
   Offset computeAbsolutePaintOffset(double layoutOffset, double pixels) {

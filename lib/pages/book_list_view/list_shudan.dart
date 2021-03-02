@@ -214,7 +214,7 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
   ListView buildListView(List<BookList> list, BuildContext context, int index) {
     final width = 1 / MediaQuery.of(context).devicePixelRatio;
     return ListView.builder(
-      // itemExtent: 112,
+      itemExtent: 112,
       // key: PageStorageKey<String>('shudan$index'),
       itemCount: list.length,
       itemBuilder: (context, index) {

@@ -173,6 +173,7 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
   late double height;
   @override
   void performLayout() {
+    print('layout....');
     if (child == null) {
       size = constraints.biggest;
       return;
