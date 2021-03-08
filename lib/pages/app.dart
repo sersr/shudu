@@ -15,7 +15,7 @@ class ShuduApp extends StatelessWidget {
       return MaterialApp(
         title: 'shudu',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          primarySwatch: Colors.lightBlue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
           platform: state.platform,
           fontFamily: 'NotoSansSC',

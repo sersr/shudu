@@ -37,3 +37,34 @@ Widget btn1(
         )
       : child;
 }
+
+Widget btn2({VoidCallback? onTap, required String text, required IconData icon}) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(4.0),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(2.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 36,
+            color: Colors.grey.shade600,
+          ),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}

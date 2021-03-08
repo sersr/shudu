@@ -25,8 +25,8 @@ class SearchEventEnterPageWithoutKey extends SearchEvent {
 }
 
 class SearchEventWithKey extends SearchEvent {
-  SearchEventWithKey({this.key}) : super();
-  final String? key;
+  SearchEventWithKey({required this.key}) : super();
+  final String key;
 
   @override
   List<Object?> get props => [key];
@@ -45,9 +45,9 @@ class SearchWithoutData extends SearchResult {
 
 class SearchResultWithData extends SearchResult {
   SearchResultWithData({
-    this.searchList,
+    required this.searchList,
   }) : super();
-  final SearchList? searchList;
+  final SearchList searchList;
   SearchResultWithData copywith({SearchList? searchList, Uint8List? imgdata}) {
     return SearchResultWithData(
       searchList: searchList ?? this.searchList,
@@ -61,13 +61,22 @@ class SearchResultWithData extends SearchResult {
 class SearchBloc extends Bloc<SearchEvent, SearchResult> {
   SearchBloc(this.repository) : super(SearchWithoutData());
   final BookRepository repository;
+  final searchHistory = <String>[];
   @override
   Stream<SearchResult> mapEventToState(SearchEvent event) async* {
     if (event is SearchEventEnterPageWithoutKey) {
       yield SearchWithoutData();
     } else if (event is SearchEventWithKey) {
       yield SearchWithoutData();
-      var list = await repository.searchWithKey(event.key);
+      if (!searchHistory.contains(event.key) && event.key.isNotEmpty) {
+        searchHistory.add(event.key);
+      }
+      SearchList list;
+      if (searchHistory.last == event.key && state is SearchResultWithData) {
+        list = (state as SearchResultWithData).searchList;
+      } else {
+        list = await repository.searchWithKey(event.key);
+      }
       yield SearchResultWithData(searchList: list);
     }
   }

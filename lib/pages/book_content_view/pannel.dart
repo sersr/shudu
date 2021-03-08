@@ -473,15 +473,15 @@ class _BottomEndState extends State<BottomEnd> {
                       bloc.completerCanLoad();
                     },
                   ),
-                  bottomButton(
-                      text: '性能图层',
-                      onTap: () {
-                        final opt = context.read<OptionsBloc>();
-                        opt.add(OptionsEvent(showPerformmanceOverlay: !opt.showPerformmanceOverlay));
-                      }),
+                  // bottomButton(
+                  //     text: '性能图层',
+                  //     onTap: () {
+                  //       final opt = context.read<OptionsBloc>();
+                  //       opt.add(OptionsEvent(showPerformmanceOverlay: !opt.showPerformmanceOverlay));
+                  //     }),
                   bottomButton(text: '阴影', onTap: () => bloc.add(PainterShowShadowEvent())),
-                  bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadEvent())),
-                  bottomButton(text: '取消', onTap: () => bloc.completerResolve(Status.ignore)),
+                  // bottomButton(text: '重新下载', onTap: () => bloc.add(PainterReloadEvent())),
+                  // bottomButton(text: '取消', onTap: () => bloc.completerResolve(Status.ignore)),
                   bottomButton(text: '删除缓存', onTap: () => bloc.add(PainterDeleteCachesEvent(bloc.bookid!))),
                 ]),
               ),
@@ -493,6 +493,7 @@ class _BottomEndState extends State<BottomEnd> {
   }
 }
 
+/// 属性设置页面
 class BookSettingsView extends StatefulWidget {
   const BookSettingsView({Key? key, required this.showSettings}) : super(key: key);
   final ValueNotifier<SettingView> showSettings;

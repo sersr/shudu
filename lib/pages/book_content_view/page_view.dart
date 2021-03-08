@@ -524,8 +524,8 @@ class SliderRenderObject extends RenderBox {
 
   @override
   void performLayout() {
-    size = esize!;
-    final _height = size.height - 4.0 - epadding!.bottom;
+    size = constraints.biggest;
+    final _height = esize!.height - 4.0 - epadding!.bottom;
 
     final _constraints = BoxConstraints.tight(esize!);
     if (_header != null) {

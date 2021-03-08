@@ -580,7 +580,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   /// 以检测即将要访问的网址是否已存在。
   Future<void> downFromNet(int contentid, int _bookid) async {
     if (contentid == -1 || loadingId.contains(contentid)) return;
-
+    if (tData.cid != null && tData.cid == contentid) {
+      loading.value = true;
+    }
     loadingId.add(contentid);
     assert(Log.i('add loadingId: $contentid', stage: this, name: 'downFromNet'));
     final bookContent = await repository.getContentFromNet(_bookid, contentid);

@@ -82,23 +82,12 @@ class _BookInfoPageState extends State<BookInfoPage> {
                             var contain = false;
                             int? cid;
                             int? currentPage;
-                            for (var l in cState.custom) {
+                            for (var l in cState.sortChildren) {
                               if (l.id == bookid) {
                                 contain = true;
                                 cid = l.chapterId;
                                 currentPage = l.page;
                                 break;
-                              }
-                            }
-
-                            if (!contain) {
-                              for (var l in cState.isTop) {
-                                if (l.id == bookid) {
-                                  contain = true;
-                                  cid = l.chapterId;
-                                  currentPage = l.page;
-                                  break;
-                                }
                               }
                             }
                             final eh = math.max(ui.window.padding.bottom / ui.window.devicePixelRatio / 3, 0.0);
@@ -300,20 +289,13 @@ class _BookInfoPageState extends State<BookInfoPage> {
           final bookid = info.id;
           var contained = false;
           int? cid;
-          cState.custom.forEach((element) {
+          cState.sortChildren.forEach((element) {
             if (element.id == bookid) {
               contained = true;
               cid = element.chapterId;
             }
           });
-          if (!contained) {
-            cState.isTop.forEach((element) {
-              if (element.id == bookid) {
-                contained = true;
-                cid = element.chapterId;
-              }
-            });
-          }
+
           return btn1(
             onTap: () {
               if (contained) {

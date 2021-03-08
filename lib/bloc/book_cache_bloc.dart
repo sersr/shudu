@@ -108,23 +108,12 @@ class BookChapterIdIsTopEvent extends BookChapterIdEvent {
   List<Object?> get props => [isTop, id];
 }
 
-// class BookChapterIdUpdateCidEvent extends BookChapterIdEvent {
-//   BookChapterIdUpdateCidEvent({required this.id, required this.cid, required this.page});
-//   final int id;
-//   final int cid;
-//   final int page;
-
-//   @override
-//   List<Object?> get props => [id, cid, page];
-// }
-
 class BookChapterIdFirstLoadEvent extends BookChapterIdEvent {}
 
 class BookChapterIdState {
-  BookChapterIdState({this.isTop = const [], this.custom = const []});
-  final Iterable<BookCache> isTop;
-  final Iterable<BookCache> custom;
-
+  BookChapterIdState({this.sortChildren = const [], this.first = false});
+  final List<BookCache> sortChildren;
+  final bool first;
   factory BookChapterIdState.fromMap(List<Map> list) {
     var _bookCaches = <BookCache>[];
     for (var bookCache in list) {
@@ -133,16 +122,13 @@ class BookChapterIdState {
     _bookCaches.sort((p, n) => n.sortKey! - p.sortKey!);
     final isTop = _bookCaches.where((element) => element.isTop == 1);
     final custom = _bookCaches.where((element) => element.isTop != 1);
-    return BookChapterIdState(isTop: isTop, custom: custom);
+    return BookChapterIdState(sortChildren: isTop.toList()..addAll(custom));
   }
 }
 
 class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
-  BookCacheBloc(this.repository) : super(BookChapterIdState());
+  BookCacheBloc(this.repository) : super(BookChapterIdState(first: true));
   BookRepository repository;
-
-  // AppLifecycleState
-  // final currentContentId = <int, Map<String, int>>{};
 
   @override
   Stream<BookChapterIdState> mapEventToState(BookChapterIdEvent event) async* {
@@ -153,14 +139,10 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
       yield* loadForView(load: event.load);
     } else if (event is BookChapterIdAddEvent) {
       yield* addBook(event);
-    // } else if (event is BookChapterIdUpdateCidEvent) {
-      //   currentContentId[event.id] = {'cid': event.cid, 'page': event.page};
     } else if (event is BookChapterIdDeleteEvent) {
       await deleteBook(event);
     } else if (event is BookChapterIdIsTopEvent) {
       repository.innerdb.updateBookIsTop(event.id, event.isTop);
-      // } else if (event is BookChapterSaveEvent) {
-      //   await save();
     }
   }
 
@@ -172,15 +154,6 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     }
   }
 
-  // Future<void> save() async {
-  //   if (currentContentId.isEmpty) return;
-  //   final _current = Map.of(currentContentId).entries;
-  //   currentContentId.clear();
-  //   for (var el in _current) {
-  //     await repository.innerdb.updateMainInfo(el.key, el.value['cid']!, el.value['page']!);
-  //   }
-  // }
-
   Stream<BookChapterIdState> loadForView({bool load = false}) async* {
     // await save();
     var list = <Map<String, dynamic>>[];
@@ -189,18 +162,14 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
       final s = BookChapterIdState.fromMap(list);
       yield s;
       if (load) {
-        for (var item in s.isTop) {
-          await Future.delayed(Duration(milliseconds: 200));
-          await loadFromNet(item.id!);
-        }
-        for (var item in s.custom) {
+        for (var item in s.sortChildren) {
           await Future.delayed(Duration(milliseconds: 200));
           await loadFromNet(item.id!);
         }
         list = await repository.innerdb.db.rawQuery('SELECT * FROM BookInfo');
-        yield BookChapterIdState.fromMap(list);
       }
     }
+    yield BookChapterIdState.fromMap(list);
     completerLoading();
   }
 

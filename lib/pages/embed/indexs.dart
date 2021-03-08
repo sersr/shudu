@@ -26,12 +26,12 @@ class _IndexsWidgetState extends State<IndexsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
-      child: MediaQuery.removePadding(
-        removeTop: true,
-        removeBottom: true,
-        context: context,
+    return MediaQuery.removePadding(
+      removeTop: true,
+      removeBottom: true,
+      context: context,
+      child: GestureDetector(
+        onTap: () {},
         child: LayoutBuilder(
           builder: (context, constraints) {
             final height = constraints.maxHeight;
@@ -43,7 +43,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                 final volIndex = state.volIndex;
                 controller?.dispose();
                 var offset = 0.0;
-                final halfHeight = (height - headerextent) / 2 - extent / 2;
+                final halfHeight = (height - headerextent - extent) / 2;
                 for (var i = 0; i < volIndex; i++) {
                   offset += headerextent;
                   offset += (indexs[i].length - 1) * extent;
@@ -59,7 +59,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                 return Scrollbar(
                   controller: controller,
                   thickness: 10,
-                  radius: Radius.circular(5),
+                  radius: const Radius.circular(5),
                   child: CustomScrollView(
                     controller: controller,
                     // key: Key('$max'),
@@ -68,11 +68,12 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                         SliverStickyHeader.builder(
                           builder: (context, st) {
                             return Container(
+                              height: headerextent,
                               padding: const EdgeInsets.only(top: 4.0, bottom: 1.0),
                               child: Center(child: Text('${l.first as String}')),
                               decoration: BoxDecoration(
                                 color: Color.fromRGBO(150, 180, 140, 1),
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(st.isPinned ? 6.0 : 0.0)),
+                                // borderRadius: BorderRadius.vertical(top: Radius.circular(st.isPinned ? 6.0 : 0.0)),
                               ),
                               // height: headerextent,
                             );
@@ -118,8 +119,6 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                     ],
                   ),
                 );
-                // },
-                // );
               } else if (state is BookIndexErrorState) {
                 return Center(
                   child: btn1(

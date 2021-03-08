@@ -99,8 +99,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final child = Column(children: [
       AppBar(
+        backgroundColor: Colors.grey.shade100,
+        foregroundColor: Colors.grey.shade700,
         title: Text('hello world'),
-        // elevation: 1.0,
+        elevation: .0,
         centerTitle: true,
         actions: [
           Column(
@@ -188,64 +190,70 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void showdlg(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Stack(
-          children: [
-            Positioned(
-              bottom: 0.0,
-              left: 16.0,
-              right: 16.0,
-              height: 400,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200]!.withAlpha(240),
-                  borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[200]!.withAlpha(240),
+            borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          child: Container(
+            height: 200,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text('选择平台样式'),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                child: Column(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        btn1(
-                          child: Container(
-                            child: Text('android style'),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          ),
-                          radius: 40,
-                          bgColor: Colors.cyan[400],
-                          splashColor: Colors.cyan[200],
-                          onTap: () {
-                            context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.android));
-                            Future.delayed(Duration(milliseconds: 200), () {
-                              Navigator.of(context).pop();
-                            });
-                          },
+                    btn1(
+                      child: Container(
+                        child: Text(
+                          'android style',
+                          style: TextStyle(color: Colors.grey.shade100),
                         ),
-                        btn1(
-                          child: Container(
-                            child: Text('ios style'),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          ),
-                          radius: 40,
-                          bgColor: Colors.cyan[400],
-                          splashColor: Colors.cyan[200],
-                          onTap: () {
-                            context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.iOS));
-                            Future.delayed(Duration(milliseconds: 200), () {
-                              Navigator.of(context).pop();
-                            });
-                          },
-                        )
-                      ],
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      ),
+                      radius: 10,
+                      bgColor: Colors.cyan.shade600,
+                      splashColor: Colors.cyan.shade200,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.android));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
                     ),
+                    btn1(
+                      child: Container(
+                        child: Text(
+                          'ios style',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      ),
+                      radius: 10,
+                      bgColor: Colors.cyan.shade600,
+                      splashColor: Colors.cyan.shade200,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.iOS));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    )
                   ],
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -266,62 +274,31 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          btn1(
-            radius: 8.0,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            bgColor: Colors.blue,
-            splashColor: Colors.blue[300],
-            onTap: () {
-              context.read<BookInfoBloc>().add(BookInfoEventSentWithId(item.id!));
-              Navigator.of(context).pushReplacementNamed(BookInfoPage.currentRoute);
-            },
-            child: Text(
-              '书籍详情',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[200],
-                fontSize: 14,
-              ),
-            ),
-          ),
-          btn1(
-            radius: 8.0,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            bgColor: Colors.blue,
-            splashColor: Colors.blue[300],
-            onTap: () {
-              context.read<BookCacheBloc>()
-                ..add(BookChapterIdIsTopEvent(id: item.id!, isTop: item.isTop == 1 ? 0 : 1))
-                ..add(BookChapterIdLoadEvent());
-              Navigator.of(context)..pop();
-            },
-            child: Text(
-              item.isTop == 1 ? '取消置顶' : '书籍置顶',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[200],
-                fontSize: 14,
-              ),
-            ),
-          ),
-          btn1(
-            radius: 8.0,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            bgColor: Colors.blue,
-            splashColor: Colors.blue[300],
-            onTap: () {
-              context.read<BookCacheBloc>()..add(BookChapterIdDeleteEvent(id: item.id!))..add(BookChapterIdLoadEvent());
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              '删除书籍',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[200],
-                fontSize: 14,
-              ),
-            ),
-          ),
+          btn2(
+              icon: Icons.book,
+              text: '书籍详情',
+              onTap: () {
+                context.read<BookInfoBloc>().add(BookInfoEventSentWithId(item.id!));
+                Navigator.of(context).pushReplacementNamed(BookInfoPage.currentRoute);
+              }),
+          btn2(
+              icon: Icons.touch_app_sharp,
+              text: item.isTop == 1 ? '取消置顶' : '书籍置顶',
+              onTap: () {
+                context.read<BookCacheBloc>()
+                  ..add(BookChapterIdIsTopEvent(id: item.id!, isTop: item.isTop == 1 ? 0 : 1))
+                  ..add(BookChapterIdLoadEvent());
+                Navigator.of(context)..pop();
+              }),
+          btn2(
+              icon: Icons.delete_forever_outlined,
+              text: '删除书籍',
+              onTap: () {
+                context.read<BookCacheBloc>()
+                  ..add(BookChapterIdDeleteEvent(id: item.id!))
+                  ..add(BookChapterIdLoadEvent());
+                Navigator.of(context).pop();
+              }),
         ],
       ),
     );
@@ -351,7 +328,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           builder: (context, constraints) {
             return BlocBuilder<BookCacheBloc, BookChapterIdState>(
               builder: (context, state) {
-                final children = state.isTop.toList()..addAll(state.custom);
+                final children = state.sortChildren;
+                if (state.first) {
+                  return SizedBox();
+                }
+                if (children.isEmpty) {
+                  return Center(child: Text('点击右上角搜索按钮搜索'));
+                }
                 return ListView.builder(
                   itemCount: children.length,
                   padding: const EdgeInsets.all(0.0),
@@ -424,7 +407,7 @@ class MySearchPage extends SearchDelegate<void> {
   ThemeData appBarTheme(BuildContext context) {
     final theme = Theme.of(context);
     return theme.copyWith(
-      primaryColor: Colors.cyan,
+      primaryColor: Colors.white,
       primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.grey),
       primaryColorBrightness: Brightness.light,
       primaryTextTheme: theme.textTheme,
@@ -439,14 +422,53 @@ class MySearchPage extends SearchDelegate<void> {
           width: 100,
           child: Icon(
             Icons.ac_unit,
-            size: 40,
+            size: 30,
           )));
-
   @override
-  Widget buildSuggestions(BuildContext context) => wrap(context, Center(child: Text('suggestions')));
+  Widget buildSuggestions(BuildContext context) {
+    return wrap(context, suggestions(context));
+  }
+
+  Widget suggestions(BuildContext context) {
+    return StatefulBuilder(
+      builder: (context, setstate) {
+        final bloc = BlocProvider.of<SearchBloc>(context);
+        return Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Wrap(
+            children: [
+              for (var i in bloc.searchHistory)
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Material(
+                    borderRadius: BorderRadius.circular(3.0),
+                    color: Colors.grey.shade300,
+                    child: InkWell(
+                      onTap: () {
+                        query = i;
+                        showResults(context);
+                        // setstate(() {
+                        //   bloc.searchHistory.remove(i);
+                        // });
+                      },
+                      borderRadius: BorderRadius.circular(3.0),
+                      child: Container(
+                        child: Text(i),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.0),
+                      ),
+                    ),
+                  ),
+                )
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget wrap(BuildContext context, Widget child) {
     return Stack(
+      fit: StackFit.expand,
       children: [
         child,
         Positioned(
@@ -464,12 +486,10 @@ class MySearchPage extends SearchDelegate<void> {
               child: Container(
                 height: 40,
                 width: 70,
-                // decoration: BoxDecoration(borderRadius: BorderRadius.circular(50.0), ),
-                child: Center(
-                    child: Text(
-                  '返回',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                )),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50.0),
+                ),
+                child: Center(child: Text('返回')),
               ),
             ),
           ),
@@ -491,10 +511,12 @@ class MySearchPage extends SearchDelegate<void> {
           );
         } else if (state is SearchResultWithData) {
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: ListView(
               children: [
-                for (var value in state.searchList!.data!)
+                suggestions(context),
+                if (searchProvier.searchHistory.isNotEmpty) Divider(height: 1),
+                for (var value in state.searchList.data!)
                   GestureDetector(
                     onTap: () {
                       final bookInfoBloc = context.read<BookInfoBloc>();
@@ -502,7 +524,9 @@ class MySearchPage extends SearchDelegate<void> {
                       Navigator.of(context).pushNamed(BookInfoPage.currentRoute);
                     },
                     child: Container(
-                      height: 50,
+                      height: 40,
+                      alignment: Alignment.centerLeft,
+                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
                       child: Text('${value.name}'),
                     ),
                   ),
