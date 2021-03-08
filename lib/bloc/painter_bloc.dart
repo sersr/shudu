@@ -142,24 +142,22 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   int currentPage = 1;
 
-  // bool showRect = false;
-
   /// ----------------------------------------------
 
   TextData tData = TextData();
   ContentViewConfig config = ContentViewConfig();
 
-  var cache = <int, TextData>{};
+  var caches = <int, TextData>{};
 
-  /// download ID
+  /// 访问网络 id
   List<int> loadingId = [];
 
   /// 网络任务异步状态
   var completer = Completer<Status>();
 
   var sizeChanged = true;
-  var padding = const EdgeInsets.all(0.0);
-  var realPadding = const EdgeInsets.all(0.0);
+  var padding = EdgeInsets.zero;
+  var realPadding = EdgeInsets.zero;
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNewBookIdEvent) {
@@ -187,7 +185,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await loadFirst();
       await Future.delayed(Duration(milliseconds: 400));
       yield painter();
-      loading.value = false;
     } else if (event is PainterReloadEvent) {
       if (_inBookView && tData.contentIsNotEmpty) {
         await loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
@@ -196,7 +193,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (event.changeState) {
         _inBookView = false;
       }
-      // memoryToDatabase();
     }
   }
 
@@ -225,10 +221,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     yield painter();
     loading.value = true;
     await Future.delayed(Duration(milliseconds: 100));
-    if (!cache.containsKey(tData.pid)) {
+    if (!caches.containsKey(tData.pid)) {
       await completer.future;
       await loadPN(_pid, _cid!, _nid!, _bookid);
-      if (!cache.containsKey(tData.pid)) {
+      if (!caches.containsKey(tData.pid)) {
         yield painter();
         loading.value = false;
         error.value = true;
@@ -238,7 +234,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (canCompute != null && !canCompute!.isCompleted) {
       await canCompute!.future;
     }
-    tData = cache[tData.pid] ?? TextData();
+    tData = caches[tData.pid] ?? TextData();
     currentPage = 1;
     controller?.setPixelsWithoutNtf(0.0);
     _innerIndex = 0;
@@ -257,10 +253,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _bookid = bookid!;
     yield painter();
     loading.value = true;
-    if (!cache.containsKey(tData.nid)) {
+    if (!caches.containsKey(tData.nid)) {
       await completer.future;
       await loadPN(_pid!, _cid!, _nid, _bookid);
-      if (!cache.containsKey(tData.nid)) {
+      if (!caches.containsKey(tData.nid)) {
         yield painter();
         loading.value = false;
         error.value = true;
@@ -270,7 +266,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (canCompute != null && !canCompute!.isCompleted) {
       await canCompute!.future;
     }
-    tData = cache[tData.nid] ?? TextData();
+    tData = caches[tData.nid] ?? TextData();
     currentPage = 1;
     controller?.setPixelsWithoutNtf(0.0);
     _innerIndex = 0;
@@ -315,11 +311,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     showrect = !showrect;
     reset(clearCache: true);
     yield painter(ign: true);
-    loading.value = true;
     await completer.future;
     await loadFirst();
     yield painter();
-    loading.value = false;
   }
 
   Stream<PainterState> setPrefs(PainterSetPreferencesEvent event) async* {
@@ -386,7 +380,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     loadingId.clear();
     tData = TextData()..cid = tData.cid;
     if (clearCache) {
-      cache.clear();
+      caches.clear();
     }
   }
 
@@ -409,13 +403,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (event.cid == -1) return;
     ignore.value = true;
     controller?.setPixelsWithoutNtf(0.0);
-    final _lastIbv = _inBookView;
+    final _lastInBookView = _inBookView;
 
     _innerIndex = 0;
     if (tData.cid == null || tData.cid != event.cid || sizeChanged) {
       assert(Log.i('page: ${event.page}', stage: this, name: 'newBook'));
-      final clear = bookid != event.id || sizeChanged;
-      if (!clear) {
+      final diffBook = bookid != event.id || sizeChanged;
+      if (!diffBook) {
         loading.value = true;
       }
 
@@ -430,7 +424,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
       currentPage = event.page;
       tData.cid = event.cid;
-      reset(clearCache: clear);
+      reset(clearCache: diffBook);
       bookid = event.id;
       _inBookView = true;
 
@@ -438,7 +432,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       dump();
       await canLoad?.future;
 
-      if (!_lastIbv) {
+      if (!_lastInBookView) {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
       await Future.delayed(Duration(milliseconds: 150));
@@ -458,7 +452,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     } else {
       _inBookView = true;
       await canLoad?.future;
-      if (!_lastIbv) {
+      if (!_lastInBookView) {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
     }
@@ -474,21 +468,20 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       case TargetPlatform.android:
         final sysinsets = w.systemGestureInsets;
         var _padding = EdgeInsets.fromWindowPadding(sysinsets, w.devicePixelRatio);
-        // 虚拟导航栏
 
         if (padding.top != _padding.top) {
           padding = _padding.copyWith(bottom: 0.0);
           sizeChanged = true;
         }
+
         if (padding.bottom > _padding.bottom || _padding.bottom > 0.0) {
-          // 虚拟导航栏 bottom += 8.0; 底部非直角；
+
           if (padding.bottom != 8.0) {
             padding = padding.copyWith(bottom: 8.0);
             sizeChanged = true;
           }
         }
-        assert(Log.i('size: $size, $_size, $padding'));
-        // 检测底部导航栏是否是虚拟的
+
         if (size != _size) {
           if (_size.height != size.height - realPadding.bottom) {
             size = _size;
@@ -497,7 +490,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           }
         }
         break;
-
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
@@ -509,12 +501,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
         break;
       case TargetPlatform.fuchsia:
-      // 不清楚，暂时和iOS一样
       case TargetPlatform.iOS:
-        // ios 全面屏：padding，size 不变,待测试
+        // ios
         var _padding = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
         if ((_padding.top == 0.0 && padding.top != _padding.top) ||
-            // padding.bottom != _padding.bottom || // iPhone 不用检测底部
             size.height < _size.height ||
             size.width != _size.width) {
           size = _size;
@@ -607,8 +597,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     var result = TextData();
     var contain = false;
     void cacheReturn(int _contentid) {
-      if (cache.containsKey(_contentid)) {
-        result = cache[_contentid]!;
+      if (caches.containsKey(_contentid)) {
+        result = caches[_contentid]!;
         contain = result.nid != null && result.nid != -1;
         return;
       }
@@ -634,33 +624,33 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   /// 缓存当前章节前后几章
   void cacheGbg(TextData _cnpid) {
-    if (cache.length >= 6) {
-      final _tData = cache[tData.cid];
+    if (caches.length >= 6) {
+      final _tData = caches[tData.cid];
       if (_tData != null) {
-        if (cache.containsKey(_tData.cid)) {
+        if (caches.containsKey(_tData.cid)) {
           final _cache = <int, TextData>{};
 
-          if (cache.containsKey(_tData.pid)) {
-            final _cp = cache[_tData.pid]!;
+          if (caches.containsKey(_tData.pid)) {
+            final _cp = caches[_tData.pid]!;
             _cache[_cp.cid!] = _cp;
-            if (cache.containsKey(_cp.pid)) {
-              _cache[_cp.pid!] = cache[_cp.pid]!;
+            if (caches.containsKey(_cp.pid)) {
+              _cache[_cp.pid!] = caches[_cp.pid]!;
             }
             // cache = _cache;
           }
-          if (cache.containsKey(_tData.nid)) {
-            final _cn = cache[_tData.nid]!;
+          if (caches.containsKey(_tData.nid)) {
+            final _cn = caches[_tData.nid]!;
             _cache[_cn.cid!] = _cn;
-            if (cache.containsKey(_cn.nid)) {
-              _cache[_cn.nid!] = cache[_cn.nid]!;
+            if (caches.containsKey(_cn.nid)) {
+              _cache[_cn.nid!] = caches[_cn.nid]!;
             }
           }
           _cache[_tData.cid!] = _tData;
-          cache = _cache;
+          caches = _cache;
         }
       }
     }
-    cache[_cnpid.cid!] = _cnpid;
+    caches[_cnpid.cid!] = _cnpid;
   }
 
   Future<void> loadFromDb(int contentid, int _bookid) async {
@@ -732,7 +722,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     await callback();
     loadCount -= 1;
     assert(Log.i('load: done  <\n——————————————————————'));
-    completerResolve(tData.contentIsNotEmpty && cache.containsKey(tData.nid) && cache.containsKey(tData.pid)
+    completerResolve(tData.contentIsNotEmpty && caches.containsKey(tData.nid) && caches.containsKey(tData.pid)
         ? Status.done
         : Status.error);
   }
@@ -760,10 +750,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
       }
       // 进行异步任务时，需要检查页面是否已退出，以免等待过长时间。
-      if (_inBookView && _nid != -1 && !cache.containsKey(_nid)) {
+      if (_inBookView && _nid != -1 && !caches.containsKey(_nid)) {
         await loadData(_nid, _bookid);
       }
-      if (_inBookView && _pid != -1 && !cache.containsKey(_pid)) {
+      if (_inBookView && _pid != -1 && !caches.containsKey(_pid)) {
         await loadData(_pid, _bookid);
       }
     });
@@ -804,13 +794,13 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final exPage = index - _innerIndex;
     var result = true;
     if (key == 0) {
-      result = currentPage + exPage < tData.content!.length || cache.containsKey(tData.nid);
+      result = currentPage + exPage < tData.content!.length || caches.containsKey(tData.nid);
     } else {
-      result = currentPage + exPage > 1 || cache.containsKey(tData.pid);
+      result = currentPage + exPage > 1 || caches.containsKey(tData.pid);
     }
     if (!delayed) {
       delayed = true;
-      if (!cache.containsKey(tData.pid) || !cache.containsKey(tData.nid)) {
+      if (!caches.containsKey(tData.pid) || !caches.containsKey(tData.nid)) {
         loadPNCb();
       }
       Future.delayed(Duration(seconds: 1), () {
@@ -852,16 +842,16 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
         break;
       } else if (tol < 0) {
-        if (cache.containsKey(tData.pid)) {
-          text = tData = cache[tData.pid]!;
+        if (caches.containsKey(tData.pid)) {
+          text = tData = caches[tData.pid]!;
           currentContentFirstIndex -= text.content!.length;
         } else {
           text = null;
         }
       } else if (tol >= length) {
-        if (cache.containsKey(tData.nid)) {
+        if (caches.containsKey(tData.nid)) {
           currentContentFirstIndex += length;
-          text = tData = cache[tData.nid]!;
+          text = tData = caches[tData.nid]!;
         } else {
           text = null;
         }
