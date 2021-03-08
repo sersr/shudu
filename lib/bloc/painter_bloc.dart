@@ -399,8 +399,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   Completer<void>? canLoad;
   bool _inBookView = false;
   NopPageViewController? controller;
+  // 加载状态
   ValueNotifier<bool> loading = ValueNotifier<bool>(false);
+  // 是否直接忽略
   ValueNotifier<bool> ignore = ValueNotifier<bool>(false);
+  // 显示网络错误信息
   ValueNotifier<bool> error = ValueNotifier(false);
   Stream<PainterState> newBook(PainterNewBookIdEvent event) async* {
     if (event.cid == -1) return;
@@ -412,14 +415,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (tData.cid == null || tData.cid != event.cid || sizeChanged) {
       assert(Log.i('page: ${event.page}', stage: this, name: 'newBook'));
       final clear = bookid != event.id || sizeChanged;
-
-      /// 等待[load](异步)执行完成
-      /// 避免数据竞争
-      // yield painter(ignore: true);
-      _inBookView = false;
       if (!clear) {
         loading.value = true;
       }
+
+      _inBookView = false;
       if (!completer.isCompleted) {
         // 尽快退出其他任务；
         if (loadingId.isNotEmpty) {
@@ -432,11 +432,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       tData.cid = event.cid;
       reset(clearCache: clear);
       bookid = event.id;
-      // 没有后台任务了
       _inBookView = true;
-      if (!clear) {
-        loading.value = true;
-      }
+
       // 更新信息
       dump();
       await canLoad?.future;
@@ -444,15 +441,16 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (!_lastIbv) {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(Duration(milliseconds: 150));
       sizeChange();
 
       sizeChanged = false;
-      computeCount++;
       bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
-
+      final timer = Timer(Duration(milliseconds: 500), () {
+        loading.value = true;
+      });
       await loadFirst();
-      computeCount--;
+      timer.cancel();
       yield painter();
       if (config.axis == Axis.vertical) {
         resetController();
@@ -560,6 +558,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
+  // 等待UI空闲
   Future<void> awaitCompute(FutureOr<void> Function() call) async {
     if (canCompute != null && !canCompute!.isCompleted) {
       Log.i('awaiting >>', stage: this, name: 'awaitCompute');
@@ -580,9 +579,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   /// 以检测即将要访问的网址是否已存在。
   Future<void> downFromNet(int contentid, int _bookid) async {
     if (contentid == -1 || loadingId.contains(contentid)) return;
-    if (tData.cid != null && tData.cid == contentid) {
-      loading.value = true;
-    }
     loadingId.add(contentid);
     assert(Log.i('add loadingId: $contentid', stage: this, name: 'downFromNet'));
     final bookContent = await repository.getContentFromNet(_bookid, contentid);
@@ -603,8 +599,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         cacheGbg(_cnpid);
       });
       await memoryToDatabase(bookContent);
-    } else {
-      loading.value = false;
     }
   }
 
@@ -615,7 +609,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     void cacheReturn(int _contentid) {
       if (cache.containsKey(_contentid)) {
         result = cache[_contentid]!;
-        contain = true;
+        contain = result.nid != null && result.nid != -1;
         return;
       }
       contain = false;
@@ -676,24 +670,24 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (queryList.isNotEmpty) {
       final map = queryList.first;
       if (map.contentIsNotEmpty) {
-        if (map['hasContent'] != 1 || map['nid'] == -1) {
-          await downFromNet(contentid, _bookid);
-        } else {
-          assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
-          await awaitCompute(() async {
-            if (_bookid != bookid) return;
-            final list = await divText(map['content'] as String, map['cname'] as String);
-            assert(list.isNotEmpty);
-            final _cnpid = TextData(
-              cid: map['cid'] as int,
-              nid: map['nid'] as int,
-              pid: map['pid'] as int,
-              cname: map['cname'] as String,
-              content: list,
-            );
-            cacheGbg(_cnpid);
-          });
-        }
+        // if (map['hasContent'] != 1 || map['nid'] == -1) {
+        //   await downFromNet(contentid, _bookid);
+        // } else {
+        assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
+        await awaitCompute(() async {
+          if (_bookid != bookid) return;
+          final list = await divText(map['content'] as String, map['cname'] as String);
+          assert(list.isNotEmpty);
+          final _cnpid = TextData(
+            cid: map['cid'] as int,
+            nid: map['nid'] as int,
+            pid: map['pid'] as int,
+            cname: map['cname'] as String,
+            content: list,
+          );
+          cacheGbg(_cnpid);
+        });
+        // }
       }
     }
   }
@@ -715,12 +709,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       final _currentText = await loadData(_cid, _bookid);
       if (_bookid == bookid && _cid == _currentText.cid) {
         tData = _currentText;
-        final _nid = tData.nid!;
-        if (_nid == -1) {
-          await reloadFromNet(_cid, _bookid);
-          final _newtData = await loadData(_cid, _bookid);
-          tData = _newtData;
-        }
       }
     });
     if (bookid == _bookid && tData.contentIsNotEmpty && _cid == tData.cid) {
@@ -752,10 +740,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   final errorID = <int?>[];
 
   // /// pid/nid == -1的解决方案
-  Future<void> reloadFromNet(int _cid, int _bookid) async {
-    Log.w('重新下载： 当前章节是否为第一章或最后一张,$_cid', stage: this, name: 'reloadFromNet');
-    await downFromNet(_cid, _bookid);
-  }
+  // Future<void> reloadFromNet(int _cid, int _bookid) async {
+  //   Log.w('重新下载： 当前章节是否为第一章或最后一张,$_cid', stage: this, name: 'reloadFromNet');
+  //   await downFromNet(_cid, _bookid);
+  // }
 
   /// 异步 调用
   Future<void> loadPN(int _pid, int _cid, int _nid, int _bookid, {bool update = false}) async {
@@ -763,7 +751,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       if (_nid == -1 || update) {
         if (!errorID.contains(_cid) || update) {
           errorID.add(_cid);
-          await reloadFromNet(_cid, _bookid);
+          await downFromNet(_cid, _bookid);
           final _tdata = await loadData(_cid, _bookid);
           if (_tdata.contentIsNotEmpty && tData.cid == _cid) {
             tData = _tdata;

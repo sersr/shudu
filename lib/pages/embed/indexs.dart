@@ -73,7 +73,6 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                               child: Center(child: Text('${l.first as String}')),
                               decoration: BoxDecoration(
                                 color: Color.fromRGBO(150, 180, 140, 1),
-                                // borderRadius: BorderRadius.vertical(top: Radius.circular(st.isPinned ? 6.0 : 0.0)),
                               ),
                               // height: headerextent,
                             );
