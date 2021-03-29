@@ -169,6 +169,8 @@ class ShudanListDetailItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ts = BlocProvider.of<TextStylesBloc>(context);
+
     return Container(
       height: 108,
       decoration: BoxDecoration(
@@ -194,6 +196,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
         child: Row(children: [
           Container(
             width: 72,
+            height: 108,
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: ImageResolve(img: l.bookIamge, width: 72),
           ),
@@ -211,9 +214,9 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                       children: [
                         Text(
                           '${l.bookName}',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: ts.state.title2,
                           softWrap: false,
-                          overflow: TextOverflow.fade,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Expanded(
                           child: Align(
@@ -242,11 +245,12 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             softWrap: false,
                             maxLines: 2,
-                            style: TextStyle(fontSize: 13, color: Colors.grey[900]),
+                            style: ts.state.body1!.copyWith(color: Color.fromRGBO(120, 120, 120, 1)),
                           ),
                           Text(
                             '${l.description}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                            style: ts.state.body3,
+                            softWrap: false,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                           ),

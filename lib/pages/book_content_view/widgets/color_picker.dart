@@ -156,7 +156,7 @@ class RenderColorPicker extends RenderBox {
       red,
     ]).createShader(rect);
     final path = Path();
-    path..addArc(rect, 0, math.pi * 2);
+    path.addArc(rect, 0, math.pi * 2);
     // canvas.drawRect(Offset.zero & Size(extentWithElevation* 2 , extentWithElevation * 2), Paint());
     canvas.drawShadow(path, Colors.black, elevation!, false);
     canvas.drawCircle(Offset(extentWithElevation, extentWithElevation), _radius!, Paint()..shader = g);
@@ -310,12 +310,12 @@ class _SelectColorState extends State<SelectColor> {
       onPanEnd: end,
       onPanCancel: widget.onChangeCancel,
       child: Poin(
+        poinOffset: poinOffset,
         child: RepaintBoundary(
             child: ColorPickerWidget(
           extent: extent,
           radius: widget.radius,
         )),
-        poinOffset: poinOffset,
       ),
     );
   }

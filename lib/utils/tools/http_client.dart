@@ -1,11 +1,12 @@
 import 'package:http/http.dart' as http;
 
+@Deprecated('Use `Dio` instead')
 class TimeClient extends http.BaseClient {
   final http.Client _inner;
   TimeClient() : _inner = http.Client();
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
-    return timeLimit(() => _inner.send(request), onTimeout: () {
+    return _timeLimit(() => _inner.send(request), onTimeout: () {
       throw http.ClientException('TIMEOUT', request.url);
     });
   }
@@ -21,7 +22,7 @@ class TimeClient extends http.BaseClient {
 //   await timeLimit(() => fn(client), onTimeout: () => client.close());
 // }
 
-Future<T> timeLimit<T>(Future<T> Function() fn, {int? seconds, required Future<T> Function() onTimeout}) async {
+Future<T> _timeLimit<T>(Future<T> Function() fn, {int? seconds, required Future<T> Function() onTimeout}) async {
   try {
     return await fn().timeout(Duration(seconds: seconds ?? 5));
   } catch (e) {

@@ -41,15 +41,16 @@ class BookItem extends StatelessWidget {
         children: [
           Container(
             width: 60,
+            height: 98,
             // padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
             child: ImageResolve(
               img: img,
               width: 60,
               builder: (child) {
                 return UpdateIcon(
-                  child: child,
                   isNew: isNew,
                   isTop: isTop,
+                  child: child,
                 );
               },
             ),
@@ -220,7 +221,7 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
       final path = Path();
-      path..addRect(Offset.zero & size);
+      path.addRect(Offset.zero & size);
       context.paintChild(child!, offset);
       final canvas = context.canvas;
       if (isNew!) {

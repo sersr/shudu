@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'context_view.dart';
+import 'painter_page.dart';
 
 class BookContentPage extends StatelessWidget {
   static String currentRoute = '/content';

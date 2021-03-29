@@ -2,7 +2,7 @@
 
 ## 介绍
 
-实现文本内容流畅滑动。
+    RenderObject 层面布局实践
 
 release 版本
 
@@ -11,10 +11,10 @@ release 版本
 ## 构建
 
     flutter --version  
-> Flutter 1.27.0-4.0.pre • channel dev • <https://github.com/flutter/flutter.git>  
-> Framework • revision f8cd24de95 (7 days ago) • 2021-02-16 11:24:17 -0800  
-> Engine • revision 1d537824d6  
-> Tools • Dart 2.13.0 (build 2.13.0-30.0.dev)  
+> Flutter 2.0.3 • channel stable • https://github.com/flutter/flutter.git  
+> Framework • revision 4d7946a68d (11 days ago) • 2021-03-18 17:24:33 -0700  
+> Engine • revision 3459eb2436  
+> Tools • Dart 2.12.2  
 
 ## 免责声明
 

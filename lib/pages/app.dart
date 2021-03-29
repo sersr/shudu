@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import '../bloc/bloc.dart';
 
-import 'book_content_view/content_main.dart';
+import '../bloc/bloc.dart';
+import 'book_content_view/content_page.dart';
 import 'book_info_view/book_info_page.dart';
 import 'home_view/home_page.dart';
 
@@ -18,7 +18,15 @@ class ShuduApp extends StatelessWidget {
           primarySwatch: Colors.lightBlue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
           platform: state.platform,
+          brightness: Brightness.light,
           fontFamily: 'NotoSansSC',
+          pageTransitionsTheme: PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: OptionsState.create(state.pageTransitionsBuilder),
+              TargetPlatform.iOS: OptionsState.create(state.pageTransitionsBuilder),
+              TargetPlatform.windows: OptionsState.create(state.pageTransitionsBuilder),
+            },
+          ),
         ),
         home: MyHomePage(),
         showPerformanceOverlay: state.showPerformmanceOverlay ?? false,
@@ -39,25 +47,20 @@ class MulProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(
-          create: (_) => BookRepository(),
+        BlocProvider(create: (_) => OptionsBloc()),
+        Provider(create: (context) => BookRepository(() async => context.read<OptionsBloc>().init())),
+        BlocProvider(
+          create: (context) => BookCacheBloc(context.read<BookRepository>())..add(BookChapterIdFirstLoadEvent()),
         ),
-        BlocProvider(create: (context) {
-          return BookCacheBloc(context.read<BookRepository>())..add(BookChapterIdFirstLoadEvent());
-        }),
-        BlocProvider(create: (context) {
-          return BookIndexBloc(repository: context.read<BookRepository>());
-        }),
+        BlocProvider(
+          create: (context) => BookIndexBloc(repository: context.read<BookRepository>()),
+        ),
         BlocProvider(create: (context) => SearchBloc(context.read<BookRepository>())),
         BlocProvider(create: (context) => BookInfoBloc(context.read<BookRepository>())),
         BlocProvider(
-          create: (context) {
-            return PainterBloc(
-                repository: context.read<BookRepository>(),
-                bookIndexBloc: context.read<BookIndexBloc>());
-          },
+          create: (context) =>
+              PainterBloc(repository: context.read<BookRepository>(), bookIndexBloc: context.read<BookIndexBloc>()),
         ),
-        BlocProvider(create: (_) => OptionsBloc(defaultTargetPlatform)),
         BlocProvider(create: (_) => TextStylesBloc()),
       ],
       child: ShuduApp(),

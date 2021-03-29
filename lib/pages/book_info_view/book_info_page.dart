@@ -10,7 +10,7 @@ import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
 import '../../data/book_info.dart';
 import '../../utils/utils.dart';
-import '../book_content_view/content_main.dart';
+import '../book_content_view/content_page.dart';
 import '../embed/indexs.dart';
 // import '../embed/indexs.dart';
 
@@ -177,7 +177,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                           return background(
                             child: IndexsWidget(
                               onTap: (context, id, cid) {
-                                context.read<PainterBloc>()..add(PainterNewBookIdEvent(id, cid, 1));
+                                context.read<PainterBloc>().add(PainterNewBookIdEvent(id, cid, 1));
                                 Navigator.of(context).pushNamed(BookContentPage.currentRoute);
                                 showIndexs.value = !showIndexs.value;
                                 context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
@@ -200,19 +200,20 @@ class _BookInfoPageState extends State<BookInfoPage> {
       ),
     );
     return WillPopScope(
-        child: child,
-        onWillPop: () async {
-          if (widget.bookid != null && widget.cid != null && widget.page != null) {
-            context.read<PainterBloc>()
-              ..inbook()
-              ..canLoad = Completer<void>()
-              ..add(PainterNewBookIdEvent(widget.bookid!, widget.cid!, widget.page!));
+      onWillPop: () async {
+        if (widget.bookid != null && widget.cid != null && widget.page != null) {
+          context.read<PainterBloc>()
+            ..inbook()
+            ..canLoad = Completer<void>()
+            ..add(PainterNewBookIdEvent(widget.bookid!, widget.cid!, widget.page!));
 
-            // Navigator.of(context).pushNamed(BookContentPage.currentRoute);
-          }
-          // final bloc = BlocProvider.of<PainterBloc>(context);
-          return true;
-        });
+          // Navigator.of(context).pushNamed(BookContentPage.currentRoute);
+        }
+        // final bloc = BlocProvider.of<PainterBloc>(context);
+        return true;
+      },
+      child: child,
+    );
   }
 
   Widget background({required Widget child}) {
@@ -284,6 +285,8 @@ class _BookInfoPageState extends State<BookInfoPage> {
     );
     yield Container(
       margin: const EdgeInsets.only(top: 10.0),
+      color: Colors.grey[200],
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6),
       child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
         builder: (context, cState) {
           final bookid = info.id;
@@ -352,8 +355,6 @@ class _BookInfoPageState extends State<BookInfoPage> {
           );
         },
       ),
-      color: Colors.grey[200],
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6),
     );
     yield Container(
       color: Colors.grey[200],
@@ -384,10 +385,10 @@ class _BookInfoPageState extends State<BookInfoPage> {
         child: Row(
           children: [
             Container(
+              height: 130,
               child: ImageResolve(
                 img: img,
               ),
-              height: 130,
             ),
             Expanded(
               child: Container(
@@ -505,7 +506,7 @@ class BookInfoSameItemWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '作者：${author}',
+                      '作者：$author',
                       style: ts.state.body1,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,

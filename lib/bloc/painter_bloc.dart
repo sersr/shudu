@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -8,92 +9,19 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import '../api/api.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../data/book_content.dart';
-import '../pages/book_content_view/page_view_controller.dart';
+import '../pages/book_content_view/widgets/battery_view.dart';
+import '../pages/book_content_view/widgets/content_view.dart';
+import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
 import 'book_index_bloc.dart';
 import 'book_repository.dart';
 
-typedef WidgetCallback = Widget? Function(int page, {required bool changeState});
+typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 typedef SetPageNotifier = void Function(double, void Function(int page));
-
-class ContentViewConfig {
-  ContentViewConfig(
-      {this.fontSize, this.lineBwHeight, this.bgcolor, this.fontFamily, this.fontColor, this.locale, this.axis});
-  double? fontSize;
-  double? lineBwHeight;
-  int? bgcolor;
-  String? fontFamily;
-  int? fontColor;
-  Locale? locale;
-  Axis? axis;
-  ContentViewConfig copyWith(
-      {double? fontSize,
-      double? lineBwHeight,
-      int? bgcolor,
-      int? fontFamily,
-      int? fontColor,
-      Locale? locale,
-      Axis? axis}) {
-    return ContentViewConfig(
-      fontColor: fontColor ?? this.fontColor,
-      fontFamily: fontFamily as String? ?? this.fontFamily,
-      fontSize: fontSize ?? this.fontSize,
-      lineBwHeight: lineBwHeight ?? this.lineBwHeight,
-      bgcolor: bgcolor ?? this.bgcolor,
-      locale: locale ?? this.locale,
-      axis: axis ?? this.axis,
-    );
-  }
-
-  @override
-  String toString() {
-    return '$runtimeType: fontSize: $fontSize, lineBwHeight: $lineBwHeight,'
-        ' bgcolor: $bgcolor, fontFamily: $fontFamily, fontColor: $fontColor, local: $locale, axis: $axis';
-  }
-}
-
-abstract class PainterEvent {
-  PainterEvent();
-}
-
-class PainterShowShadowEvent extends PainterEvent {}
-
-class PainterReloadEvent extends PainterEvent {}
-
-class PainterInitEvent extends PainterEvent {}
-
-class PainterNewBookIdEvent extends PainterEvent {
-  PainterNewBookIdEvent(this.id, this.cid, this.page);
-  final int id;
-  final int cid;
-  final int page;
-}
-
-class PainterSetPreferencesEvent extends PainterEvent {
-  PainterSetPreferencesEvent({this.config});
-  final ContentViewConfig? config;
-}
-
-class PainterDeleteCachesEvent extends PainterEvent {
-  PainterDeleteCachesEvent(this.bookId);
-  final int bookId;
-}
-
-class PainterLoadEvent extends PainterEvent {}
-
-class PainterOutEvent extends PainterEvent {
-  PainterOutEvent({this.changeState = true});
-  final bool changeState;
-}
-
-class PainterPreEvent extends PainterEvent {}
-
-class PainterNextEvent extends PainterEvent {}
-
-class PainterMetricsChangeEvent extends PainterEvent {}
 
 class PainterState {
   PainterState({this.empty});
@@ -136,8 +64,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   final BookIndexBloc bookIndexBloc;
 
   /// ----------   状态   --------------------------
-  Size size = Size.zero;
-
   int? bookid;
 
   int currentPage = 1;
@@ -155,29 +81,31 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   /// 网络任务异步状态
   var completer = Completer<Status>();
 
+  Size size = Size.zero;
   var sizeChanged = true;
   var padding = EdgeInsets.zero;
   var realPadding = EdgeInsets.zero;
+
   @override
   Stream<PainterState> mapEventToState(PainterEvent event) async* {
     if (event is PainterNewBookIdEvent) {
-      yield* await newBook(event);
+      yield* newBook(event);
     } else if (event is PainterInitEvent) {
-      if (config.bgcolor == null) {
+      if (config.isEmpty) {
         await getPrefs();
       }
     } else if (event is PainterMetricsChangeEvent) {
-      yield* await metricsChange();
+      yield* metricsChange();
     } else if (event is PainterSetPreferencesEvent) {
-      yield* await setPrefs(event);
+      yield* setPrefs(event);
     } else if (event is PainterDeleteCachesEvent) {
       await deleteCache(event.bookId);
     } else if (event is PainterPreEvent) {
-      yield* await goPre();
+      yield* goPre();
     } else if (event is PainterNextEvent) {
-      yield* await goNext();
+      yield* goNext();
     } else if (event is PainterShowShadowEvent) {
-      yield* await showdow();
+      yield* showdow();
     } else if (event is PainterLoadEvent) {
       yield painter(ign: true);
       loading.value = true;
@@ -185,14 +113,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await loadFirst();
       await Future.delayed(Duration(milliseconds: 400));
       yield painter();
-    } else if (event is PainterReloadEvent) {
-      if (_inBookView && tData.contentIsNotEmpty) {
-        await loadPN(tData.pid!, tData.cid!, tData.nid!, bookid!, update: true);
-      }
-    } else if (event is PainterOutEvent) {
-      if (event.changeState) {
-        _inBookView = false;
-      }
+      loading.value = false;
     }
   }
 
@@ -225,9 +146,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await completer.future;
       await loadPN(_pid, _cid!, _nid!, _bookid);
       if (!caches.containsKey(tData.pid)) {
-        yield painter();
         loading.value = false;
         error.value = true;
+        yield painter();
         return;
       }
     }
@@ -239,10 +160,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     controller?.setPixelsWithoutNtf(0.0);
     _innerIndex = 0;
 
-    yield painter();
     loading.value = false;
-    loadPNCb();
+    yield painter();
     bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
+    loadPNCb();
   }
 
   Stream<PainterState> goNext() async* {
@@ -251,15 +172,15 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _pid = tData.pid;
     final _cid = tData.cid;
     final _bookid = bookid!;
-    yield painter();
     loading.value = true;
+    yield painter();
     if (!caches.containsKey(tData.nid)) {
       await completer.future;
       await loadPN(_pid!, _cid!, _nid, _bookid);
       if (!caches.containsKey(tData.nid)) {
-        yield painter();
         loading.value = false;
         error.value = true;
+        yield painter();
         return;
       }
     }
@@ -271,39 +192,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     controller?.setPixelsWithoutNtf(0.0);
     _innerIndex = 0;
 
+    loading.value = false;
     yield painter();
     bookIndexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
-    loading.value = false;
     loadPNCb();
-  }
-
-  void completerResolve(Status value) {
-    if (!completer.isCompleted) {
-      completer.complete(value);
-    }
-  }
-
-  void completerCanLoad() {
-    if (canLoad != null && !canLoad!.isCompleted) {
-      canLoad!.complete();
-    }
-  }
-
-  void completercanCompute() {
-    if (canCompute != null && !canCompute!.isCompleted) {
-      canCompute!.complete();
-    }
-  }
-
-  void out() {
-    _inBookView = false;
-    if (tData.contentIsEmpty) {
-      ignore.value = true;
-    }
-  }
-
-  void inbook() {
-    _inBookView = true;
   }
 
   bool showrect = false;
@@ -324,11 +216,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _fontColor = event.config!.fontColor!;
     final _fontFamily = event.config!.fontFamily!;
     final _axis = event.config!.axis!;
+    final _p = event.config!.patternList!;
     if (_fontSize != config.fontSize ||
         _fontFamily != config.fontFamily ||
-        _height != config.lineBwHeight ||
         _fontColor != config.fontColor ||
-        _axis != config.axis) {
+        _axis != config.axis ||
+        event.patternChange) {
       flush = true;
     }
 
@@ -336,17 +229,24 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await box.put('bgcolor', _bgcolor);
       await box.put('fontColor', _fontColor);
       await box.put('axis', _axis.index);
+      await box.put('patternList', _p);
       if (_fontSize > 0) await box.put('fontSize', _fontSize);
       if (_height >= 1.0) await box.put('lineBwHeight', _height);
       if (_fontFamily.isNotEmpty) await box.put('fontFamily', _fontFamily);
     });
-    print(config);
+
     if (flush) {
       reset(clearCache: true);
       yield painter(ign: true);
       loading.value = true;
       await completer.future;
       await loadFirst();
+    }
+    final hsl = HSVColor.fromColor(Color(config.bgcolor!));
+    if (hsl.value <= 0.6) {
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light));
+    } else {
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarIconBrightness: Brightness.dark));
     }
     yield painter();
   }
@@ -359,35 +259,22 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final _bgcolor = box.get('bgcolor') ?? 4293120424;
     final _fontColor = box.get('fontColor') ?? 4283321934;
     final axis = box.get('axis') ?? Axis.horizontal.index;
-    final _fontSize = box.get('fontSize') ?? 18.0;
-    final _height = box.get('lineBwHeight') ?? 1.4;
+    final _fontSize = box.get('fontSize') ?? 19.0;
+    final _height = box.get('lineBwHeight') ?? 1.6;
     final _fontFamily = box.get('fontFamily') ?? '';
+    final _p = await box.get('patternList') ?? <String, String>{};
     await box.close();
     config.fontSize = _fontSize;
     config.lineBwHeight = _height;
     config.bgcolor = _bgcolor;
     config.fontFamily = _fontFamily;
     config.fontColor = _fontColor;
-
+    config.patternList = _p;
     config.axis = axis == Axis.horizontal.index ? Axis.horizontal : Axis.vertical;
 
     style = getStyle(config);
     secstyle = getStyle(config.copyWith(fontSize: 13));
     otherHeight = ePadding * 2 + topPad + botPad + secstyle.fontSize! * 2;
-  }
-
-  void reset({bool clearCache = false}) {
-    loadingId.clear();
-    tData = TextData()..cid = tData.cid;
-    if (clearCache) {
-      caches.clear();
-    }
-  }
-
-  void resetController() {
-    if (controller != null && controller!.viewPortDimension != null) {
-      controller!.setPixelsWithoutNtf(controller!.page.round() * controller!.viewPortDimension!);
-    }
   }
 
   Completer<void>? canLoad;
@@ -423,8 +310,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
 
       currentPage = event.page;
-      tData.cid = event.cid;
-      reset(clearCache: diffBook);
+      // cid 更改了
+      reset(clearCache: diffBook, cid: event.cid);
       bookid = event.id;
       _inBookView = true;
 
@@ -456,10 +343,68 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         await SystemChrome.setEnabledSystemUIOverlays([]);
       }
     }
+
     loading.value = false;
     ignore.value = false;
   }
 
+  PainterState painter({bool ign = false}) {
+    ignore.value = ign;
+    return PainterState(
+      empty: tData.isNotEmpty,
+    );
+  }
+
+  void reset({bool clearCache = false, int? cid}) {
+    loadingId.clear();
+    tData = TextData()..cid = cid ?? tData.cid;
+    if (clearCache) {
+      caches.clear();
+    }
+  }
+
+  void completerResolve(Status value) {
+    if (!completer.isCompleted) {
+      completer.complete(value);
+    }
+  }
+
+  void completerCanLoad() {
+    if (canLoad != null && !canLoad!.isCompleted) {
+      canLoad!.complete();
+    }
+  }
+
+  void completercanCompute() {
+    if (canCompute != null && !canCompute!.isCompleted) {
+      canCompute!.complete();
+    }
+  }
+
+  void out() {
+    _inBookView = false;
+    if (tData.contentIsEmpty) {
+      ignore.value = true;
+    }
+  }
+
+  void inbook() {
+    _inBookView = true;
+  }
+
+  void resetController() {
+    if (controller != null && controller!.viewPortDimension != null) {
+      controller!.setPixelsWithoutNtf(controller!.page.round() * controller!.viewPortDimension!);
+    }
+  }
+
+  Future<void> dump() async {
+    if (tData.cid != null) {
+      await repository.innerdb.updateMainInfo(bookid!, tData.cid!, currentPage);
+    }
+  }
+
+  /// 待测试
   void sizeChange() {
     final w = ui.window;
     var _size = w.physicalSize / w.devicePixelRatio;
@@ -475,7 +420,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         }
 
         if (padding.bottom > _padding.bottom || _padding.bottom > 0.0) {
-
           if (padding.bottom != 8.0) {
             padding = padding.copyWith(bottom: 8.0);
             sizeChanged = true;
@@ -517,6 +461,28 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
+  /// 等待一次性文本布局
+  Completer<void>? canCompute;
+
+  /// 文本布局时计数，当 [computeCount == 0] 时，意味着UI线程中没有占用
+  int computeCount = 0;
+
+  // 等待UI空闲
+  Future<void> awaitCompute(FutureOr<void> Function() call) async {
+    if (canCompute != null && !canCompute!.isCompleted) {
+      Log.i('awaiting >>', stage: this, name: 'awaitCompute');
+      await canCompute!.future;
+    }
+    if (!_inBookView) return;
+    computeCount++;
+    if (loading.value) {
+      loading.value = false;
+      await Future.delayed(Duration(milliseconds: 50));
+    }
+    await call();
+    computeCount--;
+  }
+
   /// 持久化本地
   Future<void> memoryToDatabase(BookContent bookContent) async {
     final count = Sqflite.firstIntValue(await repository.innerdb.db
@@ -548,25 +514,66 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
-  // 等待UI空闲
-  Future<void> awaitCompute(FutureOr<void> Function() call) async {
-    if (canCompute != null && !canCompute!.isCompleted) {
-      Log.i('awaiting >>', stage: this, name: 'awaitCompute');
-      await canCompute!.future;
+  // return: 可能为空
+  Future<TextData> loadData(int _contentKey, int _bookid) async {
+    var result = TextData();
+    var contain = false;
+    void cacheReturn(int _key) {
+      if (caches.containsKey(_key)) {
+        result = caches[_key]!;
+        contain = result.nid != null && result.nid != -1;
+        return;
+      }
+      contain = false;
     }
-    if (!_inBookView) return;
-    computeCount++;
-    if (loading.value) {
-      loading.value = false;
-      await Future.delayed(Duration(milliseconds: 50));
-    }
-    await call();
-    computeCount--;
+
+    /// 1
+    /// cache
+    cacheReturn(_contentKey);
+    if (contain) return result;
+
+    /// 2
+    /// 从 数据库 中 加载
+    await loadFromDb(_contentKey, _bookid);
+    cacheReturn(_contentKey);
+    if (contain) return result;
+
+    /// last
+    await downFromNet(_contentKey, _bookid);
+    cacheReturn(_contentKey);
+    return result;
   }
 
-  /// 这是访问网络的唯一方式；
-  /// 由于访问网络有时间延迟，并且存在多次访问同一网址的可能，所以保存 contentid 在 [loadingId] 中,
-  /// 以检测即将要访问的网址是否已存在。
+  Future<void> loadFromDb(int contentid, int _bookid) async {
+    var queryList = await repository.innerdb.db.rawQuery(
+        'SELECT content,nid,pid,cid,cname,hasContent FROM BookContent WHERE bookId =? AND cid = ?',
+        [_bookid, contentid]);
+    if (queryList.isNotEmpty) {
+      final map = queryList.first;
+      if (map.contentIsNotEmpty) {
+        // if (map['hasContent'] != 1 || map['nid'] == -1) {
+        //   await downFromNet(contentid, _bookid);
+        // } else {
+        assert(Log.i('url: ${Api.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
+        await awaitCompute(() async {
+          if (_bookid != bookid) return;
+          final list = await divText(map['content'] as String, map['cname'] as String);
+          assert(list.isNotEmpty);
+          final _cnpid = TextData(
+            cid: map['cid'] as int,
+            nid: map['nid'] as int,
+            pid: map['pid'] as int,
+            cname: map['cname'] as String,
+            content: list,
+          );
+          cacheGbg(_cnpid);
+        });
+        // }
+      }
+    }
+  }
+
+  /// 下载章节内容
   Future<void> downFromNet(int contentid, int _bookid) async {
     if (contentid == -1 || loadingId.contains(contentid)) return;
     loadingId.add(contentid);
@@ -590,36 +597,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       });
       await memoryToDatabase(bookContent);
     }
-  }
-
-  // return: 可能为空
-  Future<TextData> loadData(int _contentid, int _bookid) async {
-    var result = TextData();
-    var contain = false;
-    void cacheReturn(int _contentid) {
-      if (caches.containsKey(_contentid)) {
-        result = caches[_contentid]!;
-        contain = result.nid != null && result.nid != -1;
-        return;
-      }
-      contain = false;
-    }
-
-    /// 1
-    /// cache
-    cacheReturn(_contentid);
-    if (contain) return result;
-
-    /// 2
-    /// 从 数据库 中 加载
-    await loadFromDb(_contentid, _bookid);
-    cacheReturn(_contentid);
-    if (contain) return result;
-
-    /// last
-    await downFromNet(_contentid, _bookid);
-    cacheReturn(_contentid);
-    return result;
   }
 
   /// 缓存当前章节前后几章
@@ -653,55 +630,18 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     caches[_cnpid.cid!] = _cnpid;
   }
 
-  Future<void> loadFromDb(int contentid, int _bookid) async {
-    var queryList = await repository.innerdb.db.rawQuery(
-        'SELECT content,nid,pid,cid,cname,hasContent FROM BookContent WHERE bookId =? AND cid = ?',
-        [_bookid, contentid]);
-    if (queryList.isNotEmpty) {
-      final map = queryList.first;
-      if (map.contentIsNotEmpty) {
-        // if (map['hasContent'] != 1 || map['nid'] == -1) {
-        //   await downFromNet(contentid, _bookid);
-        // } else {
-        assert(Log.i('url: ${BookRepository.contentUrl(_bookid, contentid)}', stage: this, name: 'loadFromDb'));
-        await awaitCompute(() async {
-          if (_bookid != bookid) return;
-          final list = await divText(map['content'] as String, map['cname'] as String);
-          assert(list.isNotEmpty);
-          final _cnpid = TextData(
-            cid: map['cid'] as int,
-            nid: map['nid'] as int,
-            pid: map['pid'] as int,
-            cname: map['cname'] as String,
-            content: list,
-          );
-          cacheGbg(_cnpid);
-        });
-        // }
-      }
-    }
-  }
-
-  PainterState painter({bool ign = false}) {
-    ignore.value = ign;
-    return PainterState(
-      empty: tData.isNotEmpty,
-    );
-  }
-
   /// 首次（重置）加载
   Future<void> loadFirst() async {
     final _bookid = bookid!;
-    final _cid = tData.cid!;
-    Log.i('loadFirst: computeCount: $computeCount', stage: this, name: 'loadFirst');
+    final _key = tData.cid!;
     await load(() async {
-      assert(Log.i('cid: $_cid', stage: this, name: 'loadFirst'));
-      final _currentText = await loadData(_cid, _bookid);
-      if (_bookid == bookid && _cid == _currentText.cid) {
+      assert(Log.i('cid: $_key', stage: this, name: 'loadFirst'));
+      final _currentText = await loadData(_key, _bookid);
+      if (_bookid == bookid && _key == _currentText.cid) {
         tData = _currentText;
       }
     });
-    if (bookid == _bookid && tData.contentIsNotEmpty && _cid == tData.cid) {
+    if (bookid == _bookid && tData.contentIsNotEmpty && _key == tData.cid) {
       if (currentPage > tData.content!.length) {
         currentPage = tData.content!.length;
       }
@@ -729,12 +669,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   final errorID = <int?>[];
 
-  // /// pid/nid == -1的解决方案
-  // Future<void> reloadFromNet(int _cid, int _bookid) async {
-  //   Log.w('重新下载： 当前章节是否为第一章或最后一张,$_cid', stage: this, name: 'reloadFromNet');
-  //   await downFromNet(_cid, _bookid);
-  // }
-
   /// 异步 调用
   Future<void> loadPN(int _pid, int _cid, int _nid, int _bookid, {bool update = false}) async {
     await load(() async {
@@ -757,10 +691,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         await loadData(_pid, _bookid);
       }
     });
-  }
-
-  Future<void> deleteCache(int bookId) async {
-    await repository.innerdb.db.rawDelete('DELETE FROM BookContent WHERE bookId = ?', [bookId]);
   }
 
   int nexttime = 0;
@@ -789,11 +719,11 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   bool delayed = false;
-  bool hasContent(int key, int index) {
+  bool hasContent(HasContent key, int index) {
     assert(tData.contentIsNotEmpty);
     final exPage = index - _innerIndex;
     var result = true;
-    if (key == 0) {
+    if (key == HasContent.getRight) {
       result = currentPage + exPage < tData.content!.length || caches.containsKey(tData.nid);
     } else {
       result = currentPage + exPage > 1 || caches.containsKey(tData.pid);
@@ -816,13 +746,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   int _innerIndex = 0;
   late TextStyle style;
   late TextStyle secstyle;
-
   Widget? getWidget(int page, {bool changeState = false}) {
     if (changeState && page == _innerIndex) return null;
     var currentContentFirstIndex = _innerIndex - currentPage + 1;
-    TextData? text = tData;
+    var text = tData;
     Widget? child;
-    while (text != null && text.contentIsNotEmpty) {
+    while (text.contentIsNotEmpty) {
       final tol = page - currentContentFirstIndex;
       final length = text.content!.length;
       if (tol >= 0 && tol <= length - 1) {
@@ -831,13 +760,32 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         if (!changeState) {
           child = ContentView(
             contentMetrics: tData.content![currentPage - 1],
+            battery: FutureBuilder<int>(
+              future: repository.getBatteryLevel(),
+              builder: (context, snaps) {
+                if (snaps.hasData) {
+                  return CustomPaint(
+                    painter: BatteryView(
+                      progress: (snaps.data! / 100).clamp(0.0, 1.0),
+                      color: Color(config.fontColor!),
+                    ),
+                  );
+                }
+                return CustomPaint(
+                  painter: BatteryView(
+                    progress: (repository.level / 100).clamp(0.0, 1.0),
+                    color: Color(config.fontColor!),
+                  ),
+                );
+              },
+            ),
           );
         }
         if (config.axis == Axis.vertical) {
-          final footv = '${currentPage}/${text.content!.length}页';
+          final footv = '$currentPage/${text.content!.length}页';
           scheduleMicrotask(() {
             footer.value = footv;
-            header.value = text!.cname!;
+            header.value = text.cname!;
           });
         }
         break;
@@ -846,35 +794,27 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           text = tData = caches[tData.pid]!;
           currentContentFirstIndex -= text.content!.length;
         } else {
-          text = null;
+          break;
         }
       } else if (tol >= length) {
         if (caches.containsKey(tData.nid)) {
           currentContentFirstIndex += length;
           text = tData = caches[tData.nid]!;
         } else {
-          text = null;
+          break;
         }
       }
     }
     return child;
   }
 
-  Future<void> dump() async {
-    if (tData.cid != null) {
-      await repository.innerdb.updateMainInfo(bookid!, tData.cid!, currentPage);
-    }
-  }
-
-  Completer<void>? canCompute;
-  int computeCount = 0;
   static const topPad = 8.0;
   static const ePadding = 12.0;
   static const botPad = 4.0;
   late double otherHeight;
   final reg = RegExp('\u0009|\u000B|\u000C|\u000D|\u0020|'
       '\u00A0|\u1680|\uFEFF|\u205F|\u202F|\u2028|\u2000|\u2001|\u2002|'
-      '\u2003|\u2004|\u2005|\u2006|\u2007|\u2008|\u2009|\u200A+');
+      '\u2003|\u2004|\u2005|\u2006|\u2007|\u2008|\u2009|\u200A|(&nbsp;)+');
 
   Future<List<ContentMetrics>> divText(String text, String cname) async {
     assert(text.isNotEmpty);
@@ -888,7 +828,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final now = Timeline.now;
 
     /// layout
-    var _text = text.replaceAll(reg, '').replaceAll(RegExp('([\n\u3000*]+)\n'), '\n');
+    var _text = text.replaceAll(reg, '').replaceAll(RegExp('([(\n|<br/>)\u3000*]+(\n|<br/>))|(<br/>)'), '\n');
     if (_text.startsWith(RegExp('\n'))) {
       _text = _text.replaceFirst(RegExp('\n'), '');
     }
@@ -1019,6 +959,10 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     assert(Log.i('work done <<<'));
     return textPages;
   }
+
+  Future<void> deleteCache(int bookId) async {
+    await repository.innerdb.db.rawDelete('DELETE FROM BookContent WHERE bookId = ?', [bookId]);
+  }
 }
 
 class ContentMetrics {
@@ -1060,130 +1004,91 @@ class ContentMetrics {
   final bool showrect;
 }
 
-class ContentView extends LeafRenderObjectWidget {
-  ContentView({
-    required this.contentMetrics,
-  });
+enum HasContent {
+  getLeft,
+  getRight,
+}
 
-  final ContentMetrics contentMetrics;
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return RenderContentView(contentMetrics: contentMetrics);
+class ContentViewConfig {
+  ContentViewConfig(
+      {this.fontSize,
+      this.lineBwHeight,
+      this.bgcolor,
+      this.fontFamily,
+      this.fontColor,
+      this.locale,
+      this.axis,
+      this.patternList});
+  double? fontSize;
+  double? lineBwHeight;
+  int? bgcolor;
+  String? fontFamily;
+  int? fontColor;
+  Locale? locale;
+  Axis? axis;
+  Map? patternList;
+  ContentViewConfig copyWith(
+      {double? fontSize,
+      double? lineBwHeight,
+      int? bgcolor,
+      int? fontFamily,
+      int? fontColor,
+      Locale? locale,
+      Axis? axis,
+      Map? patternList}) {
+    return ContentViewConfig(
+      fontColor: fontColor ?? this.fontColor,
+      fontFamily: fontFamily as String? ?? this.fontFamily,
+      fontSize: fontSize ?? this.fontSize,
+      lineBwHeight: lineBwHeight ?? this.lineBwHeight,
+      bgcolor: bgcolor ?? this.bgcolor,
+      locale: locale ?? this.locale,
+      axis: axis ?? this.axis,
+      patternList: patternList ?? this.patternList,
+    );
+  }
+
+  bool get isEmpty {
+    return bgcolor == null || fontSize == null || fontColor == null || axis == null || lineBwHeight == null;
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant RenderContentView renderObject) {
-    renderObject.contentMetrics = contentMetrics;
+  String toString() {
+    return '$runtimeType: fontSize: $fontSize, lineBwHeight: $lineBwHeight,'
+        ' bgcolor: $bgcolor, fontFamily: $fontFamily, fontColor: $fontColor, local: $locale, axis: $axis';
   }
 }
 
-class RenderContentView extends RenderBox {
-  RenderContentView({
-    required ContentMetrics contentMetrics,
-  }) : _contentMetrics = contentMetrics {
-    bottomLeft = TextPainter(text: TextSpan(), textDirection: TextDirection.ltr);
-  }
-  late TextPainter bottomLeft;
-
-  ContentMetrics? _contentMetrics;
-  ContentMetrics? get contentMetrics => _contentMetrics;
-  set contentMetrics(ContentMetrics? v) {
-    if (_contentMetrics == v) return;
-    _contentMetrics = v;
-    markNeedsLayout();
-  }
-
-  @override
-  bool get sizedByParent => true;
-
-  @override
-  void performResize() {
-    size = constraints.biggest;
-  }
-
-  @override
-  void performLayout() {
-    // size = constraints.biggest;
-    if (contentMetrics!.isHorizontal) {
-      final time = DateTime.now();
-      bottomLeft.text =
-          TextSpan(text: '${time.hour.timePadLeft}:${time.minute.timePadLeft}', style: contentMetrics!.secstyle);
-      bottomLeft.layout(maxWidth: size.width);
-    }
-  }
-
-  @override
-  bool get isRepaintBoundary => true;
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    dpaint(context, offset);
-  }
-
-  void dpaint(PaintingContext context, Offset offset) {
-    // context.setIsComplexHint();
-    final canvas = context.canvas;
-    final isHorizontal = contentMetrics!.isHorizontal;
-    final topPad = contentMetrics!.topPad;
-    final bottomRight = contentMetrics!.botRightPainter;
-    final right = contentMetrics!.right;
-    final botPad = contentMetrics!.botPad;
-    final e = contentMetrics!.extraHeightInLines;
-    final fontSize = contentMetrics!.fontSize;
-    final extraPadding = 12.0;
-    final topHeight = contentMetrics!.topHeight;
-    final _teps = contentMetrics!.painters;
-    final index = contentMetrics!.index;
-    final left = contentMetrics!.left;
-    final cnamePainter = contentMetrics!.cPainter;
-    final cBigPainter = contentMetrics!.cBigPainter;
-    final _size = contentMetrics!.size;
-
-    final windowTopPadding = isHorizontal ? contentMetrics!.windowTopPadding : 0;
-    var h = 0.0;
-    canvas.save();
-    canvas.translate(offset.dx + left, offset.dy + windowTopPadding);
-    if (isHorizontal) {
-      h += topPad;
-      cnamePainter.paint(canvas, Offset(0.0, h));
-      h += cnamePainter.height;
-    }
-    if (index == 0) {
-      if (!isHorizontal) {
-        h -= extraPadding;
-      }
-      h += (fontSize + e) * (topHeight + 3);
-      cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
-      if (!isHorizontal) {
-        h += extraPadding;
-      }
-    }
-
-    if (isHorizontal) {
-      h += extraPadding;
-    }
-    // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
-    final xh = h;
-    for (var _tep in _teps) {
-      h += e / 2;
-      _tep.paint(canvas, Offset(0.0, h));
-      h += fontSize + e / 2;
-    }
-    // h -= e / 2;
-    if (contentMetrics!.showrect) {
-      canvas.drawRect(
-          Offset(0.0, xh + e / 2) & Size(_size.width, h - xh - e - 1), Paint()..color = Colors.black.withAlpha(100));
-    }
-    // canvas.drawRect(
-    //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
-    // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
-    if (isHorizontal) {
-      bottomRight.paint(canvas, Offset(right, _size.height - bottomRight.height - botPad));
-      bottomLeft.paint(canvas, Offset(0.0, _size.height - bottomLeft.height - botPad));
-    }
-    canvas.restore();
-  }
-
-  // @override
-  // bool hitTestSelf(ui.Offset position) => true;
+abstract class PainterEvent {
+  PainterEvent();
 }
+
+class PainterShowShadowEvent extends PainterEvent {}
+
+class PainterInitEvent extends PainterEvent {}
+
+class PainterNewBookIdEvent extends PainterEvent {
+  PainterNewBookIdEvent(this.id, this.cid, this.page);
+  final int id;
+  final int cid;
+  final int page;
+}
+
+class PainterSetPreferencesEvent extends PainterEvent {
+  PainterSetPreferencesEvent({this.config, this.patternChange = false});
+  final ContentViewConfig? config;
+  final bool patternChange;
+}
+
+class PainterDeleteCachesEvent extends PainterEvent {
+  PainterDeleteCachesEvent(this.bookId);
+  final int bookId;
+}
+
+class PainterLoadEvent extends PainterEvent {}
+
+class PainterPreEvent extends PainterEvent {}
+
+class PainterNextEvent extends PainterEvent {}
+
+class PainterMetricsChangeEvent extends PainterEvent {}

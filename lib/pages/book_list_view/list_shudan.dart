@@ -61,16 +61,16 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
             indicatorColor: Colors.pink.shade200,
             tabs: [
               Container(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
                 child: Text('最新发布'),
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
               ),
               Container(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
                 child: Text('本周最热'),
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
               ),
               Container(
-                child: Text('最多收藏'),
                 padding: const EdgeInsets.symmetric(vertical: 5.0),
+                child: Text('最多收藏'),
               ),
             ],
           ),

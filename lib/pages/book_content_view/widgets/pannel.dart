@@ -4,17 +4,17 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/bloc.dart';
+import '../../../bloc/bloc.dart';
 
-import '../../bloc/book_index_bloc.dart';
-import '../../bloc/book_info_bloc.dart';
-import '../../bloc/book_repository.dart';
-import '../../bloc/painter_bloc.dart';
-import '../../utils/utils.dart';
-import '../book_info_view/book_info_page.dart';
-import '../embed/indexs.dart';
+import '../../../bloc/book_index_bloc.dart';
+import '../../../bloc/book_info_bloc.dart';
+import '../../../bloc/book_repository.dart';
+import '../../../bloc/painter_bloc.dart';
+import '../../../utils/utils.dart';
+import '../../book_info_view/book_info_page.dart';
+import '../../embed/indexs.dart';
 import 'color_picker.dart';
-import 'context_view.dart';
+import '../painter_page.dart';
 import 'page_view_controller.dart';
 
 class Pannel extends StatefulWidget {
@@ -58,6 +58,7 @@ class _PannelState extends State<Pannel> {
 
   @override
   Widget build(BuildContext context) {
+    var end = ValueNotifier<bool>(true);
     final child = Column(
       children: [
         Expanded(
@@ -93,18 +94,6 @@ class _PannelState extends State<Pannel> {
                                 v -= (l.length - 1);
                               }
                               return GestureDetector(
-                                child: Container(
-                                  child: Text(
-                                    text,
-                                    style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
-                                    overflow: TextOverflow.fade,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(6.0),
-                                    color: Colors.grey.shade900.withAlpha(210),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                ),
                                 onTap: () {
                                   if (!bloc.loading.value) {
                                     // timer?.cancel();
@@ -113,6 +102,18 @@ class _PannelState extends State<Pannel> {
                                     bloc.add(PainterNewBookIdEvent(state.id, cid, 1));
                                   }
                                 },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6.0),
+                                    color: Colors.grey.shade900.withAlpha(210),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                  child: Text(
+                                    text,
+                                    style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
+                                    overflow: TextOverflow.fade,
+                                  ),
+                                ),
                               );
                             },
                           ),
@@ -127,161 +128,161 @@ class _PannelState extends State<Pannel> {
             buildWhen: (_, newState) => newState is BookIndexWidthData,
           ),
         ),
-        RepaintBoundary(
-          child: Container(
-            color: Colors.grey.shade900.withAlpha(218),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: btn1(
-                          radius: 40,
-                          onTap: () {
-                            if (!bloc.loading.value) {
-                              widget.showSettings.value = SettingView.none;
-                              final bloc = context.read<PainterBloc>();
-                              bloc.add(PainterPreEvent());
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            child: Center(
-                                child: Text(
-                              '上一章',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade300),
-                            )),
-                          ),
-                          bgColor: Colors.grey.shade900,
-                          splashColor: Colors.grey.shade700),
-                    ),
-                    Expanded(
-                      child: RepaintBoundary(
-                          child: BlocListener<BookIndexBloc, BookIndexState>(
-                              listener: (context, state) {
-                                var index = 0;
-                                var max = 200;
-                                if (state is BookIndexWidthData) {
-                                  index = state.index;
-
-                                  for (var i = 0; i < state.bookIndexs.length; i++) {
-                                    if (i < state.volIndex) {
-                                      index += state.bookIndexs[i].length - 1;
-                                    } else {
-                                      break;
-                                    }
-                                  }
-                                  max = 0;
-                                  state.bookIndexs.forEach((element) {
-                                    max += element.length - 1;
-                                  });
-                                  max--;
-                                  max = math.max(index, max);
-                                }
-                                slide.value = index.toDouble();
-                                sldvalue = SliderValue(index: index, max: max);
-                              },
-                              child: AnimatedBuilder(
-                                animation: slide,
-                                builder: (context, child) {
-                                  return Slider(
-                                    value: slide.value,
-                                    // divisions: sldvalue.max,
-                                    onChanged: (double value) {
-                                      slide.value = value;
-                                    },
-                                    onChangeEnd: (value) {
-                                      timer?.cancel();
-                                      timer = Timer(Duration(milliseconds: 1500), () {
-                                        widget.showCname.value = false;
-                                        slide.value = sldvalue.index.toDouble();
-                                      });
-                                    },
-                                    onChangeStart: (value) {
-                                      timer?.cancel();
-                                      widget.showCname.value = true;
-                                      widget.showSettings.value = SettingView.none;
-                                    },
-                                    min: 0.0,
-                                    max: sldvalue.max.toDouble(),
-                                  );
-                                },
-                              )
-                              // buildWhen: (oldstate, state) => state is BookIndexWidthData
-                              )),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 10.0),
-                      child: btn1(
-                          radius: 40,
-                          onTap: () {
-                            if (!bloc.loading.value) {
-                              widget.showSettings.value = SettingView.none;
-                              final bloc = context.read<PainterBloc>();
-                              bloc.add(PainterNextEvent());
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            child: Center(
-                              child: Text(
-                                '下一章',
+        AnimatedBuilder(
+          animation: widget.showPannel,
+          builder: (context, child) {
+            if (widget.showPannel.value) {
+              end.value = false;
+              indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+            }
+            return AnimatedOpacity(
+              opacity: widget.showPannel.value ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              onEnd: () {
+                end.value = !widget.showPannel.value;
+                if (widget.showPannel.value) {
+                  SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+                } else {
+                  SystemChrome.setEnabledSystemUIOverlays([]);
+                }
+              },
+              child: AnimatedBuilder(
+                  animation: end,
+                  builder: (context, _) {
+                    return IgnorePointer(ignoring: end.value, child: child!);
+                  }),
+            );
+          },
+          child: RepaintBoundary(
+            child: Container(
+              color: Colors.grey.shade900.withAlpha(218),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: btn1(
+                            radius: 40,
+                            onTap: () {
+                              if (!bloc.loading.value) {
+                                widget.showSettings.value = SettingView.none;
+                                final bloc = context.read<PainterBloc>();
+                                bloc.add(PainterPreEvent());
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Center(
+                                  child: Text(
+                                '上一章',
                                 style: TextStyle(fontSize: 12, color: Colors.grey.shade300),
+                              )),
+                            ),
+                            bgColor: Colors.grey.shade900,
+                            splashColor: Colors.grey.shade700),
+                      ),
+                      Expanded(
+                        child: RepaintBoundary(
+                            child: BlocListener<BookIndexBloc, BookIndexState>(
+                                listener: (context, state) {
+                                  var index = 0;
+                                  var max = 200;
+                                  if (state is BookIndexWidthData) {
+                                    index = state.index;
+
+                                    for (var i = 0; i < state.bookIndexs.length; i++) {
+                                      if (i < state.volIndex) {
+                                        index += state.bookIndexs[i].length - 1;
+                                      } else {
+                                        break;
+                                      }
+                                    }
+                                    max = 0;
+                                    state.bookIndexs.forEach((element) {
+                                      max += element.length - 1;
+                                    });
+                                    max--;
+                                    max = math.max(index, max);
+                                  }
+                                  slide.value = index.toDouble();
+                                  sldvalue = SliderValue(index: index, max: max);
+                                },
+                                child: AnimatedBuilder(
+                                  animation: slide,
+                                  builder: (context, child) {
+                                    return Slider(
+                                      value: slide.value,
+                                      // divisions: sldvalue.max,
+                                      onChanged: (double value) {
+                                        slide.value = value;
+                                      },
+                                      onChangeEnd: (value) {
+                                        timer?.cancel();
+                                        timer = Timer(Duration(milliseconds: 1500), () {
+                                          widget.showCname.value = false;
+                                          slide.value = sldvalue.index.toDouble();
+                                        });
+                                      },
+                                      onChangeStart: (value) {
+                                        timer?.cancel();
+                                        widget.showCname.value = true;
+                                        widget.showSettings.value = SettingView.none;
+                                      },
+                                      min: 0.0,
+                                      max: sldvalue.max.toDouble(),
+                                    );
+                                  },
+                                )
+                                // buildWhen: (oldstate, state) => state is BookIndexWidthData
+                                )),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: btn1(
+                            radius: 40,
+                            onTap: () {
+                              if (!bloc.loading.value) {
+                                widget.showSettings.value = SettingView.none;
+                                final bloc = context.read<PainterBloc>();
+                                bloc.add(PainterNextEvent());
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Center(
+                                child: Text(
+                                  '下一章',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade300),
+                                ),
                               ),
                             ),
-                          ),
-                          bgColor: Colors.grey.shade900,
-                          // radius: 6.0,
-                          splashColor: Colors.grey.shade700),
-                    ),
-                  ],
-                ),
-                BottomEnd(
-                  showSettings: widget.showSettings,
-                  showCname: widget.showCname,
-                  willPop: widget.willPop,
-                  controller: widget.controller,
-                ),
-              ],
+                            bgColor: Colors.grey.shade900,
+                            // radius: 6.0,
+                            splashColor: Colors.grey.shade700),
+                      ),
+                    ],
+                  ),
+                  BottomEnd(
+                    showSettings: widget.showSettings,
+                    showCname: widget.showCname,
+                    willPop: widget.willPop,
+                    controller: widget.controller,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ],
     );
     // 初始不显示
-    var end = ValueNotifier<bool>(true);
-    return AnimatedBuilder(
-      animation: widget.showPannel,
-      builder: (context, child) {
-        if (widget.showPannel.value) {
-          end.value = false;
-          indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
-        }
-        return AnimatedOpacity(
-          opacity: widget.showPannel.value ? 1.0 : 0.0,
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: AnimatedBuilder(
-              animation: end,
-              builder: (context, _) {
-                return IgnorePointer(ignoring: end.value, child: child!);
-              }),
-          onEnd: () {
-            end.value = !widget.showPannel.value;
-            if (widget.showPannel.value) {
-              SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-            } else {
-              SystemChrome.setEnabledSystemUIOverlays([]);
-            }
-          },
-        );
-      },
-      child: RepaintBoundary(child: child),
-    );
+
+    return child;
   }
 }
 
@@ -435,10 +436,11 @@ class _BottomEndState extends State<BottomEnd> {
                       ),
                     ),
                     onTap: () {
+                      final _axis = widget.controller.axis == Axis.horizontal ? Axis.vertical : Axis.horizontal;
+                      // widget.controller.axis = _axis;
                       bloc.add(
                         PainterSetPreferencesEvent(
-                          config: bloc.config.copyWith(
-                              axis: widget.controller.axis == Axis.horizontal ? Axis.vertical : Axis.horizontal),
+                          config: bloc.config.copyWith(axis: _axis),
                         ),
                       );
                     },

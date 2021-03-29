@@ -2,12 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:battery/battery.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import '../api/api.dart';
 import '../data/search_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite/sqlite_api.dart';
@@ -22,76 +26,35 @@ import '../data/book_list_detail.dart';
 import '../utils/utils.dart';
 import 'book_index_bloc.dart';
 
-typedef DCallback<T> = Future<void> Function(T);
-
-// class SecondData extends Object {
-//   SecondData(this.db, this.bloc);
-//   // final Dio dio;
-//   final Database db;
-//   // final SharedPreferences prefs;
-//   final BookCacheBloc bloc;
-// }
-
 class BookRepository {
-  BookRepository();
+  BookRepository(this.afterInitCallback);
 
   late String dataPath;
   late InnerDatabase innerdb;
-  // Dio dio;
-  // late SharedPreferences prefs;
   late String appPath;
   late Box<int> imageUpdate;
-  final _init = ValueNotifier<bool>(false);
+
   ValueNotifier<bool> get init => _init;
+  final _init = ValueNotifier<bool>(false);
 
-  ///API------------------------------------------------
-  static int shortid(int id) => (id / 1000 + 1).toInt();
-
-  static String imageUrl(String img) => 'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
-
-  static String contentUrl(int id, int? cid) {
-    final sd = shortid(id);
-    return 'https://contentxs.pigqq.com/BookFiles/Html/$sd/$id/$cid.html';
-  }
-
-  static String indexUrl(int id) {
-    final sid = shortid(id);
-    return 'https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/index.html';
-  }
-
-  static String infoUrl(int id) {
-    final sid = shortid(id);
-    return 'https://infosxs.pigqq.com/BookFiles/Html/$sid/$id/info.html';
-  }
-
-  static String shudanUrl(String c, int index) {
-    return 'https://scxs.pigqq.com/shudan/man/all/$c/$index.html';
-  }
-
-  static String shudanDetailUrl(int? index) {
-    assert(index != null);
-    return 'https://scxs.pigqq.com/shudan/detail/$index.html';
-  }
-
-  static String searchUrl(String key) {
-    return 'https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2';
-  }
-
-  ///API------------------------------------------------
+  final VoidCallback afterInitCallback;
 
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
-  final client = TimeClient();
+  final client = dioCreater();
   @mustCallSuper
   Future<void> initState() async {
-    appPath = (await getApplicationDocumentsDirectory())!.path;
+    appPath = (await getApplicationDocumentsDirectory()).path;
     Hive.init('$appPath/shudu/hive');
     imageUpdate = await Hive.openBox<int>('imageUpdate');
     final d = Directory('$appPath/shudu/images');
     if (!await d.exists()) {
       await d.create(recursive: true);
     }
+
+    await getBatteryLevel();
+
     clientRP = ReceivePort();
     _isolate = await Isolate.spawn(_isolateRe, [clientRP.sendPort, appPath]);
     clientSP = await clientRP.first;
@@ -112,22 +75,25 @@ class BookRepository {
   }
 
   // 启动app时等待初始化完成
-  void afterInit() {
+  Future<void> afterInit() async {
     _init.value = true;
+    await afterInitCallback();
   }
 
-  void dipose() async {
+  void dipose() {
     client.close();
     clientRP.close();
-    _isolate.kill(priority: 0);
-    // await db.close();
+    _isolate.kill(priority: Isolate.immediate);
   }
 
   Future<SearchList> searchWithKey(String? key) async {
-    var url = BookRepository.searchUrl(key!);
+    var url = Api.searchUrl(key!);
     try {
-      var respone = await client.get(Uri.parse(url));
-      Map<String, dynamic> map = jsonDecode(respone.body);
+      var respone = await client.get<List<int>>(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      Map<String, dynamic> map = jsonDecode(utf8.decode(respone.data!));
       return SearchList.fromJson(map);
     } catch (e) {
       return Future.value();
@@ -136,7 +102,7 @@ class BookRepository {
 
   /// 目录
   Future<String> getIndexsFromNet(int id) async {
-    final url = indexUrl(id);
+    final url = Api.indexUrl(id);
     return await sendMessage<String>(MessageType.indexs, url);
   }
 
@@ -149,7 +115,7 @@ class BookRepository {
 
   /// 章节内容
   Future<BookContent> getContentFromNet(int id, int? cid) async {
-    final url = contentUrl(id, cid);
+    final url = Api.contentUrl(id, cid);
     return await sendMessage<BookContent>(MessageType.content, url);
   }
 
@@ -173,7 +139,7 @@ class BookRepository {
       }
       url = img;
     } else {
-      url = imageUrl(img);
+      url = Api.imageUrl(img);
       imgName = img;
     }
     final imgPath = '$imageLocalPath$imgName';
@@ -194,13 +160,16 @@ class BookRepository {
     }
 
     try {
-      var respone = await client.get(Uri.parse(url));
+      var respone = await client.get<List<int>>(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
       // 验证是否为图片格式
-      final buffer = await ImmutableBuffer.fromUint8List(respone.bodyBytes);
+      final buffer = await ImmutableBuffer.fromUint8List(Uint8List.fromList(respone.data!));
       await ImageDescriptor.encoded(buffer);
       errorLoading.remove(imgName);
       await imageUpdate.put(imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
-      await File(imgPath).writeAsBytes(respone.bodyBytes);
+      await File(imgPath).writeAsBytes(respone.data!);
     } catch (e) {
       assert(Log.i('$imgName, $e !!!'));
       // 本地已经存在资源；
@@ -219,7 +188,7 @@ class BookRepository {
   }
 
   Future<BookInfoRoot> loadInfo(int id) async {
-    final url = infoUrl(id);
+    final url = Api.infoUrl(id);
     return await sendMessage<BookInfoRoot>(MessageType.info, url);
   }
 
@@ -232,12 +201,24 @@ class BookRepository {
   }
 
   Future<BookListDetailData> loadShudanDetail(int? index) async {
-    final url = shudanDetailUrl(index);
+    final url = Api.shudanDetailUrl(index);
     return await sendMessage(MessageType.shudanDetail, url);
   }
 
   Future<void> restartClient() async {
     await sendMessage(MessageType.restartClient, '');
+  }
+
+  Battery? _battery;
+  int level = 50;
+
+  Future<int> getBatteryLevel() async {
+    if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      _battery ??= Battery();
+      final _level = await _battery!.batteryLevel;
+      level = _level;
+    }
+    return level;
   }
 }
 
@@ -319,12 +300,12 @@ enum MessageType {
 }
 
 class MessageFunc {
-  static Future<void> mainList(dynamic m, TimeClient client) async {
+  static Future<void> mainList(dynamic m) async {
     var bookIndexShort = <List>[];
     try {
       final map = BookIndexRoot.fromJson(jsonDecode(m.arg)).data!;
       for (var bookVol in map.list!) {
-        final _inl = []..add(bookVol.name);
+        final _inl = <dynamic>[bookVol.name];
         for (var bookChapter in bookVol.list!) {
           _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
         }
@@ -337,7 +318,7 @@ class MessageFunc {
     }
   }
 
-  static Future<void> bookList(dynamic m, TimeClient client) async {
+  static Future<void> bookList(dynamic m) async {
     final String c = m.arg;
     String? data;
     final box = await Hive.openBox('shudanlist');
@@ -367,10 +348,10 @@ class MessageFunc {
     }
   }
 
-  static Future<void> info(dynamic m, TimeClient client) async {
+  static Future<void> info(dynamic m, Dio client) async {
     try {
-      var respone = await client.get(Uri.parse(m.arg));
-      Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
+      var respone = await client.get<String>(m.arg);
+      Map<String, dynamic> map = jsonDecode(respone.data!);
       m.sp.send(IsolateReceiveMessage(data: BookInfoRoot.fromJson(map), result: Result.success));
     } catch (e) {
       Log.e('url:${m.arg}, $e', name: '_isolate');
@@ -378,10 +359,10 @@ class MessageFunc {
     }
   }
 
-  static Future<void> shudanDetail(dynamic m, TimeClient client) async {
+  static Future<void> shudanDetail(dynamic m, Dio client) async {
     try {
-      var respone = await client.get(Uri.parse(m.arg));
-      Map<String, dynamic> map = jsonDecode(utf8.decoder.convert(respone.bodyBytes));
+      var respone = await client.get<String>(m.arg);
+      Map<String, dynamic> map = jsonDecode(respone.data!);
       m.sp.send(IsolateReceiveMessage(data: BookListDetailRoot.fromJson(map).data, result: Result.success));
     } catch (e) {
       Log.e('url:${m.arg}, $e', name: '_isolate');
@@ -389,23 +370,21 @@ class MessageFunc {
     }
   }
 
-  static Future<void> indexs(dynamic m, TimeClient client) async {
+  static Future<void> indexs(dynamic m, Dio client) async {
     try {
-      var respone = await client.get(Uri.parse(m.arg));
-      m.sp.send(IsolateReceiveMessage(
-          data: utf8.decoder.convert(respone.bodyBytes).replaceAll('},]', '}]'), result: Result.success));
+      var respone = await client.get<String>(m.arg);
+      m.sp.send(IsolateReceiveMessage(data: respone.data!.replaceAll('},]', '}]'), result: Result.success));
     } catch (e) {
       Log.e('url:${m.arg}, $e', name: '_isolate');
       m.sp.send(IsolateReceiveMessage(data: '', result: Result.error));
     }
   }
 
-  static Future<void> content(dynamic m, TimeClient client) async {
+  static Future<void> content(dynamic m, Dio client) async {
     try {
-      var respone = await client.get(Uri.parse(m.arg));
+      var respone = await client.get<String>(m.arg);
       m.sp.send(IsolateReceiveMessage(
-          data: BookContentRoot.fromJson(jsonDecode(utf8.decoder.convert(respone.bodyBytes))).data,
-          result: Result.success));
+          data: BookContentRoot.fromJson(jsonDecode(respone.data!)).data, result: Result.success));
     } catch (e) {
       Log.e('url:${m.arg}, $e', name: '_isolate');
 
@@ -413,12 +392,12 @@ class MessageFunc {
     }
   }
 
-  static Future<void> shudan(dynamic m, TimeClient client) async {
+  static Future<void> shudan(dynamic m, Dio client) async {
     try {
       final String c = m.arg[0];
       final int index = m.arg[1];
-      var respone = await client.get(Uri.parse(BookRepository.shudanUrl(c, index)));
-      final data = utf8.decoder.convert(respone.bodyBytes);
+      var respone = await client.get<String>(Api.shudanUrl(c, index));
+      final data = respone.data!;
       m.sp.send(IsolateReceiveMessage(
           data: BookListRoot.fromJson(jsonDecode(data)).data ?? <BookList>[], result: Result.success));
       if (index == 1) {
@@ -465,7 +444,7 @@ class IsolateReceiveMessage {
 void _isolateRe(List args) async {
   assert(() {
     // Bloc.observer = SimpleBlocObserver();
-    Log.switchToPrint = (stage) {
+    Log.enablePrint = (stage) {
       return true;
     };
     return true;
@@ -475,7 +454,7 @@ void _isolateRe(List args) async {
   final receivePort = ReceivePort();
   port.send(receivePort.sendPort);
   Hive.init(appPath + '/hive');
-  var client = TimeClient();
+  var client = dioCreater();
 
   receivePort.listen(
     (m) async {
@@ -497,14 +476,14 @@ void _isolateRe(List args) async {
             MessageFunc.shudan(m, client);
             break;
           case MessageType.bookList:
-            MessageFunc.bookList(m, client);
+            MessageFunc.bookList(m);
             break;
           case MessageType.mainList:
-            MessageFunc.mainList(m, client);
+            MessageFunc.mainList(m);
             break;
           case MessageType.restartClient:
             client.close();
-            client = TimeClient();
+            client = dioCreater();
             m.sp.send(IsolateReceiveMessage(data: '', result: Result.success));
             break;
           default:
@@ -514,3 +493,5 @@ void _isolateRe(List args) async {
     },
   );
 }
+
+Dio dioCreater() => Dio(BaseOptions(connectTimeout: 5000, sendTimeout: 5000, receiveTimeout: 10000));

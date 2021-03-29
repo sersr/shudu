@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../bloc/bloc.dart';
 import '../../utils/widget/image_shadow.dart';
 
-/// 不支持web
 class ImageResolve extends StatelessWidget {
   const ImageResolve({Key? key, this.img, this.builder, this.width = 112}) : super(key: key);
   final String? img;

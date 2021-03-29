@@ -70,10 +70,10 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                             return Container(
                               height: headerextent,
                               padding: const EdgeInsets.only(top: 4.0, bottom: 1.0),
-                              child: Center(child: Text('${l.first as String}')),
                               decoration: BoxDecoration(
                                 color: Color.fromRGBO(150, 180, 140, 1),
                               ),
+                              child: Center(child: Text('${l.first as String}')),
                               // height: headerextent,
                             );
                           },

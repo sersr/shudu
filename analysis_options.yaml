@@ -4,9 +4,10 @@ include: package:pedantic/analysis_options.yaml
 linter:
   rules:
     unawaited_futures: false
-    tunnecessary_null_comparison: true
     prefer_relative_imports: true
+    curly_braces_in_flow_control_structures: false
 
 analyzer:
   errors:
     prefer_relative_imports: warning
+    

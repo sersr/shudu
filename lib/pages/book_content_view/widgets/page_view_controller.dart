@@ -1,13 +1,10 @@
-import 'dart:collection';
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-
-import '../../bloc/painter_bloc.dart';
-import '../../utils/utils.dart';
+import 'package:flutter/scheduler.dart';
+import '../../../bloc/painter_bloc.dart';
+import '../../../utils/utils.dart';
 
 typedef BoolCallback = bool Function();
 
@@ -17,27 +14,48 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     required this.scrollingNotify,
     required this.getDragState,
     required this.hasContent,
-    this.axis = Axis.vertical,
-  })  : _maxExtent = double.infinity,
+  })   : _maxExtent = double.infinity,
         _minExtent = double.negativeInfinity {
     _activity = IdleActivity(this);
   }
 
   TickerProvider vsync;
-  Axis axis;
   BoolCallback getDragState;
   void Function(bool) scrollingNotify;
-  bool Function(int, int) hasContent;
+  bool Function(HasContent, int) hasContent;
 
   Activity? _activity;
-  double? _pixels = 0.0;
-  double? get pixels => _pixels;
+
+  double _pixels = 0.0;
+  @override
+  double get pixels => _pixels;
+
+  void beginActivity(Activity activity) {
+    if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
+      _lastvelocity = _activity!.velocity;
+    }
+    _activity!.dispose();
+    _activity = activity;
+    _currentDrag?.dispose();
+    _currentDrag = null;
+  }
+
+  Axis _axis = Axis.vertical;
+  Axis get axis => _axis;
+  set axis(Axis v) {
+    if (v == _axis) return;
+    _axis = v;
+    notifyListeners();
+  }
 
   double? _viewPortDimension;
   double? get viewPortDimension => _viewPortDimension;
 
-  void update() {
-    notifyListeners();
+  void applyViewPortDimension(double dimension) {
+    if (_viewPortDimension != null && _viewPortDimension != dimension) {
+      _pixels = page.toInt() * dimension;
+    }
+    _viewPortDimension = dimension;
   }
 
   static final Tolerance kDefaultTolerance = Tolerance(
@@ -51,44 +69,35 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   );
 
   double get page {
-    return pixels! / viewPortDimension!;
+    assert(viewPortDimension != null);
+    return pixels / viewPortDimension!;
   }
 
   Simulation getSimulation(double velocity) {
-    return ClampingScrollSimulation(position: pixels!, velocity: velocity);
+    return ClampingScrollSimulation(position: pixels, velocity: velocity);
   }
 
   Simulation getSpringSimulation(double velocity, double end) {
-    return ScrollSpringSimulation(kDefaultSpring, pixels!, end, velocity);
-  }
-
-  void beginActivity(Activity activity) {
-    if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
-      _lastvelocity = _activity!.velocity;
-    }
-    _activity!.dispose();
-    _activity = activity;
-    _currentDrag?.dispose();
-    _currentDrag = null;
+    return ScrollSpringSimulation(kDefaultSpring, pixels, end, velocity);
   }
 
   void nextPage() {
     if (_lastActivityIsIdle) {
       final nextPage = page.round();
       if (axis == Axis.horizontal) {
-        if (hasContent(0, nextPage)) {
+        if (hasContent(HasContent.getRight, nextPage)) {
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
       } else {
-        if (hasContent(0, nextPage)) {
+        if (hasContent(HasContent.getRight, nextPage)) {
           var _n = page;
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
-          if (hasContent(0, (page + 0.5).round())) {
+          if (hasContent(HasContent.getRight, (page + 0.5).round())) {
             _n += 1;
           } else {
             _n = (page + 0.5).roundToDouble();
@@ -103,7 +112,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void prePage() {
-    if (_activity is IdleActivity && hasContent(1, page.toInt() - 1)) {
+    if (_activity is IdleActivity && hasContent(HasContent.getLeft, page.toInt() - 1)) {
       if (minExtent!.isFinite) {
         _minExtent = double.negativeInfinity;
       }
@@ -111,7 +120,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     }
   }
 
-  Activity? get aaa => _activity;
   bool get isScrolling => _activity is! IdleActivity;
   void scrollingnotifier(bool value) {
     scrollingNotify(value);
@@ -125,13 +133,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   @override
-  void setPixels(double? v) {
+  void setPixels(double v) {
     if (v == _pixels) return;
-    v = v!.clamp(minExtent!, maxExtent!);
+    v = v.clamp(minExtent!, maxExtent!);
     _pixels = v;
-    // if (pixels == minExtent || pixels == maxExtent) {
-    //   goIdle();
-    // }
     notifyListeners();
   }
 
@@ -139,8 +144,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   double get lastvelocity => _lastvelocity;
 
   @override
-  void goPageResolve() {
-    final la = pixels! % viewPortDimension!;
+  void goBallisticResolveWithLastActivity() {
+    final la = pixels % viewPortDimension!;
     if (axis == Axis.vertical || la <= 1.0 || la + 1.0 >= viewPortDimension!) {
       _lastvelocity = 0.0;
       goIdle();
@@ -150,48 +155,37 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     }
   }
 
-  // var ballisticPageStyle = true;
   @override
   void goBallistic(double velocity) {
     if (!_canDrag) {
       goIdle();
       return;
     }
+
     int to;
 
     if (axis == Axis.horizontal) {
-      if (velocity < -200.0) {
+      if (velocity < -200.0)
         to = (page - 0.5).round();
-        velocity = math.max(-500, velocity);
-      } else if (velocity > 200.0) {
+      else if (velocity > 200.0)
         to = (page + 0.5).round();
-        velocity = math.min(500, velocity);
-      } else {
+      else
         to = page.round();
-      }
+
       final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
-        end: end,
+        end: () => end,
         simulation: getSpringSimulation(velocity, end),
       ));
     } else {
-      if (velocity < -200.0) {
-        to = (page - 0.5).round();
-      } else if (velocity > 200.0) {
-        to = (page + 0.5).round();
-      } else {
-        to = page.round();
-      }
-      final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
-
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
-        end: end,
+        end: () => velocity >= 0.0 ? maxExtent! : minExtent!,
         simulation: getSimulation(velocity),
-        magnetic: false,
+        swipeDown: velocity >= 0,
       ));
     }
   }
@@ -200,28 +194,23 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     _pixels = v;
   }
 
-  void applyViewPortDimension(double dimension) {
-    if (_viewPortDimension != null && _viewPortDimension != dimension) {
-      _pixels = page.toInt() * dimension;
-    }
-    _viewPortDimension = dimension;
-  }
-
   double? _minExtent;
   double? _maxExtent;
 
   double? get minExtent => _minExtent;
   double? get maxExtent => _maxExtent;
 
-  void applyConentDimension({double? minExtent, double? maxExtent}) {
-    _minExtent = minExtent;
-    _maxExtent = maxExtent;
+  void applyConentDimension({required double minExtent, required double maxExtent}) {
+    if (_minExtent != minExtent || _maxExtent != maxExtent) {
+      _minExtent = minExtent;
+      _maxExtent = maxExtent;
+    }
   }
 
   @override
   void applyUserOffset(double delta) {
     if (delta == 0.0) return;
-    setPixels(pixels! - delta);
+    setPixels(pixels - delta);
   }
 
   PreNextDragController? _currentDrag;
@@ -238,7 +227,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       return null;
     }
     scrollingnotifier(true);
-    final _drag = PreNextDragController(delegate: this, details: details, cancelCallback: cancelCallback);
+    final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
     _currentDrag = _drag;
     return _drag;
@@ -246,7 +235,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   var _lastActivityIsIdle = true;
   ScrollHoldController hold(VoidCallback cancel) {
-    final _hold = HoldActivity(this, call: cancel);
+    final _hold = HoldActivity(this, cancelCallback: cancel);
     _lastActivityIsIdle = _activity is IdleActivity;
     beginActivity(_hold);
     return _hold;
@@ -263,9 +252,9 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 }
 
 class ContentPreNextWidget extends RenderObjectWidget {
-  ContentPreNextWidget({this.builder, this.offset});
-  final WidgetCallback? builder;
-  final NopPageViewController? offset;
+  ContentPreNextWidget({required this.builder, required this.offset});
+  final WidgetCallback builder;
+  final NopPageViewController offset;
   @override
   ContentPreNextElement createElement() => ContentPreNextElement(this);
 
@@ -276,7 +265,7 @@ class ContentPreNextWidget extends RenderObjectWidget {
 
   @override
   void updateRenderObject(BuildContext context, covariant ContentPreNextRenderObject renderObject) {
-    renderObject.vpOffset = offset;
+    renderObject.nopController = offset;
   }
 }
 
@@ -288,7 +277,7 @@ class ContentPreNextElement extends RenderObjectElement {
   @override
   ContentPreNextRenderObject get renderObject => super.renderObject as ContentPreNextRenderObject;
 
-  final childElement = SplayTreeMap<int, Element>();
+  final childElement = <int, Element>{};
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -355,9 +344,9 @@ class ContentPreNextElement extends RenderObjectElement {
     owner!.buildScope(this, () {
       try {
         childElement.removeWhere((key, value) {
-          final clear = key < leadingGarbage || key > trailingGarbage;
+          final clear = key < leadingGarbage - 1 || key > trailingGarbage + 1;
           if (clear) {
-            final el = updateChild(value, null, key);
+            final el = updateChild(value, null, null);
             assert(el == null);
           }
           return clear;
@@ -367,7 +356,7 @@ class ContentPreNextElement extends RenderObjectElement {
   }
 
   Widget? _build(int index, {bool changeState = false}) {
-    return widget.builder!(index, changeState: changeState);
+    return widget.builder(index, changeState: changeState);
   }
 
   @override
@@ -390,10 +379,10 @@ class NopPageViewParenData extends BoxParentData {
 }
 
 class ContentPreNextRenderObject extends RenderBox {
-  ContentPreNextRenderObject({NopPageViewController? vpOffset}) : _vpOffset = vpOffset;
+  ContentPreNextRenderObject({required NopPageViewController vpOffset}) : _nopController = vpOffset;
 
   ContentPreNextElement? _element;
-  final childlist = SplayTreeMap<int, RenderBox>();
+  final childlist = <int, RenderBox>{};
 
   void add(RenderBox child, index) {
     assert(index is int);
@@ -423,18 +412,18 @@ class ContentPreNextRenderObject extends RenderBox {
     });
   }
 
-  NopPageViewController? _vpOffset;
+  NopPageViewController _nopController;
 
-  NopPageViewController? get vpOffset => _vpOffset;
+  NopPageViewController get nopController => _nopController;
 
-  set vpOffset(NopPageViewController? v) {
-    if (_vpOffset == v) return;
+  set nopController(NopPageViewController v) {
+    if (_nopController == v) return;
     if (attached) {
-      _vpOffset!.removeListener(markNeedsLayout);
-      _vpOffset = v;
+      _nopController.removeListener(markNeedsLayout);
+      _nopController = v;
     }
     if (attached) {
-      _vpOffset!.addListener(markNeedsLayout);
+      _nopController.addListener(markNeedsLayout);
     }
     markNeedsLayout();
   }
@@ -442,24 +431,19 @@ class ContentPreNextRenderObject extends RenderBox {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _vpOffset!.addListener(markNeedsLayout);
+    _nopController.addListener(markNeedsLayout);
     childlist.values.forEach((element) {
       element.attach(owner);
     });
   }
-
-  @override
-  bool get sizedByParent => true;
 
   int? firstIndex;
   int? lastIndex;
 
   bool get canPaint => firstIndex != null && lastIndex != null;
 
-  // @override
-  // void performResize() {
-  //   size = constraints.biggest;
-  // }
+  @override
+  bool get sizedByParent => true;
 
   @override
   Size computeDryLayout(BoxConstraints constraints) {
@@ -467,18 +451,19 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   Axis axis = Axis.horizontal;
+
   @override
   void performLayout() {
-    // final now = Timeline.now;
     double extent;
-    axis = vpOffset!.axis;
+    axis = nopController.axis;
     if (axis == Axis.horizontal) {
       extent = size.width;
     } else {
       extent = size.height;
     }
-    vpOffset!.applyViewPortDimension(extent);
-    final pixels = vpOffset!.pixels!;
+    nopController.applyViewPortDimension(extent);
+
+    final pixels = nopController.pixels;
     firstIndex = lastIndex = null;
     final _firstIndex = getMinChildIndexForScrollOffset(pixels, extent);
     final _lastIndex = getMaxChildIndexForScrollOffset(pixels + extent, extent);
@@ -510,13 +495,13 @@ class ContentPreNextRenderObject extends RenderBox {
       }
       collectGarbage(firstIndex!, lastIndex!);
 
-      final leftChild = vpOffset!.hasContent(1, firstIndex!);
-      final rightChild = vpOffset!.hasContent(0, lastIndex!);
-      vpOffset!.applyConentDimension(
+      final leftChild = nopController.hasContent(HasContent.getLeft, firstIndex!);
+      final rightChild = nopController.hasContent(HasContent.getRight, lastIndex!);
+      nopController.applyConentDimension(
         minExtent: leftChild ? double.negativeInfinity : indexToLayoutOffset(extent, firstIndex!),
         maxExtent: rightChild ? double.infinity : indexToLayoutOffset(extent, lastIndex!),
       );
-      _element!._build(vpOffset!.page.round(), changeState: true);
+      _element!._build(nopController.page.round(), changeState: true);
     }
   }
 
@@ -595,7 +580,7 @@ class ContentPreNextRenderObject extends RenderBox {
   void detach() {
     super.detach();
 
-    _vpOffset!.removeListener(markNeedsLayout);
+    _nopController.removeListener(markNeedsLayout);
     childlist.values.forEach((element) {
       element.detach();
     });

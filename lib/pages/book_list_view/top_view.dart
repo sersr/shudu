@@ -51,7 +51,7 @@ class BookListItem extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${score}分',
+                          '$score分',
                           style: lgsty,
                           softWrap: false,
                         ),

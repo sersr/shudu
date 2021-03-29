@@ -5,17 +5,19 @@ class ImageShadow extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: child,
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(-4, 2),
-            color: Color.fromRGBO(180, 180, 180, 1),
-            blurRadius: 2.6,
-            spreadRadius: 2,
-          ),
-        ],
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(-4, 2),
+              color: Color.fromRGBO(180, 180, 180, 1),
+              blurRadius: 2.6,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: child,
       ),
     );
   }

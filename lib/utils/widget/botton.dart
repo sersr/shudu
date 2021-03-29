@@ -17,23 +17,23 @@ Widget btn1(
   child = InkWell(
     splashColor: splashColor,
     borderRadius: BorderRadius.circular(radius),
-    child: Padding(
-      padding: padding ?? const EdgeInsets.all(0.0),
-      child: child,
-    ),
     onTap: onTap,
     onLongPress: onLongPress,
     onTapCancel: onTapCancel,
     onTapDown: onTapDown,
     highlightColor: splashColor!.withAlpha(190),
+    child: Padding(
+      padding: padding ?? const EdgeInsets.all(0.0),
+      child: child,
+    ),
   );
 
   return background
       ? Material(
           borderRadius: BorderRadius.circular(radius),
           color: bgColor ?? Colors.grey[200],
-          child: child,
           type: MaterialType.button,
+          child: child,
         )
       : child;
 }

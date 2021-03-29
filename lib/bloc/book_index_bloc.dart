@@ -78,28 +78,26 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   @override
   Stream<BookIndexState> mapEventToState(BookIndexEvent event) async* {
     if (event is BookIndexShowEvent) {
-      // if (cid == event.cid) {
-      //   final _s = state;
-      //   yield BookIndexLoadingState();
-      //   await Future.delayed(Duration(milliseconds: 400 * (Random().nextInt(3) + 1)));
-      //   yield _s;
-      //   return;
-      // }
-      yield* await sendIndexs(bookid: event.id ?? 0, contentid: event.cid ?? 0);
+      assert(() {
+        if (event.cid == null || event.id == null) {
+          print('BookIndexEvent: event == null');
+        }
+        return true;
+      }());
+      yield* sendIndexs(bookid: event.id ?? 0, contentid: event.cid ?? 0);
     } else if (event is BookIndexReloadEvent) {
-      yield* await sendIndexs(bookid: id ?? 0, contentid: cid ?? 0);
+      yield* sendIndexs(bookid: id ?? 0, contentid: cid ?? 0);
     }
   }
 
   Future<void> cacheinnerdb(int? id, String indexs) async {
     int? count = 0;
 
-    count =
-        Sqflite.firstIntValue(
+    count = Sqflite.firstIntValue(
         await repository!.innerdb.db.rawQuery('SELECT COUNT(*) FROM BookIndex WHERE bookId = ?', [id]));
     if (count! > 0) {
       await repository!.innerdb.db.rawUpdate('UPDATE BookIndex set bIndexs = ? WHERE bookId = ?', [indexs, id]);
-      assert(Log.log(count > 1 ? Log.error : Log.info, 'count: $count,id: ${id} cache bIndexs.',
+      assert(Log.log(count > 1 ? Log.error : Log.info, 'count: $count,id: $id cache bIndexs.',
           stage: this, name: 'cacheinnerdb'));
     } else {
       await repository!.innerdb.db.rawInsert(

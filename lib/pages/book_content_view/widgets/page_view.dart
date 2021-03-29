@@ -5,11 +5,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/bloc.dart';
+import '../../../bloc/bloc.dart';
 
-import '../../bloc/painter_bloc.dart';
-import '../../utils/utils.dart';
-import 'context_view.dart';
+import '../../../bloc/painter_bloc.dart';
+import '../../../utils/utils.dart';
+import '../painter_page.dart';
+import 'battery_view.dart';
 import 'page_view_controller.dart';
 import 'pannel.dart';
 
@@ -40,13 +41,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     super.initState();
     offsetPosition = NopPageViewController(
       vsync: this,
-      scrollingNotify: isScrolling,
+      scrollingNotify: scrollingNotify,
       getDragState: canDrag,
       hasContent: isBoundary,
     );
-    bloc = context.read<PainterBloc>();
-    bloc.controller = offsetPosition;
-    resetState();
   }
 
   @override
@@ -58,36 +56,35 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.read<PainterBloc>();
+    bloc = context.read<PainterBloc>()..controller = offsetPosition;
+    resetState();
   }
 
   void resetState() {
     if (bloc.config.axis != null) {
-      if (offsetPosition.axis != bloc.config.axis) {
-        offsetPosition.axis = bloc.config.axis ?? Axis.horizontal;
-      }
+      offsetPosition.axis = bloc.config.axis!;
     }
   }
 
-  bool isBoundary(int lr, int index) {
-    return bloc.hasContent(lr, index);
+  bool isBoundary(HasContent key, int index) {
+    return bloc.hasContent(key, index);
   }
 
-  void isScrolling(bool scrolling) {
-    if (!scrolling) {
+  void scrollingNotify(bool isScrolling) {
+    if (!isScrolling) {
       bloc
         ..completercanCompute()
         ..dump();
     } else {
       if (bloc.canCompute == null || bloc.canCompute!.isCompleted) {
-        bloc.canCompute = Completer();
+        bloc.canCompute = Completer<void>();
       }
     }
   }
 
   bool canDrag() => bloc.computeCount == 0;
 
-  Widget? getChild(int index, {required bool changeState}) {
+  Widget? getChild(int index, {bool changeState = false}) {
     return bloc.getWidget(index, changeState: changeState);
     // return child;
   }
@@ -129,17 +126,44 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
         epadding: bloc.padding,
         header: RepaintBoundary(child: head),
         body: RepaintBoundary(child: child),
-        leftFooter: RepaintBoundary(child: footleft),
+        leftFooter: RepaintBoundary(
+            child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 12,
+                  width: 30,
+                  child: FutureBuilder<int>(
+                    future: bloc.repository.getBatteryLevel(),
+                    builder: (context, snaps) {
+                      if (snaps.hasData) {
+                        return CustomPaint(
+                          painter: BatteryView(
+                            progress: (snaps.data! / 100).clamp(0.0, 1.0),
+                            color: Color(bloc.config.fontColor!),
+                          ),
+                        );
+                      }
+                      return CustomPaint(
+                        painter: BatteryView(
+                          progress: (bloc.repository.level / 100).clamp(0.0, 1.0),
+                          color: Color(bloc.config.fontColor!),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                footleft,
+              ],
+            ),
+          ],
+        )),
         rightFooter: RepaintBoundary(child: footright),
       );
-      // return Stack(
-      //   children: [
-      //     Positioned(top: 8.0 + bloc.padding.top, left: 16.0, child: head),
-      //     Positioned(bottom: 4.0 + bloc.padding.bottom, left: 16.0, child: footleft),
-      //     Positioned(bottom: 4.0 + bloc.padding.bottom, right: 16.0, child: footright),
-      //     Positioned.fill(top: 33 + bloc.padding.top, bottom: 33 + bloc.padding.bottom, right: 16.0, child: child),
-      //   ],
-      // );
     }
   }
 
@@ -152,7 +176,6 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
           return !bloc.ignore.value
               ? bloc.tData.contentIsNotEmpty
                   ? GestureDetector(
-                      child: wrapChild(),
                       onTapUp: (d) {
                         if (offsetPosition.page == 0 ||
                             offsetPosition.page % offsetPosition.page.toInt() == 0 ||
@@ -165,7 +188,6 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                           final x = l.dx - halfW;
                           final y = l.dy - halfH;
                           if (x.abs() < sixW && y.abs() < sixH) {
-                            // if (l.dx > halfW - sixW && l.dx < halfW + sixW && l.dy > halfH - sixH && l.dy < halfH + sixH) {
                             widget.show.value = !widget.show.value;
                             if (!widget.show.value) {
                               widget.showCname.value = false;
@@ -175,6 +197,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                           }
                         }
                       },
+                      child: wrapChild(),
                     )
                   : GestureDetector(
                       onTap: () {
@@ -305,33 +328,26 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void onDown(DragDownDetails d) {
-    // SystemChrome.restoreSystemUIOverlays();
-    hold = widget.offsetPosition.hold(() {
-      hold = null;
-    });
+    hold = widget.offsetPosition.hold(() => hold = null);
   }
 
   void onStart(DragStartDetails d) {
-    drag = widget.offsetPosition.drag(d, () {
-      drag = null;
-    });
+    drag = widget.offsetPosition.drag(d, () => drag = null);
   }
 
   void onUpdate(DragUpdateDetails d) {
-    if (drag != null) {
-      drag!.update(d);
-    }
+    drag?.update(d);
   }
 
   void onEnd(DragEndDetails d) {
-    widget.offsetPosition.goBallistic(-d.primaryVelocity!);
+    drag?.end(d);
   }
 
   void onCancel() {
     drag?.cancel();
     hold?.cancel();
-    drag = null;
-    hold = null;
+    assert(drag == null);
+    assert(hold == null);
   }
 
   @override
@@ -448,7 +464,7 @@ class SlideElement extends RenderObjectElement {
 class SliderRenderObject extends RenderBox {
   SliderRenderObject(Size esize, EdgeInsets epadding, double otherHeight)
       : _esize = esize,
-      _otherHeight = otherHeight,
+        _otherHeight = otherHeight,
         _epadding = epadding;
   RenderBox? _header;
   RenderBox? _body;

@@ -85,18 +85,6 @@ Widget wrap({required Widget child, int? div}) {
 
 Widget animationBuilder(String text, List<ValueNotifier<bool>> notifier, int index, int? div) {
   return GestureDetector(
-    child: Container(
-      color: Colors.white.withAlpha(0),
-      child: AnimatedBuilder(
-          animation: notifier[index],
-          builder: (context, child) {
-            return Container(
-              child: Text(text),
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
-              color: notifier[index].value ? Colors.grey[300] : null,
-            );
-          }),
-    ),
     onTap: () {
       notifier.forEach((element) {
         if (element == notifier[index]) {
@@ -108,5 +96,17 @@ Widget animationBuilder(String text, List<ValueNotifier<bool>> notifier, int ind
         }
       });
     },
+    child: Container(
+      color: Colors.white.withAlpha(0),
+      child: AnimatedBuilder(
+          animation: notifier[index],
+          builder: (context, child) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
+              color: notifier[index].value ? Colors.grey[300] : null,
+              child: Text(text),
+            );
+          }),
+    ),
   );
 }

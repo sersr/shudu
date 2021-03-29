@@ -6,7 +6,7 @@ abstract class Log {
   static const int error = 2;
   static const int level = 0;
   static final List<String> _logMessage = ['Info', 'Warnning', 'Error'];
-  static bool Function(Object?) switchToPrint = (_) => false;
+  static bool Function(Object?) enablePrint = (_) => false;
   static bool i(String info, {Object? stage, Object? name, Object? data}) {
     return log(Log.info, info, stage: stage, name: name, data: data);
   }
@@ -22,7 +22,7 @@ abstract class Log {
   static bool log(int lv, String message, {Object? stage, Object? name, Object? data}) {
     String addMsg;
     String l;
-    if (!switchToPrint(stage)) return true;
+    if (!enablePrint(stage)) return true;
     switch (level) {
       case 0:
         l = _logMessage[lv];

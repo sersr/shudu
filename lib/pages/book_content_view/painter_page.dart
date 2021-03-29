@@ -8,7 +8,7 @@ import '../../utils/utils.dart';
 
 import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/painter_bloc.dart';
-import 'page_view.dart';
+import 'widgets/page_view.dart';
 
 enum SettingView { indexs, setting, none }
 
@@ -31,7 +31,6 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    // absorbPointer.value = true;
   }
 
   @override
@@ -44,7 +43,6 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
   void canLoad() {
     if (animation.isCompleted) {
       bloc.completerCanLoad();
-      // SystemChrome.setEnabledSystemUIOverlays([]);
     }
   }
 
@@ -67,7 +65,8 @@ class _PainterPageState extends State<PainterPage> with WidgetsBindingObserver {
     WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
-Timer? errorTimer;
+
+  Timer? errorTimer;
   @override
   Widget build(BuildContext context) {
     Widget child = BlocBuilder<PainterBloc, PainterState>(
@@ -113,16 +112,16 @@ Timer? errorTimer;
                         },
                         child: Center(
                           child: Container(
-                            child: Text(
-                              '网络加载出错',
-                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13.0),
-                              overflow: TextOverflow.fade,
-                            ),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6.0),
                               color: Colors.grey.shade100.withAlpha(250),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                            child: Text(
+                              '网络加载出错',
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13.0),
+                              overflow: TextOverflow.fade,
+                            ),
                           ),
                         ),
                       ))),
@@ -159,21 +158,21 @@ Timer? errorTimer;
     final cbloc = context.read<BookCacheBloc>()
       ..loading = Completer<void>()
       ..add(BookChapterIdLoadEvent());
-    bloc.out();
-    bloc.completerCanLoad();
+    bloc
+      ..out()
+      ..completerCanLoad();
     if (!bloc.completer.isCompleted) {
-      // 尽快退出其他任务；
       await bloc.repository.restartClient();
-      // await bloc.completer.future;
     }
     bloc.completercanCompute();
 
     await bloc.completer.future;
     await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+
     assert(Log.i('computeCount: ${bloc.computeCount},loadCount: ${bloc.loadCount},loadingId: ${bloc.loadingId}'));
     await cbloc.loading!.future;
     //-------------------------
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: 300));
     // absorbPointer.value = false;
     return true;
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +13,7 @@ import '../../bloc/options_bloc.dart';
 import '../../bloc/painter_bloc.dart';
 import '../../bloc/search_bloc.dart';
 import '../../utils/utils.dart';
-import '../book_content_view/content_main.dart';
+import '../book_content_view/content_page.dart';
 import '../book_info_view/book_info_page.dart';
 import '../book_list_view/list_main.dart';
 import 'book_item.dart';
@@ -48,10 +49,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  /// 不会发生？？
   @override
   void dispose() {
-    painterBloc.add(PainterOutEvent(changeState: false));
     WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
@@ -113,12 +112,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     final height = contraints.maxHeight;
                     return InkWell(
                       borderRadius: BorderRadius.circular(height / 2),
+                      onTap: () => showSearch(context: context, delegate: MySearchPage()),
                       child: Container(
                         height: height,
                         width: height,
                         child: Icon(Icons.search),
                       ),
-                      onTap: () => showSearch(context: context, delegate: MySearchPage()),
                     );
                   },
                 ),
@@ -134,12 +133,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   final height = contraints.maxHeight;
                   return InkWell(
                     borderRadius: BorderRadius.circular(height / 2),
+                    onTap: () => showdlg(context),
                     child: Container(
                       height: height,
                       width: height,
                       child: Icon(Icons.menu),
                     ),
-                    onTap: () => showdlg(context),
                   );
                 },
               ),
@@ -150,8 +149,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       Expanded(
         child: RepaintBoundary(
           child: IndexedStack(
-            children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
             index: currentIndex,
+            children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
           ),
         ),
       ),
@@ -176,17 +175,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     /// 安全地初始化
     return AnimatedBuilder(
-        animation: painterBloc.repository.init,
-        child: RepaintBoundary(child: child),
-        builder: (context, child) {
-          if (painterBloc.repository.init.value) {
-            painterBloc.add(PainterInitEvent());
-          }
-          return AbsorbPointer(
-            child: Material(child: child),
-            absorbing: !painterBloc.repository.init.value,
-          );
-        });
+      animation: painterBloc.repository.init,
+      builder: (context, child) {
+        if (painterBloc.repository.init.value) {
+          painterBloc.add(PainterInitEvent());
+        }
+        return AbsorbPointer(
+          absorbing: !painterBloc.repository.init.value,
+          child: Material(child: child),
+        );
+      },
+      child: RepaintBoundary(child: child),
+    );
   }
 
   void showdlg(BuildContext context) {
@@ -198,15 +198,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             color: Colors.grey[200]!.withAlpha(240),
             borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Container(
-            height: 200,
+            height: 300,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Text('选择平台样式'),
                   ),
                 ),
@@ -215,13 +215,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   children: [
                     btn1(
                       child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         child: Text(
-                          'android style',
+                          'Android',
                           style: TextStyle(color: Colors.grey.shade100),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
-                      radius: 10,
+                      radius: 5,
                       bgColor: Colors.cyan.shade600,
                       splashColor: Colors.cyan.shade200,
                       onTap: () {
@@ -233,17 +233,119 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ),
                     btn1(
                       child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         child: Text(
-                          'ios style',
+                          'IOS',
                           style: TextStyle(color: Colors.grey.shade100),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
-                      radius: 10,
+                      radius: 5,
                       bgColor: Colors.cyan.shade600,
                       splashColor: Colors.cyan.shade200,
                       onTap: () {
                         context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.iOS));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    )
+                  ],
+                ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('页面过度动画'),
+                  ),
+                ),
+                Wrap(
+                  spacing: 12.0,
+                  runSpacing: 8.0,
+                  children: [
+                    btn1(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'FadeUpwards',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                      ),
+                      radius: 5,
+                      bgColor: Colors.lightBlue.shade700,
+                      splashColor: Colors.lightBlue.shade400,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.fadeUpwards));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    ),
+                    btn1(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'OpenUpwards',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                      ),
+                      radius: 5,
+                      bgColor: Colors.lightBlue.shade700,
+                      splashColor: Colors.lightBlue.shade400,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.openUpwards));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    ),
+                    btn1(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'Cupertino',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                      ),
+                      radius: 5,
+                      bgColor: Colors.lightBlue.shade700,
+                      splashColor: Colors.lightBlue.shade400,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.cupertino));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    ),
+                    btn1(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'FadeThrough',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                      ),
+                      radius: 5,
+                      bgColor: Colors.lightBlue.shade700,
+                      splashColor: Colors.lightBlue.shade400,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.fadeThrough));
+                        Future.delayed(Duration(milliseconds: 200), () {
+                          Navigator.of(context).pop();
+                        });
+                      },
+                    ),
+                    btn1(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'Zoom',
+                          style: TextStyle(color: Colors.grey.shade100),
+                        ),
+                      ),
+                      radius: 5,
+                      bgColor: Colors.lightBlue.shade700,
+                      splashColor: Colors.lightBlue.shade400,
+                      onTap: () {
+                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.zoom));
                         Future.delayed(Duration(milliseconds: 200), () {
                           Navigator.of(context).pop();
                         });
@@ -288,7 +390,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 context.read<BookCacheBloc>()
                   ..add(BookChapterIdIsTopEvent(id: item.id!, isTop: item.isTop == 1 ? 0 : 1))
                   ..add(BookChapterIdLoadEvent());
-                Navigator.of(context)..pop();
+                Navigator.of(context).pop();
               }),
           btn2(
               icon: Icons.delete_forever_outlined,
@@ -453,8 +555,8 @@ class MySearchPage extends SearchDelegate<void> {
                       },
                       borderRadius: BorderRadius.circular(3.0),
                       child: Container(
-                        child: Text(i),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.0),
+                        child: Text(i),
                       ),
                     ),
                   ),

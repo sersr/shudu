@@ -1,6 +1,6 @@
 extension DateTimeFormat on DateTime {
   String get toStringFormat {
-    return '${month}/${day}/${year} ${hour.timePadLeft}:${minute.timePadLeft}:${second.timePadLeft} ${hour < 9 ? 'AM' : 'PM'}';
+    return '$month/$day/$year ${hour.timePadLeft}:${minute.timePadLeft}:${second.timePadLeft} ${hour < 9 ? 'AM' : 'PM'}';
   }
 }
 

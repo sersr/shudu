@@ -19,8 +19,8 @@ class _ListCatetoryPageState extends State<ListCatetoryPage> {
               itemBuilder: (context, ida, index) {
                 print(index);
                 return Container(
-                  child: Center(child: Text('hfllf $ida,$index')),
                   color: Colors.cyan,
+                  child: Center(child: Text('hfllf $ida,$index')),
                 );
               },
               itemCount: 10,
