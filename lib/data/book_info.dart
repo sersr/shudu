@@ -1,9 +1,10 @@
 import 'package:json_annotation/json_annotation.dart';
 
 part 'book_info.g.dart';
+
 @JsonSerializable()
 class BookVote {
-  BookVote({this.bookId, this.scroe, this.totalScore, this.voterCount});
+  const BookVote({this.bookId, this.scroe, this.totalScore, this.voterCount});
   @JsonKey(name: 'BookId')
   final int? bookId;
   @JsonKey(name: 'TotalScore')
@@ -16,9 +17,10 @@ class BookVote {
   factory BookVote.fromJson(Map<String, dynamic> json) => _$BookVoteFromJson(json);
   Map<String, dynamic> toJson() => _$BookVoteToJson(this);
 }
+
 @JsonSerializable()
 class SameUserBook {
-  SameUserBook({this.id, this.img, this.lastChapter, this.lastChapterId, this.name, this.score});
+  const SameUserBook({this.id, this.img, this.lastChapter, this.lastChapterId, this.name, this.score});
   @JsonKey(name: 'Id')
   final int? id;
   @JsonKey(name: 'Name')
@@ -35,9 +37,10 @@ class SameUserBook {
   factory SameUserBook.fromJson(Map<String, dynamic> json) => _$SameUserBookFromJson(json);
   Map<String, dynamic> toJson() => _$SameUserBookToJson(this);
 }
+
 @JsonSerializable()
 class SameCategoryBook {
-  SameCategoryBook({this.id, this.img, this.name, this.score});
+  const SameCategoryBook({this.id, this.img, this.name, this.score});
   @JsonKey(name: 'Id')
   final int? id;
   @JsonKey(name: 'Name')
@@ -53,7 +56,7 @@ class SameCategoryBook {
 
 @JsonSerializable(explicitToJson: true)
 class BookInfo {
-  BookInfo(
+  const BookInfo(
       {this.author,
       this.bookStatus,
       this.bookVote,
@@ -83,11 +86,11 @@ class BookInfo {
   final String? lastTime;
   @JsonKey(name: 'FirstChapterId')
   final int? firstChapterId;
-  @JsonKey(name:'LastChapter')
+  @JsonKey(name: 'LastChapter')
   final String? lastChapter;
-  @JsonKey(name:'LastChapterId')
+  @JsonKey(name: 'LastChapterId')
   final int? lastChapterId;
-  
+
   @JsonKey(name: 'Id')
   final int? id;
   @JsonKey(name: 'Name')
@@ -107,10 +110,10 @@ class BookInfo {
 
 @JsonSerializable(explicitToJson: true)
 class BookInfoRoot {
-BookInfoRoot({this.data,this.info,this.status});
-final int? status;
-final String? info;
-final BookInfo? data;
-factory BookInfoRoot.fromJson(Map<String, dynamic> json) => _$BookInfoRootFromJson(json);
-Map<String, dynamic> toJson() => _$BookInfoRootToJson(this);
+  const BookInfoRoot({this.data, this.info, this.status});
+  final int? status;
+  final String? info;
+  final BookInfo? data;
+  factory BookInfoRoot.fromJson(Map<String, dynamic> json) => _$BookInfoRootFromJson(json);
+  Map<String, dynamic> toJson() => _$BookInfoRootToJson(this);
 }

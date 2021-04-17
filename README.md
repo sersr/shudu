@@ -2,19 +2,42 @@
 
 ## 介绍
 
-    RenderObject 层面布局实践
+    小说阅读，注重文本阅读（其他功能没怎么实现）
+
+## 更新
+
+关键代码重构
+
+多任务实现
+
+    Future 特性（异步）。一个 Future 意味着一个任务，每个任务有对应 id，（可根据 id 查询 Future，在 UI 中显示加载状态），调用 then() 实现自动二级缓存（可实现自动下载，包括下载全部）  
+
+全屏优化
+
+    通过 plugin 从 Android 端直接获取 size 并自由控制 UI 刷新（ps：ui.window 无法稳定获得数据，并且更新不由己会导致显示错乱）；
+    通过控制 UI 约束条件（tight），阻止上层重新布局/渲染 子级（flutter 布局/渲染 优化）
+
+...
 
 release 版本
 
 <img src="demo.gif" width="40%" >
 
-## 构建
 
-    flutter --version  
-> Flutter 2.0.3 • channel stable • https://github.com/flutter/flutter.git  
-> Framework • revision 4d7946a68d (11 days ago) • 2021-03-18 17:24:33 -0700  
-> Engine • revision 3459eb2436  
-> Tools • Dart 2.12.2  
+
+## 构建
+    Flutter.sdk >= 2.0
+
+## 一些要点
+
+- 持久化: 数据库，Hive...
+- 插件: 使用插件与平台通信
+- dart 知识: 熟练使用 Future，合理设计代码
+- flutter: 布局与渲染优化
+- bloc: 只有一个事件处理完成之后，才会处理下一个事件，所以对于特殊情况是调用 异步函数，由函数异步发送事件，这样避免在事件中等待过长时间
+- 局限性: 文本布局是使用 `TextPainter` 实现的，也就是说无法在另一个 `Isolate` 调用 layout，不过这个问题暂时解决了(ps: 暂用 UI 资源时无法交互，很短暂几乎无法察觉，而且只要切换到空闲状态就会自动缓存，连续滑动页面到边界会自动切换到空闲状态)，在分割页面时也提前为每个页面进行文本布局了，也就是说在 `drawFrame` 时，跳过布局阶段，直接渲染，文本布局还是很消耗资源的
+
+
 
 ## 免责声明
 

@@ -1,48 +1,90 @@
 import 'package:flutter/material.dart';
 
-class BatteryView extends CustomPainter {
-  BatteryView({required this.progress, Color? color}) {
-    this.color = color ?? Colors.grey.shade800;
-  }
+class BatteryView extends LeafRenderObjectWidget {
+  BatteryView({required this.progress, Color? color}) : color = color ?? Colors.grey.shade800;
+
   final double progress;
-  final rrect = RRect.fromLTRBXY(0.0, 0.0, 24, 10, 4, 4.4);
-  final path = Path();
-  late Color color;
+  final Color color;
+
   @override
-  void paint(Canvas canvas, Size size) {
+  RenderObject createRenderObject(BuildContext context) {
+    return BatteryViewObject(progress: progress, color: color);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, covariant BatteryViewObject renderObject) {
+    renderObject
+      ..color = color
+      ..progress = progress;
+  }
+}
+
+class BatteryViewObject extends RenderBox {
+  BatteryViewObject({required double progress, required Color color})
+      : _progress = progress,
+        _color = color;
+  @override
+  void performLayout() {
+    size = constraints.constrain(const Size(30, 10));
+  }
+
+  double _progress;
+  double get progress => _progress;
+  set progress(double v) {
+    if (_progress == v) return;
+    _progress = v;
+    markNeedsPaint();
+  }
+
+  Color _color;
+  Color get color => _color;
+  set color(Color v) {
+    if (_color == v) return;
+    _color = v;
+    markNeedsPaint();
+  }
+
+  final rrect = const RRect.fromLTRBXY(0.0, 0.0, 24, 10, 4, 4.4);
+  final path = Path();
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final canvas = context.canvas;
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
     path
       ..reset()
       ..addRRect(rrect);
     canvas.drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..color = color
-          ..strokeWidth = 1.4);
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = color
+        ..strokeWidth = 1.4,
+    );
+
     path
       ..reset()
       ..moveTo(23.5, 3)
       ..lineTo(24.0, 3)
-      ..arcToPoint(Offset(24.0, 7), radius: Radius.circular(2))
-      ..lineTo(23.5, 7.0)
+      ..arcToPoint(Offset(24.0, 7), radius: const Radius.circular(2))
+      ..lineTo(23.5, 7)
       ..close();
     canvas.drawPath(path, Paint()..color = color);
-    final rect = Rect.fromLTWH(2.0, 2, 20 * progress, 6);
+
     RRect rrect2;
     if (progress == 1.0) {
+      final rect = const Rect.fromLTWH(2.0, 2, 20, 6);
       rrect2 = RRect.fromRectXY(rect, 2.5, 2.5);
     } else {
+      final rect = Rect.fromLTWH(2.0, 2, 19 * progress, 6);
       rrect2 = RRect.fromRectAndCorners(
         rect,
-        topLeft: Radius.circular(2.5),
-        bottomLeft: Radius.circular(2.5),
+        topLeft: const Radius.circular(2.5),
+        bottomLeft: const Radius.circular(2.5),
       );
     }
     canvas.drawRRect(rrect2, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+    canvas.restore();
+    // canvas.drawRect(offset & size, Paint()..color = color);
   }
 }

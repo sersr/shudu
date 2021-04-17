@@ -39,17 +39,17 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
     markNeedsLayout();
   }
 
-  @override
-  bool get sizedByParent => true;
+  // @override
+  // bool get sizedByParent => true;
 
-  @override
-  void performResize() {
-    size = constraints.biggest;
-  }
+  // @override
+  // void performResize() {
+  //   size = constraints.biggest;
+  // }
 
   @override
   void performLayout() {
-    // size = constraints.biggest;
+    size = constraints.biggest;
     if (contentMetrics!.isHorizontal) {
       final time = DateTime.now();
       bottomLeft.text =
@@ -57,7 +57,7 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
       bottomLeft.layout(maxWidth: size.width);
     }
     if (child != null) {
-      child!.layout(BoxConstraints.loose(Size(30, 10)));
+      child!.layout(constraints, parentUsesSize: true);
     }
   }
 
@@ -70,16 +70,15 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
   }
 
   void dpaint(PaintingContext context, Offset offset) {
-    // context.setIsComplexHint();
+    context.setIsComplexHint();
     final canvas = context.canvas;
     final isHorizontal = contentMetrics!.isHorizontal;
     final topPad = contentMetrics!.topPad;
     final bottomRight = contentMetrics!.botRightPainter;
     final right = contentMetrics!.right;
-    final botPad = contentMetrics!.botPad;
+    final botPad = PainterBloc.botPad;
     final e = contentMetrics!.extraHeightInLines;
     final fontSize = contentMetrics!.fontSize;
-    final extraPadding = 12.0;
     final topHeight = contentMetrics!.topHeight;
     final _teps = contentMetrics!.painters;
     final index = contentMetrics!.index;
@@ -87,8 +86,9 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
     final cnamePainter = contentMetrics!.cPainter;
     final cBigPainter = contentMetrics!.cBigPainter;
     final _size = contentMetrics!.size;
-
+    final whiteHeight = contentMetrics!.whiteLines;
     final windowTopPadding = isHorizontal ? contentMetrics!.windowTopPadding : 0;
+
     var h = 0.0;
     canvas.save();
     canvas.translate(offset.dx + left, offset.dy + windowTopPadding);
@@ -99,17 +99,17 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
     }
     if (index == 0) {
       if (!isHorizontal) {
-        h -= extraPadding;
+        h -= PainterBloc.ePadding;
       }
-      h += (fontSize + e) * (topHeight + 3);
+      h += (fontSize + e) * topHeight + whiteHeight;
       cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
       if (!isHorizontal) {
-        h += extraPadding;
+        h += PainterBloc.ePadding;
       }
     }
 
     if (isHorizontal) {
-      h += extraPadding;
+      h += PainterBloc.ePadding;
     }
     // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
     final xh = h;
@@ -131,9 +131,11 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
       var bleft = 0.0;
       final _offset = Offset(0.0, _size.height - bottomLeft.height - botPad);
       if (child != null) {
-        bleft = 30;
-        context.paintChild(child!, _offset);
+        bleft = child!.size.width;
+        context.paintChild(child!, _offset.translate(0.0, (bottomLeft.height - child!.size.height) / 5));
       }
+          // canvas.drawRect(_offset.translate(0.0, 0.0) & Size(bottomLeft.width, bottomLeft.height),
+      // Paint()..color = Colors.black.withAlpha(100));
       bottomLeft.paint(canvas, _offset.translate(bleft, 0.0));
     }
     canvas.restore();
@@ -142,3 +144,4 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
   // @override
   // bool hitTestSelf(ui.Offset position) => true;
 }
+ 

@@ -44,16 +44,17 @@ class BookInfoStateWithData extends BookInfoState {
 
 class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
   BookInfoBloc(this.repository) : super(BookInfoStateWithoutData());
-  final BookRepository repository;
+  final Repository repository;
   int lastId = -1;
   @override
   Stream<BookInfoState> mapEventToState(BookInfoEvent event) async* {
     if (event is BookInfoEventIdle) {
       yield BookInfoStateWithoutData();
     } else if (event is BookInfoEventSentWithId) {
+      lastId = event.id;
       yield BookInfoStateWithoutData();
-      await Future.delayed(Duration(milliseconds: 300));
       var data = await repository.loadInfo(event.id);
+      await Future.delayed(Duration(milliseconds: 300));
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
@@ -62,7 +63,6 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
         }
       }
       yield BookInfoStateWithData(data);
-      lastId = event.id;
     } else if (event is BookInfoReloadEvent) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));

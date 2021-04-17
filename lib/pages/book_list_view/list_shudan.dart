@@ -48,47 +48,37 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    // if (show) {
-    final theme = Theme.of(context);
-    return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 80,
-          title: Text('书单'),
-          centerTitle: true,
-          bottom: TabBar(
-            controller: controller,
-            unselectedLabelColor: Colors.black,
-            indicatorColor: Colors.pink.shade200,
-            tabs: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('最新发布'),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('本周最热'),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('最多收藏'),
-              ),
-            ],
-          ),
-        ),
-        body: DefaultTextStyle(
-          style: TextStyle(fontFamily: 'NotoSansSC', fontSize: 14, color: Color.fromRGBO(30, 30, 30, 1)),
-          child: Theme(
-            data: theme.copyWith(
-              textTheme: theme.textTheme.copyWith(
-                overline: TextStyle(fontSize: 13, color: Colors.grey[700], fontFamily: 'NotoSansSC'),
-              ),
-            ),
-            child: TabBarView(
+    return RepaintBoundary(
+      child: Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 80,
+            title: Text('书单'),
+            centerTitle: true,
+            bottom: TabBar(
               controller: controller,
-              children: [WrapWidget(index: 0), WrapWidget(index: 1), WrapWidget(index: 2)],
+              unselectedLabelColor: Colors.black,
+              indicatorColor: Colors.pink.shade200,
+              tabs: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('最新发布'),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('本周最热'),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('最多收藏'),
+                ),
+              ],
             ),
           ),
-        ));
+          body: TabBarView(
+            controller: controller,
+            children: [WrapWidget(index: 0), WrapWidget(index: 1), WrapWidget(index: 2)],
+          )),
+    );
   }
 }
 
@@ -179,7 +169,7 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
               ),
               child: () {
                 if (state.all[widget.index].isEmpty) {
-                  if (state.status == Status.failed) {
+                  if (state.status == Status.failed && widget.index == state.id) {
                     return Center(
                       child: btn1(
                         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -203,9 +193,9 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
               }());
           // return
         },
-        // buildWhen: (o, n) {
-        //   return widget.index == n.id;
-        // },
+        buildWhen: (o, n) {
+          return widget.index == n.id;
+        },
       ),
       // child: Container(),
     );
@@ -215,43 +205,38 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
     final width = 1 / MediaQuery.of(context).devicePixelRatio;
     return ListView.builder(
       itemExtent: 112,
-      // key: PageStorageKey<String>('shudan$index'),
       itemCount: list.length,
       itemBuilder: (context, index) {
         final bookList = list[index];
-        return RepaintBoundary(
-          child: Container(
-            decoration: BoxDecoration(
-              border: BorderDirectional(
-                bottom: BorderSide(width: width, color: Color.fromRGBO(210, 210, 210, 1)),
-              ),
+        return Container(
+          decoration: BoxDecoration(
+            border: BorderDirectional(
+              bottom: BorderSide(width: width, color: Color.fromRGBO(210, 210, 210, 1)),
             ),
-            child: btn1(
-              onTap: () {
-                final route = MaterialPageRoute(builder: (_) {
-                  return BlocProvider(
-                    create: (context) => ShudanListDetailBloc(context.read<BookRepository>()),
-                    child: Builder(builder: (context) {
-                      BlocProvider.of<ShudanListDetailBloc>(context).add(ShudanListDetailLoadEvent(bookList.listId));
-                      return ShudanDetailPage(total: bookList.bookCount);
-                    }),
-                  );
-                });
-                Navigator.of(context).push(route);
-              },
-              radius: 0,
-              bgColor: Colors.grey[100],
-              splashColor: Colors.grey[300],
-              padding: const EdgeInsets.all(0),
-              child: RepaintBoundary(
-                child: ShudanItem(
-                  desc: bookList.description,
-                  name: bookList.title,
-                  total: bookList.bookCount,
-                  img: bookList.cover,
-                  title: bookList.title,
-                ),
-              ),
+          ),
+          child: btn1(
+            onTap: () {
+              final route = MaterialPageRoute(builder: (_) {
+                return BlocProvider(
+                  create: (context) => ShudanListDetailBloc(context.read<Repository>()),
+                  child: Builder(builder: (context) {
+                    BlocProvider.of<ShudanListDetailBloc>(context).add(ShudanListDetailLoadEvent(bookList.listId));
+                    return ShudanDetailPage(total: bookList.bookCount);
+                  }),
+                );
+              });
+              Navigator.of(context).push(route);
+            },
+            radius: 0,
+            bgColor: Colors.grey[100],
+            splashColor: Colors.grey[300],
+            padding: const EdgeInsets.all(0),
+            child: ShudanItem(
+              desc: bookList.description,
+              name: bookList.title,
+              total: bookList.bookCount,
+              img: bookList.cover,
+              title: bookList.title,
             ),
           ),
         );
@@ -308,7 +293,7 @@ enum Status {
 
 class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
   ShudanBloc(this.repository) : super(ShudanState());
-  BookRepository repository;
+  Repository repository;
   final c = ['new', 'hot', 'collect'];
   var newList = <BookList>[];
   var hotList = <BookList>[];

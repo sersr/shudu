@@ -1,11 +1,12 @@
 import 'dart:async';
-
+import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import '../../bloc/bloc.dart';
 
 import '../../bloc/book_cache_bloc.dart';
 import '../../bloc/book_info_bloc.dart';
@@ -19,7 +20,7 @@ import '../book_list_view/list_main.dart';
 import 'book_item.dart';
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -28,6 +29,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int currentIndex = 0;
   late PainterBloc painterBloc;
+  late OptionsBloc opts;
+  late BookCacheBloc cache;
+  Future? _future;
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
   @override
   void initState() {
@@ -39,14 +43,42 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     painterBloc = context.read<PainterBloc>();
+    opts = context.read<OptionsBloc>();
+    final search = context.read<SearchBloc>();
+    cache = context.read<BookCacheBloc>();
+    if (_future == null) {
+      cache.repository..addInitCallback(opts.init)..addInitCallback(painterBloc.getPrefs)..addInitCallback(search.init);
+      _future ??= cache.repository.initState().then((_) {
+        painterBloc.sizeChange();
+        cache.add(BookChapterIdFirstLoadEvent());
+      });
+    }
+    // 创建实例（第一次使用才开始创建）
+    context.read<BookInfoBloc>();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print(state);
-    if (state == AppLifecycleState.detached) {
-      painterBloc.repository.dipose();
-    }
+    // if (state == AppLifecycleState.detached) {
+    //   painterBloc.repository.dipose();
+    // } else {
+    //   painterBloc.repository.initState();
+    // }
+  }
+
+  Timer? timer;
+  @override
+  void didChangeMetrics() {
+    // 桌面窗口大小改变
+    timer?.cancel();
+    timer = Timer(Duration(milliseconds: 100), () {
+      if (mounted) {
+        final w = ui.window;
+        assert(Log.i('systemGestureInsets${w.systemGestureInsets} viewPadding ${w.viewPadding} padding'
+            ' ${w.padding} viewInsets ${w.viewInsets} physicalGeometry ${w.physicalGeometry}'));
+        painterBloc.add(PainterMetricsChangeEvent());
+      }
+    });
   }
 
   @override
@@ -55,10 +87,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Timer? timer;
+  Timer? dialogtimer;
   @override
   Future<bool> didPopRoute() async {
-    final inTime = timer == null ? false : timer!.isActive;
+    final inTime = dialogtimer == null ? false : dialogtimer!.isActive;
     if (inTime) {
       // 退出 app
       return false;
@@ -88,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       );
     });
     Overlay.of(context)!.insert(entry);
-    timer = Timer(Duration(seconds: 2), () {
+    dialogtimer = Timer(Duration(seconds: 2), () {
       entry.remove();
     });
     return true;
@@ -96,12 +128,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final child = Column(children: [
-      AppBar(
-        backgroundColor: Colors.grey.shade100,
-        foregroundColor: Colors.grey.shade700,
-        title: Text('hello world'),
-        elevation: .0,
+    final child = Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.grey.shade200,
+        title: Text('shudu'),
+        elevation: 1 / ui.window.devicePixelRatio,
+        // shadowColor: Color(0xffffffff),
         centerTitle: true,
         actions: [
           Column(
@@ -133,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   final height = contraints.maxHeight;
                   return InkWell(
                     borderRadius: BorderRadius.circular(height / 2),
-                    onTap: () => showdlg(context),
+                    onTap: () => showbts(context),
                     child: Container(
                       height: height,
                       width: height,
@@ -146,19 +178,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ],
         ),
       ),
-      Expanded(
-        child: RepaintBoundary(
-          child: IndexedStack(
-            index: currentIndex,
-            children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), ListMainPage()],
-          ),
+      body: RepaintBoundary(
+        child: IndexedStack(
+          index: currentIndex,
+          children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), RepaintBoundary(child: ListMainPage())],
         ),
       ),
-      BottomNavigationBar(
-        elevation: 3.0,
+      bottomNavigationBar: BottomNavigationBar(
+        iconSize: 18.0,
+        selectedFontSize: 11.0,
+        unselectedFontSize: 11.0,
         items: [
           BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
-          BottomNavigationBarItem(label: '书城', icon: Icon(Icons.shop_rounded))
+          BottomNavigationBarItem(label: '书城', icon: Icon(Icons.local_grocery_store_rounded))
         ],
         onTap: (index) {
           if (index == currentIndex) {
@@ -171,25 +203,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         },
         currentIndex: currentIndex,
       ),
-    ]);
+    );
 
     /// 安全地初始化
-    return AnimatedBuilder(
-      animation: painterBloc.repository.init,
-      builder: (context, child) {
-        if (painterBloc.repository.init.value) {
-          painterBloc.add(PainterInitEvent());
-        }
+    return FutureBuilder<void>(
+      future: _future,
+      builder: (context, snap) {
         return AbsorbPointer(
-          absorbing: !painterBloc.repository.init.value,
-          child: Material(child: child),
+          absorbing: snap.connectionState != ConnectionState.done,
+          child: child,
         );
       },
-      child: RepaintBoundary(child: child),
     );
   }
 
-  void showdlg(BuildContext context) {
+  void showbts(BuildContext context) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -198,160 +226,241 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             color: Colors.grey[200]!.withAlpha(240),
             borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Container(
-            height: 300,
+          padding: const EdgeInsets.only(left: 12.0, right: 4.0, bottom: 4.0),
+          child: RepaintBoundary(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: const EdgeInsets.only(top: 8.0),
                     child: Text('选择平台样式'),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'Android',
-                          style: TextStyle(color: Colors.grey.shade100),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'Android',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.cyan.shade600,
+                        splashColor: Colors.cyan.shade200,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(platform: TargetPlatform.android)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.cyan.shade600,
-                      splashColor: Colors.cyan.shade200,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.android));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    ),
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'IOS',
-                          style: TextStyle(color: Colors.grey.shade100),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'IOS',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
-                      ),
-                      radius: 5,
-                      bgColor: Colors.cyan.shade600,
-                      splashColor: Colors.cyan.shade200,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(platform: TargetPlatform.iOS));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    )
-                  ],
+                        radius: 5,
+                        bgColor: Colors.cyan.shade600,
+                        splashColor: Colors.cyan.shade200,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(platform: TargetPlatform.iOS)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
+                      )
+                    ],
+                  ),
                 ),
+                Divider(height: 1),
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: const EdgeInsets.only(top: 8.0),
                     child: Text('页面过度动画'),
                   ),
                 ),
-                Wrap(
-                  spacing: 12.0,
-                  runSpacing: 8.0,
-                  children: [
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'FadeUpwards',
-                          style: TextStyle(color: Colors.grey.shade100),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Wrap(
+                    spacing: 12.0,
+                    runSpacing: 8.0,
+                    children: [
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'FadeUpwards',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.fadeUpwards)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.lightBlue.shade700,
-                      splashColor: Colors.lightBlue.shade400,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.fadeUpwards));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    ),
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'OpenUpwards',
-                          style: TextStyle(color: Colors.grey.shade100),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'OpenUpwards',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.openUpwards)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.lightBlue.shade700,
-                      splashColor: Colors.lightBlue.shade400,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.openUpwards));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    ),
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'Cupertino',
-                          style: TextStyle(color: Colors.grey.shade100),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'Cupertino',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.cupertino)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.lightBlue.shade700,
-                      splashColor: Colors.lightBlue.shade400,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.cupertino));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    ),
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'FadeThrough',
-                          style: TextStyle(color: Colors.grey.shade100),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'FadeThrough',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.fadeThrough)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.lightBlue.shade700,
-                      splashColor: Colors.lightBlue.shade400,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.fadeThrough));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    ),
-                    btn1(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text(
-                          'Zoom',
-                          style: TextStyle(color: Colors.grey.shade100),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            'Zoom',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
                         ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.zoom)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                ),
+                Divider(height: 1),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text('指针采样'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      BlocBuilder<OptionsBloc, OptionsState>(
+                        buildWhen: (o, n) {
+                          // 初始化之后必定不会是 null
+                          assert(o.options.resampleOffset != null);
+                          if (o.options.resampleOffset! != n.options.resampleOffset) {
+                            return true;
+                          }
+                          return false;
+                        },
+                        builder: (context, state) {
+                          final opt = Provider.of<OptionsBloc>(context);
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(child: Text('采样时间差:')),
+                              IconButton(
+                                  icon: Icon(Icons.remove),
+                                  onPressed: () {
+                                    if (opt.state.options.resampleOffset != null) {
+                                      final offset = opt.state.options.resampleOffset! - 1;
+                                      opt.add(OptionsEvent(ConfigOptions(resampleOffset: offset)));
+                                    }
+                                  }),
+                              Center(
+                                child: Text('${opt.state.options.resampleOffset}'),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.add),
+                                onPressed: () {
+                                  if (opt.state.options.resampleOffset != null) {
+                                    final offset = opt.state.options.resampleOffset! + 1;
+                                    opt.add(OptionsEvent(ConfigOptions(resampleOffset: offset)));
+                                  }
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                      radius: 5,
-                      bgColor: Colors.lightBlue.shade700,
-                      splashColor: Colors.lightBlue.shade400,
-                      onTap: () {
-                        context.read<OptionsBloc>().add(OptionsEvent(pageBuilder: PageBuilder.zoom));
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          Navigator.of(context).pop();
-                        });
-                      },
-                    )
-                  ],
+                      Center(child: Text('现在状态:')),
+                      btn1(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text(
+                            '${opts.state.options.resample == null ? '开启' : opts.state.options.resample! ? '开启' : '关闭'}',
+                            style: TextStyle(color: Colors.grey.shade100),
+                          ),
+                        ),
+                        radius: 5,
+                        bgColor: Colors.lightBlue.shade700,
+                        splashColor: Colors.lightBlue.shade400,
+                        onTap: () {
+                          opts.add(OptionsEvent(ConfigOptions(
+                              resample: opts.state.options.resample == null ? false : !opts.state.options.resample!)));
+                          Future.delayed(Duration(milliseconds: 200), () {
+                            Navigator.of(context).pop();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -371,7 +480,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         horizontal: 12.0,
         vertical: 8.0,
       ),
-      height: 300,
+      height: 260,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,25 +489,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                context.read<BookInfoBloc>().add(BookInfoEventSentWithId(item.id!));
-                Navigator.of(context).pushReplacementNamed(BookInfoPage.currentRoute);
+                Navigator.of(context).pop();
+                BookInfoPage.push(context, item.id!);
               }),
           btn2(
               icon: Icons.touch_app_sharp,
               text: item.isTop == 1 ? '取消置顶' : '书籍置顶',
               onTap: () {
-                context.read<BookCacheBloc>()
-                  ..add(BookChapterIdIsTopEvent(id: item.id!, isTop: item.isTop == 1 ? 0 : 1))
-                  ..add(BookChapterIdLoadEvent());
+                cache.updateTop(item.id!, item.isTop == 1 ? 0 : 1);
                 Navigator.of(context).pop();
               }),
           btn2(
               icon: Icons.delete_forever_outlined,
               text: '删除书籍',
               onTap: () {
-                context.read<BookCacheBloc>()
-                  ..add(BookChapterIdDeleteEvent(id: item.id!))
-                  ..add(BookChapterIdLoadEvent());
+                cache.deleteBook(item.id!);
                 Navigator.of(context).pop();
               }),
         ],
@@ -413,10 +518,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       key: _refreshKey,
       displacement: 20.0,
       onRefresh: () {
-        final bloc = context.read<BookCacheBloc>()
+        final bloc = cache
           ..completerLoading()
           ..loading = Completer()
-          ..add(BookChapterIdLoadEvent(load: true));
+          ..load(update: true);
         return bloc.loading!.future;
       },
       child: NotificationListener(
@@ -426,66 +531,55 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           }
           return false;
         },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return BlocBuilder<BookCacheBloc, BookChapterIdState>(
-              builder: (context, state) {
-                final children = state.sortChildren;
-                if (state.first) {
-                  return SizedBox();
-                }
-                if (children.isEmpty) {
-                  return Center(child: Text('点击右上角搜索按钮搜索'));
-                }
-                return ListView.builder(
-                  itemCount: children.length,
-                  padding: const EdgeInsets.all(0.0),
-                  itemBuilder: (context, index) {
-                    final item = children[index];
-                    return Container(
-                      decoration: index != children.length - 1
-                          ? BoxDecoration(
-                              border: BorderDirectional(
-                                bottom: BorderSide(
-                                    width: 1 / MediaQuery.of(context).devicePixelRatio,
-                                    color: Color.fromRGBO(210, 210, 210, 1)),
-                              ),
-                            )
-                          : null,
-                      child: btn1(
-                        background: false,
-                        child: BookItem(
-                          img: item.img,
-                          bookName: item.name,
-                          bookUdateItem: item.lastChapter,
-                          bookUpdateTime: item.updateTime,
-                          isTop: item.isTop == 1,
-                          isNew: item.isNew == 1,
-                        ),
-                        radius: 6.0,
-                        bgColor: bgColor,
-                        splashColor: spalColor,
-                        padding: const EdgeInsets.all(0),
-                        onTap: () {
-                          context.read<BookCacheBloc>().completerLoading();
-                          painterBloc
-                            ..canLoad = Completer<void>()
-                            ..ignore.value = true
-                            ..add(PainterNewBookIdEvent(item.id!, item.chapterId!, item.page!));
-
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                            return BookContentPage();
-                          }));
-                        },
-                        onLongPress: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) => bottomSheet(context, item),
-                          );
-                        },
-                      ),
-                    );
-                  },
+        child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
+          builder: (context, state) {
+            final children = state.sortChildren;
+            if (state.first) {
+              return SizedBox();
+            }
+            if (children.isEmpty) {
+              return Center(child: Text('点击右上角搜索按钮搜索'));
+            }
+            return ListView.builder(
+              itemCount: children.length,
+              padding: const EdgeInsets.all(0.0),
+              itemBuilder: (context, index) {
+                final item = children[index];
+                return Container(
+                  decoration: index != children.length - 1
+                      ? BoxDecoration(
+                          border: BorderDirectional(
+                            bottom: BorderSide(
+                                width: 1 / MediaQuery.of(context).devicePixelRatio,
+                                color: Color.fromRGBO(210, 210, 210, 1)),
+                          ),
+                        )
+                      : null,
+                  child: btn1(
+                    background: false,
+                    child: BookItem(
+                      img: item.img,
+                      bookName: item.name,
+                      bookUdateItem: item.lastChapter,
+                      bookUpdateTime: item.updateTime,
+                      isTop: item.isTop == 1,
+                      isNew: item.isNew == 1,
+                    ),
+                    radius: 6.0,
+                    bgColor: bgColor,
+                    splashColor: spalColor,
+                    padding: const EdgeInsets.all(0),
+                    onTap: () {
+                      cache.completerLoading();
+                      BookContentPage.push(context, item.id!, item.chapterId!, item.page!);
+                    },
+                    onLongPress: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (context) => bottomSheet(context, item),
+                      );
+                    },
+                  ),
                 );
               },
             );
@@ -539,24 +633,28 @@ class MySearchPage extends SearchDelegate<void> {
           padding: const EdgeInsets.all(6.0),
           child: Wrap(
             children: [
-              for (var i in bloc.searchHistory)
+              for (var i in bloc.searchHistory.reversed)
                 Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Material(
                     borderRadius: BorderRadius.circular(3.0),
                     color: Colors.grey.shade300,
                     child: InkWell(
+                      onLongPress: () {
+                        bloc.delete(i);
+                        setstate(() {});
+                      },
                       onTap: () {
                         query = i;
                         showResults(context);
-                        // setstate(() {
-                        //   bloc.searchHistory.remove(i);
-                        // });
                       },
                       borderRadius: BorderRadius.circular(3.0),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.0),
-                        child: Text(i),
+                        child: Text(
+                          i,
+                          style: Provider.of<TextStylesBloc>(context).small1.copyWith(color: Colors.grey.shade700),
+                        ),
                       ),
                     ),
                   ),
@@ -578,6 +676,7 @@ class MySearchPage extends SearchDelegate<void> {
           bottom: 16.0,
           child: Material(
             color: Colors.grey[200],
+            elevation: 4.0,
             borderRadius: BorderRadius.circular(50.0),
             child: InkWell(
               borderRadius: BorderRadius.circular(50.0),
@@ -602,8 +701,9 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final searchProvier = context.rd<SearchBloc>();
-    searchProvier.add(SearchEventWithKey(key: query));
+    final bloc = BlocProvider.of<SearchBloc>(context);
+
+    bloc.add(SearchEventWithKey(key: query));
 
     return wrap(context, BlocBuilder<SearchBloc, SearchResult>(
       builder: (context, state) {
@@ -617,14 +717,10 @@ class MySearchPage extends SearchDelegate<void> {
             child: ListView(
               children: [
                 suggestions(context),
-                if (searchProvier.searchHistory.isNotEmpty) Divider(height: 1),
+                if (bloc.searchHistory.isNotEmpty) Divider(height: 1),
                 for (var value in state.searchList.data!)
                   GestureDetector(
-                    onTap: () {
-                      final bookInfoBloc = context.read<BookInfoBloc>();
-                      bookInfoBloc.add(BookInfoEventSentWithId(int.parse(value.id!)));
-                      Navigator.of(context).pushNamed(BookInfoPage.currentRoute);
-                    },
+                    onTap: () => BookInfoPage.push(context, int.parse(value.id!)),
                     child: Container(
                       height: 40,
                       alignment: Alignment.centerLeft,
@@ -656,11 +752,4 @@ class MySearchPage extends SearchDelegate<void> {
           )),
         )
       ];
-}
-
-/// no throws
-extension ContextRead on BuildContext {
-  T rd<T>() {
-    return Provider.of<T>(this, listen: false);
-  }
 }

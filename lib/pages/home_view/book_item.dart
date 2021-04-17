@@ -24,12 +24,12 @@ class BookItem extends StatelessWidget {
   final String? img;
   final bool isNew;
   final bool isTop;
-  static final ltsty = TextStyle(fontSize: 11, color: Colors.grey[600]);
-  static final mdsty = TextStyle(fontSize: 13, fontWeight: FontWeight.w400);
-  static final lgsty = TextStyle(
-    // fontSize: 14,
-    fontWeight: FontWeight.w600,
-  );
+  // static final ltsty = TextStyle(fontSize: 11, color: Colors.grey[600]);
+  // static final mdsty = TextStyle(fontSize: 13, fontWeight: FontWeight.w400);
+  // static final lgsty = TextStyle(
+  //   // fontSize: 14,
+  //   fontWeight: FontWeight.w600,
+  // );
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class BookItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       bookName!,
-                      style: ts.state.title2,
+                      style: ts.title3,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -75,7 +75,7 @@ class BookItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       '最新：$bookUdateItem',
-                      style: ts.state.body1,
+                      style: ts.body2,
                       softWrap: false,
                       overflow: TextOverflow.fade,
                     ),
@@ -84,7 +84,7 @@ class BookItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       bookUpdateTime!,
-                      style: ltsty,
+                      style: ts.body3,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),

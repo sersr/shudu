@@ -55,7 +55,7 @@ class DrivenAcitvity extends Activity {
     required TickerProvider vsync,
     required double from,
     required double to,
-    Duration? duration,
+    Duration? duration = const Duration(milliseconds: 300),
     required Curve curve,
   }) : super(delegate) {
     _controller = AnimationController.unbounded(vsync: vsync, value: from)
@@ -63,9 +63,9 @@ class DrivenAcitvity extends Activity {
       ..animateTo(to, duration: duration, curve: curve).whenComplete(end);
   }
 
-  AnimationController? _controller;
+  late AnimationController _controller;
   void _tick() {
-    delegate.setPixels(_controller!.value);
+    delegate.setPixels(_controller.value);
   }
 
   void end() {
@@ -74,11 +74,11 @@ class DrivenAcitvity extends Activity {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _controller.dispose();
   }
 
   @override
-  double get velocity => _controller!.velocity;
+  double get velocity => _controller.velocity;
 }
 
 class BallisticActivity extends Activity {
@@ -119,6 +119,7 @@ class BallisticActivity extends Activity {
       final p = (_controller.value - _end).abs();
       if (p < 1 / ui.window.devicePixelRatio) {
         delegate.setPixels(_end);
+        // 先渲染当前帧
         SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => done());
         return;
       }

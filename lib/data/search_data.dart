@@ -4,7 +4,7 @@ part 'search_data.g.dart';
 
 @JsonSerializable()
 class SearchData {
-  SearchData(
+  const SearchData(
       {this.author,
       this.bookStatus,
       this.cName,
@@ -42,7 +42,7 @@ class SearchData {
 
 @JsonSerializable(explicitToJson: true)
 class SearchList {
-  SearchList({this.data, this.info, this.status});
+  const SearchList({this.data, this.info, this.status});
   final List<SearchData>? data;
   final int? status;
   final String? info;

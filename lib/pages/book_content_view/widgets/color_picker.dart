@@ -304,11 +304,16 @@ class _SelectColorState extends State<SelectColor> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onPanDown: down,
-      onPanStart: start,
-      onPanUpdate: update,
-      onPanEnd: end,
-      onPanCancel: widget.onChangeCancel,
+      onHorizontalDragDown: down,
+      onHorizontalDragStart: start,
+      onHorizontalDragUpdate: update,
+      onHorizontalDragEnd: end,
+      onHorizontalDragCancel: widget.onChangeCancel,
+      onVerticalDragDown: down,
+      onVerticalDragStart: start,
+      onVerticalDragUpdate: update,
+      onVerticalDragEnd: end,
+      onVerticalDragCancel: widget.onChangeCancel,
       child: Poin(
         poinOffset: poinOffset,
         child: RepaintBoundary(

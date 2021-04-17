@@ -1,10 +1,9 @@
 import 'package:json_annotation/json_annotation.dart';
-
 part 'book_content.g.dart';
 
 @JsonSerializable()
 class BookContent {
-  BookContent({this.cid, this.cname, this.content, this.hasContent, this.id, this.name, this.nid, this.pid});
+  const BookContent({this.cid, this.cname, this.content, this.hasContent, this.id, this.name, this.nid, this.pid});
   final int? cid;
   final String? cname;
   final String? content;
@@ -19,11 +18,25 @@ class BookContent {
   String toString() {
     return toJson().toString();
   }
+
+  BookContent copyWith(
+      {int? cid, String? cname, String? content, hasContent, int? id, String? name, int? nid, int? pid}) {
+    return BookContent(
+      cid: cid ?? this.cid,
+      cname: cname ?? this.cname,
+      content: content ?? this.content,
+      hasContent: hasContent ?? this.hasContent,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      nid: nid ?? this.nid,
+      pid: pid ?? this.pid,
+    );
+  }
 }
 
 @JsonSerializable(explicitToJson: true)
 class BookContentRoot {
-  BookContentRoot({this.data, this.info, this.status});
+  const BookContentRoot({this.data, this.info, this.status});
   final BookContent? data;
   final String? info;
   final int? status;

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'bloc.dart';
 
 import '../data/search_data.dart';
@@ -23,6 +24,8 @@ abstract class SearchEvent extends Equatable {
 class SearchEventEnterPageWithoutKey extends SearchEvent {
   SearchEventEnterPageWithoutKey() : super();
 }
+
+class _SearchEventSave extends SearchEvent {}
 
 class SearchEventWithKey extends SearchEvent {
   SearchEventWithKey({required this.key}) : super();
@@ -60,24 +63,54 @@ class SearchResultWithData extends SearchResult {
 
 class SearchBloc extends Bloc<SearchEvent, SearchResult> {
   SearchBloc(this.repository) : super(SearchWithoutData());
-  final BookRepository repository;
-  final searchHistory = <String>[];
+  final Repository repository;
+  late List<String> searchHistory;
+  late Box box;
   @override
   Stream<SearchResult> mapEventToState(SearchEvent event) async* {
     if (event is SearchEventEnterPageWithoutKey) {
       yield SearchWithoutData();
     } else if (event is SearchEventWithKey) {
-      yield SearchWithoutData();
-      if (!searchHistory.contains(event.key) && event.key.isNotEmpty) {
-        searchHistory.add(event.key);
+      var shouldUpdate = false;
+      if (event.key.isNotEmpty) {
+        if (searchHistory.isEmpty || searchHistory.last != event.key) {
+          yield SearchWithoutData();
+          shouldUpdate = true;
+          searchHistory
+            ..remove(event.key)
+            ..add(event.key);
+          await save();
+        }
       }
-      SearchList list;
-      if (searchHistory.last == event.key && state is SearchResultWithData) {
-        list = (state as SearchResultWithData).searchList;
-      } else {
-        list = await repository.searchWithKey(event.key);
+      if (shouldUpdate) {
+        var list = await repository.searchWithKey(event.key);
+        if (list.data != null) {
+          yield SearchResultWithData(searchList: list);
+        }
       }
-      yield SearchResultWithData(searchList: list);
+    } else if (event is _SearchEventSave) {
+      await save();
     }
+  }
+
+  Future<void> init() async {
+    box = await Hive.openBox('searchHistory');
+    final List<String> _searchHistory = box.get('suggestions', defaultValue: const <String>[]);
+    if (_searchHistory.length > 20) {
+      searchHistory = _searchHistory.sublist(_searchHistory.length - 20, _searchHistory.length);
+    } else {
+      searchHistory = List<String>.of(_searchHistory);
+    }
+  }
+Future<void> save() async {
+    if (searchHistory.length > 20) {
+      searchHistory = searchHistory.sublist(searchHistory.length - 16, searchHistory.length);
+    }
+    await box.put('suggestions', searchHistory);
+  }
+
+  void delete(String key) {
+    searchHistory.remove(key);
+    add(_SearchEventSave());
   }
 }

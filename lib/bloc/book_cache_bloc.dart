@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'book_repository.dart';
 
@@ -78,35 +77,7 @@ abstract class BookChapterIdEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// class BookChapterSaveEvent extends BookChapterIdEvent {}
-
-class BookChapterIdAddEvent extends BookChapterIdEvent {
-  BookChapterIdAddEvent({required this.bookCache});
-  final BookCache bookCache;
-
-  @override
-  List<Object?> get props => [bookCache];
-}
-
-class BookChapterIdDeleteEvent extends BookChapterIdEvent {
-  BookChapterIdDeleteEvent({required this.id});
-  final int id;
-}
-
-class BookChapterIdLoadEvent extends BookChapterIdEvent {
-  BookChapterIdLoadEvent({this.load = false});
-  final bool load;
-  @override
-  List<Object> get props => [load];
-}
-
-class BookChapterIdIsTopEvent extends BookChapterIdEvent {
-  BookChapterIdIsTopEvent({required this.isTop, required this.id});
-  final int isTop;
-  final int id;
-  @override
-  List<Object?> get props => [isTop, id];
-}
+class _BookCacheInnerEvent extends BookChapterIdEvent {}
 
 class BookChapterIdFirstLoadEvent extends BookChapterIdEvent {}
 
@@ -116,33 +87,33 @@ class BookChapterIdState {
   final bool first;
   factory BookChapterIdState.fromMap(List<Map> list) {
     var _bookCaches = <BookCache>[];
-    for (var bookCache in list) {
-      _bookCaches.add(BookCache.fromMap(bookCache as Map<String, dynamic>));
+    var _sortChildren = <BookCache>[];
+
+    if (list.isNotEmpty) {
+      for (var bookCache in list) {
+        _bookCaches.add(BookCache.fromMap(bookCache as Map<String, dynamic>));
+      }
+      _bookCaches.sort((p, n) => n.sortKey! - p.sortKey!);
+      final isTop = _bookCaches.where((element) => element.isTop == 1);
+      final custom = _bookCaches.where((element) => element.isTop != 1);
+      _sortChildren = isTop.toList()..addAll(custom);
     }
-    _bookCaches.sort((p, n) => n.sortKey! - p.sortKey!);
-    final isTop = _bookCaches.where((element) => element.isTop == 1);
-    final custom = _bookCaches.where((element) => element.isTop != 1);
-    return BookChapterIdState(sortChildren: isTop.toList()..addAll(custom));
+    return BookChapterIdState(sortChildren: _sortChildren);
   }
 }
 
 class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   BookCacheBloc(this.repository) : super(BookChapterIdState(first: true));
-  BookRepository repository;
+  Repository repository;
 
+  // 不在 [mapEventToState] 中处理异步，不然事件无法即时处理
   @override
   Stream<BookChapterIdState> mapEventToState(BookChapterIdEvent event) async* {
     if (event is BookChapterIdFirstLoadEvent) {
-      await repository.initState();
-      yield* loadForView(/* load: true */);
-    } else if (event is BookChapterIdLoadEvent) {
-      yield* loadForView(load: event.load);
-    } else if (event is BookChapterIdAddEvent) {
-      yield* addBook(event);
-    } else if (event is BookChapterIdDeleteEvent) {
-      await deleteBook(event);
-    } else if (event is BookChapterIdIsTopEvent) {
-      repository.innerdb.updateBookIsTop(event.id, event.isTop);
+      // update(); // 正式版
+      load();
+    } else if (event is _BookCacheInnerEvent) {
+      yield* _load();
     }
   }
 
@@ -154,23 +125,47 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     }
   }
 
-  Stream<BookChapterIdState> loadForView({bool load = false}) async* {
-    // await save();
-    var list = <Map<String, dynamic>>[];
-    list = await repository.innerdb.db.rawQuery('SELECT * FROM BookInfo');
-    if (list.isNotEmpty) {
-      final s = BookChapterIdState.fromMap(list);
-      yield s;
-      if (load) {
-        for (var item in s.sortChildren) {
-          await Future.delayed(Duration(milliseconds: 200));
-          await loadFromNet(item.id!);
-        }
-        list = await repository.innerdb.db.rawQuery('SELECT * FROM BookInfo');
-      }
-    }
+  Stream<BookChapterIdState> _load() async* {
+    final list = await repository.innerdb.loadBookInfo();
     yield BookChapterIdState.fromMap(list);
     completerLoading();
+  }
+
+  // 不在事件队列中
+  Future<void> _update() async {
+    final list = await repository.innerdb.loadBookInfo();
+    if (list.isNotEmpty) {
+      final s = BookChapterIdState.fromMap(list);
+      for (var item in s.sortChildren) {
+        await Future.delayed(Duration(milliseconds: 200));
+        await loadFromNet(item.id!);
+      }
+    }
+  }
+
+  void emitUpdate() => add(_BookCacheInnerEvent());
+
+  Future<void> load({bool update = false}) async {
+    loading = Completer<void>();
+    if (update) {
+      await _update();
+    }
+    emitUpdate();
+  }
+
+  Future<void> addBook(BookCache bookCache) async {
+    await repository.innerdb.addBook(bookCache);
+    emitUpdate();
+  }
+
+  Future<void> updateTop(int id, int isTop) async {
+    await repository.innerdb.updateBookIsTop(id, isTop);
+    emitUpdate();
+  }
+
+  Future<void> deleteBook(int id) async {
+    await repository.innerdb.deleteBook(id);
+    emitUpdate();
   }
 
   Future<void> loadFromNet(int id) async {
@@ -180,38 +175,8 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
       final newCname = data.lastChapter;
       final lastTime = data.lastTime;
       if (newCname != null && lastTime != null) {
-        await repository.innerdb.updateCname(id, newCname, lastTime);
+        return repository.innerdb.updateCname(id, newCname, lastTime);
       }
     }
-  }
-
-  Stream<BookChapterIdState> addBook(BookChapterIdAddEvent event) async* {
-    int? count = 0;
-    final bookcache = event.bookCache;
-    count = Sqflite.firstIntValue(
-        await repository.innerdb.db.rawQuery('SELECT COUNT(*) FROM BookInfo where bookid = ?', [bookcache.id]));
-    if (count == 0) {
-      await repository.innerdb.db.rawInsert(
-        'INSERT INTO BookInfo(name, bookId, chapterId, img, updateTime, lastChapter, sortKey, isTop,cPage,isNew)'
-        ' VALUES(?,?,?,?,?,?,?,?,?,?)',
-        [
-          bookcache.name,
-          bookcache.id,
-          bookcache.chapterId,
-          bookcache.img,
-          bookcache.updateTime,
-          bookcache.lastChapter,
-          bookcache.sortKey,
-          bookcache.isTop,
-          bookcache.page,
-          bookcache.isNew,
-        ],
-      );
-    }
-    yield* loadForView();
-  }
-
-  Future<void> deleteBook(BookChapterIdDeleteEvent event) async {
-    await repository.innerdb.db.rawDelete('DELETE FROM BookInfo WHERE bookId = ?', [event.id]);
   }
 }

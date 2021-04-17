@@ -10,6 +10,7 @@ class ListBangdanPage extends StatefulWidget {
 
 class _ListBangdanPageState extends State<ListBangdanPage> {
   final colorv = ValueNotifier(HSVColor.fromColor(Colors.black));
+  final change = ValueNotifier(false);
   @override
   Widget build(BuildContext context) {
     var r = math.sqrt(math.pow(30, 2) + math.pow(40, 2)) / 50;
@@ -32,6 +33,30 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
         ),
         body: TabBarView(
           children: [
+            // ListView.builder(itemBuilder: (context, index) {
+            //   if (index == 5) {
+            //     return InkWell(
+            //       onTap: () {
+            //         change.value = !change.value;
+            //       },
+            //       child: RepaintBoundary(
+            //         child: AnimatedBuilder(
+            //             animation: change,
+            //             builder: (context, child) {
+            //               return Container(
+            //                 height: change.value ? 50 : 100,
+            //                 color: Colors.grey,
+            //                 // child: Text('value :${change.value ? 'slslsl' : 'hello'}'),
+            //               );
+            //             }),
+            //       ),
+            //     );
+            //   }
+            //   return Container(
+            //     color: Colors.blue,
+            //     height: 50,
+            //   );
+            // }),
             wrap(
               child: Container(
                 color: Colors.lightGreen,
@@ -58,10 +83,8 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
 }
 
 Widget wrap({required Widget child, int? div}) {
-  var listnotf = <ValueNotifier<bool>>[];
-  for (var i = 0; i < 6; i++) {
-    listnotf.add(ValueNotifier(i == 0));
-  }
+  var listnotf = ValueNotifier(0);
+
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisAlignment: MainAxisAlignment.start,
@@ -83,27 +106,18 @@ Widget wrap({required Widget child, int? div}) {
   );
 }
 
-Widget animationBuilder(String text, List<ValueNotifier<bool>> notifier, int index, int? div) {
+Widget animationBuilder(String text, ValueNotifier<int> notifier, int index, int? div) {
   return GestureDetector(
     onTap: () {
-      notifier.forEach((element) {
-        if (element == notifier[index]) {
-          if (!element.value) {
-            element.value = true;
-          }
-        } else {
-          element.value = false;
-        }
-      });
+      notifier.value = index;
     },
-    child: Container(
-      color: Colors.white.withAlpha(0),
+    child: RepaintBoundary(
       child: AnimatedBuilder(
-          animation: notifier[index],
+          animation: notifier,
           builder: (context, child) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
-              color: notifier[index].value ? Colors.grey[300] : null,
+              color: notifier.value == index ? Colors.grey[300] : Colors.transparent,
               child: Text(text),
             );
           }),

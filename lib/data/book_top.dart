@@ -4,7 +4,7 @@ part 'book_top.g.dart';
 
 @JsonSerializable()
 class BookTopList {
-  BookTopList({this.author, this.desc, this.id, this.img, this.name, this.score, this.cname});
+  const BookTopList({this.author, this.desc, this.id, this.img, this.name, this.score, this.cname});
   @JsonKey(name: 'Id')
   final int? id;
   @JsonKey(name: 'Name')
@@ -26,7 +26,7 @@ class BookTopList {
 
 @JsonSerializable(explicitToJson: true)
 class BookTopData {
-  BookTopData({this.bookList, this.hasNext, this.page});
+  const BookTopData({this.bookList, this.hasNext, this.page});
   @JsonKey(name: 'BookList')
   final List<BookTopList>? bookList;
   @JsonKey(name: 'Page')
@@ -40,7 +40,7 @@ class BookTopData {
 
 @JsonSerializable(explicitToJson: true)
 class BookTopWrap {
-  BookTopWrap({this.data, this.info, this.status});
+  const BookTopWrap({this.data, this.info, this.status});
   final int? status;
   final String? info;
   final BookTopData? data;

@@ -4,7 +4,7 @@ part 'book_index.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class BookIndex {
-  BookIndex({this.id, this.list, this.name});
+  const BookIndex({this.id, this.list, this.name});
   final int? id;
   final List<BookIndexDiv>? list;
   final String? name;
@@ -14,7 +14,7 @@ class BookIndex {
 
 @JsonSerializable(explicitToJson: true)
 class BookIndexDiv {
-  BookIndexDiv({this.list, this.name});
+  const BookIndexDiv({this.list, this.name});
   final List<BookIndexChapter>? list;
   final String? name;
   factory BookIndexDiv.fromJson(Map<String, dynamic> json) => _$BookIndexDivFromJson(json);
@@ -23,7 +23,7 @@ class BookIndexDiv {
 
 @JsonSerializable()
 class BookIndexChapter {
-  BookIndexChapter({this.hasContent, this.id, this.name});
+  const BookIndexChapter({this.hasContent, this.id, this.name});
   final int? hasContent;
   final int? id;
   final String? name;
@@ -33,7 +33,7 @@ class BookIndexChapter {
 
 @JsonSerializable(explicitToJson: true)
 class BookIndexRoot {
-  BookIndexRoot({this.data, this.id, this.info, this.status});
+  const BookIndexRoot({this.data, this.id, this.info, this.status});
   final int? id;
   final int? status;
   final String? info;

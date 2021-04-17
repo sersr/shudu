@@ -1,12 +1,12 @@
-import 'package:flutter/foundation.dart';
-
+// import 'package:flutter/foundation.dart';
+part of autils;
 abstract class Log {
   static const int info = 0;
   static const int warnning = 1;
   static const int error = 2;
   static const int level = 0;
   static final List<String> _logMessage = ['Info', 'Warnning', 'Error'];
-  static bool Function(Object?) enablePrint = (_) => false;
+  static bool Function(Object?) enablePrint = (_) => true;
   static bool i(String info, {Object? stage, Object? name, Object? data}) {
     return log(Log.info, info, stage: stage, name: name, data: data);
   }

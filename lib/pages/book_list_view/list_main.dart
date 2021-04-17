@@ -23,8 +23,8 @@ class ListMainPage extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) {
                     return BlocProvider(
-                      create: (context) => ShudanBloc(context.read<BookRepository>()),
-                      child: ListShudanPage(),
+                      create: (context) => ShudanBloc(context.read<Repository>()),
+                      child: RepaintBoundary(child: ListShudanPage()),
                     );
                   }));
                 }),
@@ -40,7 +40,7 @@ class ListMainPage extends StatelessWidget {
                 // bgColor: Color.fromRGBO(222, 222, 222, 1),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                    return ListCatetoryPage();
+                    return RepaintBoundary(child: ListCatetoryPage());
                   }));
                 }),
           ),
@@ -52,7 +52,7 @@ class ListMainPage extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                    return ListBangdanPage();
+                    return RepaintBoundary(child: ListBangdanPage());
                   }));
                 }),
           ),

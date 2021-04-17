@@ -14,7 +14,8 @@
         {
             "name": "debug",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "lib/main.dart"
         },
         {
             "name": "profile",

@@ -4,7 +4,7 @@ part 'book_list_detail.g.dart';
 
 @JsonSerializable()
 class BookListDetail {
-  BookListDetail(
+  const BookListDetail(
       {this.author,
       this.bookIamge,
       this.bookId,
@@ -37,7 +37,7 @@ class BookListDetail {
 
 @JsonSerializable(explicitToJson: true)
 class BookListDetailData {
-  BookListDetailData(
+  const BookListDetailData(
       {this.addTime,
       this.bookList,
       this.cover,
@@ -78,7 +78,7 @@ class BookListDetailData {
 
 @JsonSerializable(explicitToJson: true)
 class BookListDetailRoot {
-  BookListDetailRoot({this.data, this.info, this.status});
+  const BookListDetailRoot({this.data, this.info, this.status});
   final BookListDetailData? data;
   final int? status;
   final String? info;

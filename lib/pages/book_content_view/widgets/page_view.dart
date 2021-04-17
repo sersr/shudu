@@ -50,23 +50,23 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   @override
   void didUpdateWidget(covariant ContentPageView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    resetState();
+    updateAxis();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<PainterBloc>()..controller = offsetPosition;
-    resetState();
+    updateAxis();
   }
 
-  void resetState() {
+  void updateAxis() {
     if (bloc.config.axis != null) {
       offsetPosition.axis = bloc.config.axis!;
     }
   }
 
-  bool isBoundary(HasContent key, int index) {
+  bool isBoundary(ContentBounds key, int index) {
     return bloc.hasContent(key, index);
   }
 
@@ -74,15 +74,14 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     if (!isScrolling) {
       bloc
         ..completercanCompute()
-        ..dump();
+        ..dump()
+        ..unDelayedLoad();
     } else {
-      if (bloc.canCompute == null || bloc.canCompute!.isCompleted) {
-        bloc.canCompute = Completer<void>();
-      }
+      bloc.setcanCompute();
     }
   }
 
-  bool canDrag() => bloc.computeCount == 0;
+  bool canDrag() => bloc.computeCount <= 0;
 
   Widget? getChild(int index, {bool changeState = false}) {
     return bloc.getWidget(index, changeState: changeState);
@@ -100,14 +99,36 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
       final head = AnimatedBuilder(
         animation: bloc.header,
         builder: (context, _) {
-          return Text('${bloc.header.value}', style: bloc.secstyle);
+          return Text('${bloc.header.value}', style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0);
         },
       );
       final footleft = AnimatedBuilder(
         animation: bloc.footer,
         builder: (context, _) {
           final time = DateTime.now();
-          return Text('${time.hour.timePadLeft}:${time.minute.timePadLeft}', style: bloc.secstyle);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FutureBuilder<int>(
+                future: bloc.repository.getBatteryLevel(),
+                builder: (context, snaps) {
+                  if (snaps.hasData) {
+                    return BatteryView(
+                      progress: (snaps.data! / 100).clamp(0.0, 1.0),
+                      color: bloc.config.fontColor!,
+                    );
+                  }
+                  return BatteryView(
+                    progress: (bloc.repository.level / 100).clamp(0.0, 1.0),
+                    color: bloc.config.fontColor!,
+                  );
+                },
+              ),
+              Text('${time.hour.timePadLeft}:${time.minute.timePadLeft}',
+                  style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0),
+            ],
+          );
         },
       );
       final footright = AnimatedBuilder(
@@ -117,51 +138,18 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
             '${bloc.footer.value}',
             style: bloc.secstyle,
             textAlign: TextAlign.right,
+            maxLines: 1,
+            textScaleFactor: 1.0,
           );
         },
       );
       return SlideWidget(
         otherHieght: bloc.otherHeight,
         esize: bloc.size,
-        epadding: bloc.padding,
+        paddingRect: bloc.paddingRect,
         header: RepaintBoundary(child: head),
         body: RepaintBoundary(child: child),
-        leftFooter: RepaintBoundary(
-            child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 12,
-                  width: 30,
-                  child: FutureBuilder<int>(
-                    future: bloc.repository.getBatteryLevel(),
-                    builder: (context, snaps) {
-                      if (snaps.hasData) {
-                        return CustomPaint(
-                          painter: BatteryView(
-                            progress: (snaps.data! / 100).clamp(0.0, 1.0),
-                            color: Color(bloc.config.fontColor!),
-                          ),
-                        );
-                      }
-                      return CustomPaint(
-                        painter: BatteryView(
-                          progress: (bloc.repository.level / 100).clamp(0.0, 1.0),
-                          color: Color(bloc.config.fontColor!),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                footleft,
-              ],
-            ),
-          ],
-        )),
+        leftFooter: RepaintBoundary(child: footleft),
         rightFooter: RepaintBoundary(child: footright),
       );
     }
@@ -207,7 +195,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                         widget.show.value = !widget.show.value;
                       },
                       child: Container(
-                        color: Colors.cyan.withAlpha(0),
+                        color: Colors.transparent,
                         child: Center(
                           child: btn1(
                               bgColor: Colors.blue,
@@ -226,7 +214,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                     widget.show.value = !widget.show.value;
                   },
                   child: Container(
-                    color: Colors.cyan.withAlpha(0),
+                    color: Colors.transparent,
                   ),
                 );
         });
@@ -366,7 +354,7 @@ class _NopPageViewState extends State<NopPageView> {
 class SlideWidget extends RenderObjectWidget {
   SlideWidget(
       {required this.esize,
-      required this.epadding,
+      required this.paddingRect,
       required this.header,
       required this.body,
       required this.leftFooter,
@@ -377,7 +365,7 @@ class SlideWidget extends RenderObjectWidget {
   final Widget leftFooter;
   final Widget rightFooter;
   final Size esize;
-  final EdgeInsets epadding;
+  final EdgeInsets paddingRect;
   final double otherHieght;
   @override
   SlideElement createElement() {
@@ -386,13 +374,13 @@ class SlideWidget extends RenderObjectWidget {
 
   @override
   SliderRenderObject createRenderObject(BuildContext context) {
-    return SliderRenderObject(esize, epadding, otherHieght);
+    return SliderRenderObject(esize, paddingRect, otherHieght);
   }
 
   @override
   void updateRenderObject(BuildContext context, covariant SliderRenderObject renderObject) {
     renderObject
-      ..epadding = epadding
+      ..paddingRect = paddingRect
       ..otherHeight = otherHieght
       ..esize = esize;
   }
@@ -465,7 +453,7 @@ class SliderRenderObject extends RenderBox {
   SliderRenderObject(Size esize, EdgeInsets epadding, double otherHeight)
       : _esize = esize,
         _otherHeight = otherHeight,
-        _epadding = epadding;
+        _paddingRect = epadding;
   RenderBox? _header;
   RenderBox? _body;
   RenderBox? _leftFooter;
@@ -522,11 +510,11 @@ class SliderRenderObject extends RenderBox {
     markNeedsLayout();
   }
 
-  EdgeInsets? _epadding;
-  EdgeInsets? get epadding => _epadding;
-  set epadding(EdgeInsets? v) {
-    if (_epadding == v) return;
-    _epadding = v;
+  EdgeInsets? _paddingRect;
+  EdgeInsets? get paddingRect => _paddingRect;
+  set paddingRect(EdgeInsets? v) {
+    if (_paddingRect == v) return;
+    _paddingRect = v;
     markNeedsLayout();
   }
 
@@ -541,46 +529,70 @@ class SliderRenderObject extends RenderBox {
   @override
   void performLayout() {
     size = constraints.biggest;
-    final _height = esize!.height - 4.0 - epadding!.bottom;
+    final _constraints = BoxConstraints.loose(esize!);
 
-    final _constraints = BoxConstraints.tight(esize!);
     if (_header != null) {
+      final _height = paddingRect!.top + PainterBloc.topPad;
       _header!.layout(_constraints);
       final parendata = _header!.parentData as BoxParentData;
-      parendata.offset = Offset(16.0, epadding!.top + 8.0);
+      parendata.offset = Offset(paddingRect!.left, _height);
     }
+
+    final _bottomHeight = esize!.height - paddingRect!.bottom - PainterBloc.botPad;
+    var height = PainterBloc.pageNumSize;
+
     if (_leftFooter != null) {
-      _leftFooter!.layout(_constraints);
+      _leftFooter!.layout(_constraints, parentUsesSize: true);
+      height = _leftFooter!.size.height;
       final parendata = _leftFooter!.parentData as BoxParentData;
-      parendata.offset = Offset(16.0, _height - 12.0);
+      parendata.offset = Offset(paddingRect!.left, _bottomHeight);
     }
+
     if (_rightFooter != null) {
-      _rightFooter!.layout(_constraints);
+      _rightFooter!.layout(BoxConstraints.tight(Size(esize!.width, height)));
       final parendata = _rightFooter!.parentData as BoxParentData;
-      parendata.offset = Offset(-16.0, _height - 12.0);
+      parendata.offset = Offset(-paddingRect!.right, _bottomHeight);
     }
+
     if (_body != null) {
       final _constraints =
-          BoxConstraints.tight(Size(esize!.width, esize!.height - 62 - epadding!.top - epadding!.bottom));
+          BoxConstraints.tight(Size(esize!.width, esize!.height - otherHeight! - paddingRect!.vertical));
       _body!.layout(_constraints);
+
       final parendata = _body!.parentData as BoxParentData;
-      parendata.offset = Offset(.0, 33 + epadding!.top);
+      parendata.offset = Offset(.0, PainterBloc.ePadding + paddingRect!.top + PainterBloc.topPad);
     }
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_header != null) {
-      context.paintChild(_header!, childOffset(_header!));
+      context.paintChild(
+        _header!,
+        childOffset(_header!) + offset,
+      );
     }
+
     if (_body != null) {
-      context.paintChild(_body!, childOffset(_body!));
+      var _headerHeight = 0.0;
+      if (_header != null) {
+        _headerHeight = _header!.size.height;
+      }
+      context.paintChild(_body!, childOffset(_body!).translate(offset.dx, offset.dy + _headerHeight));
     }
+
     if (_leftFooter != null) {
-      context.paintChild(_leftFooter!, childOffset(_leftFooter!));
+      context.paintChild(
+        _leftFooter!,
+        childOffset(_leftFooter!).translate(offset.dx, offset.dy - _leftFooter!.size.height),
+      );
     }
+
     if (_rightFooter != null) {
-      context.paintChild(_rightFooter!, childOffset(_rightFooter!));
+      context.paintChild(
+        _rightFooter!,
+        childOffset(_rightFooter!).translate(offset.dx, offset.dy - _rightFooter!.size.height),
+      );
     }
   }
 

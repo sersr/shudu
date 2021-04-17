@@ -1,8 +1,8 @@
 import 'dart:async';
-
+import 'dart:math' as math;
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../utils/utils.dart';
 import 'book_repository.dart';
@@ -60,9 +60,9 @@ class BookIndexWidthData extends BookIndexState {
 }
 
 class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
-  BookIndexBloc({this.repository}) : super(BookIndexIdleState());
+  BookIndexBloc({required this.repository}) : super(BookIndexIdleState());
 
-  BookRepository? repository;
+  late Repository repository;
 
   List<List> indexs = [];
   int? id;
@@ -78,12 +78,6 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   @override
   Stream<BookIndexState> mapEventToState(BookIndexEvent event) async* {
     if (event is BookIndexShowEvent) {
-      assert(() {
-        if (event.cid == null || event.id == null) {
-          print('BookIndexEvent: event == null');
-        }
-        return true;
-      }());
       yield* sendIndexs(bookid: event.id ?? 0, contentid: event.cid ?? 0);
     } else if (event is BookIndexReloadEvent) {
       yield* sendIndexs(bookid: id ?? 0, contentid: cid ?? 0);
@@ -91,30 +85,21 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   }
 
   Future<void> cacheinnerdb(int? id, String indexs) async {
-    int? count = 0;
-
-    count = Sqflite.firstIntValue(
-        await repository!.innerdb.db.rawQuery('SELECT COUNT(*) FROM BookIndex WHERE bookId = ?', [id]));
-    if (count! > 0) {
-      await repository!.innerdb.db.rawUpdate('UPDATE BookIndex set bIndexs = ? WHERE bookId = ?', [indexs, id]);
-      assert(Log.log(count > 1 ? Log.error : Log.info, 'count: $count,id: $id cache bIndexs.',
-          stage: this, name: 'cacheinnerdb'));
-    } else {
-      await repository!.innerdb.db.rawInsert(
-        'INSERT INTO BookIndex (bookId,bIndexs)'
-        ' VALUES(?,?)',
-        [id, indexs],
-      );
-    }
+    return repository.innerdb.cacheinnerdb(id, indexs);
   }
 
   Stream<BookIndexState> sendIndexs({required int bookid, required int contentid}) async* {
+    if (id == bookid &&
+        cid == contentid &&
+        (bookUpDateTime[bookid] ?? 0) + updateInterval > DateTime.now().millisecondsSinceEpoch) {
+      return;
+    }
     final _id = id;
     var index = 0;
     var volIndex = 0;
     var inIndexs = false;
     var cacheList = <int>[];
-    var queryList = await repository!.innerdb.db.rawQuery('SELECT cid FROM BookContent WHERE bookId =?', [bookid]);
+    var queryList = await repository.innerdb.sendIndexs(bookid);
     for (var l in queryList) {
       cacheList.add(l['cid'] as int);
     }
@@ -136,13 +121,9 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
       }
     } else {
       yield BookIndexIdleState();
-      indexs.clear();
-      id = bookid;
-      cid = contentid;
-      var bookList = [];
-      bookList = await repository!.innerdb.db.rawQuery('SELECT * FROM BookIndex WHERE bookId = ?', [bookid]);
-      if (bookList.isNotEmpty) {
-        final restr = bookList.first['bIndexs'] as String?;
+      indexs = <List>[];
+      if (queryList.isNotEmpty) {
+        final restr = queryList.first['bIndexs'] as String?;
         if (restr != null && restr.isNotEmpty) {
           final bookIndexShort = await loadFromList(restr);
           if (bookIndexShort.isNotEmpty) {
@@ -168,15 +149,17 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
         }
       }
     }
-
+    id = bookid;
+    cid = contentid;
     if (indexs.isEmpty || // immediate
         !inIndexs || // immediate
         (bookUpDateTime[bookid] ?? 0) + updateInterval <= DateTime.now().millisecondsSinceEpoch) {
-      final rawData = await repository!.getIndexsFromNet(bookid);
+      final rawData = await repository.getIndexsFromNet(bookid);
       if (rawData.isEmpty) {
         if (indexs.isEmpty) {
           yield BookIndexErrorState();
         } else if (!inIndexs) {
+          calculate(indexs, index, volIndex);
           yield BookIndexWidthData(
               id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
         }
@@ -195,7 +178,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             indexs.last.last.cid != bookIndexShort.last.last.cid) {
           final newCname = bookIndexShort.last.last.cname;
 
-          await repository!.innerdb.updateCname(bookid, newCname, DateTime.now().toStringFormat);
+          await repository.innerdb.updateCname(bookid, newCname, DateTime.now().toStringFormat);
           indexs = bookIndexShort;
           index = 0;
           volIndex = 0;
@@ -209,15 +192,49 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             }
           }
           assert(Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
+          calculate(indexs, index, volIndex);
           yield BookIndexWidthData(
               id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
           await cacheinnerdb(id, rawData);
         }
       }
+    } else {
+      calculate(indexs, index, volIndex);
     }
   }
 
   Future<List<List>> loadFromList(String restr) async {
-    return await repository!.loadIndexsList(restr);
+    return await repository.loadIndexsList(restr);
   }
+
+  ValueNotifier<int> slide = ValueNotifier(0);
+  var sldvalue = SliderValue(index: 0, max: 200);
+
+  void calculate(List<List> indexs, int index, int volIndex) {
+    var max = 200;
+    for (var i = 0; i < indexs.length; i++) {
+      if (i < volIndex) {
+        index += indexs[i].length - 1;
+      } else {
+        break;
+      }
+    }
+    max = 0;
+    indexs.forEach((element) {
+      max += element.length - 1;
+    });
+
+    max--;
+    max = math.max(index, max);
+
+    slide.value = index;
+
+    sldvalue = SliderValue(index: index, max: max);
+  }
+}
+
+class SliderValue {
+  SliderValue({required this.max, required this.index});
+  final int max;
+  final int index;
 }

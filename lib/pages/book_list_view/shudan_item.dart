@@ -37,7 +37,7 @@ class ShudanItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       title!,
-                      style: ts.state.title2,
+                      style: ts.title3,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -46,7 +46,7 @@ class ShudanItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       desc!,
-                      style: ts.state.body1!.copyWith(color: Color.fromRGBO(100, 100, 100, 1)),
+                      style: ts.body2,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -55,7 +55,7 @@ class ShudanItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3.0),
                     child: Text(
                       '总共$total本书',
-                      style: ts.state.body3,
+                      style: ts.body3,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),
