@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../compatible/repository.dart';
 
 import '../data/book_info.dart';
-import 'book_repository.dart';
 
 abstract class BookInfoEvent extends Equatable {
   BookInfoEvent();
@@ -10,8 +10,6 @@ abstract class BookInfoEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
-
-class BookInfoEventIdle extends BookInfoEvent {}
 
 class BookInfoReloadEvent extends BookInfoEvent {}
 
@@ -48,30 +46,29 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
   int lastId = -1;
   @override
   Stream<BookInfoState> mapEventToState(BookInfoEvent event) async* {
-    if (event is BookInfoEventIdle) {
-      yield BookInfoStateWithoutData();
-    } else if (event is BookInfoEventSentWithId) {
+    if (event is BookInfoEventSentWithId) {
       lastId = event.id;
       yield BookInfoStateWithoutData();
-      var data = await repository.loadInfo(event.id);
+      var data = await repository.bookEvent.loadInfo(event.id);
+      print('data: $data');
       await Future.delayed(Duration(milliseconds: 300));
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.innerdb.updateCname(event.id, newCname, lastTime);
+          await repository.bookEvent.updateCname(event.id, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);
     } else if (event is BookInfoReloadEvent) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));
-      var data = await repository.loadInfo(lastId);
+      var data = await repository.bookEvent.loadInfo(lastId);
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.innerdb.updateCname(lastId, newCname, lastTime);
+          await repository.bookEvent.updateCname(lastId, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);

@@ -46,11 +46,16 @@ class BatteryViewObject extends RenderBox {
 
   final rrect = const RRect.fromLTRBXY(0.0, 0.0, 24, 10, 4, 4.4);
   final path = Path();
+
+  static const _radius = 2.5;
+
   @override
   void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
+
     canvas.save();
     canvas.translate(offset.dx, offset.dy);
+
     path
       ..reset()
       ..addRRect(rrect);
@@ -72,18 +77,25 @@ class BatteryViewObject extends RenderBox {
     canvas.drawPath(path, Paint()..color = color);
 
     RRect rrect2;
+
+    var _color = color;
+
+    if (progress < 0.11) _color = Colors.red.shade600;
+
     if (progress == 1.0) {
       final rect = const Rect.fromLTWH(2.0, 2, 20, 6);
-      rrect2 = RRect.fromRectXY(rect, 2.5, 2.5);
+      rrect2 = RRect.fromRectXY(rect, _radius, _radius);
     } else {
       final rect = Rect.fromLTWH(2.0, 2, 19 * progress, 6);
+
       rrect2 = RRect.fromRectAndCorners(
         rect,
-        topLeft: const Radius.circular(2.5),
-        bottomLeft: const Radius.circular(2.5),
+        topLeft: const Radius.circular(_radius),
+        bottomLeft: const Radius.circular(_radius),
       );
     }
-    canvas.drawRRect(rrect2, Paint()..color = color);
+    
+    canvas.drawRRect(rrect2, Paint()..color = _color);
     canvas.restore();
     // canvas.drawRect(offset & size, Paint()..color = color);
   }

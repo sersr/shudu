@@ -24,7 +24,7 @@ class ShudanItem extends StatelessWidget {
             width: 72,
             height: height ?? 112,
             padding: EdgeInsets.symmetric(vertical: .0),
-            child: RepaintBoundary(child: ImageResolve(img: img, width: 72)),
+            child: RepaintBoundary(child: ImageResolve(img: img)),
           ),
           Expanded(
             child: Padding(

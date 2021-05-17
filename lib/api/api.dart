@@ -4,12 +4,10 @@ class Api {
   ///API------------------------------------------------
 
   // pigqq, pysmei
-  static var domains = Queue.of(const ['pigqq', 'pysmei']);
+  static final domains = Queue.of(const ['pigqq', 'pysmei']);
 
   // 由于 api 解析几乎（都）相同，
-  static void moveNext() {
-    domains.addLast(domains.removeFirst());
-  }
+  static void moveNext() => domains.addLast(domains.removeFirst());
 
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
@@ -43,6 +41,21 @@ class Api {
     return 'https://souxs.${domains.first}.com/search.aspx?key=$key&page=1&siteid=app2';
   }
 
-  ///API------------------------------------------------
+  /// -- 未实现
+  // 榜单
+  static String topUrl(String catg, String date, int index) {
+    return 'https://scxs.${domains.first}.com/top/man/top/$catg/$date/$index.html';
+  }
+
+  // 分类
+  static String bookCategory() {
+    return 'https://scxs.${domains.first}.com/Categories/BookCategory.html';
+  }
+
+  static String categUrl(int categ, String type, int index) {
+    return 'https://scxs.${domains.first}.com/Categories/$categ/$type/$index.html';
+  }
+
+  ///API------------------------------------------------ end
 
 }

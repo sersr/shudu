@@ -69,7 +69,9 @@ class DrivenAcitvity extends Activity {
   }
 
   void end() {
-    delegate.goIdle();
+    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+      delegate.goIdle();
+    });
   }
 
   @override
@@ -104,13 +106,13 @@ class BallisticActivity extends Activity {
       if (swipeDown!) {
         if (_controller.value >= _end) {
           delegate.setPixels(_controller.value);
-        SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => done());
+          done();
           return;
         }
       } else {
         if (_controller.value <= _end) {
           delegate.setPixels(_controller.value);
-        SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => done());
+          done();
           return;
         }
       }
@@ -120,7 +122,7 @@ class BallisticActivity extends Activity {
       if (p < 1 / ui.window.devicePixelRatio) {
         delegate.setPixels(_end);
         // 先渲染当前帧
-        SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => done());
+        done();
         return;
       }
       delegate.setPixels(_controller.value);
@@ -131,7 +133,7 @@ class BallisticActivity extends Activity {
   double get velocity => _controller.velocity;
 
   void done() {
-    delegate.goIdle();
+    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => delegate.goIdle());
   }
 
   @override

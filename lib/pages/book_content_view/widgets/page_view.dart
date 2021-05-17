@@ -1,40 +1,35 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../bloc/bloc.dart';
 
-import '../../../bloc/painter_bloc.dart';
+import '../../../bloc/bloc.dart';
 import '../../../utils/utils.dart';
-import '../painter_page.dart';
 import 'battery_view.dart';
+import 'content_view.dart';
 import 'page_view_controller.dart';
+import 'pan_slide.dart';
 import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({
     Key? key,
-    required this.show,
-    required this.willPop,
     required this.showCname,
-    required this.showSettings,
   }) : super(key: key);
 
-  final ValueNotifier<bool> show;
-  final Future<bool> Function() willPop;
-  final ValueNotifier<SettingView> showSettings;
   final ValueNotifier<bool> showCname;
 
   @override
-  _ContentPageViewState createState() => _ContentPageViewState();
+  ContentPageViewState createState() => ContentPageViewState();
 }
 
-class _ContentPageViewState extends State<ContentPageView> with TickerProviderStateMixin {
+class ContentPageViewState extends State<ContentPageView> with TickerProviderStateMixin {
   late NopPageViewController offsetPosition;
-  late PainterBloc bloc;
+  late ContentNotifier bloc;
+  late BookIndexBloc indexBloc;
+  PanSlideController? controller;
+  late PanSlideState state;
 
   @override
   void initState() {
@@ -42,10 +37,72 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
     offsetPosition = NopPageViewController(
       vsync: this,
       scrollingNotify: scrollingNotify,
-      getDragState: canDrag,
+      // getDragState: canDrag,
       hasContent: isBoundary,
     );
+    state = context.findAncestorStateOfType<PanSlideState>()!;
   }
+
+  PanSlideController getController() {
+    if (controller != null && !controller!.close) return controller!;
+    controller = PanSlideController.showPan(
+      context,
+      onhide: onhideEnd,
+      onshow: onshowEnd,
+      onanimating: onanimating,
+      builder: (contxt, _controller) {
+        return RepaintBoundary(
+          child: PannelSlide(
+            useDefault: false,
+            controller: _controller,
+            botChild: (context, animation) {
+              final op = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
+              final curve = CurvedAnimation(parent: animation, curve: Curves.ease, reverseCurve: Curves.ease.flipped);
+              final position = curve.drive(op);
+              return RepaintBoundary(
+                child: SlideTransition(
+                  position: position,
+                  child: FadeTransition(
+                    opacity: curve.drive(Tween<double>(begin: 0, end: 0.9)),
+                    child: Pannel(
+                      controller: offsetPosition,
+                      showCname: widget.showCname,
+                    ),
+                  ),
+                ),
+              );
+            },
+            topChild: (context, animation) {
+              final op = Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
+              final curve = CurvedAnimation(parent: animation, curve: Curves.ease, reverseCurve: Curves.ease.flipped);
+              final position = curve.drive(op);
+              return RepaintBoundary(
+                child: SlideTransition(
+                  position: position,
+                  child: FadeTransition(
+                    opacity: curve.drive(Tween<double>(begin: 0, end: 0.9)),
+                    child: TopPannel(showCname: widget.showCname),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+    return controller!;
+  }
+
+  void onshowEnd() {
+    if (bloc.config.value.portrait! && bloc.inBook) uiOverlay(hide: false);
+    indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+  }
+
+  void onhideEnd() {
+    if (bloc.config.value.portrait! && bloc.inBook) uiOverlay();
+  }
+
+  void onanimating() {}
 
   @override
   void didUpdateWidget(covariant ContentPageView oldWidget) {
@@ -56,101 +113,116 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.read<PainterBloc>()..controller = offsetPosition;
+    bloc = context.read<ContentNotifier>()..controller = offsetPosition;
+    indexBloc = context.read<BookIndexBloc>();
     updateAxis();
   }
 
   void updateAxis() {
-    if (bloc.config.axis != null) {
-      offsetPosition.axis = bloc.config.axis!;
+    if (bloc.config.value.axis != null) {
+      offsetPosition.axis = bloc.config.value.axis!;
     }
   }
 
-  bool isBoundary(ContentBounds key, int index) {
-    return bloc.hasContent(key, index);
+  int isBoundary(int index) {
+    return bloc.hasContent(index);
   }
+
+  bool laststate = false;
 
   void scrollingNotify(bool isScrolling) {
-    if (!isScrolling) {
-      bloc
-        ..completercanCompute()
-        ..dump()
-        ..unDelayedLoad();
-    } else {
-      bloc.setcanCompute();
+    // if (!isScrolling) {
+    //   bloc
+    //     ..unDelayedLoad()
+    //     ..completercanCompute();
+    // } else {
+    //   bloc.setcanCompute();
+    // }
+    // EventLooper.instance.stop = isScrolling;
+    if (isScrolling) {
+      if (bloc.isActive.value) {
+        laststate = true;
+        bloc.stopAuto();
+      }
+    } else if (laststate) {
+      laststate = false;
+      bloc.auto();
     }
+    // bloc.resetAuto();
   }
 
-  bool canDrag() => bloc.computeCount <= 0;
+  // bool canDrag() => bloc.computeCount <= 0;
 
   Widget? getChild(int index, {bool changeState = false}) {
-    return bloc.getWidget(index, changeState: changeState);
-    // return child;
+    final mes = bloc.getContentMes(index, changeState: changeState);
+    if (mes == null) return null;
+    final child = ContentView(
+      contentMetrics: mes,
+      battery: FutureBuilder<int>(
+        future: bloc.repository.getBatteryLevel(),
+        builder: (context, snaps) {
+          return BatteryView(
+            progress: ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100).clamp(0.0, 1.0),
+            color: bloc.config.value.fontColor!,
+          );
+        },
+      ),
+    );
+
+    return child;
   }
 
   Widget wrapChild() {
-    final child = NopPageView(
-      offsetPosition: offsetPosition,
-      builder: getChild,
-    );
+    final child = NopPageView(offsetPosition: offsetPosition, builder: getChild);
+
     if (offsetPosition.axis == Axis.horizontal) {
       return child;
     } else {
       final head = AnimatedBuilder(
         animation: bloc.header,
-        builder: (context, _) {
+        builder: (__, _) {
           return Text('${bloc.header.value}', style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0);
         },
       );
-      final footleft = AnimatedBuilder(
+
+      final footer = AnimatedBuilder(
         animation: bloc.footer,
-        builder: (context, _) {
+        builder: (__, _) {
           final time = DateTime.now();
+
           return Row(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FutureBuilder<int>(
                 future: bloc.repository.getBatteryLevel(),
-                builder: (context, snaps) {
-                  if (snaps.hasData) {
-                    return BatteryView(
-                      progress: (snaps.data! / 100).clamp(0.0, 1.0),
-                      color: bloc.config.fontColor!,
-                    );
-                  }
+                builder: (_, snaps) {
                   return BatteryView(
-                    progress: (bloc.repository.level / 100).clamp(0.0, 1.0),
-                    color: bloc.config.fontColor!,
+                    progress: ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100).clamp(0.0, 1.0),
+                    color: bloc.config.value.fontColor!,
                   );
                 },
               ),
               Text('${time.hour.timePadLeft}:${time.minute.timePadLeft}',
                   style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0),
+              Expanded(child: SizedBox()),
+              Text(
+                '${bloc.footer.value}',
+                style: bloc.secstyle,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                textScaleFactor: 1.0,
+              ),
             ],
           );
         },
       );
-      final footright = AnimatedBuilder(
-        animation: bloc.footer,
-        builder: (context, _) {
-          return Text(
-            '${bloc.footer.value}',
-            style: bloc.secstyle,
-            textAlign: TextAlign.right,
-            maxLines: 1,
-            textScaleFactor: 1.0,
-          );
-        },
-      );
-      return SlideWidget(
-        otherHieght: bloc.otherHeight,
-        esize: bloc.size,
+
+      return _SlideWidget(
         paddingRect: bloc.paddingRect,
         header: RepaintBoundary(child: head),
         body: RepaintBoundary(child: child),
-        leftFooter: RepaintBoundary(child: footleft),
-        rightFooter: RepaintBoundary(child: footright),
+        footer: RepaintBoundary(child: footer),
       );
     }
   }
@@ -176,10 +248,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                           final x = l.dx - halfW;
                           final y = l.dy - halfH;
                           if (x.abs() < sixW && y.abs() < sixH) {
-                            widget.show.value = !widget.show.value;
-                            if (!widget.show.value) {
-                              widget.showCname.value = false;
-                            }
+                            getController().trigger(immediate: false);
                           } else {
                             offsetPosition.nextPage();
                           }
@@ -189,10 +258,7 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                     )
                   : GestureDetector(
                       onTap: () {
-                        if (widget.show.value) {
-                          widget.showCname.value = false;
-                        }
-                        widget.show.value = !widget.show.value;
+                        getController().trigger(immediate: false);
                       },
                       child: Container(
                         color: Colors.transparent,
@@ -203,38 +269,23 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
                               radius: 40,
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               child: Text('重新加载'),
-                              onTap: () => bloc.add(PainterLoadEvent())),
+                              onTap: () => bloc.reload()),
                         ),
                       ))
               : GestureDetector(
                   onTap: () {
-                    if (widget.show.value) {
-                      widget.showCname.value = false;
-                    }
-                    widget.show.value = !widget.show.value;
+                    getController().trigger(immediate: false);
                   },
-                  child: Container(
-                    color: Colors.transparent,
-                  ),
+                  child: Container(color: Colors.transparent),
                 );
         });
 
-    return Stack(
-      children: [
-        child,
-        Pannel(
-          showPannel: widget.show,
-          willPop: widget.willPop,
-          controller: offsetPosition,
-          showCname: widget.showCname,
-          showSettings: widget.showSettings,
-        )
-      ],
-    );
+    return child;
   }
 
   @override
   void dispose() {
+    controller?.dispose();
     offsetPosition.dispose();
     bloc.controller = null;
     super.dispose();
@@ -242,10 +293,10 @@ class _ContentPageViewState extends State<ContentPageView> with TickerProviderSt
 }
 
 /// [NopPageView]
-/// 无端
-/// 可以任意值为起始点，支持负增长；
-/// 提供端点判定；
-/// 无缓存，状态由用户管理
+///
+/// 以 0 为起始点，端点由程序控制
+/// 提供状态更改体制
+/// 当 index 改变时，会发出通知
 class NopPageView extends StatefulWidget {
   const NopPageView({
     Key? key,
@@ -291,6 +342,10 @@ class _NopPageViewState extends State<NopPageView> {
               ..onEnd = onEnd
               ..onCancel = onCancel
               ..dragStartBehavior = dragStartBehavior;
+            // ..minFlingDistance = kTouchSlop
+            // ..minFlingVelocity = kMinFlingVelocity
+            // ..maxFlingVelocity = kMaxFlingVelocity
+            // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
         )
       };
@@ -306,6 +361,10 @@ class _NopPageViewState extends State<NopPageView> {
               ..onEnd = onEnd
               ..onCancel = onCancel
               ..dragStartBehavior = dragStartBehavior;
+            // ..minFlingDistance = kTouchSlop
+            // ..minFlingVelocity = kMinFlingVelocity
+            // ..maxFlingVelocity = kMaxFlingVelocity
+            // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
         )
       };
@@ -351,52 +410,46 @@ class _NopPageViewState extends State<NopPageView> {
   }
 }
 
-class SlideWidget extends RenderObjectWidget {
-  SlideWidget(
-      {required this.esize,
-      required this.paddingRect,
-      required this.header,
-      required this.body,
-      required this.leftFooter,
-      required this.otherHieght,
-      required this.rightFooter});
+class _SlideWidget extends RenderObjectWidget {
+  _SlideWidget({
+    required this.paddingRect,
+    required this.header,
+    required this.body,
+    required this.footer,
+    // required this.rightFooter
+  });
   final Widget header;
   final Widget body;
-  final Widget leftFooter;
-  final Widget rightFooter;
-  final Size esize;
+  final Widget footer;
+  // final Widget rightFooter;
   final EdgeInsets paddingRect;
-  final double otherHieght;
   @override
-  SlideElement createElement() {
-    return SlideElement(this);
+  _SlideElement createElement() {
+    return _SlideElement(this);
   }
 
   @override
-  SliderRenderObject createRenderObject(BuildContext context) {
-    return SliderRenderObject(esize, paddingRect, otherHieght);
+  _SlideRenderObject createRenderObject(BuildContext context) {
+    return _SlideRenderObject(paddingRect);
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant SliderRenderObject renderObject) {
-    renderObject
-      ..paddingRect = paddingRect
-      ..otherHeight = otherHieght
-      ..esize = esize;
+  void updateRenderObject(BuildContext context, covariant _SlideRenderObject renderObject) {
+    renderObject.paddingRect = paddingRect;
   }
 }
 
-class SlideElement extends RenderObjectElement {
-  SlideElement(RenderObjectWidget widget) : super(widget);
+class _SlideElement extends RenderObjectElement {
+  _SlideElement(_SlideWidget widget) : super(widget);
 
   @override
-  SlideWidget get widget => super.widget as SlideWidget;
+  _SlideWidget get widget => super.widget as _SlideWidget;
   @override
-  SliderRenderObject get renderObject => super.renderObject as SliderRenderObject;
+  _SlideRenderObject get renderObject => super.renderObject as _SlideRenderObject;
   Element? _header;
   Element? _body;
-  Element? _leftFooter;
-  Element? _rightFooter;
+  Element? _footer;
+  // Element? _rightFooter;
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -411,16 +464,16 @@ class SlideElement extends RenderObjectElement {
     if (_body != null) {
       visitor(_body!);
     }
-    if (_leftFooter != null) {
-      visitor(_leftFooter!);
+    if (_footer != null) {
+      visitor(_footer!);
     }
-    if (_rightFooter != null) {
-      visitor(_rightFooter!);
-    }
+    // if (_rightFooter != null) {
+    //   visitor(_rightFooter!);
+    // }
   }
 
   @override
-  void update(covariant SlideWidget newWidget) {
+  void update(covariant _SlideWidget newWidget) {
     super.update(newWidget);
     ud();
   }
@@ -434,8 +487,8 @@ class SlideElement extends RenderObjectElement {
   void ud() {
     _header = updateChild(_header, widget.header, 'header');
     _body = updateChild(_body, widget.body, 'body');
-    _leftFooter = updateChild(_leftFooter, widget.leftFooter, 'leftFooter');
-    _rightFooter = updateChild(_rightFooter, widget.rightFooter, 'rightFooter');
+    _footer = updateChild(_footer, widget.footer, 'leftFooter');
+    // _rightFooter = updateChild(_rightFooter, widget.rightFooter, 'rightFooter');
   }
 
   @override
@@ -449,15 +502,12 @@ class SlideElement extends RenderObjectElement {
   }
 }
 
-class SliderRenderObject extends RenderBox {
-  SliderRenderObject(Size esize, EdgeInsets epadding, double otherHeight)
-      : _esize = esize,
-        _otherHeight = otherHeight,
-        _paddingRect = epadding;
+class _SlideRenderObject extends RenderBox {
+  _SlideRenderObject(EdgeInsets epadding) : _paddingRect = epadding;
   RenderBox? _header;
   RenderBox? _body;
-  RenderBox? _leftFooter;
-  RenderBox? _rightFooter;
+  RenderBox? _footer;
+  // RenderBox? _rightFooter;
   void add(RenderBox child, slot) {
     if (slot == 'header') {
       if (_header != null) dropChild(_header!);
@@ -468,13 +518,9 @@ class SliderRenderObject extends RenderBox {
       adoptChild(child);
       _body = child;
     } else if (slot == 'leftFooter') {
-      if (_leftFooter != null) dropChild(_leftFooter!);
+      if (_footer != null) dropChild(_footer!);
       adoptChild(child);
-      _leftFooter = child;
-    } else if (slot == 'rightFooter') {
-      if (_rightFooter != null) dropChild(_rightFooter!);
-      adoptChild(child);
-      _rightFooter = child;
+      _footer = child;
     }
   }
 
@@ -490,109 +536,66 @@ class SliderRenderObject extends RenderBox {
         _body = null;
       }
     } else if (slot == 'leftFooter') {
-      if (_leftFooter != null) {
-        dropChild(_leftFooter!);
-        _leftFooter = null;
-      }
-    } else if (slot == 'rightFooter') {
-      if (_rightFooter != null) {
-        dropChild(_rightFooter!);
-        _rightFooter = null;
+      if (_footer != null) {
+        dropChild(_footer!);
+        _footer = null;
       }
     }
   }
 
-  Size? _esize;
-  Size? get esize => _esize;
-  set esize(Size? v) {
-    if (_esize == v) return;
-    _esize = v;
-    markNeedsLayout();
-  }
-
-  EdgeInsets? _paddingRect;
-  EdgeInsets? get paddingRect => _paddingRect;
-  set paddingRect(EdgeInsets? v) {
+  EdgeInsets _paddingRect;
+  EdgeInsets get paddingRect => _paddingRect;
+  set paddingRect(EdgeInsets v) {
     if (_paddingRect == v) return;
     _paddingRect = v;
-    markNeedsLayout();
-  }
-
-  double? _otherHeight;
-  double? get otherHeight => _otherHeight;
-  set otherHeight(double? v) {
-    if (_otherHeight == v) return;
-    _otherHeight = v;
     markNeedsLayout();
   }
 
   @override
   void performLayout() {
     size = constraints.biggest;
-    final _constraints = BoxConstraints.loose(esize!);
+    var height = ContentNotifier.pagefooterSize;
+    final _constraints = BoxConstraints.tight(Size(size.width - paddingRect.horizontal, height));
 
     if (_header != null) {
-      final _height = paddingRect!.top + PainterBloc.topPad;
+      final _height = paddingRect.top + ContentNotifier.topPad;
       _header!.layout(_constraints);
-      final parendata = _header!.parentData as BoxParentData;
-      parendata.offset = Offset(paddingRect!.left, _height);
+      final parentdata = _header!.parentData as BoxParentData;
+      parentdata.offset = Offset(paddingRect.left, _height);
     }
 
-    final _bottomHeight = esize!.height - paddingRect!.bottom - PainterBloc.botPad;
-    var height = PainterBloc.pageNumSize;
+    final _bottomHeight = size.height - paddingRect.bottom - ContentNotifier.botPad;
 
-    if (_leftFooter != null) {
-      _leftFooter!.layout(_constraints, parentUsesSize: true);
-      height = _leftFooter!.size.height;
-      final parendata = _leftFooter!.parentData as BoxParentData;
-      parendata.offset = Offset(paddingRect!.left, _bottomHeight);
+    if (_footer != null) {
+      _footer!.layout(_constraints);
+      final parentdata = _footer!.parentData as BoxParentData;
+      parentdata.offset = Offset(paddingRect.left, _bottomHeight - height);
     }
-
-    if (_rightFooter != null) {
-      _rightFooter!.layout(BoxConstraints.tight(Size(esize!.width, height)));
-      final parendata = _rightFooter!.parentData as BoxParentData;
-      parendata.offset = Offset(-paddingRect!.right, _bottomHeight);
-    }
+    Log.i('layout....');
 
     if (_body != null) {
       final _constraints =
-          BoxConstraints.tight(Size(esize!.width, esize!.height - otherHeight! - paddingRect!.vertical));
+          BoxConstraints.tight(Size(size.width, size.height - ContentNotifier.otherHeight - paddingRect.vertical));
       _body!.layout(_constraints);
 
-      final parendata = _body!.parentData as BoxParentData;
-      parendata.offset = Offset(.0, PainterBloc.ePadding + paddingRect!.top + PainterBloc.topPad);
+      final parentdata = _body!.parentData as BoxParentData;
+      parentdata.offset =
+          Offset(.0, ContentNotifier.contentPadding + paddingRect.top + ContentNotifier.topPad + height);
     }
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_header != null) {
-      context.paintChild(
-        _header!,
-        childOffset(_header!) + offset,
-      );
+      context.paintChild(_header!, childOffset(_header!) + offset);
     }
 
     if (_body != null) {
-      var _headerHeight = 0.0;
-      if (_header != null) {
-        _headerHeight = _header!.size.height;
-      }
-      context.paintChild(_body!, childOffset(_body!).translate(offset.dx, offset.dy + _headerHeight));
+      context.paintChild(_body!, childOffset(_body!) + offset);
     }
 
-    if (_leftFooter != null) {
-      context.paintChild(
-        _leftFooter!,
-        childOffset(_leftFooter!).translate(offset.dx, offset.dy - _leftFooter!.size.height),
-      );
-    }
-
-    if (_rightFooter != null) {
-      context.paintChild(
-        _rightFooter!,
-        childOffset(_rightFooter!).translate(offset.dx, offset.dy - _rightFooter!.size.height),
-      );
+    if (_footer != null) {
+      context.paintChild(_footer!, childOffset(_footer!) + offset);
     }
   }
 
@@ -609,11 +612,8 @@ class SliderRenderObject extends RenderBox {
     if (_body != null) {
       redepthChild(_body!);
     }
-    if (_leftFooter != null) {
-      redepthChild(_leftFooter!);
-    }
-    if (_rightFooter != null) {
-      redepthChild(_rightFooter!);
+    if (_footer != null) {
+      redepthChild(_footer!);
     }
   }
 
@@ -622,8 +622,7 @@ class SliderRenderObject extends RenderBox {
     super.attach(owner);
     _header?.attach(owner);
     _body?.attach(owner);
-    _leftFooter?.attach(owner);
-    _rightFooter?.attach(owner);
+    _footer?.attach(owner);
   }
 
   @override
@@ -631,16 +630,16 @@ class SliderRenderObject extends RenderBox {
     super.detach();
     _header?.detach();
     _body?.detach();
-    _leftFooter?.detach();
-    _rightFooter?.detach();
+    _footer?.detach();
   }
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     if (_body != null) {
-      return _body!.hitTestChildren(result, position: position) || _body!.hitTest(result, position: position);
+      final o = position - childOffset(_body!);
+      return _body!.hitTest(result, position: o);
     }
-    return false;
+    return true;
   }
 
   @override
@@ -651,11 +650,8 @@ class SliderRenderObject extends RenderBox {
     if (_body != null) {
       visitor(_body!);
     }
-    if (_leftFooter != null) {
-      visitor(_leftFooter!);
-    }
-    if (_rightFooter != null) {
-      visitor(_rightFooter!);
+    if (_footer != null) {
+      visitor(_footer!);
     }
   }
 
@@ -667,16 +663,11 @@ class SliderRenderObject extends RenderBox {
     if (_body != null) {
       visitor(_body!);
     }
-    if (_leftFooter != null) {
-      visitor(_leftFooter!);
-    }
-    if (_rightFooter != null) {
-      visitor(_rightFooter!);
+    if (_footer != null) {
+      visitor(_footer!);
     }
   }
 
   @override
-  bool hitTestSelf(Offset position) {
-    return true;
-  }
+  bool hitTestSelf(Offset position) => true;
 }

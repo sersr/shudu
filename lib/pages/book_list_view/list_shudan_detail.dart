@@ -28,7 +28,24 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
       ),
       body: BlocBuilder<ShudanListDetailBloc, ShudanListDetailState>(
         builder: (context, state) {
-          if (state.data != null) {
+          if (state is ShudanListDetailFailed) {
+            return Center(
+              child: btn1(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                bgColor: Colors.blue,
+                splashColor: Colors.blue[200],
+                radius: 40,
+                child: Text(
+                  '重新加载',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  BlocProvider.of<ShudanListDetailBloc>(context).add(ShudanListDetailReLoadEvent());
+                },
+              ),
+            );
+          }
+          if (state.data?.listId != null) {
             List<Widget> _getChildren() {
               return [
                 // header
@@ -53,13 +70,15 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                                padding: const EdgeInsets.symmetric(vertical: 3.0),
                                 child: Text('${state.data!.title}', maxLines: 2, style: ts.title2),
                               ),
-                              Expanded(
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 3.0),
                                 child: Text('共${widget.total}本书', style: ts.body2),
                               ),
-                              Expanded(
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 3.0),
                                 child: Text('${state.data!.updateTime}', style: ts.body3),
                               ),
                             ],
@@ -181,7 +200,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
             width: 72,
             height: 108,
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ImageResolve(img: l.bookIamge, width: 72),
+            child: ImageResolve(img: l.bookIamge),
           ),
           Expanded(
             child: Padding(
@@ -266,23 +285,38 @@ class ShudanListDetailLoadEvent extends ShudanListDetailEvent {
   final int? index;
 }
 
+class ShudanListDetailReLoadEvent extends ShudanListDetailEvent {}
+
 class ShudanListDetailState {
   ShudanListDetailState([this.data]);
   final BookListDetailData? data;
 }
 
+class ShudanListDetailFailed extends ShudanListDetailState {}
+
 class ShudanListDetailBloc extends Bloc<ShudanListDetailEvent, ShudanListDetailState> {
   ShudanListDetailBloc(this.repository) : super(ShudanListDetailState());
 
   final Repository repository;
+  int? lastIndex;
   @override
   Stream<ShudanListDetailState> mapEventToState(ShudanListDetailEvent event) async* {
     if (event is ShudanListDetailLoadEvent) {
-      final data = await repository.loadShudanDetail(event.index);
-      if (data.listId != null) {
-        await Future.delayed(Duration(milliseconds: 300));
-        yield ShudanListDetailState(data);
-      }
+      lastIndex = event.index;
+      yield* load(lastIndex);
+    } else if (event is ShudanListDetailReLoadEvent) {
+      yield* load(lastIndex);
+    }
+  }
+
+  Stream<ShudanListDetailState> load(int? index) async* {
+    if (index == null) return;
+    final data = await repository.bookEvent.loadShudanDetail(index);
+    if (data.listId != null) {
+      await Future.delayed(Duration(milliseconds: 300));
+      yield ShudanListDetailState(data);
+    } else {
+      yield ShudanListDetailFailed();
     }
   }
 }

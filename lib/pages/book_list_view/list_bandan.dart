@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -19,7 +18,7 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          toolbarHeight: 56,
+          title: Text('榜单'),
           bottom: TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.black,

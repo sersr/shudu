@@ -22,9 +22,7 @@ typedef SetPageNotifier = void Function(double, void Function(int page));
 typedef FutureCallback<T> = FutureOr<T> Function();
 
 class PainterState {
-  PainterState({this.empty});
-  final bool? empty;
-  bool get isNull => empty == null;
+  PainterState();
 }
 
 enum Status { ignore, error, done }
@@ -72,137 +70,176 @@ class TextData {
   }
 }
 
-class PainterBloc extends Bloc<PainterEvent, PainterState> {
-  PainterBloc({required this.repository, required this.bookCacheBloc}) : super(PainterState(empty: true));
+class ContentNotifier extends ChangeNotifier {
+  ContentNotifier({required this.repository});
 
   final Repository repository;
-  // final BookIndexBloc bookIndexBloc;
-  final BookCacheBloc bookCacheBloc;
 
   int? bookid;
 
   int currentPage = 1;
 
-  ContentViewConfig config = ContentViewConfig();
+  final config = ValueNotifier<ContentViewConfig>(ContentViewConfig());
 
-  @override
-  Stream<PainterState> mapEventToState(PainterEvent event) async* {
-    if (event is PainterMetricsChangeEvent) {
-      await metricsChange();
-    } else if (event is PainterShowShadowEvent) {
-      await showdow();
-    } else if (event is _InnerEvent) {
-      if (_inBookView) {
-        yield PainterState(empty: tData.isNotEmpty);
-      }
+  Future<void> reload() async {
+    notifyState(loading: true, ignore: true);
 
-    } else if (event is PainterLoadEvent) {
-      // 空白内容，加载状态
-      notifyState(loading: true, ignore: true);
-      await loadFirst();
-      await Future.delayed(Duration(milliseconds: 300));
-      painter();
-    }
+    await _nf;
+    await _loadFirst();
+
+    painter();
   }
 
   Future<void> metricsChange() async {
     // 实时
-    final changed = await modifiedSize();
+    final changed = await _modifiedSize();
     if (changed) {
       if (_inBookView && tData.cid != null && bookid != null) {
-        adpotCache = false;
+        await _nf;
+        if (_inBookView) painter();
+
         notifyState(ignore: true);
-        // completercanCompute();
         await reset(clearCache: true);
-        adpotCache = true;
-        // resetController();
-        await loadFirst();
-        // 所有变量都变了，[controller.pixels] [_innerIndex] [currentPage] 可能不同步
-        // [currentPage] 被重新约束了
-        if (_inBookView) {
-          painter();
-        }
+        await _loadFirst();
+
+        if (_inBookView) painter();
       }
     }
   }
 
-  Future goNext() => willGoProOrNext(isPid: false);
-  Future goPre() => willGoProOrNext(isPid: true);
+  Future goNext() => _willGoProOrNext(isPid: false);
+  Future goPre() => _willGoProOrNext(isPid: true);
+
+  void auto() {
+    if (config.value.axis == Axis.vertical) {
+      _auto();
+      return;
+    }
+    setPrefs(config.value.copyWith(axis: Axis.vertical)).then((value) async {
+      await EventLooper.instance.scheduler.endOfFrame;
+      if (controller != null && controller!.axis == Axis.vertical) {
+        _auto();
+        return;
+      }
+      Timer.periodic(Duration(seconds: 1), (timer) {
+        if (controller != null && controller!.axis == Axis.vertical) {
+          timer.cancel();
+          _auto();
+        }
+
+        if (timer.tick > 5) timer.cancel();
+      });
+    });
+  }
+
+  void _auto() {
+    if (config.value.axis == Axis.horizontal) return;
+    isActive.value = !isActive.value;
+    if (isActive.value) {
+      _autoRun();
+    } else {
+      stopAuto();
+    }
+  }
+
+  final isActive = ValueNotifier(false);
+
+  Duration? lastStamp;
+  double? _start;
+
+  late final autoValue = ValueNotifier<double>(6.0)..addListener(configListen);
+
+  void _autoTick(Duration timeStamp) {
+    if (controller == null ||
+        controller!.pixels == controller!.maxExtent ||
+        !_inBookView ||
+        !isActive.value ||
+        enter != null ||
+        config.value.axis == Axis.horizontal) {
+      stopAuto();
+      return;
+    }
+
+    lastStamp ??= timeStamp;
+    _start ??= controller!.pixels;
+    final _e = timeStamp - lastStamp!;
+
+    var millisecond = _e.inMicroseconds / Duration.microsecondsPerMillisecond;
+
+    controller!.setPixels(_start! + millisecond / ((11 - autoValue.value) * 15).clamp(15, 150));
+    _autoRun();
+  }
+
+  void resetAuto() {
+    lastStamp = null;
+    _start = null;
+  }
+
+  void _autoRun() {
+    EventLooper.instance.scheduler.scheduleFrameCallback((a) {
+      _autoTick(a);
+    });
+  }
+
+  void stopAuto() {
+    isActive.value = false;
+    lastStamp = null;
+    _start = null;
+  }
 
   bool showrect = false;
   Future<void> showdow() async {
     showrect = !showrect;
 
-    adpotCache = false;
-
     await reset(clearCache: true);
-    adpotCache = true;
 
-    await loadFirst();
-
+    await _nf;
+    await _loadFirst();
     painter();
-
-    adpotCache = true;
   }
 
   Future<void> setPrefs(ContentViewConfig _config) async {
     var flush = false;
     final _fontSize = _config.fontSize!;
-    final _height = _config.lineBwHeight!;
-    final _bgcolor = _config.bgcolor!;
+    final _height = _config.lineTweenHeight!;
     final _fontColor = _config.fontColor!;
     final _fontFamily = _config.fontFamily!;
     final _axis = _config.axis!;
-    final _p = _config.patternList!;
     final _portrait = _config.portrait!;
-    if (_fontSize != config.fontSize ||
-        _fontFamily != config.fontFamily ||
-        _fontColor != config.fontColor ||
-        _height != config.lineBwHeight ||
-        _axis != config.axis) {
+
+    if (_fontSize != config.value.fontSize ||
+        _fontFamily != config.value.fontFamily ||
+        _fontColor != config.value.fontColor ||
+        _height != config.value.lineTweenHeight ||
+        _axis != config.value.axis) {
       flush = true;
     }
-    final resetTozero = _axis != config.axis;
-    // 横屏切换由 sizeChange 处理
-    if (_portrait != config.portrait) await orientation(_portrait);
-    await getPrefs((box) async {
-      await box.put('bgcolor', _bgcolor);
-      await box.put('fontColor', _fontColor);
-      await box.put('axis', _axis);
-      await box.put('patternList', _p);
-      await box.put('portrait', _portrait);
-      if (_fontSize > 0) await box.put('fontSize', _fontSize);
-      if (_height >= 1.0) await box.put('lineBwHeight', _height);
-      if (_fontFamily.isNotEmpty) await box.put('fontFamily', _fontFamily);
-    });
+
+    final resetTozero = _axis != config.value.axis;
+    if (_portrait != config.value.portrait) await orientation(_portrait);
+    config.value = _config;
 
     if (flush) {
-      adpotCache = false;
-
-      // await inCompute(() async {
       await reset(clearCache: true);
       if (resetTozero) resetController();
-      adpotCache = true;
-      await loadFirst();
-      // });
+      await _nf;
+      await _loadFirst();
     }
-
     painter();
   }
 
-  Future<void> getPrefs([Future<void> Function(Box)? callback]) async {
+  Future<void> initConfigs() async {
     final box = await Hive.openBox('settings');
-    if (callback != null) {
-      await callback(box);
-    }
     var _bgcolor = box.get('bgcolor', defaultValue: Color(0xffe3d1a8));
     var _fontColor = box.get('fontColor', defaultValue: Color(0xff4e4e4e));
     var axis = box.get('axis', defaultValue: Axis.horizontal);
     final _fontSize = box.get('fontSize', defaultValue: 18.0);
-    final _height = box.get('lineBwHeight', defaultValue: 1.6);
+    final _height = box.get('lineTweenHeight', defaultValue: 1.6);
     final _fontFamily = box.get('fontFamily', defaultValue: '');
     final _p = box.get('patternList', defaultValue: <String, String>{});
     final _portrait = box.get('portrait', defaultValue: true);
+    final _autoValue = box.get('autoValue', defaultValue: 6.0);
+
     // 适配
     if (_bgcolor is int) {
       await box.delete('bgcolor');
@@ -216,109 +253,158 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       await box.delete('fontColor');
       _fontColor = box.get('fontColor', defaultValue: Color(0xff4e4e4e));
     }
-    await box.close();
-    config.fontSize = _fontSize;
-    config.lineBwHeight = _height;
-    config.bgcolor = _bgcolor;
-    config.fontFamily = _fontFamily;
-    config.fontColor = _fontColor;
-    config.patternList = _p;
-    config.axis = axis;
-    config.portrait = _portrait;
 
-    style = getStyle(config);
-    secstyle = getStyle(config.copyWith(fontSize: pageNumSize));
+    await box.close();
+    config.value.fontSize = _fontSize;
+    config.value.lineTweenHeight = _height;
+    config.value.bgcolor = _bgcolor;
+    config.value.fontFamily = _fontFamily;
+    config.value.fontColor = _fontColor;
+    config.value.patternList = _p;
+    config.value.axis = axis;
+    config.value.portrait = _portrait;
+
+    autoValue.value = _autoValue;
+
+    style = _getStyle(config.value);
+    secstyle = style.copyWith(fontSize: pagefooterSize);
+    config.addListener(configListen);
   }
+
+  Future? _configF;
+  Future? configListen() async {
+    style = _getStyle(config.value);
+    secstyle = style.copyWith(fontSize: pagefooterSize);
+
+    _configF ??= () async {
+      final _config = config.value;
+      final box = await Hive.openBox('settings');
+      var _bgcolor = box.get('bgcolor');
+      var _fontColor = box.get('fontColor');
+      var axis = box.get('axis');
+      final _fontSize = box.get('fontSize');
+      final _height = box.get('lineTweenHeight');
+      final _fontFamily = box.get('fontFamily');
+      final _p = box.get('patternList');
+      final _portrait = box.get('portrait');
+      final _autoValue = box.get('autoValue');
+
+      if (_bgcolor != _config.bgcolor) await box.put('bgcolor', _config.bgcolor);
+      if (_fontColor != _config.fontColor) await box.put('fontColor', _config.fontColor);
+      if (axis != _config.axis) await box.put('axis', _config.axis);
+      if (_p != _config.patternList) await box.put('patternList', _config.patternList);
+      if (_portrait != _config.portrait) await box.put('portrait', _config.portrait);
+      if (_fontSize != _config.fontSize && _config.fontSize! > 0) await box.put('fontSize', _config.fontSize);
+
+      if (_height != _config.lineTweenHeight && _config.lineTweenHeight! >= 1.0)
+        await box.put('lineTweenHeight', _config.lineTweenHeight);
+
+      if (_fontFamily != _config.fontFamily && _config.fontFamily!.isNotEmpty)
+        await box.put('fontFamily', _config.fontFamily);
+
+      if (_autoValue != autoValue.value) box.put('autoValue', autoValue.value);
+
+      await box.close();
+    }()
+      ..whenComplete(() => _configF = null);
+    return _configF;
+  }
+
+  void uiOverlayState() {}
 
   Future? _nf;
   Future? get enter => _nf;
 
   Future<void> newBookOrCid(int newBookid, int cid, int page, {bool inBook = false}) async {
-    await _nf;
-    _nf ??= _newBookOrCid(newBookid, cid, page, inBook: inBook)..whenComplete(() => _nf = null);
+    _nf ??= _newBookOrCid(newBookid, cid, page, inBook)..whenComplete(() => _nf = null);
   }
 
-  Future<void> _newBookOrCid(int newBookid, int cid, int page, {bool inBook = false}) async {
-    if (cid == -1) return;
+  Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
+    if (tData.cid != cid || tData.contentIsEmpty || bookid != newBookid) {
+      assert(Log.i('new: $newBookid $cid', stage: this, name: 'newBook'));
 
-    assert(canLoad == null || canLoad!.isCompleted);
-    if (!inBook) canLoad = Completer<void>();
-    controller?.goBallisticResolveWithLastActivity();
-
-    orientation(config.portrait!);
-    final _lastInBookView = _inBookView;
-
-    adpotCache = false;
-    if (tData.cid == null || tData.cid != cid || tData.contentIsEmpty) {
-      assert(Log.i('page: $page', stage: this, name: 'newBook'));
       final diffBook = bookid != newBookid;
-      notifyState(ignore: diffBook || tData.contentIsEmpty, loading: false);
+      notifyState(ignore: diffBook || inBook || tData.contentIsEmpty, loading: false);
 
-      await canLoad?.future;
       out();
 
-      if (!_lastInBookView) uiOverlay().whenComplete(modifiedSize);
-
-      currentPage = page;
-
       await reset(clearCache: diffBook, cid: cid);
+      currentPage = page;
       bookid = newBookid;
 
-      // 重置状态
-      // completercanCompute();
+      await dump();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _newBookOrCid(int newBookid, int cid, int page, bool inBook) async {
+    if (cid == -1) return;
+
+    if (!_inBookView) _innerIndex = 0;
+    // if (_innerIndex != 0 && (controller == null || controller!.page.round() == 0)) _innerIndex = 0;
+
+    stopAuto();
+    // final _lastInBookView = _inBookView;
+
+    assert(_canLoad == null || _canLoad!.isCompleted);
+    // if (!inBook) _canLoad = Completer<void>();
+
+    orientation(config.value.portrait!);
+    if (await setNewBookOrCid(newBookid, cid, page)) {
+      await _modifiedSize();
+
+      _getCurrentIds();
+
+      final _t = Timer(const Duration(milliseconds: 500), () => notifyState(loading: true));
 
       inbook();
-      final dump = undelayedDump();
-      final timer = Timer(const Duration(milliseconds: 300), () {
-        notifyState(loading: true);
-      });
+      await _loadFirst();
 
-      adpotCache = true;
-      getCurrentIds();
+      _t.cancel();
 
-      await loadFirst();
-
-      await dump;
-      timer.cancel();
       painter();
       resetController();
-    } else {
-      inbook();
-      if (!_lastInBookView || !config.portrait!) {
-        // await canLoad?.future;
-        uiOverlay();
-      }
+      await Future.delayed(const Duration(milliseconds: 100));
     }
-    adpotCache = true;
-    notifyState(ignore: false, loading: false);
+
+    inbook();
+    // 异步
+    // 如果没有加载完成，就要退出应该忽略
+    notifyState(ignore: !_inBookView, loading: false);
     statusColor();
   }
 
   Size size = Size.zero;
 
-  // 开启帧回调
+  final safePaddingNotifier = ValueNotifier<bool>(false);
 
-  var safePadding = EdgeInsets.zero;
+  var _safePadding = EdgeInsets.zero;
+
+  EdgeInsets get safePadding => _safePadding;
+
+  set safePadding(EdgeInsets e) {
+    if (_safePadding == e) return;
+    _safePadding = e;
+    safePaddingNotifier.value = !safePaddingNotifier.value;
+  }
+
   var paddingRect = EdgeInsets.zero;
   var safeBottom = 6.0;
 
-  /// 返回值是实时的
-  ///
-  /// 如果两次调用之间设置不变， 则返回值为 `false`
-  /// 即使 [_fast] 为 `true`
-  Future<bool> modifiedSize() async {
+  Future<bool> _modifiedSize() async {
     final w = ui.window;
     var _size = w.physicalSize / w.devicePixelRatio;
     var _p = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        await repository.getViewInsets();
-        var _sizeOut = Size.zero;
-        _sizeOut = repository.viewInsets.size;
+        final _sizeOut = (await repository.getViewInsets()).size;
+
         if (_sizeOut != _size) {
           safeBottom = repository.bottomHeight.toDouble() + 6.0;
         }
+
         _p = repository.viewInsets.padding;
         _size = _sizeOut;
         break;
@@ -333,7 +419,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         if ((_p.top == 0.0 && safePadding.top != _p.top) || size.height < _size.height || size.width != _size.width) {
           size = _size;
           safePadding = _p;
-          paddingRect = _p.copyWith(bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
+          paddingRect = safePadding.copyWith(bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
 
           return true;
         } else {
@@ -344,7 +430,6 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       size = _size;
       safePadding = _p;
 
-      // 从安全边界获取
       paddingRect = EdgeInsets.only(
         left: safePadding.left + 16,
         top: safePadding.top,
@@ -358,19 +443,20 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   }
 
   /// 首次（重置）加载
-  Future<void> loadFirst() async {
+  Future<void> _loadFirst() async {
+    if (tData.cid == null || bookid == null) return;
     final _bookid = bookid!;
     final _key = tData.cid!;
     assert(Log.i('cid: $_key', stage: this, name: 'loadFirst'));
-    loadId(_key);
+    _loadId(_key);
 
-    await EventLooper.instance.onListen(() async => _futures.awaitId(_key));
+    await _futures.awaitId(_key);
 
     final _currentText = _getTextData(_key);
     if (_bookid == bookid && _currentText != null && _currentText.contentIsNotEmpty && _key == _currentText.cid) {
       tData = _currentText;
 
-      if (config.axis == Axis.vertical) {
+      if (config.value.axis == Axis.vertical) {
         final footv = '$currentPage/${tData.content.length}页';
         footer.value = footv;
         header.value = tData.cname!;
@@ -384,42 +470,42 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     unDelayedLoad();
   }
 
-  bool _delayedDone = true;
-  bool hasContent(ContentBounds key, int index) {
-    var result = true;
+  int hasContent(int index) {
+    var _r = 0;
     if (tData.contentIsNotEmpty) {
       final exPage = index - _innerIndex;
-      if (key == ContentBounds.getRight) {
-        result = currentPage + exPage < tData.content.length || caches.containsKey(tData.nid);
-      } else {
-        result = currentPage + exPage > 1 || caches.containsKey(tData.pid);
-      }
+
+      final hasRight = currentPage + exPage < tData.content.length || _caches.containsKey(tData.nid);
+      final hasLeft = currentPage + exPage > 1 || _caches.containsKey(tData.pid);
+
+      if (hasRight) _r |= ContentBounds.addRight;
+      if (hasLeft) _r |= ContentBounds.addLeft;
     } else {
-      result = false;
+      return ContentBounds.notLeftAndRight;
     }
-    if (_delayedDone) {
-      _delayedDone = false;
-      _delayedLoad().then((_) {
-        Future.delayed(const Duration(seconds: 3), () => _delayedDone = true);
-      });
-    }
-    return result;
+
+    _delayedLoad();
+
+    return _r;
   }
 
-  Widget? getWidget(int page, {bool changeState = false}) {
+  // 首先确定当前章节首页位置
+  // 再根据当前页面实际位置判断位于哪一个章节，和此章节的哪一页
+  ContentMetrics? getContentMes(int page, {bool changeState = false}) {
     if (changeState && page == _innerIndex) return null;
     var currentContentFirstIndex = _innerIndex - currentPage + 1;
     var text = tData;
-    Widget? child;
+    ContentMetrics? child;
     while (text.contentIsNotEmpty) {
       // 当前章节页
       final contentIndex = page - currentContentFirstIndex;
+
       final length = text.content.length;
 
       if (contentIndex >= 0 && contentIndex <= length - 1) {
         final _currentPage = contentIndex + 1;
 
-        // 只有滑动结束或过半才会进行判定 [currentPage]
+        // 滑动过半才会进行判定 [currentPage]
         if (changeState) {
           assert(Log.i('update', stage: this, name: 'getWidget'));
           assert(controller == null || controller!.page.round() == page);
@@ -427,46 +513,47 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
           _innerIndex = page;
           currentPage = _currentPage;
           tData = text;
-          undelayedDump();
-          if (config.axis == Axis.vertical) {
+          dump();
+          if (config.value.axis == Axis.vertical) {
             final footv = '$currentPage/${text.content.length}页';
             SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
-              if (config.axis != Axis.vertical) return;
+              if (config.value.axis != Axis.vertical) return;
               footer.value = footv;
               header.value = text.cname!;
             });
           }
           return null;
         } else {
-          child = ContentView(
-            contentMetrics: text.content[_currentPage - 1],
-            battery: FutureBuilder<int>(
-              future: repository.getBatteryLevel(),
-              builder: (context, snaps) {
-                if (snaps.hasData) {
-                  return BatteryView(
-                    progress: (snaps.data! / 100).clamp(0.0, 1.0),
-                    color: config.fontColor!,
-                  );
-                }
-                return BatteryView(
-                  progress: (repository.level / 100).clamp(0.0, 1.0),
-                  color: config.fontColor!,
-                );
-              },
-            ),
-          );
+          child = text.content[_currentPage - 1];
+          // ContentView(
+          //   contentMetrics: text.content[_currentPage - 1],
+          //   battery: FutureBuilder<int>(
+          //     future: repository.getBatteryLevel(),
+          //     builder: (context, snaps) {
+          //       if (snaps.hasData) {
+          //         return BatteryView(
+          //           progress: (snaps.data! / 100).clamp(0.0, 1.0),
+          //           color: config.value.fontColor!,
+          //         );
+          //       }
+          //       return BatteryView(
+          //         progress: (repository.level / 100).clamp(0.0, 1.0),
+          //         color: config.value.fontColor!,
+          //       );
+          //     },
+          //   ),
+          // );
         }
         break;
       } else if (contentIndex < 0) {
-        if (caches.containsKey(text.pid)) {
+        if (_caches.containsKey(text.pid)) {
           text = _getTextData(text.pid!)!;
           currentContentFirstIndex -= text.content.length;
         } else {
           break;
         }
       } else if (contentIndex >= length) {
-        if (caches.containsKey(text.nid)) {
+        if (_caches.containsKey(text.nid)) {
           currentContentFirstIndex += length;
           text = _getTextData(text.nid!)!;
         } else {
@@ -475,73 +562,47 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
     }
 
-    // 如果发生意外，重新加载
-    // if (child == null) {
-    //   if (!shouldUpdate) {
-    //     shouldUpdate = true;
-    //     Future.delayed(Duration(milliseconds: 400), () async {
-    //       // 重置状态
-    //       resetController();
-    //       await loadFirst();
-    //       painter();
-    //       shouldUpdate = false;
-    //     });
-    //   }
-    // }
-
     return child;
   }
 
-  TextStyle getStyle(ContentViewConfig config) {
+  TextStyle _getStyle(ContentViewConfig config) {
     return TextStyle(
-      locale: const Locale('cn', 'ZH'),
+      locale: const Locale('zh', 'CN'),
       fontSize: config.fontSize,
       color: config.fontColor!,
       height: 1.0,
+      leadingDistribution: TextLeadingDistribution.even,
       fontFamily: 'NotoSansSC', // SourceHanSansSC
       // fontFamilyFallback: ['RobotoMono', 'NotoSansSC'],
     );
   }
 
-  static const pageNumSize = 13.0;
+  static const pagefooterSize = 13.0;
   static const topPad = 8.0;
-  static const ePadding = 10.0;
+  static const contentPadding = 10.0;
   static const botPad = 8.0;
-  static const otherHeight = ePadding * 2 + topPad + botPad + pageNumSize * 2;
-  final regexpEmpty = RegExp('( |\u3000)+');
-
-  // 取消后续操作
-  bool _cancel() => !adpotCache;
-
-  // // 耗时函数回调
-  // Future<bool> _innerCallback(VoidCallback callback, {String debugLabel = ''}) async {
-  //   if (!_fast) {
-  //     return EventLooper.instance
-  //         .frameCallbackLooper(callback, frameThreshold: 2, cancel: _cancel, debugLabel: debugLabel);
-  //   } else {
-  //     callback();
-  //   }
-  //   return true;
-  // }
+  static const otherHeight = contentPadding * 2 + topPad + botPad + pagefooterSize * 2;
+  final _regexpEmpty = RegExp('( |\u3000)+');
 
   Future<bool> _getInnerCallbackLooper(
-    int contentid,
     ResultTimeCallback callback, {
-    double frameThreshold = 2,
+    bool eventOnly = false,
+    double frameThreshold = 1.5,
     String debugLabel = '',
   }) async {
     if (_cancel()) return false;
-    // if (contentid == tData.cid) {
-    //   callback(() => false);
-    //   return true;
-    // }
-    return EventLooper.instance.scheduleEventTask(callback, frameThreshold: frameThreshold, debugLabel: debugLabel);
+    return EventLooper.instance
+        .scheduleEventTask(callback, eventOnly: eventOnly, frameThreshold: frameThreshold, debugLabel: debugLabel);
   }
 
   // ---------------------------------------
   Future? _getid;
 
-  bool ignoreTask(int contentid) {
+  bool _ignoreTask(int contentid) {
+    if ((contentid == tData.cid) && loading.value) {
+      notifyState(loading: false);
+    }
+
     final _thatData = _getTextData(contentid);
     if (_thatData != null && _thatData.contentIsNotEmpty) {
       if (_thatData.nid == -1 || _thatData.hasContent != 1) {
@@ -549,11 +610,16 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
       return true;
     }
+
     if (_cancel() || !_inBookView) return true;
+
     if (_idSets.isEmpty) {
-      getCurrentIds();
+      _getCurrentIds();
     } else {
-      _getid ??= Future<void>.delayed(Duration(seconds: 3), getCurrentIds)..then((_) => _getid = null);
+      _getid ??= Future<void>(_getCurrentIds).then((_) async {
+        await Future<void>.delayed(const Duration(seconds: 3));
+        _getid = null;
+      });
     }
     return !_idSets.contains(contentid);
   }
@@ -561,11 +627,12 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   final _ids = <int?>[];
 
   List<int?> get _idSets {
-    if (_ids.isEmpty) getCurrentIds();
+    if (_ids.isEmpty) _getCurrentIds();
     return _ids;
   }
 
-  List<int?> getCurrentIds() {
+  // 根据当前章节更新存活章节
+  List<int?> _getCurrentIds() {
     _ids.clear();
     _ids.add(tData.cid);
 
@@ -583,14 +650,17 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     return _ids;
   }
 
-  Future<List<ContentMetrics>> divText(List<String> paragraphs, String cname, int contentid, int words) async {
+  Future<List<ContentMetrics>> _asyncLayout(List<String> paragraphs, String cname, int contentid, int words) async {
     assert(Log.i('working   >>>'));
     var ignore = false;
+    var whiteRows = 0;
+
     final pages = <List<TextPainter>>[];
     final textPages = <ContentMetrics>[];
+
     final fontSize = style.fontSize!;
     final ident = shortHash(pages);
-    final config = this.config.copyWith();
+    final config = this.config.value.copyWith();
 
     final _size = paddingRect.deflateSize(size);
     final width = _size.width;
@@ -601,10 +671,16 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     final contentHeight = _size.height - otherHeight;
 
     // 配置行高
-    final lineHeight = config.lineBwHeight! * fontSize;
+    final lineHeight = config.lineTweenHeight! * fontSize;
 
+    final _allExtraHeight = contentHeight % lineHeight;
+
+    // lineCounts
+    final rows = contentHeight ~/ lineHeight;
+
+    final hl = _allExtraHeight / rows;
     // 实际行高
-    final lineHeightAndExtra = (contentHeight % lineHeight) / (contentHeight ~/ lineHeight) + lineHeight;
+    final lineHeightAndExtra = hl + lineHeight;
 
     // 大标题
     late final TextPainter _bigTitlePainter;
@@ -624,23 +700,24 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
             ..layout(maxWidth: width);
     }
 
-    var whiteCounts = 0;
+    var incSize = 10;
 
-    void _f01() {
-      var leaf = 10;
+    // 任务开始
+    var _done = await _getInnerCallbackLooper((wait, _) async {
       var done = false;
       while (true) {
         for (var i = 1; i < 10; i++) {
           final s = (lineHeightAndExtra * i - 110);
+          await wait();
 
-          if (leaf > 10) {
-            if (s >= 0 && s < leaf) {
-              whiteCounts = i;
+          if (incSize > 10) {
+            if (s >= 0 && s < incSize) {
+              whiteRows = i;
               done = true;
               break;
             }
-          } else if (s.abs() < leaf) {
-            whiteCounts = i;
+          } else if (s.abs() < incSize) {
+            whiteRows = i;
             done = true;
             break;
           }
@@ -648,182 +725,148 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
         if (done) break;
 
-        leaf += 10;
+        incSize += 10;
       }
-      if (lineHeightAndExtra * whiteCounts > 200) {
-        whiteCounts--;
-      }
-    }
 
-    final _listf = [_t01, _t02, _f01];
+      if (lineHeightAndExtra * whiteRows > 200) whiteRows--;
 
-    var index = 0;
+      final _half = fontSize / 2;
 
-    var _done = await _getInnerCallbackLooper(contentid, (timeOut) {
-      for (var _i = index; _i < _listf.length; _i++) {
-        if (timeOut()) {
-          index = _i;
-          Log.w('timeOut.... | title $contentid');
+      await wait();
 
-          return EventStatus.timeout;
-        }
+      ignore = _ignoreTask(contentid);
 
-        ignore = ignoreTask(contentid);
-        if (ignore) {
-          Log.w('ignore.... | title $contentid');
-          return EventStatus.ignore;
-        }
+      if (ignore) return EventStatus.ignoreAndRemove;
 
-        _listf[_i]();
-      }
-    }, debugLabel: 'title #<$ident>'.toString().padRight(16));
+      // ignore = _ignoreTask(contentid);
 
-    bool innerCancel() => !_done || ignore || ignoreTask(contentid);
+      // if (ignore) return EventStatus.ignoreAndRemove;
+      _t01();
+      await wait();
+      _t02();
+      await wait();
 
-    if (innerCancel()) return const [];
+      Log.i('white. end');
 
-    final lines = <TextPainter>[];
+      final lines = <TextPainter>[];
 
-    index = 0;
-    var _start = 0;
-    int? _end;
-    final _t = TextPainter(textDirection: TextDirection.ltr);
+      final _t = TextPainter(textDirection: TextDirection.ltr);
 
-    _done = await _getInnerCallbackLooper(contentid, (timeOut) {
-      for (var i = index; i < paragraphs.length; i++) {
-        index = i;
+      // 分行布局
+      for (var i = 0; i < paragraphs.length; i++) {
+        await wait();
 
-        final p = paragraphs[i];
-        final pc = p.characters;
-        var start = _start;
-        while (start < pc.length) {
-          var end = _end ?? math.min(start + words, pc.length);
+        final pl = paragraphs[i];
+        var start = 0;
+        ignore = _ignoreTask(contentid);
 
-          if (pc.getRange(start, end).toString().replaceAll(regexpEmpty, '').isEmpty) break;
-          if (_end == null) {
-            while (true) {
-              if (end >= pc.length) break;
+        if (ignore) return EventStatus.ignoreAndRemove;
 
-              if (timeOut()) return EventStatus.timeout;
+        while (start < pl.length) {
+          var end = math.min(start + words, pl.length);
 
-              ignore = ignoreTask(contentid);
+          if (end == pl.length && pl.substring(start, end).replaceAll(_regexpEmpty, '').isEmpty) break;
+          await wait();
 
-              if (ignore) return EventStatus.ignore;
+          // 确定每一行的字数
+          while (true) {
+            if (end >= pl.length) break;
 
-              end++;
-              _t
-                ..text = TextSpan(text: pc.getRange(start, end).toString(), style: style)
-                ..layout(maxWidth: width);
+            // ignore = _ignoreTask(contentid);
 
-              if (_t.height > fontSize) {
-                final endOffset = _t.getPositionForOffset(Offset(width, fontSize / 2)).offset;
-                _end = end = start + endOffset;
-                break;
-              }
+            // if (ignore) return EventStatus.ignoreAndRemove;
+
+            await wait();
+
+            end++;
+
+            // final n = Stopwatch()..start();
+            // final np = n.elapsedMicroseconds;
+            _t
+              ..text = TextSpan(text: pl.substring(start, end), style: style)
+              ..layout(maxWidth: width);
+
+            // Log.i('stop: use: ${(n.elapsedMicroseconds - np) / 1000}ms');
+
+            await wait();
+
+            if (_t.height > fontSize) {
+              final endOffset = _t.getPositionForOffset(Offset(width, _half)).offset;
+              end = start + endOffset;
+              break;
             }
           }
-          if (timeOut()) return EventStatus.timeout;
 
-          ignore = ignoreTask(contentid);
+          // ignore = _ignoreTask(contentid);
 
-          if (ignore) return EventStatus.ignore;
+          // if (ignore) return EventStatus.ignoreAndRemove;
+
+          await wait();
 
           final _text = TextPainter(
-              text: TextSpan(text: pc.getRange(start, end).toString(), style: style), textDirection: TextDirection.ltr)
+              text: TextSpan(text: pl.substring(start, end), style: style), textDirection: TextDirection.ltr)
             ..layout(maxWidth: width);
 
+          start = end;
           lines.add(_text);
-          _start = start = end;
-          _end = null;
         }
-
-        _start = 0;
       }
-    }, frameThreshold: 0.825, debugLabel: 'para #<$ident>'.toString().padRight(16));
 
-    if (innerCancel()) return const [];
+      await wait();
+      var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
 
-    var topHeight = (_bigTitlePainter.height / fontSize).floor();
-    var whiteHeight = whiteCounts * lineHeightAndExtra;
-
-    void _f02() {
-      // 每个页面能达到的最大行数
-      final spl = (contentHeight / lineHeightAndExtra).floor();
       // 首页留白和标题
-      final firstPages = math.max(0, spl - whiteCounts - topHeight);
+      final firstPages = math.max(0, rows - whiteRows - topExtraRows);
       pages.add(lines.sublist(0, math.min(firstPages, lines.length)));
 
+      // 分页
       for (var i = firstPages; i < lines.length;) {
-        pages.add(lines.sublist(i, (i + spl).clamp(i, lines.length)));
-        i += spl;
+        pages.add(lines.sublist(i, (i + rows).clamp(i, lines.length)));
+        i += rows;
       }
-    }
 
-    _done = await _getInnerCallbackLooper(contentid, (timeOut) {
-      if (timeOut()) return EventStatus.timeout;
+      var extraHeight = lineHeightAndExtra - fontSize;
+      final isHorizontal = config.axis == Axis.horizontal;
 
-      _f02();
-    }, debugLabel: '_f02 #<$ident>'.toString().padRight(16));
+      // 添加页面信息
+      for (var r = 0; r < pages.length; r++) {
+        await wait();
 
-    if (innerCancel()) return const [];
-
-    var exh = lineHeightAndExtra - config.fontSize!;
-    final isHorizontal = config.axis == Axis.horizontal;
-
-    var _r = 0;
-    TextPainter? bottomRight;
-    List<TextPainter>? _teps;
-
-    _done = await _getInnerCallbackLooper(contentid, (timeOut) {
-      for (var r = _r; r < pages.length; r++) {
-        bottomRight ??= TextPainter(
+        final bottomRight = TextPainter(
             text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle), textDirection: TextDirection.ltr)
           ..layout(maxWidth: width);
 
-        Log.w('timeOut.... | pages $contentid');
-        if (timeOut()) {
-          _r = r;
-          return EventStatus.timeout;
-        }
-        ignore = ignoreTask(contentid);
-        if (ignore) {
-          Log.w('ignore.... | pages $contentid');
-          return EventStatus.ignore;
-        }
+        await wait();
 
-        final right = width - bottomRight!.width - leftExtraPadding * 2;
-        _teps ??= <TextPainter>[];
-        final p = pages[r];
+        ignore = _ignoreTask(contentid);
 
-        for (var i = 0; i < p.length; i++) {
-          _teps!.add(p[i]);
-        }
+        if (ignore) return EventStatus.ignoreAndRemove;
+        await wait();
+
+        final right = width - bottomRight.width - leftExtraPadding * 2;
 
         final met = ContentMetrics(
-            painters: _teps!,
-            extraHeightInLines: exh,
+            painters: pages[r],
+            extraHeightInLines: extraHeight,
             isHorizontal: isHorizontal,
             secstyle: secstyle,
             fontSize: fontSize,
             cPainter: smallTitlePainter,
-            botRightPainter: bottomRight!,
+            botRightPainter: bottomRight,
             cBigPainter: _bigTitlePainter,
             right: right,
             left: left,
             index: r,
-            topHeight: topHeight,
             size: _size,
-            windowTopPadding: paddingRect.top,
+            windowTopPadding: safePadding.top,
             showrect: showrect,
-            whiteHeight: whiteHeight);
-        textPages.add(met);
+            topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
 
-        _teps = null;
-        bottomRight = null;
+        textPages.add(met);
       }
     }, debugLabel: 'pages #<$ident>'.toString().padRight(16));
 
-    if (innerCancel()) return const [];
+    if (!_done || ignore || _ignoreTask(contentid)) return const [];
 
     assert(Log.i('work done <<<'));
     return textPages;
@@ -837,59 +880,33 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     if (_bookid == bookid &&
         contentid != null &&
         contentid != -1 &&
-        !caches.containsKey(contentid) &&
+        !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
       final _ntask = loadData(contentid, _bookid);
-      // 任务添加的开始
-      // 更新要保留的 contentid
-      getCurrentIds();
+
+      _getCurrentIds();
       _futures.addTask(contentid, _ntask);
     }
   }
 
-  void loadId(int? id) => _loadTasks(bookid!, id);
+  void _loadId(int? id) => _loadTasks(bookid!, id);
 
   void unDelayedLoad() => _loadCallback();
 
-  void loadAuto() {
-    loadId(tData.cid);
-
-    final next = _getTextData(tData.nid);
-    if (next != null) {
-      final thirty = _getTextData(next.nid);
-      if (thirty != null) {
-        loadId(thirty.nid);
-      } else {
-        loadId(next.nid);
-      }
-    } else {
-      loadId(tData.nid);
-    }
-
-    loadPre();
-  }
-
-  void loadPre() {
-    final pre = _getTextData(tData.pid);
-    if (pre != null) {
-      loadId(pre.pid);
-    } else {
-      loadId(tData.pid);
-    }
-  }
+  void _loadAuto() => _getCurrentIds().forEach(_loadId);
 
   void _loadCallback() {
-    loadResolve();
-    loadAuto();
+    _loadResolve();
+    _loadAuto();
   }
 
   // 处于最后一章节时，查看是否有更新
-  Future<void> loadResolve() async {
+  Future<void> _loadResolve() async {
     if (tData.nid == -1 || tData.hasContent != 1) {
       if (tData.contentIsEmpty) return;
 
       void _getdata() {
-        if (caches.containsKey(tData.cid)) {
+        if (_caches.containsKey(tData.cid)) {
           if (tData.contentIsNotEmpty && (currentPage == tData.content.length || currentPage == 1)) {
             tData = _getTextData(tData.cid!)!;
             if (currentPage > tData.content.length) {
@@ -901,7 +918,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
       }
 
       final cid = tData.cid!;
-      final _data = caches[cid];
+      final _data = _caches[cid];
 
       if (_data != null && _data.contentIsNotEmpty && tData.nid != -1 && tData.hasContent == 1) {
         // 已经重新加载到 caches 了
@@ -909,19 +926,19 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         return;
       }
 
-      if (reloadIds.contains(cid)) return;
+      if (_reloadIds.contains(cid)) return;
 
       assert(Log.i('nid = ${tData.nid}, hasContent: ${tData.hasContent}', stage: this, name: 'loadResolve'));
 
-      reloadIds.add(cid);
-      Future.delayed(const Duration(seconds: 10), () => reloadIds.remove(cid));
+      _reloadIds.add(cid);
+      Future.delayed(const Duration(seconds: 10), () => _reloadIds.remove(cid));
       await load(bookid!, cid, update: true);
       _getdata();
     }
   }
 
   // 立即
-  Future<void> resolveId() async {
+  Future<void> _resolveId() async {
     if (tData.contentIsEmpty) return;
     var _data = _getTextData(tData.cid);
     if (_data != null && (_data.hasContent != 1 || _data.nid == -1)) {
@@ -936,37 +953,27 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
   }
 
-  Future<bool>? _loadFuture;
+  Future? _loadFuture;
   Future _delayedLoad() async {
     if (_inBookView)
-      _loadFuture ??= _getInnerCallbackLooper(-1, (_) {
-        _loadCallback();
-      }, debugLabel: '_delayedLoad'.padRight(16))
-        ..whenComplete(() => _loadFuture = null);
+      _loadFuture ??= Future.delayed(const Duration(seconds: 1), _loadCallback)..whenComplete(() => _loadFuture = null);
   }
 
-  // Future inCompute(FutureCallback callback) async {
-  //   // if (canCompute != null && !canCompute!.isCompleted) {
-  //   //   Log.i('awaiting >> ', stage: this, name: 'awaitCompute');
-  //   //   await canCompute!.future;
-  //   // }
-  //   // computeCount++;
-  //   await callback();
-  //   // computeCount--;
-  // }
+  Future<void> updateCurrent() => _resolveId().then((_) => painter());
 
-  Future<void> updateCurrent() => resolveId().then((value) => painter());
-
-  Future<void> willGoProOrNext({bool isPid = false}) async {
+  Future<void> _willGoProOrNext({bool isPid = false}) async {
     if (_inPreOrNext || tData.contentIsEmpty) return;
-    notifyState(loading: true);
     _inPreOrNext = true;
+
+    stopAuto();
+    notifyState(loading: true);
+
     var getid = -1;
 
     if (isPid) {
       getid = tData.pid!;
     } else {
-      await resolveId();
+      await _resolveId();
       getid = tData.nid!;
       if (getid == -1) {
         notifyState(loading: false, error: const NotifyMessage(true, msg: NotifyMessage.notNext));
@@ -974,9 +981,9 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     }
 
     if (getid != -1) {
-      final success = await getContent(getid);
-      if (!success && !isPid) {
-        notifyState(error: const NotifyMessage(true, msg: NotifyMessage.notNext));
+      final success = await _getContent(getid);
+      if (!success) {
+        notifyState(error: const NotifyMessage(true, msg: NotifyMessage.network));
       }
     }
 
@@ -984,15 +991,25 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     _inPreOrNext = false;
   }
 
-  Future<bool> getContent(int getid) async {
+  Future<bool> _getContent(int getid) async {
     var _data = _getTextData(getid);
     if (_data == null || _data.contentIsEmpty) {
-      loadAuto();
+      _loadAuto();
+      _getCurrentIds();
 
-      await EventLooper.instance.onListen(() async => _futures.awaitId(getid));
+      final _x = _futures.awaitId(getid);
+
+      // 如果渲染管道在运行中，布局时间会大大加长
+      if (_x != null) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        notifyState(loading: false);
+        await _x;
+      }
+
       _data = _getTextData(getid);
       if (_data == null || _data.contentIsEmpty) return false;
     }
+
     tData = _data;
     currentPage = 1;
     resetController();
@@ -1004,27 +1021,25 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   // 所有异步任务
   final _futures = <int, Future>{};
+
   // 缓存池
-  final caches = <int, TextData>{};
+  final _caches = <int, TextData>{};
+
   // 记录重新下载的id，并延迟删除，避免频繁访问
-  final reloadIds = <int>{};
+  final _reloadIds = <int>{};
 
   int get tasksLength => _futures.length;
-  // 正在进入章节阅读页面，[true] 阻止页面退出
-  // var _locked = false;
-  // bool get locked => _locked;
+  Future get waitTasks => Future.wait(List.of(_futures.values));
 
   // 异步任务时防止用户滚动
-  // int computeCount = 0;
-  Completer<void>? canCompute;
-  Completer<void>? canLoad;
+  Completer<void>? _canLoad;
   bool _inBookView = false;
   bool _inPreOrNext = false;
-  bool shouldUpdate = false;
 
   TextData _tData = TextData();
 
   TextData get tData => _tData;
+
   set tData(TextData data) {
     if (data == _tData) return;
     assert(data.contentIsNotEmpty, '不该为 空');
@@ -1039,7 +1054,7 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
   // 显示网络错误信息
   final _loading = ValueNotifier(false);
   final _ignore = ValueNotifier(true);
-  final _error = ValueNotifier(NotifyMessage(false));
+  final _error = ValueNotifier(const NotifyMessage(false));
 
   NopPageViewController? controller;
   ValueListenable<bool> get loading => _loading;
@@ -1053,56 +1068,41 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   late TextStyle style;
   late TextStyle secstyle;
+  final showCname = ValueNotifier(false);
 
-  // 只能做为结果返回，并且处理状态
-  // 一旦有了新状态，就要显示信息
   void painter() {
-    // computeCount++;
-    notifyState(ignore: false, loading: false);
-    add(_InnerEvent());
+    notifyState(ignore: !_inBookView || tData.contentIsEmpty, loading: false);
+    notifyListeners();
   }
 
   Future<void> reset({bool clearCache = false, int? cid}) async {
+    adpotCache = false;
+
     if (clearCache) {
-      caches.clear();
       if (_futures.isNotEmpty) {
         final tasks = Map.of(_futures);
         // 还有任务在
-        tasks.forEach((key, _future) {
-          _future.whenComplete(() {
-            caches.remove(key);
-          });
-        });
+        await Future.wait(tasks.values);
       }
+      _caches.clear();
     }
-
+    adpotCache = true;
     _tData = TextData()..cid = cid ?? tData.cid;
   }
 
   void completerCanLoad() {
-    if (canLoad != null && !canLoad!.isCompleted) {
-      canLoad!.complete();
+    if (_canLoad != null && !_canLoad!.isCompleted) {
+      print('................c');
+      _canLoad!.complete();
     }
   }
-
-  // void completercanCompute() {
-  //   if (canCompute != null && !canCompute!.isCompleted) {
-  //     canCompute!.complete();
-  //   }
-  // }
-
-  // void setcanCompute() {
-  //   if (canCompute == null || canCompute!.isCompleted) {
-  //     canCompute = Completer<void>();
-  //   }
-  // }
 
   void out() {
     _inBookView = false;
     adpotCache = false;
-    resetController();
   }
 
+  bool get inBook => _inBookView;
   void inbook() {
     adpotCache = true;
     _inBookView = true;
@@ -1115,8 +1115,8 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
     _innerIndex = 0;
   }
 
-  Future<void> undelayedDump() async {
-    if (bookid == null || tData.contentIsEmpty) return;
+  Future<void> dump() async {
+    if (bookid == null || tData.cid == null) return;
     final cid = tData.cid!;
     final _bookid = bookid!;
     final _currentPage = currentPage;
@@ -1137,31 +1137,31 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
 
   void addCache(TextData _cnpid) {
     assert(_cnpid.contentIsNotEmpty);
-    caches[_cnpid.cid!] = _cnpid;
+    _caches[_cnpid.cid!] = _cnpid;
   }
 
-  TextData? _getTextData(int? key) => caches[key];
+  TextData? _getTextData(int? key) => _caches[key];
 
   // 更新队列
   void updateCaches(TextData data) {
-    getCurrentIds();
-    if (caches.length > 8) {
+    _getCurrentIds();
+    if (_caches.length > _idSets.length) {
       Timeline.timeSync('updateCaches', () {
-        caches.removeWhere((key, _) => !_idSets.contains(key));
+        _caches.removeWhere((key, _) => !_idSets.contains(key));
       });
     }
   }
 
   Future<void> loadData(int _contentKey, int _bookid) async {
-    if (caches.containsKey(_contentKey)) return;
+    if (_caches.containsKey(_contentKey)) return;
     await load(_bookid, _contentKey);
   }
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    final words = (size.width - paddingRect.horizontal) ~/ config.fontSize!;
+    final words = (size.width - paddingRect.horizontal) ~/ config.value.fontSize!;
     final lines = await repository.bookEvent.load(_bookid, contentid, words, update: update);
     if (lines.contentIsNotEmpty) {
-      final pages = await divText(lines.pages, lines.cname!, contentid, words);
+      final pages = await _asyncLayout(lines.pages, lines.cname!, contentid, words);
 
       if (pages.isEmpty) return;
       final _cnpid = TextData(
@@ -1172,52 +1172,14 @@ class PainterBloc extends Bloc<PainterEvent, PainterState> {
         hasContent: lines.hasContent,
         cname: lines.cname,
       );
-      if (!ignoreTask(contentid)) addCache(_cnpid);
+      if (!_ignoreTask(contentid)) addCache(_cnpid);
     }
   }
-  // Future<void> loadFromDb(int contentid, int _bookid) async {
-  //   var queryList = await repository.innerdb.loadFromDb(contentid, _bookid);
-  //   if (queryList.isNotEmpty) {
-  //     final map = queryList.first;
-  //     late BookContent bookContent;
-  //     await frameCallbackLooper(() {
-  //       bookContent = BookContent.fromJson(map);
-  //     });
-  //     if (map.contentIsNotEmpty) {
-  //       return adoptText(bookContent, contentid, _bookid);
-  //     }
-  //   }
-  // }
 
-  /// 下载
-  // Future<void> download(int contentid, int _bookid, {bool adopt = true}) async {
-  //   assert(Log.i('loading Id: $contentid', stage: this, name: 'download'));
-  //   final bookContent = await repository.getContentFromNet(_bookid, contentid);
-
-  //   if (bookContent.content != null) {
-  //     // 首先保存到数据库中
-  //     // repository.innerdb.saveToDatabase(bookContent);
-
-  //     if (_bookid != bookid || !adopt) return;
-  //     return adoptText(bookContent, contentid, _bookid);
-  //   }
-  // }
+  // 取消后续操作
+  bool _cancel() => !adpotCache;
 
   bool adpotCache = true;
-  // Future<void> adoptText(BookContent bookContent, int contentid, int _bookid) async {
-  //   if (_bookid != bookid) return;
-  //   final list = await divText(bookContent.content!, bookContent.cname!);
-  //   if (list.isEmpty) return;
-  //   final _cnpid = TextData(
-  //     content: list,
-  //     nid: bookContent.nid,
-  //     pid: bookContent.pid,
-  //     cid: bookContent.cid,
-  //     hasContent: bookContent.hasContent,
-  //     cname: bookContent.cname,
-  //   );
-  //   if (adpotCache) addCache(_cnpid);
-  // }
 
   ///-----------------
   Future<void> deleteCache(int bookId) async {
@@ -1238,11 +1200,10 @@ class ContentMetrics {
     required this.right,
     required this.left,
     required this.index,
-    required this.topHeight,
     required this.size,
     required this.windowTopPadding,
     required this.showrect,
-    required this.whiteHeight,
+    required this.topExtraHeight,
   });
   final List<TextPainter> painters;
   final double extraHeightInLines;
@@ -1255,22 +1216,24 @@ class ContentMetrics {
   final double right;
   final double left;
   final int index;
-  final int topHeight;
   final Size size;
   final double windowTopPadding;
   final bool showrect;
-  final double whiteHeight;
+  final double topExtraHeight;
 }
 
-enum ContentBounds {
-  getLeft,
-  getRight,
+class ContentBounds {
+  static int addLeft = 1;
+  static const int addRight = 2;
+  static const int notLeftAndRight = 3;
+  static bool hasLeft(int i) => i & addLeft != 0;
+  static bool hasRight(int i) => i & addRight != 0;
 }
 
 class ContentViewConfig {
   ContentViewConfig({
     this.fontSize,
-    this.lineBwHeight,
+    this.lineTweenHeight,
     this.bgcolor,
     this.fontFamily,
     this.fontColor,
@@ -1280,7 +1243,7 @@ class ContentViewConfig {
     this.portrait,
   });
   double? fontSize;
-  double? lineBwHeight;
+  double? lineTweenHeight;
   Color? bgcolor;
   String? fontFamily;
   Color? fontColor;
@@ -1290,7 +1253,7 @@ class ContentViewConfig {
   bool? portrait;
   ContentViewConfig copyWith({
     double? fontSize,
-    double? lineBwHeight,
+    double? lineTweenHeight,
     Color? bgcolor,
     int? fontFamily,
     Color? fontColor,
@@ -1303,7 +1266,7 @@ class ContentViewConfig {
         fontColor: fontColor ?? this.fontColor,
         fontFamily: fontFamily as String? ?? this.fontFamily,
         fontSize: fontSize ?? this.fontSize,
-        lineBwHeight: lineBwHeight ?? this.lineBwHeight,
+        lineTweenHeight: lineTweenHeight ?? this.lineTweenHeight,
         bgcolor: bgcolor ?? this.bgcolor,
         locale: locale ?? this.locale,
         axis: axis ?? this.axis,
@@ -1312,98 +1275,85 @@ class ContentViewConfig {
   }
 
   bool get isEmpty {
-    return bgcolor == null || fontSize == null || fontColor == null || axis == null || lineBwHeight == null;
+    return bgcolor == null || fontSize == null || fontColor == null || axis == null || lineTweenHeight == null;
   }
 
   @override
   bool operator ==(Object other) {
-    return identical(this, other) ||
+    return identical(this, other) &&
         other is ContentViewConfig &&
-            fontColor == other.fontColor &&
-            fontFamily == other.fontFamily &&
-            fontSize == other.fontSize &&
-            lineBwHeight == other.lineBwHeight &&
-            bgcolor == other.bgcolor &&
-            locale == other.locale &&
-            axis == other.axis &&
-            patternList == other.patternList;
+        fontColor == other.fontColor &&
+        fontFamily == other.fontFamily &&
+        fontSize == other.fontSize &&
+        lineTweenHeight == other.lineTweenHeight &&
+        bgcolor == other.bgcolor &&
+        locale == other.locale &&
+        axis == other.axis &&
+        portrait == other.portrait &&
+        patternList == other.patternList;
   }
 
   @override
   String toString() {
-    return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor: $fontColor, lineBwHeight: $lineBwHeight,'
+    return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor: $fontColor, lineTweenHeight: $lineTweenHeight,'
         ' fontFamily: $fontFamily,  local: $locale, axis: $axis';
   }
 }
-
-abstract class PainterEvent {
-  const PainterEvent();
-}
-
-class PainterShowShadowEvent extends PainterEvent {
-  const PainterShowShadowEvent();
-}
-
-class _InnerEvent extends PainterEvent {}
-
-class PainterLoadEvent extends PainterEvent {}
-
-class PainterMetricsChangeEvent extends PainterEvent {}
 
 class NotifyMessage {
   const NotifyMessage(this.error, {this.msg = network});
 
   static const network = '网络错误';
-  static const notNext = '没有下一章了';
+  static const notNext = '已经是最后一章了';
   final bool error;
   final String msg;
 }
 
-typedef FrameLooperCallback = bool Function();
+// typedef FrameLooperCallback = bool Function();
 
-class FutureTasks<T> {
-  FutureTasks({FrameLooperCallback? onFrameLooper}) : _onFrameLooper = onFrameLooper;
-  final FrameLooperCallback? _onFrameLooper;
+// class FutureTasks<T> {
+//   FutureTasks({FrameLooperCallback? onFrameLooper}) : _onFrameLooper = onFrameLooper;
+//   final FrameLooperCallback? _onFrameLooper;
 
-  final _tasks = <Future<T> Function()>[];
-  int get length => _tasks.length;
+//   final _tasks = <Future<T> Function()>[];
+//   int get length => _tasks.length;
 
-  Completer<void>? _completer;
-  int _threhsold = 4;
+//   Completer<void>? _completer;
+//   int _threhsold = 4;
 
-  Future<void> awaitComplete({int threshold = 4}) async {
-    _threhsold = math.max(1, threshold);
-    while (_tasks.length >= _threhsold && (_onFrameLooper == null || !_onFrameLooper!())) {
-      _completer ??= Completer<void>();
-      await _completer!.future;
-    }
-  }
+//   Future<void> awaitComplete({int threshold = 4}) async {
+//     _threhsold = math.max(1, threshold);
+//     while (_tasks.length >= _threhsold && (_onFrameLooper == null || !_onFrameLooper!())) {
+//       _completer ??= Completer<void>();
+//       await _completer!.future;
+//     }
+//   }
 
-  final _tasksFutures = <Future<T>>[];
+//   final _tasksFutures = <Future<T>>[];
 
-  Future<List<T>> get wait => Future.wait(_tasksFutures);
+//   Future<List<T>> get wait => Future.wait(_tasksFutures);
 
-  void completed() {
-    if (_tasks.length <= _threhsold + 1 && _completer != null && !_completer!.isCompleted) {
-      _completer!.complete();
-      _completer = null;
-    }
-  }
+//   void completed() {
+//     if (_tasks.length <= _threhsold + 1 && _completer != null && !_completer!.isCompleted) {
+//       _completer!.complete();
+//       _completer = null;
+//     }
+//   }
 
-  Future<void> addTask(Future<T> Function() func, {void Function()? callback}) async {
-    await awaitComplete(threshold: _threhsold);
-    if (_tasks.contains(func)) return;
-    final f = func();
-    _tasks.add(func);
-    _tasksFutures.add(f);
-    f.whenComplete(() {
-      _tasks.remove(func);
-      _tasksFutures.remove(f);
-      callback?.call();
-      completed();
-    });
-  }
-}
+//   Future<void> addTask(Future<T> Function() func, {void Function()? callback}) async {
+//     await awaitComplete(threshold: _threhsold);
+//     if (_tasks.contains(func)) return;
+//     final f = func();
+//     _tasks.add(func);
+//     _tasksFutures.add(f);
+//     f.whenComplete(() {
+//       _tasks.remove(func);
+//       _tasksFutures.remove(f);
+//       callback?.call();
+//       completed();
+//     });
+//   }
+// }
 
 extension FutureTasksMap<T, E> on Map<T, Future<E>> {
   void addTask(T id, Future<E> f, {void Function()? callback, void Function(T)? solve}) {

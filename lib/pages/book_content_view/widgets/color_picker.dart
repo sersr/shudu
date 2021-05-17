@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -304,11 +305,17 @@ class _SelectColorState extends State<SelectColor> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onHorizontalDragDown: down,
-      onHorizontalDragStart: start,
-      onHorizontalDragUpdate: update,
-      onHorizontalDragEnd: end,
-      onHorizontalDragCancel: widget.onChangeCancel,
+      behavior: HitTestBehavior.opaque,
+      onPanCancel: widget.onChangeCancel,
+      onPanDown: down,
+      onPanEnd: end,
+      onPanStart: start,
+      onPanUpdate: update,
+      // onHorizontalDragDown: down,
+      // onHorizontalDragStart: start,
+      // onHorizontalDragUpdate: update,
+      // onHorizontalDragEnd: end,
+      // onHorizontalDragCancel: widget.onChangeCancel,
       onVerticalDragDown: down,
       onVerticalDragStart: start,
       onVerticalDragUpdate: update,

@@ -45,7 +45,6 @@ class BookItem extends StatelessWidget {
             // padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
             child: ImageResolve(
               img: img,
-              width: 60,
               builder: (child) {
                 return UpdateIcon(
                   isNew: isNew,

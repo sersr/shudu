@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'book_repository.dart';
+import '../compatible/repository.dart';
 
 class BookCache extends Equatable {
   BookCache({
@@ -118,7 +118,8 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Completer<void>? loading;
-
+  Future<void>? get awaitloading => loading?.future;
+  
   void completerLoading() {
     if (loading != null && !loading!.isCompleted) {
       loading!.complete();
@@ -126,14 +127,14 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Stream<BookChapterIdState> _load() async* {
-    final list = await repository.innerdb.loadBookInfo();
+    final list = await repository.bookEvent.loadBookInfo();
     yield BookChapterIdState.fromMap(list);
     completerLoading();
   }
 
   // 不在事件队列中
   Future<void> _update() async {
-    final list = await repository.innerdb.loadBookInfo();
+    final list = await repository.bookEvent.loadBookInfo();
     if (list.isNotEmpty) {
       final s = BookChapterIdState.fromMap(list);
       for (var item in s.sortChildren) {
@@ -154,28 +155,28 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Future<void> addBook(BookCache bookCache) async {
-    await repository.innerdb.addBook(bookCache);
+    await repository.bookEvent.addBook(bookCache);
     emitUpdate();
   }
 
   Future<void> updateTop(int id, int isTop) async {
-    await repository.innerdb.updateBookIsTop(id, isTop);
+    await repository.bookEvent.updateBookIsTop(id, isTop);
     emitUpdate();
   }
 
   Future<void> deleteBook(int id) async {
-    await repository.innerdb.deleteBook(id);
+    await repository.bookEvent.deleteBook(id);
     emitUpdate();
   }
 
   Future<void> loadFromNet(int id) async {
-    final rawData = await repository.loadInfo(id);
+    final rawData = await repository.bookEvent.loadInfo(id);
     final data = rawData.data;
     if (data != null) {
       final newCname = data.lastChapter;
       final lastTime = data.lastTime;
       if (newCname != null && lastTime != null) {
-        return repository.innerdb.updateCname(id, newCname, lastTime);
+        return repository.bookEvent.updateCname(id, newCname, lastTime);
       }
     }
   }

@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import android.view.Choreographer
 import android.view.Display
+import android.view.Surface
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.FlutterJNI
 import io.flutter.embedding.engine.FlutterJNI.AsyncWaitForVsyncDelegate
@@ -72,7 +73,7 @@ class BangsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val decorView = activity.window.decorView
         val decorViewWidth = decorView.width
         val decorViewHeight = decorView.height
-        Log.i(TAG, "decorView Height  $decorViewHeight")
+        // Log.i(TAG, "decorView Height  $decorViewHeight")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val windowInsets = decorView.rootWindowInsets
             if (windowInsets != null) {
@@ -82,7 +83,7 @@ class BangsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     val top = displayCutout.safeInsetTop;
                     val right = displayCutout.safeInsetRight
                     val bottom = displayCutout.safeInsetBottom;
-                    Log.i(TAG, displayCutout.boundingRects.toString())
+                    // Log.i(TAG, displayCutout.boundingRects.toString())
                     return mapOf("left" to left.toDouble(), "top" to top.toDouble(),
                             "right" to right.toDouble(), "bottom" to bottom.toDouble(),
                             "height" to decorViewHeight.toDouble(), "width" to decorViewWidth.toDouble())
@@ -98,27 +99,25 @@ class BangsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         val _activity = binding.activity
- //       var modes: Array<Display.Mode>? = null
- //       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
- //           modes = _activity.display?.supportedModes
- //       } else {
- //           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                modes = _activity.windowManager.defaultDisplay.supportedModes
- //           }
- //       }
-//
+
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            modes?.last()?.apply {
+//            val modes = _activity.windowManager.defaultDisplay.supportedModes!!
+//            modes.sortBy {
+//                it.refreshRate
+//            }
+//
+//            modes.last()?.apply {
+//                val rate = refreshRate
+//                FlutterJNI.setRefreshRateFPS(refreshRate)
+//                Log.i("FlutterActivity", "done ....")
 //                FlutterJNI.setAsyncWaitForVsyncDelegate {
 //                    Choreographer.getInstance()
 //                            .postFrameCallback { frameTimeNanos ->
-//                                val refreshPeriodNanos = (1000000000.0 / refreshRate).toLong()
+//                                val refreshPeriodNanos = (1000000000.0 / rate).toLong()
 //                                FlutterJNI.nativeOnVsync(
 //                                        frameTimeNanos, frameTimeNanos + refreshPeriodNanos, it)
 //                            }
 //                }
-//                在 @MainActivity 设置
-//                FlutterJNI.setRefreshRateFPS(refreshRate)
 //            }
 //        }
         activity = _activity

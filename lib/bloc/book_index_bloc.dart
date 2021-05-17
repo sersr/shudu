@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../compatible/repository.dart';
 import '../utils/utils.dart';
-import 'book_repository.dart';
 
 abstract class BookIndexEvent {
   BookIndexEvent();
@@ -85,7 +86,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   }
 
   Future<void> cacheinnerdb(int? id, String indexs) async {
-    return repository.innerdb.cacheinnerdb(id, indexs);
+    return repository.bookEvent.cacheinnerdb(id, indexs);
   }
 
   Stream<BookIndexState> sendIndexs({required int bookid, required int contentid}) async* {
@@ -99,7 +100,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     var volIndex = 0;
     var inIndexs = false;
     var cacheList = <int>[];
-    var queryList = await repository.innerdb.sendIndexs(bookid);
+    var queryList = await repository.bookEvent.sendIndexs(bookid);
     for (var l in queryList) {
       cacheList.add(l['cid'] as int);
     }
@@ -154,7 +155,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     if (indexs.isEmpty || // immediate
         !inIndexs || // immediate
         (bookUpDateTime[bookid] ?? 0) + updateInterval <= DateTime.now().millisecondsSinceEpoch) {
-      final rawData = await repository.getIndexsFromNet(bookid);
+      final rawData = await repository.bookEvent.getIndexsFromNet(bookid);
       if (rawData.isEmpty) {
         if (indexs.isEmpty) {
           yield BookIndexErrorState();
@@ -178,7 +179,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             indexs.last.last.cid != bookIndexShort.last.last.cid) {
           final newCname = bookIndexShort.last.last.cname;
 
-          await repository.innerdb.updateCname(bookid, newCname, DateTime.now().toStringFormat);
+          await repository.bookEvent.updateCname(bookid, newCname, DateTime.now().toStringFormat);
           indexs = bookIndexShort;
           index = 0;
           volIndex = 0;
@@ -204,7 +205,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   }
 
   Future<List<List>> loadFromList(String restr) async {
-    return await repository.loadIndexsList(restr);
+    return await repository.bookEvent.loadIndexsList(restr);
   }
 
   ValueNotifier<int> slide = ValueNotifier(0);

@@ -61,7 +61,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                   controller = ScrollController(initialScrollOffset: offset);
                   return Scrollbar(
                     controller: controller,
-                    thickness: 10,
+                    interactive: true,
+                    thickness: 8,
                     radius: const Radius.circular(5),
                     child: CustomScrollView(
                       controller: controller,
@@ -72,9 +73,10 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                             builder: (context, st) {
                               return Container(
                                 height: headerextent,
-                                // padding: const EdgeInsets.only(top: 4.0, bottom: 1.0),
                                 decoration: BoxDecoration(
                                   color: Color.fromRGBO(150, 180, 140, 1),
+                                  // borderRadius:
+                                  //     st.isPinned ? const BorderRadius.vertical(top: Radius.circular(6.0)) : null,
                                 ),
                                 child: Center(child: Text('${l.first as String}')),
                                 // height: headerextent,

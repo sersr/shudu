@@ -1,5 +1,5 @@
 name: shudu
-description: A new Flutter project.
+description: shudu 小说阅读
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.1
@@ -13,13 +13,16 @@ dependencies:
   animations: ^2.0.0
   built_collection: ^5.0.0
   battery: ^2.0.1
+  characters: ^1.1.0
   collection: ^1.15.0
   cupertino_icons: ^1.0.0
   device_info: ^2.0.0
   dio: ^4.0.0
   equatable: ^2.0.0
   flutter_bloc: ^7.0.0
-  flutter_sticky_header: ^0.6.0
+  # flutter_sticky_header: ^0.6.0
+  flutter_sticky_header:
+    path: ../plugins/flutter_sticky_header
   hive: ^2.0.0
   hive_flutter: ^1.0.0
   http: ^0.13.1
@@ -31,8 +34,10 @@ dependencies:
   retrofit: ^2.0.0-beta1
   sqflite: ^2.0.0+3
   sqflite_common_ffi: ^2.0.0
+  stream_channel: ^2.1.0
   url_launcher: ^6.0.3
   video_player: ^2.1.0
+  web_socket_channel: ^2.0.0
   carousel_slider: ^4.0.0-nullsafety.0
   bangs:
     path: ./plugins/bangs
@@ -65,6 +70,12 @@ flutter:
         - asset: assets/fonts/NotoSansSC-Regular.otf
         # - asset: assets/fonts/NotoSansSC-Bold.otf
     #       weight: 700
+    # - family: RobotoMono
+    #   fonts:
+    #     - asset: assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf
+    # - family: SourceHanSans
+    #   fonts:
+    #     - asset: assets/fonts/SourceHanSansCN/SourceHanSans-Regular.otf
     # - family: SourceHanSansSC
     #   fonts:
     #     - asset: assets/fonts/SourceHanSansSC-Regular.otf

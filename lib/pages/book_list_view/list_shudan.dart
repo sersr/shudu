@@ -51,7 +51,6 @@ class _ListShudanPageState extends State<ListShudanPage> with SingleTickerProvid
     return RepaintBoundary(
       child: Scaffold(
           appBar: AppBar(
-            toolbarHeight: 80,
             title: Text('书单'),
             centerTitle: true,
             bottom: TabBar(
@@ -96,9 +95,11 @@ class WrapWidget extends StatefulWidget {
 
 class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMixin {
   late RefreshController controller;
+  late ScrollController scrollController;
   @override
   void initState() {
     super.initState();
+    scrollController = ScrollController();
     controller = RefreshController();
   }
 
@@ -108,89 +109,103 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
     return RepaintBoundary(
       child: BlocBuilder<ShudanBloc, ShudanState>(
         builder: (context, state) {
+          // return Scrollbar(
+          //   controller: scrollController,
+          //   interactive: true,
+          //   isAlwaysShown: true,
+          //   thickness: 8,
+          //   radius: Radius.circular(8),
+          //   child:
           return SmartRefresher(
-              enablePullDown: true,
-              enablePullUp: true,
-              controller: controller,
-              onRefresh: () async {
-                final bloc = BlocProvider.of<ShudanBloc>(context);
-                await bloc.completer?.future;
-                bloc
-                  ..completer = Completer<Status>()
-                  ..add(ShudanLoadEvent(widget.index));
-                final result = await bloc.completer?.future;
-                if (mounted) {
-                  if (result == Status.done) {
-                    controller.refreshCompleted();
-                  } else if (result == Status.failed) {
-                    controller.refreshFailed();
-                  } else {
-                    controller.resetNoData();
+              scrollController: scrollController,
+                enablePullDown: true,
+                enablePullUp: true,
+                controller: controller,
+                onRefresh: () async {
+                  final bloc = BlocProvider.of<ShudanBloc>(context);
+                  await bloc.completer?.future;
+                  bloc
+                    ..completer = Completer<Status>()
+                    ..add(ShudanLoadEvent(widget.index));
+                  final result = await bloc.completer?.future;
+                  if (mounted) {
+                    if (result == Status.done) {
+                      controller.refreshCompleted();
+                    } else if (result == Status.failed) {
+                      controller.refreshFailed();
+                    } else {
+                      controller.resetNoData();
+                    }
                   }
-                }
-              },
-              onLoading: () async {
-                final bloc = BlocProvider.of<ShudanBloc>(context);
-                await bloc.completer?.future;
-                bloc
-                  ..completer = Completer<Status>()
-                  ..add(ShudanLoadEvent(widget.index));
-                final result = await bloc.completer?.future;
-                if (mounted) {
-                  if (result == Status.done) {
-                    controller.loadComplete();
-                  } else if (result == Status.failed) {
-                    controller.loadFailed();
-                  } else {
-                    controller.loadNoData();
-                  }
-                }
-              },
-              header: WaterDropHeader(),
-              footer: CustomFooter(
-                builder: (BuildContext context, LoadStatus? mode) {
-                  Widget body;
-                  if (mode == LoadStatus.idle) {
-                    body = Text('上拉加载');
-                  } else if (mode == LoadStatus.loading) {
-                    body = CupertinoActivityIndicator();
-                  } else if (mode == LoadStatus.failed) {
-                    body = Text('加载失败');
-                  } else if (mode == LoadStatus.canLoading) {
-                    body = Text('释放加载');
-                  } else {
-                    body = Text('没有更多了');
-                  }
-                  return Container(
-                    height: 55.0,
-                    child: DefaultTextStyle(style: TextStyle(color: Colors.grey[800]), child: Center(child: body)),
-                  );
                 },
-              ),
-              child: () {
-                if (state.all[widget.index].isEmpty) {
-                  if (state.status == Status.failed && widget.index == state.id) {
-                    return Center(
-                      child: btn1(
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                        bgColor: Colors.blue,
-                        splashColor: Colors.blue[200],
-                        radius: 40,
-                        child: Text(
-                          '重新加载',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                        ),
-                        onTap: () {
-                          BlocProvider.of<BookInfoBloc>(context).add(BookInfoReloadEvent());
-                        },
-                      ),
-                    );
-                  } else {
-                    return Center(child: CupertinoActivityIndicator());
+                onLoading: () async {
+                  final bloc = BlocProvider.of<ShudanBloc>(context);
+                  await bloc.completer?.future;
+                  bloc
+                    ..completer = Completer<Status>()
+                    ..add(ShudanLoadEvent(widget.index));
+                  final result = await bloc.completer?.future;
+                  if (mounted) {
+                    if (result == Status.done) {
+                      controller.loadComplete();
+                    } else if (result == Status.failed) {
+                      controller.loadFailed();
+                    } else {
+                      controller.loadNoData();
+                    }
                   }
-                }
-                return buildListView(state.all[widget.index], context, widget.index);
-              }());
+                },
+                header: WaterDropHeader(),
+                footer: CustomFooter(
+                  onClick: () {
+                  final bloc = BlocProvider.of<ShudanBloc>(context);
+                  bloc.add(ShudanLoadEvent(widget.index));
+                },
+                  builder: (BuildContext context, LoadStatus? mode) {
+                    Widget body;
+                    if (mode == LoadStatus.idle) {
+                      body = Text('上拉加载');
+                    } else if (mode == LoadStatus.loading) {
+                      body = CupertinoActivityIndicator();
+                    } else if (mode == LoadStatus.failed) {
+                      body = Text('加载失败');
+                    } else if (mode == LoadStatus.canLoading) {
+                      body = Text('释放加载');
+                    } else {
+                      body = Text('没有更多了');
+                    }
+                    return Container(
+                      height: 55.0,
+                      child: DefaultTextStyle(style: TextStyle(color: Colors.grey[800]), child: Center(child: body)),
+                    );
+                  },
+                ),
+                child: () {
+                  if (state.all[widget.index].isEmpty) {
+                    if (state.status == Status.failed && widget.index == state.id) {
+                      return Center(
+                        child: btn1(
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                          bgColor: Colors.blue,
+                          splashColor: Colors.blue[200],
+                          radius: 40,
+                          child: Text(
+                            '重新加载',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                          onTap: () {
+                            BlocProvider.of<BookInfoBloc>(context).add(BookInfoReloadEvent());
+                          },
+                        ),
+                      );
+                    } else {
+                      return Center(child: CupertinoActivityIndicator());
+                    }
+                  }
+                  return buildListView(state.all[widget.index], context, widget.index);
+                }()
+              // ),
+              );
           // return
         },
         buildWhen: (o, n) {
@@ -201,9 +216,11 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
     );
   }
 
-  ListView buildListView(List<BookList> list, BuildContext context, int index) {
+  Widget buildListView(List<BookList> list, BuildContext context, int index) {
     final width = 1 / MediaQuery.of(context).devicePixelRatio;
     return ListView.builder(
+      primary: false,
+      // controller: scrollController,
       itemExtent: 112,
       itemCount: list.length,
       itemBuilder: (context, index) {
@@ -221,7 +238,7 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
                   create: (context) => ShudanListDetailBloc(context.read<Repository>()),
                   child: Builder(builder: (context) {
                     BlocProvider.of<ShudanListDetailBloc>(context).add(ShudanListDetailLoadEvent(bookList.listId));
-                    return ShudanDetailPage(total: bookList.bookCount);
+                    return wrapData(ShudanDetailPage(total: bookList.bookCount));
                   }),
                 );
               });
@@ -333,20 +350,18 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
   int hotCount = 1;
   int collectCount = 1;
   Stream<ShudanState> resolve(int id) async* {
-    // box = await Hive.openLazyBox('shudanlist');
     var status = Status.done;
     yield shudan(id, status);
     if (id == 0) {
       if (newList.isEmpty) {
-        // final first = await box.get('shudanNewList');
-        var data = await repository.getBookList(c[id]);
+        var data = await repository.bookEvent.getBookList(c[id]);
         if (data.isNotEmpty) {
           newList = data;
           newCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.loadShudan(c[id], 1);
+        data = await repository.bookEvent.loadShudan(c[id], 1);
         if (data.isNotEmpty) {
           newCount = 1;
           newList = data;
@@ -354,7 +369,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
           status = Status.failed;
         }
       } else {
-        final data = await repository.loadShudan(c[id], newCount + 1);
+        final data = await repository.bookEvent.loadShudan(c[id], newCount + 1);
         if (data.isNotEmpty) {
           newCount += 1;
           newList.addAll(data);
@@ -364,14 +379,14 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
       }
     } else if (id == 1) {
       if (hotList.isEmpty) {
-        var data = await repository.getBookList(c[id]);
+        var data = await repository.bookEvent.getBookList(c[id]);
         if (data.isNotEmpty) {
           hotList = data;
           hotCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.loadShudan(c[id], 1);
+        data = await repository.bookEvent.loadShudan(c[id], 1);
         if (data.isNotEmpty) {
           hotList = data;
           hotCount = 1;
@@ -379,7 +394,7 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
           status = Status.noMore;
         }
       } else {
-        final data = await repository.loadShudan(c[id], hotCount + 1);
+        final data = await repository.bookEvent.loadShudan(c[id], hotCount + 1);
         if (data.isNotEmpty) {
           hotCount += 1;
           hotList.addAll(data);
@@ -389,21 +404,21 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
       }
     } else if (id == 2) {
       if (collectList.isEmpty) {
-        var data = await repository.getBookList(c[id]);
+        var data = await repository.bookEvent.getBookList(c[id]);
         if (data.isNotEmpty) {
           collectList = data;
           collectCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.loadShudan(c[id], 1);
+        data = await repository.bookEvent.loadShudan(c[id], 1);
         if (data.isNotEmpty) {
           collectList = data;
         } else {
           status = Status.failed;
         }
       } else {
-        final data = await repository.loadShudan(c[id], collectCount + 1);
+        final data = await repository.bookEvent.loadShudan(c[id], collectCount + 1);
         if (data.isNotEmpty) {
           collectCount += 1;
           collectList.addAll(data);

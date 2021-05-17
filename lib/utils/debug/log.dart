@@ -1,18 +1,19 @@
 // import 'package:flutter/foundation.dart';
 part of autils;
+
 abstract class Log {
   static const int info = 0;
-  static const int warnning = 1;
+  static const int warn = 1;
   static const int error = 2;
-  static const int level = 0;
-  static final List<String> _logMessage = ['Info', 'Warnning', 'Error'];
-  static bool Function(Object?) enablePrint = (_) => true;
+  static int level = 0;
+  static final List<String> _logMessage = ['Info', 'Warn', 'Error'];
+  
   static bool i(String info, {Object? stage, Object? name, Object? data}) {
     return log(Log.info, info, stage: stage, name: name, data: data);
   }
 
-  static bool w(String warnning, {Object? stage, Object? name, Object? data}) {
-    return log(Log.warnning, warnning, stage: stage, name: name, data: data);
+  static bool w(String warn, {Object? stage, Object? name, Object? data}) {
+    return log(Log.warn, warn, stage: stage, name: name, data: data);
   }
 
   static bool e(String error, {Object? stage, Object? name, Object? data}) {
@@ -22,7 +23,6 @@ abstract class Log {
   static bool log(int lv, String message, {Object? stage, Object? name, Object? data}) {
     String addMsg;
     String l;
-    if (!enablePrint(stage)) return true;
     switch (level) {
       case 0:
         l = _logMessage[lv];
@@ -66,7 +66,9 @@ abstract class Log {
         addMsg = '$addMsg${name.toString().padRight(12)}';
       }
     }
-    addMsg = '$addMsg |';
+    if (stage != null || name != null) {
+      addMsg = '$addMsg |';
+    }
     addMsg = '$addMsg $l: $message.';
     if (data != null) {
       addMsg = '$addMsg\n<~ data: ${data.toString()} ~>';

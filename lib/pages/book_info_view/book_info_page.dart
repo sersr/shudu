@@ -1,18 +1,14 @@
 import 'dart:async';
-import 'dart:ui' as ui;
-import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../embed/images.dart';
+import '../book_content_view/book_content_page.dart';
 
 import '../../bloc/bloc.dart';
-import '../../bloc/book_cache_bloc.dart';
-import '../../bloc/book_info_bloc.dart';
 import '../../data/book_info.dart';
 import '../../utils/utils.dart';
-import '../book_content_view/content_page.dart';
+import '../embed/images.dart';
 import '../embed/indexs.dart';
-// import '../embed/indexs.dart';
 
 class BookInfoPage extends StatefulWidget {
   const BookInfoPage({Key? key}) : super(key: key);
@@ -23,7 +19,7 @@ class BookInfoPage extends StatefulWidget {
   static Future push(BuildContext context, int bookid) async {
     BlocProvider.of<BookInfoBloc>(context).add(BookInfoEventSentWithId(bookid));
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookInfoPage();
+      return wrapData(BookInfoPage());
     }));
   }
 }
@@ -93,7 +89,6 @@ class _BookInfoPageState extends State<BookInfoPage> {
                               break;
                             }
                           }
-                          final eh = math.max(ui.window.padding.bottom / ui.window.devicePixelRatio / 3, 0.0);
 
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -102,8 +97,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
                               Expanded(
                                 child: btn1(
                                   child: Container(
-                                    height: 56 + eh,
-                                    padding: EdgeInsets.only(bottom: eh),
+                                    height: 56,
                                     child: Center(
                                       child: Text('${contain ? '阅读' : '试读'}'),
                                     ),
@@ -118,41 +112,31 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                 ),
                               ),
                               Expanded(
-                                  child: btn1(
-                                      background: false,
-                                      onTap: () {
-                                        if (contain) {
-                                          context.read<BookCacheBloc>().deleteBook(bookid);
-                                        } else {
-                                          var addCache = BookCache(
-                                            name: info.name,
-                                            img: info.img,
-                                            updateTime: info.lastTime,
-                                            lastChapter: info.lastChapter,
-                                            chapterId: info.firstChapterId,
-                                            id: info.id,
-                                            sortKey: DateTime.now().millisecondsSinceEpoch,
-                                            isTop: 0,
-                                            page: 1,
-                                            isNew: 1,
-                                          );
-                                          context.read<BookCacheBloc>().addBook(addCache);
-                                        }
-                                      },
-                                      child: Container(
-                                          height: 56 + eh,
-                                          padding: EdgeInsets.only(bottom: eh),
-                                          child: Center(child: Text('${contain ? '移除' : '添加到'}书架'))))),
-                              // Expanded(
-                              //   child: btn1(
-                              //     child: Container(
-                              //         height: 56 + eh,
-                              //         padding: EdgeInsets.only(bottom: eh),
-                              //         child: Center(child: Text('action'))),
-                              //     onTap: () {},
-                              //     background: false,
-                              //   ),
-                              // ),
+                                child: btn1(
+                                  background: false,
+                                  onTap: () {
+                                    if (contain) {
+                                      context.read<BookCacheBloc>().deleteBook(bookid);
+                                    } else {
+                                      var addCache = BookCache(
+                                        name: info.name,
+                                        img: info.img,
+                                        updateTime: info.lastTime,
+                                        lastChapter: info.lastChapter,
+                                        chapterId: info.firstChapterId,
+                                        id: info.id,
+                                        sortKey: DateTime.now().millisecondsSinceEpoch,
+                                        isTop: 0,
+                                        page: 1,
+                                        isNew: 1,
+                                      );
+                                      context.read<BookCacheBloc>().addBook(addCache);
+                                    }
+                                  },
+                                  child: Container(
+                                      height: 56, child: Center(child: Text('${contain ? '移除' : '添加到'}书架'))),
+                                ),
+                              ),
                             ],
                           );
                         },
@@ -188,29 +172,6 @@ class _BookInfoPageState extends State<BookInfoPage> {
         },
       ),
     );
-    // return widget.bookid != null && widget.cid != null && widget.page != null
-    //     ? WillPopScope(
-    //         onWillPop: () async {
-    //           var cid = widget.cid!;
-    //           var page = widget.page!;
-    //           var bookid = widget.bookid!;
-
-    //           // 重复进入相同书籍，并阅读会改变状态
-    //           final cache = context.read<BookCacheBloc>();
-    //           for (final bookCache in cache.state.sortChildren) {
-    //             if (bookCache.id == widget.bookid) {
-    //               cid = bookCache.chapterId!;
-    //               page = bookCache.page!;
-    //               break;
-    //             }
-    //           }
-    //           context.read<PainterBloc>()
-    //             ..inbook()
-    //             ..newBookOrCid(bookid, cid, page);
-    //           return true;
-    //         },
-    //         child: child,
-    //       )
     return child;
   }
 
@@ -230,7 +191,9 @@ class _BookInfoPageState extends State<BookInfoPage> {
               bottom: 66.0,
               child: Material(
                 borderRadius: BorderRadius.circular(6.0),
-                color: Color.fromRGBO(210, 210, 210, 1),
+                color: Colors.grey.shade300,
+                clipBehavior: Clip.hardEdge,
+                elevation: 4.0,
                 child: child,
               ),
             ),
@@ -398,7 +361,8 @@ class _BookInfoPageState extends State<BookInfoPage> {
                         child: Text(
                           '$name',
                           style: ts.title2,
-                          overflow: TextOverflow.fade,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                           softWrap: false,
                         ),
                       ),
@@ -472,7 +436,7 @@ class BookInfoSameItemWidget extends StatelessWidget {
               create: (context) => BookInfoBloc(context.read<Repository>()),
               child: Builder(builder: (context) {
                 BlocProvider.of<BookInfoBloc>(context).add(BookInfoEventSentWithId(l.id!));
-                return BookInfoPage();
+                return wrapData(BookInfoPage());
               }),
             );
           }));
@@ -481,7 +445,7 @@ class BookInfoSameItemWidget extends StatelessWidget {
           Container(
             width: 72,
             height: 108,
-            child: ImageResolve(img: l.img, width: 72),
+            child: ImageResolve(img: l.img),
           ),
           Expanded(
             child: Padding(

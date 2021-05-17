@@ -35,7 +35,7 @@ packages:
       name: async
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.5.0"
+    version: "2.6.1"
   bangs:
     dependency: "direct main"
     description:
@@ -135,7 +135,7 @@ packages:
     source: hosted
     version: "4.0.0-nullsafety.0"
   characters:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: characters
       url: "https://pub.flutter-io.cn"
@@ -282,10 +282,10 @@ packages:
   flutter_sticky_header:
     dependency: "direct main"
     description:
-      name: flutter_sticky_header
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.6.0"
+      path: "../plugins/flutter_sticky_header"
+      relative: true
+    source: path
+    version: "0.7.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -636,7 +636,7 @@ packages:
       name: source_span
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.8.0"
+    version: "1.8.1"
   sqflite:
     dependency: "direct main"
     description:
@@ -673,7 +673,7 @@ packages:
     source: hosted
     version: "1.10.0"
   stream_channel:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: stream_channel
       url: "https://pub.flutter-io.cn"
@@ -713,7 +713,7 @@ packages:
       name: test_api
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.2.19"
+    version: "0.3.0"
   timing:
     dependency: transitive
     description:
@@ -777,13 +777,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.0"
-  value_layout_builder:
-    dependency: transitive
-    description:
-      name: value_layout_builder
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.3.1"
   vector_math:
     dependency: transitive
     description:
@@ -820,7 +813,7 @@ packages:
     source: hosted
     version: "1.0.0"
   web_socket_channel:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: web_socket_channel
       url: "https://pub.flutter-io.cn"
@@ -849,4 +842,4 @@ packages:
     version: "3.1.0"
 sdks:
   dart: ">=2.12.0 <3.0.0"
-  flutter: ">=1.24.0-10.2.pre"
+  flutter: ">=1.24.0-10"

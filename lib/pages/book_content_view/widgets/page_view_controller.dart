@@ -10,19 +10,20 @@ typedef BoolCallback = bool Function();
 
 class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   NopPageViewController({
-    required this.vsync,
     required this.scrollingNotify,
-    required this.getDragState,
+    required this.vsync,
+    // required this.getDragState,
     required this.hasContent,
-  })   : _maxExtent = double.infinity,
+  })  : _maxExtent = double.infinity,
         _minExtent = double.negativeInfinity {
     _activity = IdleActivity(this);
   }
 
   TickerProvider vsync;
-  BoolCallback getDragState;
+
+  // BoolCallback getDragState;
   void Function(bool) scrollingNotify;
-  bool Function(ContentBounds, int) hasContent;
+  int Function(int) hasContent;
 
   Activity? _activity;
 
@@ -82,21 +83,21 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       final nextPage = page.round();
 
       if (axis == Axis.horizontal) {
-        if (hasContent(ContentBounds.getRight, nextPage)) {
+        if (ContentBounds.hasRight(hasContent(nextPage))) {
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
       } else {
-        if (hasContent(ContentBounds.getRight, nextPage)) {
+        if (hasContent(nextPage) & ContentBounds.addRight != 0) {
           var _n = page;
 
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
 
-          if (hasContent(ContentBounds.getRight, (page + 0.5).round())) {
+          if (ContentBounds.hasRight(hasContent((page + 0.5).round()))) {
             _n += 1;
           } else {
             _n = (page + 0.5).roundToDouble();
@@ -111,7 +112,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void prePage() {
-    if (_activity is IdleActivity && hasContent(ContentBounds.getLeft, page.toInt() - 1)) {
+    if (_activity is IdleActivity && ContentBounds.hasLeft(hasContent(page.toInt() - 1))) {
       if (minExtent!.isFinite) {
         _minExtent = double.negativeInfinity;
       }
@@ -126,8 +127,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goIdle() {
+    // _canDrag = true;
     scrollingnotifier(false);
-    _canDrag = true;
     beginActivity(IdleActivity(this));
   }
 
@@ -137,12 +138,12 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     // 边界信息，在 [performLayout] 中设置，
     // 只要 [v] 值不同，就要更新并重新设置边界，不然会卡住
     v = v.clamp(minExtent!, maxExtent!);
-    if (_pixels == v && v != minExtent) {
-      // 帧后回调
-      SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
-        goBallisticResolveWithLastActivity();
-      });
-    }
+    // if (_pixels == v && v != minExtent) {
+    //   // 帧后回调
+    //   SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+    //     goBallisticResolveWithLastActivity();
+    //   });
+    // }
     _pixels = v;
     notifyListeners();
   }
@@ -153,6 +154,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   // 判断是否立即停止
   @override
   void goBallisticResolveWithLastActivity() {
+    if (viewPortDimension == null) return;
     final la = pixels % viewPortDimension!;
     if (axis == Axis.vertical || la <= 1.0 || la + 1.0 >= viewPortDimension!) {
       _lastvelocity = 0.0;
@@ -165,10 +167,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goBallistic(double velocity) {
-    if (!_canDrag) {
-      goIdle();
-      return;
-    }
+    // if (!_canDrag) {
+    // goIdle();
+    // return;
+    // }
 
     int to;
 
@@ -240,12 +242,12 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   PreNextDragController? _currentDrag;
   // 指示是否可拖动
   // 当进行文本布局时，占用UI资源
-  bool _canDrag = true;
+  // bool _canDrag = true;
   PreNextDragController? drag(DragStartDetails details, VoidCallback cancelCallback) {
-    _canDrag = getDragState();
-    if (!_canDrag) {
-      return null;
-    }
+    // _canDrag = getDragState();
+    // if (!_canDrag) {
+    //   return null;
+    // }
     scrollingnotifier(true);
     final _drag = PreNextDragController(delegate: this, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
@@ -515,14 +517,16 @@ class ContentPreNextRenderObject extends RenderBox {
         data.layoutOffset = computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
       }
       collectGarbage(firstIndex!, lastIndex!);
-
-      final leftChild = nopController.hasContent(ContentBounds.getLeft, firstIndex!);
-      final rightChild = nopController.hasContent(ContentBounds.getRight, lastIndex!);
-      nopController.applyConentDimension(
-        minExtent: leftChild ? double.negativeInfinity : indexToLayoutOffset(extent, firstIndex!),
-        maxExtent: rightChild ? double.infinity : indexToLayoutOffset(extent, lastIndex!),
-      );
       _element!._build(nopController.page.round(), changeState: true);
+
+      final leftRight = nopController.hasContent(firstIndex!);
+      final hasLeft = ContentBounds.hasLeft(leftRight);
+      final hasRight = ContentBounds.hasRight(leftRight);
+
+      nopController.applyConentDimension(
+        minExtent: hasLeft ? double.negativeInfinity : indexToLayoutOffset(extent, firstIndex!),
+        maxExtent: hasRight ? double.infinity : indexToLayoutOffset(extent, lastIndex!),
+      );
     }
   }
 
@@ -591,10 +595,10 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   bool hitTestSelf(Offset position) {
-    if (position.isInRange(size)) {
-      return true;
-    }
-    return false;
+    // if (position.isInRange(size)) {
+    //   return true;
+    // }
+    return true;
   }
 
   @override
