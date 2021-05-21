@@ -1,14 +1,16 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../compatible/book_event_impl.dart';
 
-import '../../bloc/bloc.dart';
+import '../../event/event.dart';
 import '../../utils/widget/image_shadow.dart';
 
 class ImageResolve extends StatelessWidget {
-  const ImageResolve({Key? key, this.img, this.builder, this.boxFit = BoxFit.fitWidth}) : super(key: key);
+  const ImageResolve(
+      {Key? key, this.img, this.builder, this.boxFit = BoxFit.fitWidth})
+      : super(key: key);
   final String? img;
   final Widget Function(Widget)? builder;
   final BoxFit boxFit;
@@ -16,7 +18,7 @@ class ImageResolve extends StatelessWidget {
   Widget build(BuildContext context) {
     if (img == null) return Container();
     final repository = Provider.of<Repository>(context);
-    final _future = repository.saveImage(img!);
+    final _future = repository.customEvent.getImagePath(img!);
     return RepaintBoundary(
       child: _futureBuilder(_future),
     );
@@ -32,7 +34,8 @@ class ImageResolve extends StatelessWidget {
               child: Text(''),
             );
           }
-          Widget framebuilder(context, Widget image, int? frame, bool wasSynchronouslyLoaded) {
+          Widget framebuilder(
+              context, Widget image, int? frame, bool wasSynchronouslyLoaded) {
             Widget child;
             if (builder != null) {
               child = builder!(image);
@@ -48,7 +51,7 @@ class ImageResolve extends StatelessWidget {
 
           Widget errorbuilder(context, e, t) {
             final repository = Provider.of<Repository>(context);
-            final _future = repository.saveImage(MessageFunc.errorImg);
+            final _future = repository.customEvent.getImagePath(errorImg);
             if (isFirst) {
               return _futureBuilder(_future, isFirst: false);
             }

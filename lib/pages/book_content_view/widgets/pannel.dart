@@ -55,13 +55,18 @@ class _PannelState extends State<Pannel> {
         minThumbSeparation: 2,
         valueIndicatorTextStyle: TextStyle(),
         overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
-        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
+        thumbShape: RoundSliderThumbShape(
+            enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           RepaintBoundary(
-            child: CnamePan(showCname: widget.showCname, indexBloc: indexBloc, bloc: bloc, getTimer: () => timer),
+            child: CnamePan(
+                showCname: widget.showCname,
+                indexBloc: indexBloc,
+                bloc: bloc,
+                getTimer: () => timer),
           ),
           RepaintBoundary(
             child: Container(
@@ -90,7 +95,8 @@ class _PannelState extends State<Pannel> {
                         children: [
                           btn1(
                               radius: 40,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 7),
                               onTap: () {
                                 if (!bloc.loading.value) {
                                   bloc.goPre();
@@ -99,7 +105,8 @@ class _PannelState extends State<Pannel> {
                               child: Center(
                                   child: Text(
                                 '上一章',
-                                style: TextStyle(fontSize: 13, color: Colors.grey.shade300),
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey.shade300),
                               )),
                               bgColor: Colors.transparent,
                               splashColor: Colors.grey.shade700),
@@ -116,9 +123,11 @@ class _PannelState extends State<Pannel> {
                                     },
                                     onChangeEnd: (value) {
                                       timer?.cancel();
-                                      timer = Timer(Duration(milliseconds: 1500), () {
+                                      timer = Timer(
+                                          Duration(milliseconds: 1500), () {
                                         widget.showCname.value = false;
-                                        indexBloc.slide.value = indexBloc.sldvalue.index;
+                                        indexBloc.slide.value =
+                                            indexBloc.sldvalue.index;
                                       });
                                     },
                                     onChangeStart: (value) {
@@ -134,7 +143,8 @@ class _PannelState extends State<Pannel> {
                           ),
                           btn1(
                               radius: 40,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 7),
                               onTap: () {
                                 if (!bloc.loading.value) {
                                   bloc.goNext();
@@ -143,7 +153,9 @@ class _PannelState extends State<Pannel> {
                               child: Center(
                                 child: Text(
                                   '下一章',
-                                  style: TextStyle(fontSize: 13, color: Colors.grey.shade300),
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade300),
                                 ),
                               ),
                               bgColor: Colors.transparent,
@@ -224,10 +236,12 @@ class CnamePan extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6.0),
                             color: Colors.grey.shade900.withAlpha(210),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 6.0),
                           child: Text(
                             text,
-                            style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
+                            style: TextStyle(
+                                color: Colors.grey.shade400, fontSize: 15.0),
                             overflow: TextOverflow.fade,
                           ),
                         ),
@@ -263,7 +277,11 @@ class BottomEnd extends StatefulWidget {
 }
 
 Widget bottomButton(
-    {Widget? child, String? text, IconData? icon, required VoidCallback onTap, VoidCallback? onLongPress}) {
+    {Widget? child,
+    String? text,
+    IconData? icon,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress}) {
   assert(child != null || text != null);
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -278,14 +296,21 @@ Widget bottomButton(
           children: [
             if (icon != null) Icon(icon, color: Colors.grey.shade400),
             SizedBox(height: 5),
-            child ?? Text('$text', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+            child ??
+                Text('$text',
+                    style:
+                        TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           ],
         )),
     // ),
   );
 }
 
-Widget _topButton({Widget? child, String? text, required VoidCallback onTap, VoidCallback? onLongPress}) {
+Widget _topButton(
+    {Widget? child,
+    String? text,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress}) {
   assert(child != null || text != null);
   return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -304,7 +329,8 @@ class _BottomEndState extends State<BottomEnd> {
   late ContentNotifier bloc;
   late BookIndexBloc indexBloc;
   PanSlideController? controller;
-  final ValueNotifier<SettingView> showSettings = ValueNotifier(SettingView.none);
+  final ValueNotifier<SettingView> showSettings =
+      ValueNotifier(SettingView.none);
   Size bsize = const Size(0.0, 10);
 
   @override
@@ -332,8 +358,12 @@ class _BottomEndState extends State<BottomEnd> {
             controller: _controller,
             middleChild: (context, animation) {
               // return Center(child: Container(color: Colors.blue, height: 100, width: 100));
-              final op = Tween<Offset>(begin: const Offset(-0.25, 0), end: Offset.zero);
-              final curve = CurvedAnimation(parent: animation, curve: Curves.ease, reverseCurve: Curves.ease.flipped);
+              final op = Tween<Offset>(
+                  begin: const Offset(-0.25, 0), end: Offset.zero);
+              final curve = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.ease,
+                  reverseCurve: Curves.ease.flipped);
               final position = curve.drive(op);
               return RepaintBoundary(
                 child: SlideTransition(
@@ -357,7 +387,8 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
-  void onshowEnd() => indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+  void onshowEnd() =>
+      indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
 
   @override
   void dispose() {
@@ -380,7 +411,8 @@ class _BottomEndState extends State<BottomEnd> {
                 if (showSettings.value != SettingView.indexs) {
                   getController().show();
                   widget.showCname.value = false;
-                  context.read<BookIndexBloc>().add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+                  context.read<BookIndexBloc>().add(
+                      BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -394,7 +426,8 @@ class _BottomEndState extends State<BottomEnd> {
                   widget.showCname.value = false;
                   context.read<BookIndexBloc>()
                     ..bookUpDateTime.remove(bloc.bookid)
-                    ..add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+                    ..add(BookIndexShowEvent(
+                        id: bloc.bookid, cid: bloc.tData.cid));
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -473,7 +506,9 @@ class _BottomEndState extends State<BottomEnd> {
           Expanded(
             child: bottomButton(
               onTap: () {
-                final _axis = widget.controller.axis == Axis.horizontal ? Axis.vertical : Axis.horizontal;
+                final _axis = widget.controller.axis == Axis.horizontal
+                    ? Axis.vertical
+                    : Axis.horizontal;
                 // widget.controller.axis = _axis;
                 bloc.stopAuto();
                 bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
@@ -550,33 +585,32 @@ class _TopPannelState extends State<TopPannel> {
                                   widget.showCname.value = false;
 
                                   /// 由于只有一个[PainterBloc]实例，保存状态
-                                  final route = MaterialPageRoute(builder: (_) => BookInfoPage());
+                                  final route = MaterialPageRoute(
+                                      builder: (_) => BookInfoPage());
 
                                   var cid = bloc.tData.cid!;
                                   var page = bloc.currentPage;
                                   var bookid = bloc.bookid!;
 
-                                  context.read<BookInfoBloc>().add(BookInfoEventSentWithId(bookid));
+                                  context
+                                      .read<BookInfoBloc>()
+                                      .add(BookInfoEventSentWithId(bookid));
                                   bloc
                                     ..dump()
                                     ..out();
                                   context.read<BookCacheBloc>().load();
                                   final cache = context.read<BookCacheBloc>();
-                                  Navigator.of(context).push(route).then((value) {
-                                    // 重复进入相同书籍，并阅读会改变状态
-                                    for (final bookCache in cache.state.sortChildren) {
+                                  Navigator.of(context).push(route).then((_) {
+                                    // 重复进入相同书籍，会改变状态
+                                    for (final bookCache
+                                        in cache.state.sortChildren) {
                                       if (bookCache.id == bookid) {
                                         cid = bookCache.chapterId!;
                                         page = bookCache.page!;
                                         break;
                                       }
                                     }
-                                    bloc
-                                      ..inbook()
-                                      ..newBookOrCid(bookid, cid, page);
-                                    Future.delayed(route.transitionDuration * timeDilation, () {
-                                      bloc.completerCanLoad();
-                                    });
+                                    bloc.newBookOrCid(bookid, cid, page);
                                   });
                                 },
                                 text: '详情页',
@@ -586,14 +620,21 @@ class _TopPannelState extends State<TopPannel> {
                                   onTap: () {
                                     final opt = context.read<OptionsNotifier>();
                                     opt.options = ConfigOptions(
-                                      showPerformanceOverlay: opt.options.showPerformanceOverlay != null
+                                      showPerformanceOverlay: opt.options
+                                                  .showPerformanceOverlay !=
+                                              null
                                           ? !opt.options.showPerformanceOverlay!
                                           : true,
                                     );
                                   }),
-                              _topButton(text: '重新下载', onTap: () => bloc.updateCurrent()),
-                              _topButton(text: '阴影', onTap: () => bloc.showdow()),
-                              _topButton(text: '删除缓存', onTap: () => bloc.deleteCache(bloc.bookid!)),
+                              _topButton(
+                                  text: '重新下载',
+                                  onTap: () => bloc.updateCurrent()),
+                              _topButton(
+                                  text: '阴影', onTap: () => bloc.showdow()),
+                              _topButton(
+                                  text: '删除缓存',
+                                  onTap: () => bloc.deleteCache(bloc.bookid!)),
                             ],
                           ),
                         ),
@@ -610,7 +651,11 @@ class _TopPannelState extends State<TopPannel> {
 
 /// 属性设置页面
 class BookSettingsView extends StatefulWidget {
-  const BookSettingsView({Key? key, required this.showSettings, required this.close, this.bottomHeight = 0.0})
+  const BookSettingsView(
+      {Key? key,
+      required this.showSettings,
+      required this.close,
+      this.bottomHeight = 0.0})
       : super(key: key);
   final ValueNotifier<SettingView> showSettings;
   final void Function([void Function()?]) close;
@@ -652,7 +697,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           Expanded(
             child: Stack(
               children: [
-                GestureDetector(onTap: widget.close, child: Container(color: Colors.transparent)),
+                GestureDetector(
+                    onTap: widget.close,
+                    child: Container(color: Colors.transparent)),
                 Positioned(
                   top: 10.0 + bloc.safePadding.top,
                   left: 24.0 + bloc.safePadding.left,
@@ -712,11 +759,15 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                 ),
                                 child: Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0),
                                     child: AnimatedBuilder(
                                       animation: ftColor,
                                       builder: (context, child) {
-                                        return Text('字体颜色', style: TextStyle(color: ftColor.value.toColor()));
+                                        return Text('字体颜色',
+                                            style: TextStyle(
+                                                color:
+                                                    ftColor.value.toColor()));
                                       },
                                     ),
                                   ),
@@ -770,7 +821,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                           return Slider(
                                             value: bgBrightness.value,
                                             onChanged: (double value) {
-                                              bgColor.value = bgColor.value.withValue(value);
+                                              bgColor.value = bgColor.value
+                                                  .withValue(value);
                                               bgBrightness.value = value;
                                             },
                                             min: 0.0,
@@ -788,7 +840,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                           return Slider(
                                             value: ftBrightness.value,
                                             onChanged: (double value) {
-                                              ftColor.value = ftColor.value.withValue(value);
+                                              ftColor.value = ftColor.value
+                                                  .withValue(value);
                                               ftBrightness.value = value;
                                             },
                                             min: 0.0,
@@ -818,7 +871,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                           animation: fontvalue,
                                           builder: (context, child) {
                                             return Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12.0),
                                               child: Text(
                                                 '字体大小: ${fontvalue.value.toInt()}',
                                                 softWrap: false,
@@ -833,7 +888,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                           animation: fontHvalue,
                                           builder: (context, child) {
                                             return Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12.0),
                                               child: Text(
                                                 '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
                                                 softWrap: false,
@@ -852,7 +909,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                         animation: fontvalue,
                                         builder: (context, child) {
                                           return Slider(
-                                            value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
+                                            value: fontvalue.value < 10.0
+                                                ? 10.0
+                                                : fontvalue.value,
                                             onChanged: (double value) {
                                               fontvalue.value = value;
                                             },
@@ -887,7 +946,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                 child: AnimatedBuilder(
                                   animation: bloc.autoValue,
                                   builder: (context, child) {
-                                    return Text('滚动速度: ${bloc.autoValue.value.toStringAsFixed(2)}');
+                                    return Text(
+                                        '滚动速度: ${bloc.autoValue.value.toStringAsFixed(2)}');
                                   },
                                 ),
                               ),
@@ -899,7 +959,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                         animation: bloc.autoValue,
                                         builder: (context, child) {
                                           return Slider(
-                                            value: bloc.autoValue.value.clamp(1, 10),
+                                            value: bloc.autoValue.value
+                                                .clamp(1, 10),
                                             onChanged: (double value) {
                                               bloc.resetAuto();
                                               bloc.autoValue.value = value;
@@ -944,7 +1005,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                 width: 120,
                 padding: const EdgeInsets.only(bottom: 8.0, top: 5.0),
                 child: btn1(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   radius: 40,
                   onTap: () {
                     bloc.setPrefs(bloc.config.value.copyWith(
@@ -1005,13 +1067,15 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           minThumbSeparation: 2,
           valueIndicatorTextStyle: TextStyle(),
           overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
-          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
+          thumbShape: RoundSliderThumbShape(
+              enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
         ),
         child: child);
   }
 }
 
-typedef ChildBuilder = Widget Function(BuildContext, Animation<double> animation);
+typedef ChildBuilder = Widget Function(
+    BuildContext, Animation<double> animation);
 
 class PannelSlide extends StatefulWidget {
   const PannelSlide(
@@ -1023,7 +1087,11 @@ class PannelSlide extends StatefulWidget {
       this.rightChild,
       required this.controller,
       this.useDefault = true})
-      : assert(botChild != null || topChild != null || leftChild != null || rightChild != null || middleChild != null);
+      : assert(botChild != null ||
+            topChild != null ||
+            leftChild != null ||
+            rightChild != null ||
+            middleChild != null);
   final int? milliseconds;
 
   final PanSlideController controller;
@@ -1044,10 +1112,14 @@ class _PannelSlideState extends State<PannelSlide> {
   late Animation<Offset> leftPositions;
   late Animation<Offset> rightPositions;
 
-  final _topInOffset = Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
-  final _botInOffset = Tween<Offset>(begin: const Offset(0.0, 1), end: Offset.zero);
-  final _leftInOffset = Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero);
-  final _rightInOffset = Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero);
+  final _topInOffset =
+      Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
+  final _botInOffset =
+      Tween<Offset>(begin: const Offset(0.0, 1), end: Offset.zero);
+  final _leftInOffset =
+      Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero);
+  final _rightInOffset =
+      Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero);
   @override
   void initState() {
     super.initState();
@@ -1062,10 +1134,18 @@ class _PannelSlideState extends State<PannelSlide> {
 
   void updateState() {
     panSlideController = widget.controller;
-    botPositions = CurvedAnimation(parent: panSlideController.controller, curve: Curves.ease).drive(_botInOffset);
-    topPositions = CurvedAnimation(parent: panSlideController.controller, curve: Curves.ease).drive(_topInOffset);
-    leftPositions = CurvedAnimation(parent: panSlideController.controller, curve: Curves.ease).drive(_leftInOffset);
-    rightPositions = CurvedAnimation(parent: panSlideController.controller, curve: Curves.ease).drive(_rightInOffset);
+    botPositions = CurvedAnimation(
+            parent: panSlideController.controller, curve: Curves.ease)
+        .drive(_botInOffset);
+    topPositions = CurvedAnimation(
+            parent: panSlideController.controller, curve: Curves.ease)
+        .drive(_topInOffset);
+    leftPositions = CurvedAnimation(
+            parent: panSlideController.controller, curve: Curves.ease)
+        .drive(_leftInOffset);
+    rightPositions = CurvedAnimation(
+            parent: panSlideController.controller, curve: Curves.ease)
+        .drive(_rightInOffset);
   }
 
   @override

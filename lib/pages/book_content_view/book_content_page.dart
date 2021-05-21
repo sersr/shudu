@@ -15,13 +15,24 @@ import 'widgets/pan_slide.dart';
 enum SettingView { indexs, setting, none }
 
 class BookContentPage extends StatefulWidget {
-  const BookContentPage({Key? key, required this.bookid, required this.cid, required this.page}) : super(key: key);
+  const BookContentPage(
+      {Key? key, required this.bookid, required this.cid, required this.page})
+      : super(key: key);
   final int bookid;
   final int cid;
   final int page;
 
-  static Future push(BuildContext context, int newBookid, int cid, int page) async {
-    context.read<ContentNotifier>().setNewBookOrCid(newBookid, cid, page);
+  static Future? _wait;
+  static Future push(
+      BuildContext context, int newBookid, int cid, int page) async {
+    if (_wait != null) return;
+
+    _wait =
+        context.read<ContentNotifier>().setNewBookOrCid(newBookid, cid, page);
+
+    await _wait;
+    _wait = null;
+    
     await EventLooper.instance.scheduler.endOfFrame;
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return BookContentPage(bookid: newBookid, cid: cid, page: page);
@@ -47,7 +58,8 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
   void canLoad(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
-      uiOverlay().whenComplete(() => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
+      uiOverlay().whenComplete(
+          () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
     }
   }
 
@@ -65,7 +77,9 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
         return Material(
           color: bloc.config.value.bgcolor!,
           child: MediaQuery(
-            data: MediaQuery.of(context).removePadding().copyWith(size: bloc.size),
+            data: MediaQuery.of(context)
+                .removePadding()
+                .copyWith(size: bloc.size),
             child: OverflowBox(
               maxHeight: bloc.size.height,
               maxWidth: bloc.size.width,
@@ -107,11 +121,13 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
                           if (bloc.error.value.error) {
                             errorTimer?.cancel();
                             errorTimer = Timer(const Duration(seconds: 2), () {
-                              bloc.notifyState(error: const NotifyMessage(false));
+                              bloc.notifyState(
+                                  error: const NotifyMessage(false));
                             });
                             return GestureDetector(
                               onTap: () {
-                                bloc.notifyState(error: const NotifyMessage(false));
+                                bloc.notifyState(
+                                    error: const NotifyMessage(false));
                               },
                               child: Center(
                                 child: Container(
@@ -119,10 +135,13 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
                                     borderRadius: BorderRadius.circular(6.0),
                                     color: Colors.grey.shade100.withAlpha(250),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0, vertical: 6.0),
                                   child: Text(
                                     bloc.error.value.msg,
-                                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13.0),
+                                    style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontSize: 13.0),
                                     overflow: TextOverflow.fade,
                                   ),
                                 ),
@@ -176,7 +195,8 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
     // 横屏处理
     if (!bloc.config.value.portrait!) {
-      SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
+      SystemChrome.setPreferredOrientations(
+          const [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
     }
     await blocCache.awaitloading;
     await EventLooper.instance.scheduler.endOfFrame;

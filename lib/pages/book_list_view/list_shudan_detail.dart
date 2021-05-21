@@ -2,12 +2,13 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../embed/images.dart';
 
 import '../../bloc/bloc.dart';
 import '../../data/book_list_detail.dart';
+import '../../event/event.dart';
 import '../../utils/utils.dart';
 import '../book_info_view/book_info_page.dart';
+import '../embed/images.dart';
 
 class ShudanDetailPage extends StatefulWidget {
   const ShudanDetailPage({Key? key, this.total}) : super(key: key);
@@ -31,16 +32,19 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
           if (state is ShudanListDetailFailed) {
             return Center(
               child: btn1(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                 bgColor: Colors.blue,
                 splashColor: Colors.blue[200],
                 radius: 40,
                 child: Text(
                   '重新加载',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
                 ),
                 onTap: () {
-                  BlocProvider.of<ShudanListDetailBloc>(context).add(ShudanListDetailReLoadEvent());
+                  BlocProvider.of<ShudanListDetailBloc>(context)
+                      .add(ShudanListDetailReLoadEvent());
                 },
               ),
             );
@@ -51,16 +55,18 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
                 // header
                 Container(
                   height: 120,
-                  padding: const EdgeInsets.all(10.0),
+                  color: Color.fromARGB(255, 250, 250, 250),
+                  padding: const EdgeInsets.only(
+                      top: 12.0, bottom: 12.0, left: 12.0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Container(
-                        width: 112,
+                        // width: 112,
                         height: 120,
                         child: ImageResolve(
-                          img: state.data!.cover,
+                          img: state.data!.cover
                         ),
                       ),
                       Expanded(
@@ -70,16 +76,22 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                child: Text('${state.data!.title}', maxLines: 2, style: ts.title2),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 3.0),
+                                child: Text('${state.data!.title}',
+                                    maxLines: 2, style: ts.title2),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                child: Text('共${widget.total}本书', style: ts.body2),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 3.0),
+                                child:
+                                    Text('共${widget.total}本书', style: ts.body2),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                child: Text('${state.data!.updateTime}', style: ts.body3),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 3.0),
+                                child: Text('${state.data!.updateTime}',
+                                    style: ts.body3),
                               ),
                             ],
                           ),
@@ -88,32 +100,37 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
                     ],
                   ),
                 ),
+                SizedBox(height: 10),
                 // intro
                 buildIntro(ts, state.data!.description),
                 // IntroWidget(description: state.data!.description),
                 // body
+                SizedBox(height: 10),
+
                 Container(
-                  margin: const EdgeInsets.only(top: 6.0),
-                  child: Container(
-                    color: Colors.grey[200],
-                    padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 10.0),
-                    child: Row(
-                      children: [
-                        Text('书单列表', style: ts.title2),
-                      ],
-                    ),
+                  color: Color.fromARGB(255, 250, 250, 250),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 6.0, horizontal: 10.0),
+                  child: Row(
+                    children: [
+                      Text('书单列表', style: ts.title2),
+                    ],
                   ),
                 ),
-                for (var l in state.data!.bookList!) ShudanListDetailItemWidget(l: l)
+                for (var l in state.data!.bookList!)
+                  ShudanListDetailItemWidget(l: l)
               ];
             }
 
             final children = _getChildren();
-            return ListView.builder(
-              itemBuilder: (context, index) {
-                return children[index];
-              },
-              itemCount: children.length,
+            return Container(
+              color: Color.fromARGB(255, 242, 242, 242),
+              child: ListView.builder(
+                itemBuilder: (context, index) {
+                  return children[index];
+                },
+                itemCount: children.length,
+              ),
             );
           } else {
             return Center(child: CircularProgressIndicator());
@@ -127,8 +144,8 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
 
   Widget buildIntro(TextStylesBloc ts, String? description) {
     return Container(
-      padding: const EdgeInsets.only(top: 6.0, left: 10.0, right: 10.0),
-      color: Colors.grey[200],
+      padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+      color: Color.fromARGB(255, 250, 250, 250),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -156,7 +173,9 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
                         ),
                         Center(
                             child: Icon(
-                          hide.value ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_up_rounded,
+                          hide.value
+                              ? Icons.keyboard_arrow_down_rounded
+                              : Icons.keyboard_arrow_up_rounded,
                           color: Colors.grey[700],
                         )),
                       ],
@@ -186,10 +205,11 @@ class ShudanListDetailItemWidget extends StatelessWidget {
       decoration: BoxDecoration(
           border: BorderDirectional(
               bottom: BorderSide(
-                  width: 1 / MediaQuery.of(context).devicePixelRatio, color: Color.fromRGBO(210, 210, 210, 1)))),
+                  width: 1 / MediaQuery.of(context).devicePixelRatio,
+                  color: Color.fromRGBO(210, 210, 210, 1)))),
       child: btn1(
         radius: 0,
-        bgColor: Colors.grey[100],
+        bgColor: Color.fromARGB(255, 250, 250, 250),
         splashColor: Colors.grey[400],
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
         onTap: () {
@@ -226,7 +246,8 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                             alignment: Alignment.centerRight,
                             child: Text(
                               '${l.score}分',
-                              style: TextStyle(fontSize: 14, color: Colors.yellow[700]),
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.yellow[700]),
                               softWrap: false,
                               overflow: TextOverflow.fade,
                             ),
@@ -242,7 +263,8 @@ class ShudanListDetailItemWidget extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
                       maxLines: 2,
-                      style: ts.body1.copyWith(color: TextStylesBloc.blackColor6),
+                      style:
+                          ts.body1.copyWith(color: TextStylesBloc.blackColor6),
                     ),
                   ),
                   Padding(
@@ -294,13 +316,15 @@ class ShudanListDetailState {
 
 class ShudanListDetailFailed extends ShudanListDetailState {}
 
-class ShudanListDetailBloc extends Bloc<ShudanListDetailEvent, ShudanListDetailState> {
+class ShudanListDetailBloc
+    extends Bloc<ShudanListDetailEvent, ShudanListDetailState> {
   ShudanListDetailBloc(this.repository) : super(ShudanListDetailState());
 
   final Repository repository;
   int? lastIndex;
   @override
-  Stream<ShudanListDetailState> mapEventToState(ShudanListDetailEvent event) async* {
+  Stream<ShudanListDetailState> mapEventToState(
+      ShudanListDetailEvent event) async* {
     if (event is ShudanListDetailLoadEvent) {
       lastIndex = event.index;
       yield* load(lastIndex);
@@ -311,7 +335,7 @@ class ShudanListDetailBloc extends Bloc<ShudanListDetailEvent, ShudanListDetailS
 
   Stream<ShudanListDetailState> load(int? index) async* {
     if (index == null) return;
-    final data = await repository.bookEvent.loadShudanDetail(index);
+    final data = await repository.customEvent.getShudanDetail(index);
     if (data.listId != null) {
       await Future.delayed(Duration(milliseconds: 300));
       yield ShudanListDetailState(data);

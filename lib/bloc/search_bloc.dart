@@ -3,17 +3,9 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
-import 'bloc.dart';
 
 import '../data/search_data.dart';
-
-class SimpleBlocObserver extends BlocObserver {
-  @override
-  void onTransition(Bloc bloc, Transition transition) {
-    print('${transition.nextState}');
-    super.onTransition(bloc, transition);
-  }
-}
+import '../event/event.dart';
 
 abstract class SearchEvent extends Equatable {
   SearchEvent();
@@ -71,23 +63,13 @@ class SearchBloc extends Bloc<SearchEvent, SearchResult> {
     if (event is SearchEventEnterPageWithoutKey) {
       yield SearchWithoutData();
     } else if (event is SearchEventWithKey) {
-      var shouldUpdate = false;
-      if (event.key.isNotEmpty) {
-        if (searchHistory.isEmpty || searchHistory.last != event.key) {
-          yield SearchWithoutData();
-          shouldUpdate = true;
-          searchHistory
-            ..remove(event.key)
-            ..add(event.key);
-          await save();
-        }
-      }
-      if (shouldUpdate) {
-        var list = await repository.searchWithKey(event.key);
-        if (list.data != null) {
-          yield SearchResultWithData(searchList: list);
-        }
-      }
+      yield SearchWithoutData();
+      var list = await repository.customEvent.getSearchData(event.key);
+      yield SearchResultWithData(searchList: list);
+      searchHistory
+        ..remove(event.key)
+        ..add(event.key);
+      await save();
     } else if (event is _SearchEventSave) {
       await save();
     }
@@ -95,16 +77,20 @@ class SearchBloc extends Bloc<SearchEvent, SearchResult> {
 
   Future<void> init() async {
     box = await Hive.openBox('searchHistory');
-    final List<String> _searchHistory = box.get('suggestions', defaultValue: const <String>[]);
+    final List<String> _searchHistory =
+        box.get('suggestions', defaultValue: const <String>[]);
     if (_searchHistory.length > 20) {
-      searchHistory = _searchHistory.sublist(_searchHistory.length - 20, _searchHistory.length);
+      searchHistory = _searchHistory.sublist(
+          _searchHistory.length - 20, _searchHistory.length);
     } else {
       searchHistory = List<String>.of(_searchHistory);
     }
   }
-Future<void> save() async {
+
+  Future<void> save() async {
     if (searchHistory.length > 20) {
-      searchHistory = searchHistory.sublist(searchHistory.length - 16, searchHistory.length);
+      searchHistory = searchHistory.sublist(
+          searchHistory.length - 16, searchHistory.length);
     }
     await box.put('suggestions', searchHistory);
   }

@@ -61,7 +61,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                   controller = ScrollController(initialScrollOffset: offset);
                   return Scrollbar(
                     controller: controller,
-                    interactive: true,
+                    // interactive: true,
                     thickness: 8,
                     radius: const Radius.circular(5),
                     child: CustomScrollView(

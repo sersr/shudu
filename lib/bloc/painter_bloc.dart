@@ -8,14 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import '../event/event.dart';
 
-import '../pages/book_content_view/widgets/battery_view.dart';
-import '../pages/book_content_view/widgets/content_view.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
-import 'bloc.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 typedef SetPageNotifier = void Function(double, void Function(int page));
@@ -28,7 +25,13 @@ class PainterState {
 enum Status { ignore, error, done }
 
 class TextData {
-  TextData({List<ContentMetrics> content = const [], this.cid, this.pid, this.nid, this.cname, this.hasContent})
+  TextData(
+      {List<ContentMetrics> content = const [],
+      this.cid,
+      this.pid,
+      this.nid,
+      this.cname,
+      this.hasContent})
       : _content = content;
   List<ContentMetrics> get content => _content;
   final List<ContentMetrics> _content;
@@ -38,7 +41,12 @@ class TextData {
   String? cname;
   int? hasContent;
   bool get isEmpty =>
-      content.isEmpty || cid == null || pid == null || nid == null || cname == null || hasContent == null;
+      content.isEmpty ||
+      cid == null ||
+      pid == null ||
+      nid == null ||
+      cname == null ||
+      hasContent == null;
 
   bool get isNotEmpty => !isEmpty;
   void clear() {
@@ -62,7 +70,8 @@ class TextData {
   }
 
   @override
-  int get hashCode => hashValues(this, cid, pid, nid, content, cname, hasContent);
+  int get hashCode =>
+      hashValues(this, cid, pid, nid, content, cname, hasContent);
 
   @override
   String toString() {
@@ -83,8 +92,9 @@ class ContentNotifier extends ChangeNotifier {
 
   Future<void> reload() async {
     notifyState(loading: true, ignore: true);
-
+    out();
     await _nf;
+    inbook();
     await _loadFirst();
 
     painter();
@@ -99,7 +109,9 @@ class ContentNotifier extends ChangeNotifier {
         if (_inBookView) painter();
 
         notifyState(ignore: true);
+        out();
         await reset(clearCache: true);
+        inbook();
         await _loadFirst();
 
         if (_inBookView) painter();
@@ -166,7 +178,8 @@ class ContentNotifier extends ChangeNotifier {
 
     var millisecond = _e.inMicroseconds / Duration.microsecondsPerMillisecond;
 
-    controller!.setPixels(_start! + millisecond / ((11 - autoValue.value) * 15).clamp(15, 150));
+    controller!.setPixels(
+        _start! + millisecond / ((11 - autoValue.value) * 15).clamp(15, 150));
     _autoRun();
   }
 
@@ -190,10 +203,11 @@ class ContentNotifier extends ChangeNotifier {
   bool showrect = false;
   Future<void> showdow() async {
     showrect = !showrect;
-
+    out();
     await reset(clearCache: true);
 
     await _nf;
+    inbook();
     await _loadFirst();
     painter();
   }
@@ -214,15 +228,24 @@ class ContentNotifier extends ChangeNotifier {
         _axis != config.value.axis) {
       flush = true;
     }
+    final portrait = config.value.portrait;
+    var zero = _axis != config.value.axis;
 
-    final resetTozero = _axis != config.value.axis;
-    if (_portrait != config.value.portrait) await orientation(_portrait);
     config.value = _config;
 
+    if (_portrait != portrait) {
+      await orientation(_portrait);
+      // await _modifiedSize();
+      zero = true;
+      flush = true;
+    }
+
     if (flush) {
+      out();
+      if (zero) resetController();
       await reset(clearCache: true);
-      if (resetTozero) resetController();
       await _nf;
+      inbook();
       await _loadFirst();
     }
     painter();
@@ -289,12 +312,17 @@ class ContentNotifier extends ChangeNotifier {
       final _portrait = box.get('portrait');
       final _autoValue = box.get('autoValue');
 
-      if (_bgcolor != _config.bgcolor) await box.put('bgcolor', _config.bgcolor);
-      if (_fontColor != _config.fontColor) await box.put('fontColor', _config.fontColor);
+      if (_bgcolor != _config.bgcolor)
+        await box.put('bgcolor', _config.bgcolor);
+      if (_fontColor != _config.fontColor)
+        await box.put('fontColor', _config.fontColor);
       if (axis != _config.axis) await box.put('axis', _config.axis);
-      if (_p != _config.patternList) await box.put('patternList', _config.patternList);
-      if (_portrait != _config.portrait) await box.put('portrait', _config.portrait);
-      if (_fontSize != _config.fontSize && _config.fontSize! > 0) await box.put('fontSize', _config.fontSize);
+      if (_p != _config.patternList)
+        await box.put('patternList', _config.patternList);
+      if (_portrait != _config.portrait)
+        await box.put('portrait', _config.portrait);
+      if (_fontSize != _config.fontSize && _config.fontSize! > 0)
+        await box.put('fontSize', _config.fontSize);
 
       if (_height != _config.lineTweenHeight && _config.lineTweenHeight! >= 1.0)
         await box.put('lineTweenHeight', _config.lineTweenHeight);
@@ -315,22 +343,28 @@ class ContentNotifier extends ChangeNotifier {
   Future? _nf;
   Future? get enter => _nf;
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page, {bool inBook = false}) async {
-    _nf ??= _newBookOrCid(newBookid, cid, page, inBook)..whenComplete(() => _nf = null);
+  Future<void> newBookOrCid(int newBookid, int cid, int page,
+      {bool inBook = false}) async {
+    _nf ??= _newBookOrCid(newBookid, cid, page, inBook)
+      ..whenComplete(() => _nf = null);
   }
 
   Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
-    if (tData.cid != cid || tData.contentIsEmpty || bookid != newBookid) {
+    if (!_inBookView) _innerIndex = 0;
+
+    if (tData.cid != cid || bookid != newBookid) {
       assert(Log.i('new: $newBookid $cid', stage: this, name: 'newBook'));
 
+      notifyState(ignore: true, loading: false);
+      final _in = _inBookView;
+      if (_in) out();
       final diffBook = bookid != newBookid;
-      notifyState(ignore: diffBook || inBook || tData.contentIsEmpty, loading: false);
-
-      out();
 
       await reset(clearCache: diffBook, cid: cid);
       currentPage = page;
       bookid = newBookid;
+
+      if (_in) inbook();
 
       await dump();
       return true;
@@ -338,25 +372,23 @@ class ContentNotifier extends ChangeNotifier {
     return false;
   }
 
-  Future<void> _newBookOrCid(int newBookid, int cid, int page, bool inBook) async {
+  Future<void> _newBookOrCid(
+      int newBookid, int cid, int page, bool inBook) async {
     if (cid == -1) return;
 
-    if (!_inBookView) _innerIndex = 0;
-    // if (_innerIndex != 0 && (controller == null || controller!.page.round() == 0)) _innerIndex = 0;
-
     stopAuto();
-    // final _lastInBookView = _inBookView;
-
-    assert(_canLoad == null || _canLoad!.isCompleted);
-    // if (!inBook) _canLoad = Completer<void>();
 
     orientation(config.value.portrait!);
-    if (await setNewBookOrCid(newBookid, cid, page)) {
-      await _modifiedSize();
+
+    await setNewBookOrCid(newBookid, cid, page);
+
+    if (tData.contentIsEmpty) {
+      notifyState(ignore: true);
 
       _getCurrentIds();
 
-      final _t = Timer(const Duration(milliseconds: 500), () => notifyState(loading: true));
+      final _t = Timer(
+          const Duration(milliseconds: 500), () => notifyState(loading: true));
 
       inbook();
       await _loadFirst();
@@ -365,12 +397,11 @@ class ContentNotifier extends ChangeNotifier {
 
       painter();
       resetController();
-      await Future.delayed(const Duration(milliseconds: 100));
     }
 
     inbook();
     // 异步
-    // 如果没有加载完成，就要退出应该忽略
+    // 如果没有加载完成已经退出，应该忽略
     notifyState(ignore: !_inBookView, loading: false);
     statusColor();
   }
@@ -416,10 +447,13 @@ class ContentNotifier extends ChangeNotifier {
 
       case TargetPlatform.fuchsia:
       case TargetPlatform.iOS:
-        if ((_p.top == 0.0 && safePadding.top != _p.top) || size.height < _size.height || size.width != _size.width) {
+        if ((_p.top == 0.0 && safePadding.top != _p.top) ||
+            size.height < _size.height ||
+            size.width != _size.width) {
           size = _size;
           safePadding = _p;
-          paddingRect = safePadding.copyWith(bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
+          paddingRect = safePadding.copyWith(
+              bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
 
           return true;
         } else {
@@ -453,7 +487,10 @@ class ContentNotifier extends ChangeNotifier {
     await _futures.awaitId(_key);
 
     final _currentText = _getTextData(_key);
-    if (_bookid == bookid && _currentText != null && _currentText.contentIsNotEmpty && _key == _currentText.cid) {
+    if (_bookid == bookid &&
+        _currentText != null &&
+        _currentText.contentIsNotEmpty &&
+        _key == _currentText.cid) {
       tData = _currentText;
 
       if (config.value.axis == Axis.vertical) {
@@ -475,8 +512,10 @@ class ContentNotifier extends ChangeNotifier {
     if (tData.contentIsNotEmpty) {
       final exPage = index - _innerIndex;
 
-      final hasRight = currentPage + exPage < tData.content.length || _caches.containsKey(tData.nid);
-      final hasLeft = currentPage + exPage > 1 || _caches.containsKey(tData.pid);
+      final hasRight = currentPage + exPage < tData.content.length ||
+          _caches.containsKey(tData.nid);
+      final hasLeft =
+          currentPage + exPage > 1 || _caches.containsKey(tData.pid);
 
       if (hasRight) _r |= ContentBounds.addRight;
       if (hasLeft) _r |= ContentBounds.addLeft;
@@ -571,7 +610,7 @@ class ContentNotifier extends ChangeNotifier {
       fontSize: config.fontSize,
       color: config.fontColor!,
       height: 1.0,
-      leadingDistribution: TextLeadingDistribution.even,
+      // leadingDistribution: TextLeadingDistribution.even,
       fontFamily: 'NotoSansSC', // SourceHanSansSC
       // fontFamilyFallback: ['RobotoMono', 'NotoSansSC'],
     );
@@ -581,18 +620,17 @@ class ContentNotifier extends ChangeNotifier {
   static const topPad = 8.0;
   static const contentPadding = 10.0;
   static const botPad = 8.0;
-  static const otherHeight = contentPadding * 2 + topPad + botPad + pagefooterSize * 2;
+  static const otherHeight =
+      contentPadding * 2 + topPad + botPad + pagefooterSize * 2;
   final _regexpEmpty = RegExp('( |\u3000)+');
 
   Future<bool> _getInnerCallbackLooper(
-    ResultTimeCallback callback, {
-    bool eventOnly = false,
-    double frameThreshold = 1.5,
+    EventCallback callback, {
     String debugLabel = '',
   }) async {
     if (_cancel()) return false;
     return EventLooper.instance
-        .scheduleEventTask(callback, eventOnly: eventOnly, frameThreshold: frameThreshold, debugLabel: debugLabel);
+        .scheduleEventTask(callback, debugLabel: debugLabel);
   }
 
   // ---------------------------------------
@@ -650,7 +688,8 @@ class ContentNotifier extends ChangeNotifier {
     return _ids;
   }
 
-  Future<List<ContentMetrics>> _asyncLayout(List<String> paragraphs, String cname, int contentid, int words) async {
+  Future<List<ContentMetrics>> _asyncLayout(
+      List<String> paragraphs, String cname, int contentid, int words) async {
     assert(Log.i('working   >>>'));
     var ignore = false;
     var whiteRows = 0;
@@ -689,21 +728,25 @@ class ContentNotifier extends ChangeNotifier {
 
     void _t01() {
       _bigTitlePainter = TextPainter(
-          text: TextSpan(text: cname, style: style.copyWith(fontSize: 22, fontWeight: FontWeight.bold)),
+          text: TextSpan(
+              text: cname,
+              style: style.copyWith(fontSize: 22, fontWeight: FontWeight.bold)),
           textDirection: TextDirection.ltr)
         ..layout(maxWidth: width);
     }
 
     void _t02() {
-      smallTitlePainter =
-          TextPainter(text: TextSpan(text: cname, style: secstyle), textDirection: TextDirection.ltr, maxLines: 1)
-            ..layout(maxWidth: width);
+      smallTitlePainter = TextPainter(
+          text: TextSpan(text: cname, style: secstyle),
+          textDirection: TextDirection.ltr,
+          maxLines: 1)
+        ..layout(maxWidth: width);
     }
 
     var incSize = 10;
 
     // 任务开始
-    var _done = await _getInnerCallbackLooper((wait, _) async {
+    var _done = await _getInnerCallbackLooper((wait) async {
       var done = false;
       while (true) {
         for (var i = 1; i < 10; i++) {
@@ -732,21 +775,18 @@ class ContentNotifier extends ChangeNotifier {
 
       final _half = fontSize / 2;
 
-      await wait();
-
       ignore = _ignoreTask(contentid);
 
       if (ignore) return EventStatus.ignoreAndRemove;
+      await wait('ignore 01');
 
       // ignore = _ignoreTask(contentid);
 
       // if (ignore) return EventStatus.ignoreAndRemove;
       _t01();
-      await wait();
+      await wait('_t01');
       _t02();
-      await wait();
-
-      Log.i('white. end');
+      await wait('_t02');
 
       final lines = <TextPainter>[];
 
@@ -756,56 +796,56 @@ class ContentNotifier extends ChangeNotifier {
       for (var i = 0; i < paragraphs.length; i++) {
         await wait();
 
-        final pl = paragraphs[i];
+        final pl = paragraphs[i].characters;
         var start = 0;
         ignore = _ignoreTask(contentid);
 
         if (ignore) return EventStatus.ignoreAndRemove;
+        await wait();
 
         while (start < pl.length) {
           var end = math.min(start + words, pl.length);
 
-          if (end == pl.length && pl.substring(start, end).replaceAll(_regexpEmpty, '').isEmpty) break;
           await wait();
 
           // 确定每一行的字数
           while (true) {
             if (end >= pl.length) break;
 
-            // ignore = _ignoreTask(contentid);
-
-            // if (ignore) return EventStatus.ignoreAndRemove;
-
             await wait();
 
             end++;
-
-            // final n = Stopwatch()..start();
-            // final np = n.elapsedMicroseconds;
+            final s = pl.getRange(start, end).toString();
             _t
-              ..text = TextSpan(text: pl.substring(start, end), style: style)
+              ..text = TextSpan(text: s, style: style)
               ..layout(maxWidth: width);
-
-            // Log.i('stop: use: ${(n.elapsedMicroseconds - np) / 1000}ms');
 
             await wait();
 
             if (_t.height > fontSize) {
-              final endOffset = _t.getPositionForOffset(Offset(width, _half)).offset;
-              end = start + endOffset;
+              final endOffset =
+                  _t.getPositionForOffset(Offset(width, _half)).offset;
+              final _s = s.substring(0, endOffset).characters;
+              end = start + _s.length;
               break;
             }
           }
+          if (end == pl.length &&
+              pl
+                  .getRange(start, end)
+                  .toString()
+                  .replaceAll(_regexpEmpty, '')
+                  .isEmpty) break;
 
-          // ignore = _ignoreTask(contentid);
-
-          // if (ignore) return EventStatus.ignoreAndRemove;
-
+          final _s = pl.getRange(start, end);
           await wait();
 
           final _text = TextPainter(
-              text: TextSpan(text: pl.substring(start, end), style: style), textDirection: TextDirection.ltr)
+              text: TextSpan(text: _s.toString(), style: style),
+              textDirection: TextDirection.ltr)
             ..layout(maxWidth: width);
+
+          await wait('_text layout');
 
           start = end;
           lines.add(_text);
@@ -833,7 +873,8 @@ class ContentNotifier extends ChangeNotifier {
         await wait();
 
         final bottomRight = TextPainter(
-            text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle), textDirection: TextDirection.ltr)
+            text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
+            textDirection: TextDirection.ltr)
           ..layout(maxWidth: width);
 
         await wait();
@@ -907,7 +948,8 @@ class ContentNotifier extends ChangeNotifier {
 
       void _getdata() {
         if (_caches.containsKey(tData.cid)) {
-          if (tData.contentIsNotEmpty && (currentPage == tData.content.length || currentPage == 1)) {
+          if (tData.contentIsNotEmpty &&
+              (currentPage == tData.content.length || currentPage == 1)) {
             tData = _getTextData(tData.cid!)!;
             if (currentPage > tData.content.length) {
               currentPage = tData.content.length;
@@ -920,7 +962,10 @@ class ContentNotifier extends ChangeNotifier {
       final cid = tData.cid!;
       final _data = _caches[cid];
 
-      if (_data != null && _data.contentIsNotEmpty && tData.nid != -1 && tData.hasContent == 1) {
+      if (_data != null &&
+          _data.contentIsNotEmpty &&
+          tData.nid != -1 &&
+          tData.hasContent == 1) {
         // 已经重新加载到 caches 了
         _getdata();
         return;
@@ -928,7 +973,8 @@ class ContentNotifier extends ChangeNotifier {
 
       if (_reloadIds.contains(cid)) return;
 
-      assert(Log.i('nid = ${tData.nid}, hasContent: ${tData.hasContent}', stage: this, name: 'loadResolve'));
+      assert(Log.i('nid = ${tData.nid}, hasContent: ${tData.hasContent}',
+          stage: this, name: 'loadResolve'));
 
       _reloadIds.add(cid);
       Future.delayed(const Duration(seconds: 10), () => _reloadIds.remove(cid));
@@ -956,7 +1002,8 @@ class ContentNotifier extends ChangeNotifier {
   Future? _loadFuture;
   Future _delayedLoad() async {
     if (_inBookView)
-      _loadFuture ??= Future.delayed(const Duration(seconds: 1), _loadCallback)..whenComplete(() => _loadFuture = null);
+      _loadFuture ??= Future.delayed(const Duration(seconds: 1), _loadCallback)
+        ..whenComplete(() => _loadFuture = null);
   }
 
   Future<void> updateCurrent() => _resolveId().then((_) => painter());
@@ -976,14 +1023,17 @@ class ContentNotifier extends ChangeNotifier {
       await _resolveId();
       getid = tData.nid!;
       if (getid == -1) {
-        notifyState(loading: false, error: const NotifyMessage(true, msg: NotifyMessage.notNext));
+        notifyState(
+            loading: false,
+            error: const NotifyMessage(true, msg: NotifyMessage.notNext));
       }
     }
 
     if (getid != -1) {
       final success = await _getContent(getid);
       if (!success) {
-        notifyState(error: const NotifyMessage(true, msg: NotifyMessage.network));
+        notifyState(
+            error: const NotifyMessage(true, msg: NotifyMessage.network));
       }
     }
 
@@ -1032,7 +1082,6 @@ class ContentNotifier extends ChangeNotifier {
   Future get waitTasks => Future.wait(List.of(_futures.values));
 
   // 异步任务时防止用户滚动
-  Completer<void>? _canLoad;
   bool _inBookView = false;
   bool _inPreOrNext = false;
 
@@ -1090,13 +1139,6 @@ class ContentNotifier extends ChangeNotifier {
     _tData = TextData()..cid = cid ?? tData.cid;
   }
 
-  void completerCanLoad() {
-    if (_canLoad != null && !_canLoad!.isCompleted) {
-      print('................c');
-      _canLoad!.complete();
-    }
-  }
-
   void out() {
     _inBookView = false;
     adpotCache = false;
@@ -1111,8 +1153,8 @@ class ContentNotifier extends ChangeNotifier {
   // _innerIndex == page == 0
   void resetController() {
     controller?.goIdle();
-    controller?.setPixelsWithoutNtf(0.0);
     _innerIndex = 0;
+    controller?.setPixelsWithoutNtf(0.0);
   }
 
   Future<void> dump() async {
@@ -1120,7 +1162,8 @@ class ContentNotifier extends ChangeNotifier {
     final cid = tData.cid!;
     final _bookid = bookid!;
     final _currentPage = currentPage;
-    return repository.bookEvent.updateMainInfo(_bookid, cid, _currentPage);
+    return repository.databaseEvent
+        .updateBookStatus(_bookid, cid, _currentPage);
   }
 
   void notifyState({bool? loading, bool? ignore, NotifyMessage? error}) {
@@ -1158,10 +1201,13 @@ class ContentNotifier extends ChangeNotifier {
   }
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    final words = (size.width - paddingRect.horizontal) ~/ config.value.fontSize!;
-    final lines = await repository.bookEvent.load(_bookid, contentid, words, update: update);
+    final words =
+        (size.width - paddingRect.horizontal) ~/ config.value.fontSize!;
+    final lines = await repository.bookEvent
+        .getContent(_bookid, contentid, words, update);
     if (lines.contentIsNotEmpty) {
-      final pages = await _asyncLayout(lines.pages, lines.cname!, contentid, words);
+      final pages =
+          await _asyncLayout(lines.pages, lines.cname!, contentid, words);
 
       if (pages.isEmpty) return;
       final _cnpid = TextData(
@@ -1183,7 +1229,7 @@ class ContentNotifier extends ChangeNotifier {
 
   ///-----------------
   Future<void> deleteCache(int bookId) async {
-    return repository.bookEvent.deleteCache(bookId);
+    return repository.databaseEvent.deleteCache(bookId);
   }
 }
 
@@ -1275,7 +1321,11 @@ class ContentViewConfig {
   }
 
   bool get isEmpty {
-    return bgcolor == null || fontSize == null || fontColor == null || axis == null || lineTweenHeight == null;
+    return bgcolor == null ||
+        fontSize == null ||
+        fontColor == null ||
+        axis == null ||
+        lineTweenHeight == null;
   }
 
   @override
@@ -1356,7 +1406,8 @@ class NotifyMessage {
 // }
 
 extension FutureTasksMap<T, E> on Map<T, Future<E>> {
-  void addTask(T id, Future<E> f, {void Function()? callback, void Function(T)? solve}) {
+  void addTask(T id, Future<E> f,
+      {void Function()? callback, void Function(T)? solve}) {
     Log.i('addTask $id');
     if (containsKey(id)) return;
     this[id] = f;

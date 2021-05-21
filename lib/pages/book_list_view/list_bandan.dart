@@ -19,6 +19,7 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('榜单'),
+          toolbarHeight: 86,
           bottom: TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.black,

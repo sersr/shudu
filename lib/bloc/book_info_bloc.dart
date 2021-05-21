@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../compatible/repository.dart';
+import '../event/event.dart';
 
 import '../data/book_info.dart';
 
@@ -49,26 +49,28 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
     if (event is BookInfoEventSentWithId) {
       lastId = event.id;
       yield BookInfoStateWithoutData();
-      var data = await repository.bookEvent.loadInfo(event.id);
+      var data = await repository.customEvent.getInfo(event.id);
       print('data: $data');
       await Future.delayed(Duration(milliseconds: 300));
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.bookEvent.updateCname(event.id, newCname, lastTime);
+          await repository.databaseEvent
+              .updateBookStatusAndSetNew(event.id, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);
     } else if (event is BookInfoReloadEvent) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));
-      var data = await repository.bookEvent.loadInfo(lastId);
+      var data = await repository.customEvent.getInfo(lastId);
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.bookEvent.updateCname(lastId, newCname, lastTime);
+          await repository.databaseEvent
+              .updateBookStatusAndSetNew(lastId, newCname, lastTime);
         }
       }
       yield BookInfoStateWithData(data);

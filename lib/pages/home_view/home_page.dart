@@ -68,13 +68,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         autoState = true;
         painterBloc.stopAuto();
       }
-      // painterBloc.repository.dipose();
     } else if (state == AppLifecycleState.resumed) {
       if (autoState) {
         autoState = false;
         painterBloc.auto();
       }
-      // painterBloc.repository.initState();
     }
   }
 
@@ -83,7 +81,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeMetrics() {
     // 桌面窗口大小改变
     final w = ui.window;
-    assert(Log.i('data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
+    assert(Log.i(
+        'data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
         ' ${w.padding} \ndata: viewInsets ${w.viewInsets} \ndata: physicalGeometry ${w.physicalGeometry}'));
     timer?.cancel();
     timer = Timer(Duration(milliseconds: 100), () {
@@ -117,7 +116,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             borderRadius: BorderRadius.circular(6.0),
             color: Colors.grey.shade900.withAlpha(210),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
               child: Text(
                 '再按一次退出',
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
@@ -151,7 +151,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     final height = contraints.maxHeight;
                     return InkWell(
                       borderRadius: BorderRadius.circular(height / 2),
-                      onTap: () => showSearch(context: context, delegate: MySearchPage()),
+                      onTap: () => showSearch(
+                          context: context, delegate: MySearchPage()),
                       child: Container(
                         height: height,
                         width: height,
@@ -188,7 +189,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       body: RepaintBoundary(
         child: IndexedStack(
           index: currentIndex,
-          children: <Widget>[RepaintBoundary(child: buildBlocBuilder()), RepaintBoundary(child: ListMainPage())],
+          children: <Widget>[
+            RepaintBoundary(child: buildBlocBuilder()),
+            RepaintBoundary(child: ListMainPage())
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -197,13 +201,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         unselectedFontSize: 11.0,
         items: [
           BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
-          BottomNavigationBarItem(label: '书城', icon: Icon(Icons.local_grocery_store_rounded))
+          BottomNavigationBarItem(
+              label: '书城', icon: Icon(Icons.local_grocery_store_rounded))
         ],
         onTap: (index) {
           if (index == currentIndex) {
-            if (currentIndex == 0) {
-              _refreshKey.currentState!.show(atTop: true);
-            }
+            if (currentIndex == 0) _refreshKey.currentState!.show(atTop: true);
+
             return;
           }
           setState(() => currentIndex = index);
@@ -224,7 +228,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           child: changep
               ? MediaQuery(
                   data: data.copyWith(
-                      padding: EdgeInsets.fromWindowPadding(ui.window.systemGestureInsets, ui.window.devicePixelRatio)),
+                      padding: EdgeInsets.fromWindowPadding(
+                          ui.window.systemGestureInsets,
+                          ui.window.devicePixelRatio)),
                   child: child)
               : child,
         );
@@ -239,7 +245,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         return Container(
           decoration: BoxDecoration(
             color: Colors.grey[200]!.withAlpha(240),
-            borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
+            borderRadius:
+                BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
           ),
           padding: const EdgeInsets.only(left: 12.0, right: 4.0, bottom: 4.0),
           child: RepaintBoundary(
@@ -259,7 +266,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     children: [
                       btn1(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                           child: Text(
                             'Android',
                             style: TextStyle(color: Colors.grey.shade100),
@@ -269,7 +277,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         bgColor: Colors.cyan.shade600,
                         splashColor: Colors.cyan.shade200,
                         onTap: () {
-                          opts.options = ConfigOptions(platform: TargetPlatform.android);
+                          opts.options =
+                              ConfigOptions(platform: TargetPlatform.android);
                           Future.delayed(Duration(milliseconds: 200), () {
                             Navigator.of(context).pop();
                           });
@@ -277,7 +286,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       ),
                       btn1(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                           child: Text(
                             'IOS',
                             style: TextStyle(color: Colors.grey.shade100),
@@ -287,7 +297,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         bgColor: Colors.cyan.shade600,
                         splashColor: Colors.cyan.shade200,
                         onTap: () {
-                          opts.options = ConfigOptions(platform: TargetPlatform.iOS);
+                          opts.options =
+                              ConfigOptions(platform: TargetPlatform.iOS);
                           Future.delayed(Duration(milliseconds: 200), () {
                             Navigator.of(context).pop();
                           });
@@ -425,17 +436,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   icon: Icon(Icons.remove),
                                   onPressed: () {
                                     if (opt.options.resampleOffset != null) {
-                                      final offset = opt.options.resampleOffset! - 1;
-                                      opt.options = ConfigOptions(resampleOffset: offset);
+                                      final offset =
+                                          opt.options.resampleOffset! - 1;
+                                      opt.options =
+                                          ConfigOptions(resampleOffset: offset);
                                     }
                                   }),
-                              Center(child: Text('${opt.options.resampleOffset}')),
+                              Center(
+                                  child: Text('${opt.options.resampleOffset}')),
                               IconButton(
                                 icon: Icon(Icons.add),
                                 onPressed: () {
                                   if (opt.options.resampleOffset != null) {
-                                    final offset = opt.options.resampleOffset! + 1;
-                                    opt.options = ConfigOptions(resampleOffset: offset);
+                                    final offset =
+                                        opt.options.resampleOffset! + 1;
+                                    opt.options =
+                                        ConfigOptions(resampleOffset: offset);
                                   }
                                 },
                               ),
@@ -468,7 +484,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Container(
       decoration: BoxDecoration(
         // color: Colors.grey[200].withAlpha(240),
-        borderRadius: BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
+        borderRadius:
+            BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: 12.0,
@@ -544,7 +561,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         ? BoxDecoration(
                             border: BorderDirectional(
                               bottom: BorderSide(
-                                  width: 1 / MediaQuery.of(context).devicePixelRatio,
+                                  width: 1 /
+                                      MediaQuery.of(context).devicePixelRatio,
                                   color: Color.fromRGBO(210, 210, 210, 1)),
                             ),
                           )
@@ -565,7 +583,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(0),
                       onTap: () {
                         cache.completerLoading();
-                        BookContentPage.push(context, item.id!, item.chapterId!, item.page!);
+                        BookContentPage.push(
+                            context, item.id!, item.chapterId!, item.page!);
                       },
                       onLongPress: () {
                         showModalBottomSheet(
@@ -589,8 +608,8 @@ class MySearchPage extends SearchDelegate<void> {
   MySearchPage({
     String? hintText,
   }) : super(
-          searchFieldLabel: '搜索',
-          keyboardType: TextInputType.text,
+          searchFieldLabel: '书名关键字',
+          keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.search,
         );
 
@@ -633,7 +652,7 @@ class MySearchPage extends SearchDelegate<void> {
                   padding: const EdgeInsets.all(4.0),
                   child: Material(
                     borderRadius: BorderRadius.circular(3.0),
-                    color: Colors.grey.shade300,
+                    color: Color.fromARGB(255, 240, 240, 240),
                     child: InkWell(
                       onLongPress: () {
                         bloc.delete(i);
@@ -645,10 +664,13 @@ class MySearchPage extends SearchDelegate<void> {
                       },
                       borderRadius: BorderRadius.circular(3.0),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 4.0),
                         child: Text(
                           i,
-                          style: Provider.of<TextStylesBloc>(context).small1.copyWith(color: Colors.grey.shade700),
+                          style: Provider.of<TextStylesBloc>(context)
+                              .body1
+                              .copyWith(color: Colors.grey.shade700),
                         ),
                       ),
                     ),
@@ -698,8 +720,6 @@ class MySearchPage extends SearchDelegate<void> {
   Widget buildResults(BuildContext context) {
     final bloc = BlocProvider.of<SearchBloc>(context);
 
-    bloc.add(SearchEventWithKey(key: query));
-
     return wrap(context, BlocBuilder<SearchBloc, SearchResult>(
       builder: (context, state) {
         if (state is SearchWithoutData) {
@@ -713,16 +733,21 @@ class MySearchPage extends SearchDelegate<void> {
               children: [
                 suggestions(context),
                 if (bloc.searchHistory.isNotEmpty) Divider(height: 1),
-                for (var value in state.searchList.data!)
-                  GestureDetector(
-                    onTap: () => BookInfoPage.push(context, int.parse(value.id!)),
-                    child: Container(
-                      height: 40,
-                      alignment: Alignment.centerLeft,
-                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
-                      child: Text('${value.name}'),
+                if (state.searchList.data != null)
+                  for (var value in state.searchList.data!)
+                    GestureDetector(
+                      onTap: () =>
+                          BookInfoPage.push(context, int.parse(value.id!)),
+                      child: Container(
+                        height: 40,
+                        alignment: Alignment.centerLeft,
+                        decoration: BoxDecoration(
+                            border: Border(
+                                bottom:
+                                    BorderSide(color: Colors.grey.shade300))),
+                        child: Text('${value.name}'),
+                      ),
                     ),
-                  ),
               ],
             ),
           );
@@ -747,4 +772,12 @@ class MySearchPage extends SearchDelegate<void> {
           )),
         )
       ];
+
+  @override
+  void showResults(BuildContext context) {
+    final bloc = BlocProvider.of<SearchBloc>(context);
+
+    bloc.add(SearchEventWithKey(key: query));
+    super.showResults(context);
+  }
 }

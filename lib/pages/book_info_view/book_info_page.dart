@@ -1,12 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../book_content_view/book_content_page.dart';
 
 import '../../bloc/bloc.dart';
 import '../../data/book_info.dart';
+import '../../event/event.dart';
 import '../../utils/utils.dart';
+import '../book_content_view/book_content_page.dart';
 import '../embed/images.dart';
 import '../embed/indexs.dart';
 
@@ -28,6 +30,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
   ValueNotifier<bool> showIndexs = ValueNotifier(false);
   @override
   Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).padding.bottom;
     final child = Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -42,35 +45,44 @@ class _BookInfoPageState extends State<BookInfoPage> {
             if (state.data!.data == null) {
               return Center(
                 child: btn1(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                   bgColor: Colors.blue,
                   splashColor: Colors.blue[200],
                   radius: 40,
                   child: Text(
                     '重新加载',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600),
                   ),
                   onTap: () {
-                    BlocProvider.of<BookInfoBloc>(context).add(BookInfoReloadEvent());
+                    BlocProvider.of<BookInfoBloc>(context)
+                        .add(BookInfoReloadEvent());
                   },
                 ),
               );
             }
             var children = <Widget>[];
             final info = state.data!.data!;
-            children.add(
-                header(info.author, info.bookStatus, info.name, info.bookVote!, info.cName, info.desc, info.img, ts));
+
+            children.add(header(info.author, info.bookStatus, info.name,
+                info.bookVote!, info.cName, info.desc, info.img, ts));
+
             children.addAll(desc(info, ts));
             return Stack(
               children: [
                 Column(
                   children: [
                     Expanded(
-                      child: ListView.builder(
-                        itemBuilder: (context, index) {
-                          return children[index];
-                        },
-                        itemCount: children.length,
+                      child: Container(
+                        color: Color.fromARGB(255, 242, 242, 242),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemBuilder: (context, index) {
+                            return children[index];
+                          },
+                          itemCount: children.length,
+                        ),
                       ),
                     ),
                     Material(
@@ -90,54 +102,71 @@ class _BookInfoPageState extends State<BookInfoPage> {
                             }
                           }
 
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Expanded(
-                                child: btn1(
-                                  child: Container(
-                                    height: 56,
-                                    child: Center(
-                                      child: Text('${contain ? '阅读' : '试读'}'),
+                          return Container(
+                            padding: EdgeInsets.only(
+                                bottom: bottom > 0.0 &&
+                                        defaultTargetPlatform ==
+                                            TargetPlatform.iOS
+                                    ? 10.0
+                                    : 0.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Expanded(
+                                  child: btn1(
+                                    child: Container(
+                                      height: 56,
+                                      child: Center(
+                                        child: Text('${contain ? '阅读' : '试读'}'),
+                                      ),
                                     ),
+                                    onTap: () {
+                                      final data = state.data!.data;
+                                      final _cid = cid ?? data!.firstChapterId!;
+                                      final page = currentPage ?? 1;
+                                      BookContentPage.push(
+                                          context, bookid, _cid, page);
+                                    },
+                                    background: false,
                                   ),
-                                  onTap: () {
-                                    final data = state.data!.data;
-                                    final _cid = cid ?? data!.firstChapterId!;
-                                    final page = currentPage ?? 1;
-                                    BookContentPage.push(context, bookid, _cid, page);
-                                  },
-                                  background: false,
                                 ),
-                              ),
-                              Expanded(
-                                child: btn1(
-                                  background: false,
-                                  onTap: () {
-                                    if (contain) {
-                                      context.read<BookCacheBloc>().deleteBook(bookid);
-                                    } else {
-                                      var addCache = BookCache(
-                                        name: info.name,
-                                        img: info.img,
-                                        updateTime: info.lastTime,
-                                        lastChapter: info.lastChapter,
-                                        chapterId: info.firstChapterId,
-                                        id: info.id,
-                                        sortKey: DateTime.now().millisecondsSinceEpoch,
-                                        isTop: 0,
-                                        page: 1,
-                                        isNew: 1,
-                                      );
-                                      context.read<BookCacheBloc>().addBook(addCache);
-                                    }
-                                  },
-                                  child: Container(
-                                      height: 56, child: Center(child: Text('${contain ? '移除' : '添加到'}书架'))),
+                                Expanded(
+                                  child: btn1(
+                                    background: false,
+                                    onTap: () {
+                                      if (contain) {
+                                        context
+                                            .read<BookCacheBloc>()
+                                            .deleteBook(bookid);
+                                      } else {
+                                        var addCache = BookCache(
+                                          name: info.name,
+                                          img: info.img,
+                                          updateTime: info.lastTime,
+                                          lastChapter: info.lastChapter,
+                                          chapterId: info.firstChapterId,
+                                          id: info.id,
+                                          sortKey: DateTime.now()
+                                              .millisecondsSinceEpoch,
+                                          isTop: 0,
+                                          page: 1,
+                                          isNew: 1,
+                                        );
+                                        context
+                                            .read<BookCacheBloc>()
+                                            .addBook(addCache);
+                                      }
+                                    },
+                                    child: Container(
+                                        height: 56,
+                                        child: Center(
+                                            child: Text(
+                                                '${contain ? '移除' : '添加到'}书架'))),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           );
                         },
                       ),
@@ -154,7 +183,9 @@ class _BookInfoPageState extends State<BookInfoPage> {
                             onTap: (context, id, cid) {
                               BookContentPage.push(context, id, cid, 1);
                               showIndexs.value = false;
-                              context.read<BookIndexBloc>().add(BookIndexShowEvent(id: id, cid: cid));
+                              context
+                                  .read<BookIndexBloc>()
+                                  .add(BookIndexShowEvent(id: id, cid: cid));
                             },
                           ),
                           // child: Container(),
@@ -207,7 +238,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
   Iterable<Widget> desc(BookInfo info, TextStylesBloc ts) sync* {
     yield Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      color: Colors.grey[200],
+      color: Color.fromARGB(255, 250, 250, 250),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -230,7 +261,9 @@ class _BookInfoPageState extends State<BookInfoPage> {
                     ),
                     Center(
                         child: Icon(
-                      hide ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_up_rounded,
+                      hide
+                          ? Icons.keyboard_arrow_down_rounded
+                          : Icons.keyboard_arrow_up_rounded,
                       color: Colors.grey[700],
                     )),
                   ],
@@ -243,8 +276,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
     );
     yield Container(
       margin: const EdgeInsets.only(top: 10.0),
-      color: Colors.grey[200],
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6),
+      color: Color.fromARGB(255, 250, 250, 250),
       child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
         builder: (context, cState) {
           final bookid = info.id;
@@ -260,16 +292,19 @@ class _BookInfoPageState extends State<BookInfoPage> {
           return btn1(
             onTap: () {
               if (contained) {
-                context.read<BookIndexBloc>().add(BookIndexShowEvent(id: bookid, cid: cid));
+                context
+                    .read<BookIndexBloc>()
+                    .add(BookIndexShowEvent(id: bookid, cid: cid));
               } else {
-                context.read<BookIndexBloc>().add(BookIndexShowEvent(id: info.id, cid: info.firstChapterId));
+                context.read<BookIndexBloc>().add(
+                    BookIndexShowEvent(id: info.id, cid: info.firstChapterId));
               }
               showIndexs.value = !showIndexs.value;
             },
             radius: 0,
-            bgColor: Colors.grey[200],
+            bgColor: Color.fromARGB(255, 250, 250, 250),
             splashColor: Colors.grey[300],
-            padding: const EdgeInsets.all(0.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6),
             child: Row(
               children: [
                 Expanded(
@@ -314,32 +349,34 @@ class _BookInfoPageState extends State<BookInfoPage> {
         },
       ),
     );
+    // yield Container(
+    //   padding: const EdgeInsets.symmetric(horizontal: 10.0),
+    //   child:
     yield Container(
-      color: Colors.grey[200],
-      margin: const EdgeInsets.only(top: 6.0),
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: Row(
-              children: [
-                Text('${info.author} 还写过'),
-              ],
-            ),
-          ),
-          for (var l in info.sameUserBooks!) BookInfoSameItemWidget(l: l, author: info.author),
-        ],
-      ),
+      color: Color.fromARGB(255, 250, 250, 250),
+      margin: const EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+      child: Text('${info.author} 还写过'),
     );
+    for (var l in info.sameUserBooks!)
+      yield BookInfoSameItemWidget(l: l, author: info.author);
+    // );
   }
 
-  Widget header(String? author, String? bookStatus, String? name, BookVote bookvote, String? cName, String? desc,
-      String? img, TextStylesBloc ts) {
+  Widget header(
+      String? author,
+      String? bookStatus,
+      String? name,
+      BookVote bookvote,
+      String? cName,
+      String? desc,
+      String? img,
+      TextStylesBloc ts) {
     return Container(
-      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 16.0),
+      padding: const EdgeInsets.only(left: 12.0, top: 12.0, bottom: 12.0),
       child: Container(
         height: 130,
+        color: Color.fromARGB(255, 250, 250, 250),
         child: Row(
           children: [
             Container(
@@ -350,7 +387,7 @@ class _BookInfoPageState extends State<BookInfoPage> {
             ),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.only(left: 12.0),
+                padding: const EdgeInsets.only(left: 16.0),
                 child: DefaultTextStyle(
                   style: ts.body2,
                   child: Column(
@@ -424,18 +461,21 @@ class BookInfoSameItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ts = BlocProvider.of<TextStylesBloc>(context);
     return Container(
-      decoration: BoxDecoration(border: BorderDirectional(bottom: BorderSide(width: 1, color: Colors.grey[300]!))),
+      decoration: BoxDecoration(
+          border: BorderDirectional(
+              bottom: BorderSide(width: 1, color: Colors.grey.shade300))),
       child: btn1(
         radius: 0,
-        bgColor: Colors.grey[100],
+        bgColor: Color.fromARGB(255, 250, 250, 250),
         splashColor: Colors.grey[300],
-        padding: const EdgeInsets.all(0.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) {
             return BlocProvider(
               create: (context) => BookInfoBloc(context.read<Repository>()),
               child: Builder(builder: (context) {
-                BlocProvider.of<BookInfoBloc>(context).add(BookInfoEventSentWithId(l.id!));
+                BlocProvider.of<BookInfoBloc>(context)
+                    .add(BookInfoEventSentWithId(l.id!));
                 return wrapData(BookInfoPage());
               }),
             );
