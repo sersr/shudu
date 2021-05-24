@@ -16,6 +16,5 @@ void main() {
   // debugProfileLayoutsEnabled = true;
 
   RendererBinding.instance!.renderView.automaticSystemUiAdjustment = false;
-
   runApp(const MulProvider());
 }

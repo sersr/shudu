@@ -773,8 +773,7 @@ class ContentNotifier extends ChangeNotifier {
 
       if (lineHeightAndExtra * whiteRows > 200) whiteRows--;
 
-      final _half = fontSize / 2;
-
+      final _oneHalf = fontSize * 1.2;
       ignore = _ignoreTask(contentid);
 
       if (ignore) return EventStatus.ignoreAndRemove;
@@ -796,6 +795,8 @@ class ContentNotifier extends ChangeNotifier {
       for (var i = 0; i < paragraphs.length; i++) {
         await wait();
 
+        // character 版本
+        // 确保每一次递增都是完整字符
         final pl = paragraphs[i].characters;
         var start = 0;
         ignore = _ignoreTask(contentid);
@@ -804,7 +805,7 @@ class ContentNotifier extends ChangeNotifier {
         await wait();
 
         while (start < pl.length) {
-          var end = math.min(start + words, pl.length);
+          var end = math.min(start + words, pl.length - 1);
 
           await wait();
 
@@ -822,14 +823,23 @@ class ContentNotifier extends ChangeNotifier {
 
             await wait();
 
-            if (_t.height > fontSize) {
+            if (_t.height > _oneHalf) {
               final endOffset =
-                  _t.getPositionForOffset(Offset(width, _half)).offset;
+                  _t.getPositionForOffset(Offset(width, 0.1)).offset;
               final _s = s.substring(0, endOffset).characters;
+              assert(() {
+                if (endOffset != _s.length) {
+                  // 特殊字符占用更多字节
+                  print('no: $_s |$start, ${pl.length}');
+                }
+                return true;
+              }());
               end = start + _s.length;
               break;
             }
           }
+          await wait();
+
           if (end == pl.length &&
               pl
                   .getRange(start, end)
@@ -838,14 +848,14 @@ class ContentNotifier extends ChangeNotifier {
                   .isEmpty) break;
 
           final _s = pl.getRange(start, end);
-          await wait();
+
+          await wait('_text layout');
 
           final _text = TextPainter(
               text: TextSpan(text: _s.toString(), style: style),
               textDirection: TextDirection.ltr)
             ..layout(maxWidth: width);
 
-          await wait('_text layout');
 
           start = end;
           lines.add(_text);

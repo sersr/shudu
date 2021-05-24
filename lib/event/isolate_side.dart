@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
-import 'package:sqlite3/sqlite3.dart';
+import '../database/book_database.dart';
 
 import '../api/api.dart';
 import '../bloc/bloc.dart';
@@ -17,17 +17,12 @@ import 'book_event_delegate.dart';
 import 'book_event_messager.dart';
 import 'book_repository.dart';
 import 'constants.dart';
-import 'database.dart';
 import 'messages.dart';
 
 // 数据库 `Sqflite` Windows,Linux 是 FFI 实现的，可以在 Isolate 创建
 // 所有网络任务都在 Isolate 运行
 class InnerBookEventIsolate extends BookEvent
-    with
-        NetwrokFuncEvent,
-        ContentDatabaseImpl,
-        SqfliteDatabase,
-        InnerDatabaseWinImpl {
+    with NetwrokFuncEvent, ContentDatabaseImpl, BookDatabase {
   InnerBookEventIsolate(this.appPath) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.windows:
@@ -39,7 +34,7 @@ class InnerBookEventIsolate extends BookEvent
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
       default:
-        isOn = false;
+        isOn = true;
       // sqlite3.openInMemory();
     }
   }
@@ -49,9 +44,9 @@ class InnerBookEventIsolate extends BookEvent
   late final bool isOn;
   @override
   Future<void> initState() async {
-    if (isOn) {
-      await super.initState();
-    }
+    // if (isOn) {
+    await super.initState();
+    // }
     return init();
   }
 }
@@ -68,10 +63,10 @@ class BookEventIsolate extends BookEvent with BookEventDelegateMixin {
   // 函数路径处理
   void resolveFunc(IsolateSendMessage m) {
     if (target.resolve(m)) return;
-    if (!target.isOn) {
-      Log.i('something was error');
-      return;
-    }
+    // if (!target.isOn) {
+    //   Log.i('something was error');
+    //   return;
+    // }
     switch (m.type) {
       case DatabaseMessage.addBook:
         insertBook(m.args)._futureNull(m);
@@ -99,13 +94,14 @@ class BookEventIsolate extends BookEvent with BookEventDelegateMixin {
       //   final contentid = m.args[1];
       //   getContentDb(bookid, contentid)._futureMap(m);
       // break;
-      case DatabaseMessage.sendIndexs:
-        getIndexsDb(m.args)._futureMap(m);
+      case DatabaseMessage.getCacheContentsDb:
+        getCacheContentsDb(m.args)._futureMap(m);
         break;
       case DatabaseMessage.updateBookIsTop:
         int id = m.args[0];
         int isTop = m.args[1];
-        updateBookStatusAndSetTop(id, isTop)._futureNull(m);
+        int isShow = m.args[2];
+        updateBookStatusAndSetTop(id, isTop, isShow)._futureNull(m);
         break;
 
       case DatabaseMessage.updateCname:
@@ -120,6 +116,16 @@ class BookEventIsolate extends BookEvent with BookEventDelegateMixin {
         int cid = m.args[1];
         int page = m.args[2];
         updateBookStatus(id, cid, page)._futureNull(m);
+        break;
+      case DatabaseMessage.getIndexDb:
+        getIndexsDb(m.args)._futureMap(m);
+        break;
+      case DatabaseMessage.getAllBookId:
+        getAllBookId().then(
+          (value) => m.sp.send(IsolateReceiveMessage(data: value)),
+          onError: (_) => m.sp.send(IsolateReceiveMessage(
+              data: const <int>{}, result: Result.failed)),
+        );
         break;
       default:
         Future<void>.value()._futureNull(m);
@@ -165,6 +171,7 @@ mixin NetwrokFuncEvent on BookEvent {
 
   bool resolve(IsolateSendMessage m) {
     if (m.type is! CustomMessage) return false;
+    Api.moveNext();
     switch (m.type) {
       case CustomMessage.info:
         _loadInfo(m.args).then((value) {
@@ -300,10 +307,11 @@ mixin NetwrokFuncEvent on BookEvent {
         //   final pages = divText(utf8.decode(text), utf8.decode(cname), words.first);
         //   m.sp.send(IsolateReceiveMessage(data: pages));
         final text = m.args[0];
-        final cname = m.args[1];
+        // final cname = m.args[1];
         // final words = m.args[2];
-        final pages = divText(text, cname);
-        m.sp.send(IsolateReceiveMessage(data: pages));
+        final pages = LineSplitter.split(text);
+
+        m.sp.send(IsolateReceiveMessage(data: pages.toList()));
         break;
       default:
         return false;

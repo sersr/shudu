@@ -22,10 +22,12 @@ enum DatabaseMessage {
   deleteBook,
   deleteCache,
   loadBookInfo,
-  sendIndexs,
+  getCacheContentsDb,
   updateBookIsTop,
   updateCname,
   updateMainInfo,
+  getIndexDb,
+  getAllBookId,
 }
 
 class IsolateSendMessage {

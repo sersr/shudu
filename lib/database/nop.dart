@@ -1,0 +1,189 @@
+import 'dart:async';
+
+import '../utils/utils.dart';
+import 'package:sqlite3/sqlite3.dart';
+
+typedef _DatabaseFunction = void Function(NopDatabase db, int version);
+typedef _DatabaseUpgradeFunction = void Function(
+    NopDatabase db, int oVersion, int nVersion);
+typedef ReturnQuery = int Function(String sql, [List<Object?> paramters]);
+typedef Execute = void Function(String sql, [List<Object?> paramters]);
+
+abstract class NopDatabase {
+  NopDatabase();
+
+  static final _openlist = <String, NopDatabase>{};
+
+  static NopDatabase open(
+    String path, {
+    required _DatabaseFunction onCreate,
+    int version = 1,
+    _DatabaseUpgradeFunction? onUpgrade,
+    _DatabaseUpgradeFunction? onDowngrade,
+  }) {
+    if (_openlist.containsKey(path)) return _openlist[path]!;
+    final nop = NopDatabaseImpl._();
+    _openlist[path] = nop;
+    nop._open(path,
+        version: version,
+        onCreate: onCreate,
+        onDowngrade: onDowngrade,
+        onUpgrade: onUpgrade);
+    return nop;
+  }
+
+  Execute get execute;
+  List<Row> Function(String sql, [List<Object?> parameters]) get query;
+  ReturnQuery get update;
+  ReturnQuery get delete;
+  ReturnQuery get insert;
+}
+
+class NopDatabaseImpl extends NopDatabase {
+  NopDatabaseImpl._();
+  late Database db;
+
+  @override
+  late final execute = db.execute;
+
+  @override
+  late var query = _query;
+
+  @override
+  late var delete = _inneridu;
+
+  @override
+  late var update = _inneridu;
+  @override
+  late var insert = _inneridu;
+
+  void _open(
+    String path, {
+    required _DatabaseFunction onCreate,
+    int version = 1,
+    _DatabaseUpgradeFunction? onUpgrade,
+    _DatabaseUpgradeFunction? onDowngrade,
+  }) {
+    assert(version > 0);
+
+    db = sqlite3.open(path);
+    final _v = db.userVersion;
+
+    if (_v == 0) {
+      onCreate(this, version);
+      db.userVersion = version;
+    } else if (_v < version) {
+      assert(onUpgrade != null, 'onUpgrade == null');
+
+      if (onUpgrade != null) {
+        db.userVersion = version;
+        onUpgrade(this, _v, version);
+      }
+    } else if (_v < version) {
+      assert(onDowngrade != null, 'onDowngrade == null');
+
+      if (onDowngrade != null) {
+        db.userVersion = version;
+        onDowngrade(this, _v, version);
+      }
+    }
+  }
+
+  List<Row> _query(String sql, [List<Object?> parameters = const []]) {
+    final result = db.select(sql, parameters);
+    return result.map((e) => e).toList();
+  }
+
+  int _inneridu(String sql, [List<Object?> paramters = const []]) {
+    execute(sql, paramters);
+
+    final count = db.getUpdatedRows();
+
+    if (count > 0 && watcher.hasListener) watcher.run();
+
+    return count;
+  }
+
+  final watcher = Watcher();
+
+  QueryListener watch(String sql, [List<Object?> parameters = const []]) {
+    return watcher.addListener(
+        '${sql}_${parameters.join()}', () => _query(sql, parameters));
+  }
+}
+
+typedef WatcherFu = List<Map<String, Object?>> Function();
+
+class Watcher {
+  Watcher();
+  final listeners = <String, QueryListener>{};
+
+  bool get hasListener => listeners.isNotEmpty;
+
+  QueryListener addListener(String key, WatcherFu fn) {
+    if (listeners.containsKey(key)) return listeners[key]!;
+    final l = QueryListener(key, this, fn);
+    listeners[key] = l;
+    return l;
+  }
+
+  void removeListener(String key) {
+    listeners.remove(key);
+  }
+
+  void run() {
+    for (final l in listeners.values) l._run();
+  }
+}
+
+class QueryListener {
+  QueryListener(this.key, this.watcher, this.watchFn) {
+    _controller = StreamController.broadcast(onCancel: _cancel);
+  }
+  final WatcherFu watchFn;
+  final Watcher watcher;
+  final String key;
+
+  late StreamController _controller;
+
+  void _cancel() {
+    if (!_controller.hasListener) {
+      Log.i('no listener');
+      // assert(
+      //     watcher.listeners.containsKey(key) && watcher.listeners[key] == this);
+
+      // watcher.removeListener(key);
+    }
+  }
+
+  StreamSubscription listen(
+    void Function(dynamic)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return _controller.stream.listen(onData,
+        onDone: onDone, onError: onError, cancelOnError: cancelOnError);
+  }
+
+  void _run() {
+    if (_controller.hasListener) {
+      _controller.add(watchFn());
+    } else {
+      assert(
+          watcher.listeners.containsKey(key) && watcher.listeners[key] == this);
+
+      watcher.removeListener(key);
+    }
+  }
+}
+
+class Table {
+  const Table({this.name = ''});
+  final String name;
+}
+
+class Column {
+  const Column({this.name = ''});
+  final String name;
+}

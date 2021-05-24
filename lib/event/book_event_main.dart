@@ -14,7 +14,7 @@ class BookEventMain extends BookEvent with BookEventDelegateMixin {
       case TargetPlatform.fuchsia:
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
-        target = InnerBookEventMainIsolate(repository);
+        target = InnerDatabaseIsoateTransformer(repository);
         break;
       case TargetPlatform.windows:
       case TargetPlatform.linux:

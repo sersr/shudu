@@ -82,12 +82,13 @@ mixin BookEventDatabaseMessager on DatabaseEvent {
       repository.sendMessage(DatabaseMessage.loadBookInfo, null);
 
   @override
-  Future<List<Map<String, Object?>>> getIndexsDb(int bookid) =>
-      repository.sendMessage(DatabaseMessage.sendIndexs, bookid);
+  Future<List<Map<String, Object?>>> getCacheContentsDb(int bookid) =>
+      repository.sendMessage(DatabaseMessage.getCacheContentsDb, bookid);
 
   @override
-  Future<void> updateBookStatusAndSetTop(int id, int isTop) =>
-      repository.sendMessage(DatabaseMessage.updateBookIsTop, [id, isTop]);
+  Future<void> updateBookStatusAndSetTop(int id, int isTop, int isShow) =>
+      repository
+          .sendMessage(DatabaseMessage.updateBookIsTop, [id, isTop, isShow]);
 
   @override
   Future<void> updateBookStatusAndSetNew(
@@ -106,12 +107,17 @@ mixin BookEventDatabaseMessager on DatabaseEvent {
 
   @override
   Future<Set<int>> getAllBookId() {
-    throw 'messager no impletation';
+    return repository.sendMessage(DatabaseMessage.getAllBookId, '');
   }
 
   @override
   Future<void> saveContent(BookContent bookContent) =>
       throw Exception('messager no impletation');
+
+  @override
+  Future<List<Map<String, Object?>>> getIndexsDb(int bookid) {
+    return repository.sendMessage(DatabaseMessage.getIndexDb, bookid);
+  }
 }
 
 /// 数据库 和 网络任务 不在同一个 Isolate

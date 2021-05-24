@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../event/event.dart';
 
-
 class BookCache extends Equatable {
   BookCache({
     this.chapterId,
@@ -17,6 +16,7 @@ class BookCache extends Equatable {
     this.sortKey,
     this.isNew,
     this.page,
+    this.isShow,
   });
   final String? name;
   final String? img;
@@ -28,6 +28,7 @@ class BookCache extends Equatable {
   final int? isTop;
   final int? page;
   final int? isNew;
+  final int? isShow;
   // BookCache copyWith(
   //     {String? name,
   //     String? img,
@@ -64,11 +65,23 @@ class BookCache extends Equatable {
       isTop: map['isTop'] as int?,
       page: map['cPage'] as int?,
       isNew: map['isNew'] as int?,
+      isShow: map['isShow'] as int? ?? 0,
     );
   }
 
   @override
-  List<Object?> get props => [name, img, updateTime, lastChapter, chapterId, id, sortKey, isTop, page];
+  List<Object?> get props => [
+        name,
+        img,
+        updateTime,
+        lastChapter,
+        chapterId,
+        id,
+        sortKey,
+        isTop,
+        page,
+        isShow
+      ];
 }
 
 abstract class BookChapterIdEvent extends Equatable {
@@ -82,12 +95,12 @@ class _BookCacheInnerEvent extends BookChapterIdEvent {}
 class BookChapterIdFirstLoadEvent extends BookChapterIdEvent {}
 
 class BookChapterIdState {
-  BookChapterIdState({this.sortChildren = const [], this.first = false});
-  final List<BookCache> sortChildren;
-  final bool first;
-  factory BookChapterIdState.fromMap(List<Map> list) {
+  BookChapterIdState({this.list = const [], this.first = false});
+  List<Map> list;
+  List<BookCache>? _sortChildren;
+  List<BookCache> get sortChildren {
     var _bookCaches = <BookCache>[];
-    var _sortChildren = <BookCache>[];
+    if (_sortChildren != null) return _sortChildren!;
 
     if (list.isNotEmpty) {
       for (var bookCache in list) {
@@ -97,8 +110,25 @@ class BookChapterIdState {
       final isTop = _bookCaches.where((element) => element.isTop == 1);
       final custom = _bookCaches.where((element) => element.isTop != 1);
       _sortChildren = isTop.toList()..addAll(custom);
+    } else {
+      _sortChildren = <BookCache>[];
     }
-    return BookChapterIdState(sortChildren: _sortChildren);
+
+    return _sortChildren!;
+  }
+
+  List<BookCache>? _showChildren;
+  List<BookCache> get showChildren {
+    final sort = sortChildren;
+
+    _showChildren ??= sort.where((element) => element.isShow != 0).toList();
+
+    return _showChildren!;
+  }
+
+  final bool first;
+  factory BookChapterIdState.fromMap(List<Map> list) {
+    return BookChapterIdState(list: list);
   }
 }
 
@@ -119,7 +149,7 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
 
   Completer<void>? loading;
   Future<void>? get awaitloading => loading?.future;
-  
+
   void completerLoading() {
     if (loading != null && !loading!.isCompleted) {
       loading!.complete();
@@ -158,8 +188,8 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     emitUpdate();
   }
 
-  Future<void> updateTop(int id, int isTop) async {
-    await repository.databaseEvent.updateBookStatusAndSetTop(id, isTop);
+  Future<void> updateTop(int id, int isTop, {int isShow = 1}) async {
+    await repository.databaseEvent.updateBookStatusAndSetTop(id, isTop, isShow);
     emitUpdate();
   }
 

@@ -546,7 +546,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           builder: (context, state) {
             if (state.first) return SizedBox();
 
-            final children = state.sortChildren;
+            final children = state.showChildren;
             if (children.isEmpty) {
               return Center(child: Text('点击右上角按钮搜索'));
             }

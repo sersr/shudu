@@ -12,12 +12,12 @@ import io.flutter.embedding.engine.FlutterJNI
 import io.flutter.embedding.engine.dart.DartExecutor
 
 class MyApplication : FlutterApplication() {
-    override fun onCreate() {
-        val loader = FlutterInjector.instance().flutterLoader()
-        val jni = FlutterJNI()
+    // override fun onCreate() {
+        // val loader = FlutterInjector.instance().flutterLoader()
+        // val jni = FlutterJNI()
 
-        loader.startInitialization(this)
-        loader.ensureInitializationComplete(this, null)
+        // loader.startInitialization(this)
+        // loader.ensureInitializationComplete(this, null)
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 //            val modes = windowManager.defaultDisplay.supportedModes!!
@@ -39,13 +39,13 @@ class MyApplication : FlutterApplication() {
 //                }
 //            }
 //        }
-        jni.attachToNative(false)
+        // jni.attachToNative(false)
 
-        val f = FlutterEngine(this, loader, jni,null, false)
-        f.dartExecutor.executeDartEntrypoint(
-                DartExecutor.DartEntrypoint.createDefault()
-        )
-        FlutterEngineCache.getInstance().put("myEngine", f)
-        super.onCreate()
-    }
+        // val f = FlutterEngine(this, loader, jni,null, false)
+        // f.dartExecutor.executeDartEntrypoint(
+        //         DartExecutor.DartEntrypoint.createDefault()
+        // )
+        // FlutterEngineCache.getInstance().put("myEngine", f)
+    //     super.onCreate()
+    // }
 }

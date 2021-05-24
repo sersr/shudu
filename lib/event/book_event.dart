@@ -19,14 +19,14 @@ abstract class DatabaseEvent {
   /// isNew == 0
   Future<void> updateBookStatus(int id, int cid, int page);
 
-  Future<void> updateBookStatusAndSetTop(int id, int isTop);
+  Future<void> updateBookStatusAndSetTop(int id, int isTop, int isShow);
 
   Future<void> deleteCache(int bookId);
 
   /// [BookIndexBloc]
   Future<void> insertOrUpdateIndexs(int? id, String indexs);
-
-  Future<List<Map<String, Object?>>> getIndexsDb(int bookid);
+ 
+  Future<List<Map<String, Object?>>> getCacheContentsDb(int bookid);
 
   /// [BookCacheBloc]
   Future<void> insertBook(BookCache bookCache);
@@ -40,6 +40,7 @@ abstract class DatabaseEvent {
   @protected
   Future<List<Map<String, Object?>>> getContentDb(int bookid, int contentid);
   Future<Set<int>> getAllBookId();
+    Future<List<Map<String, Object?>>> getIndexsDb(int bookid);
 }
 
 abstract class CustomEvent {

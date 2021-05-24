@@ -89,10 +89,12 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     return repository.databaseEvent.insertOrUpdateIndexs(id, indexs);
   }
 
-  Stream<BookIndexState> sendIndexs({required int bookid, required int contentid}) async* {
+  Stream<BookIndexState> sendIndexs(
+      {required int bookid, required int contentid}) async* {
     if (id == bookid &&
         cid == contentid &&
-        (bookUpDateTime[bookid] ?? 0) + updateInterval > DateTime.now().millisecondsSinceEpoch) {
+        (bookUpDateTime[bookid] ?? 0) + updateInterval >
+            DateTime.now().millisecondsSinceEpoch) {
       return;
     }
     final _id = id;
@@ -100,12 +102,16 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     var volIndex = 0;
     var inIndexs = false;
     var cacheList = <int>[];
-    var queryList = await repository.databaseEvent.getIndexsDb(bookid);
+    final same = indexs.isNotEmpty && _id == bookid;
+    if (same) yield BookIndexIdleState();
+
+    var queryList = await repository.databaseEvent.getCacheContentsDb(bookid);
+
     for (var l in queryList) {
-      cacheList.add(l['cid'] as int);
+      if (l['cid'] is int) cacheList.add(l['cid'] as int);
     }
 
-    if (indexs.isNotEmpty && _id == bookid) {
+    if (same) {
       for (var i = 0; i < indexs.length; i++) {
         for (var l = 0; l < indexs[i].length; l++) {
           if (indexs[i][l] is BookIndexShort && indexs[i][l].cid == contentid) {
@@ -118,11 +124,16 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
       }
       if (inIndexs) {
         yield BookIndexWidthData(
-            id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
+            id: bookid,
+            bookIndexs: indexs,
+            index: index,
+            volIndex: volIndex,
+            cacheList: cacheList);
       }
     } else {
-      yield BookIndexIdleState();
       indexs = <List>[];
+      var queryList = await repository.databaseEvent.getIndexsDb(bookid);
+
       if (queryList.isNotEmpty) {
         final restr = queryList.first['bIndexs'] as String?;
         if (restr != null && restr.isNotEmpty) {
@@ -132,7 +143,8 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             volIndex = 0;
             for (var i = 0; i < bookIndexShort.length; i++) {
               for (var l = 0; l < bookIndexShort[i].length; l++) {
-                if (bookIndexShort[i][l] is BookIndexShort && bookIndexShort[i][l].cid == contentid) {
+                if (bookIndexShort[i][l] is BookIndexShort &&
+                    bookIndexShort[i][l].cid == contentid) {
                   index = l - 1;
                   volIndex = i;
                   inIndexs = true;
@@ -142,27 +154,40 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
             }
             if (inIndexs) {
               yield BookIndexWidthData(
-                  id: bookid, bookIndexs: bookIndexShort, index: index, volIndex: volIndex, cacheList: cacheList);
-              assert(Log.i('indexs: ${bookIndexShort.length}', stage: this, name: 'sendIndexs'));
+                  id: bookid,
+                  bookIndexs: bookIndexShort,
+                  index: index,
+                  volIndex: volIndex,
+                  cacheList: cacheList);
+              assert(Log.i('indexs: ${bookIndexShort.length}',
+                  stage: this, name: 'sendIndexs'));
             }
             indexs = bookIndexShort;
           }
         }
       }
     }
+
     id = bookid;
     cid = contentid;
+
     if (indexs.isEmpty || // immediate
         !inIndexs || // immediate
-        (bookUpDateTime[bookid] ?? 0) + updateInterval <= DateTime.now().millisecondsSinceEpoch) {
+        (bookUpDateTime[bookid] ?? 0) + updateInterval <=
+            DateTime.now().millisecondsSinceEpoch) {
       final rawData = await repository.customEvent.getIndexsNet(bookid);
+
       if (rawData.isEmpty) {
         if (indexs.isEmpty) {
           yield BookIndexErrorState();
         } else if (!inIndexs) {
           calculate(indexs, index, volIndex);
           yield BookIndexWidthData(
-              id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
+              id: bookid,
+              bookIndexs: indexs,
+              index: index,
+              volIndex: volIndex,
+              cacheList: cacheList);
         }
         return;
       }
@@ -186,17 +211,23 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
           volIndex = 0;
           for (var i = 0; i < indexs.length; i++) {
             for (var l = 0; l < indexs[i].length; l++) {
-              if (indexs[i][l] is BookIndexShort && indexs[i][l].cid == contentid) {
+              if (indexs[i][l] is BookIndexShort &&
+                  indexs[i][l].cid == contentid) {
                 index = l - 1;
                 volIndex = i;
                 break;
               }
             }
           }
-          assert(Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
+          assert(
+              Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
           calculate(indexs, index, volIndex);
           yield BookIndexWidthData(
-              id: bookid, bookIndexs: indexs, index: index, volIndex: volIndex, cacheList: cacheList);
+              id: bookid,
+              bookIndexs: indexs,
+              index: index,
+              volIndex: volIndex,
+              cacheList: cacheList);
           await cacheinnerdb(id, rawData);
         }
       }

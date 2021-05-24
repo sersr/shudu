@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../bloc/bloc.dart';
 import '../../data/book_info.dart';
@@ -93,13 +94,35 @@ class _BookInfoPageState extends State<BookInfoPage> {
                           var contain = false;
                           int? cid;
                           int? currentPage;
+                          var added = false;
                           for (var l in cState.sortChildren) {
                             if (l.id == bookid) {
+                              added = true;
+                              if (l.isShow == 0) break;
                               contain = true;
                               cid = l.chapterId;
                               currentPage = l.page;
                               break;
                             }
+                          }
+                          if (!added) {
+                            var addCache = BookCache(
+                              name: info.name,
+                              img: info.img,
+                              updateTime: info.lastTime,
+                              lastChapter: info.lastChapter,
+                              chapterId: info.firstChapterId,
+                              id: info.id,
+                              sortKey: DateTime.now().millisecondsSinceEpoch,
+                              isTop: 0,
+                              page: 1,
+                              isNew: 1,
+                              isShow: 0,
+                            );
+                            Provider.of<BookCacheBloc>(context)
+                                .repository
+                                .databaseEvent
+                                .insertBook(addCache);
                           }
 
                           return Container(
@@ -140,22 +163,23 @@ class _BookInfoPageState extends State<BookInfoPage> {
                                             .read<BookCacheBloc>()
                                             .deleteBook(bookid);
                                       } else {
-                                        var addCache = BookCache(
-                                          name: info.name,
-                                          img: info.img,
-                                          updateTime: info.lastTime,
-                                          lastChapter: info.lastChapter,
-                                          chapterId: info.firstChapterId,
-                                          id: info.id,
-                                          sortKey: DateTime.now()
-                                              .millisecondsSinceEpoch,
-                                          isTop: 0,
-                                          page: 1,
-                                          isNew: 1,
-                                        );
+                                        // var addCache = BookCache(
+                                        //   name: info.name,
+                                        //   img: info.img,
+                                        //   updateTime: info.lastTime,
+                                        //   lastChapter: info.lastChapter,
+                                        //   chapterId: info.firstChapterId,
+                                        //   id: info.id,
+                                        //   sortKey: DateTime.now()
+                                        //       .millisecondsSinceEpoch,
+                                        //   isTop: 0,
+                                        //   page: 1,
+                                        //   isNew: 1,
+                                        //   isShow: 1,
+                                        // );
                                         context
                                             .read<BookCacheBloc>()
-                                            .addBook(addCache);
+                                            .updateTop(info.id!, 0);
                                       }
                                     },
                                     child: Container(
@@ -176,11 +200,11 @@ class _BookInfoPageState extends State<BookInfoPage> {
                 Positioned.fill(
                   child: AnimatedBuilder(
                     animation: showIndexs,
-                    builder: (context, child) {
+                    builder: (_, child) {
                       if (showIndexs.value) {
                         return background(
                           child: IndexsWidget(
-                            onTap: (context, id, cid) {
+                            onTap: (_, id, cid) {
                               BookContentPage.push(context, id, cid, 1);
                               showIndexs.value = false;
                               context

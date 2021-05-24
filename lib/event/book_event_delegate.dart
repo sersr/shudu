@@ -50,6 +50,11 @@ mixin BookEventDelegateMixin on BookEvent {
   }
 
   @override
+  Future<List<Map<String, Object?>>> getIndexsDb(int bookid) {
+    return target.getIndexsDb(bookid);
+  }
+
+  @override
   Future<Set<int>> getAllBookId() => target.getAllBookId();
 
   @override
@@ -57,12 +62,12 @@ mixin BookEventDelegateMixin on BookEvent {
       target.saveContent(bookContent);
 
   @override
-  Future<List<Map<String, Object?>>> getIndexsDb(int bookid) =>
-      target.getIndexsDb(bookid);
+  Future<List<Map<String, Object?>>> getCacheContentsDb(int bookid) =>
+      target.getCacheContentsDb(bookid);
 
   @override
-  Future<void> updateBookStatusAndSetTop(int id, int isTop) =>
-      target.updateBookStatusAndSetTop(id, isTop);
+  Future<void> updateBookStatusAndSetTop(int id, int isTop, int isShow) =>
+      target.updateBookStatusAndSetTop(id, isTop, isShow);
 
   @override
   Future<void> updateBookStatusAndSetNew(
