@@ -126,6 +126,8 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
             return Container(
               color: Color.fromARGB(255, 242, 242, 242),
               child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                physics: ClampingScrollPhysicsNew(),
                 itemBuilder: (context, index) {
                   return children[index];
                 },
@@ -335,7 +337,7 @@ class ShudanListDetailBloc
 
   Stream<ShudanListDetailState> load(int? index) async* {
     if (index == null) return;
-    final data = await repository.customEvent.getShudanDetail(index);
+    final data = await repository.bookEvent.customEvent.getShudanDetail(index);
     if (data.listId != null) {
       await Future.delayed(Duration(milliseconds: 300));
       yield ShudanListDetailState(data);

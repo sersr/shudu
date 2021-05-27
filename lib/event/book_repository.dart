@@ -14,7 +14,6 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../api/api.dart';
 import '../bloc/bloc.dart';
 import '../utils/utils.dart';
 import 'book_event_main.dart';
@@ -23,12 +22,6 @@ import 'messages.dart';
 import 'repository.dart';
 
 class BookRepository extends Repository {
-  @override
-  late String dataPath;
-
-  @override
-  late String appPath;
-
   final _initCallbacks = <Future<void> Function()>[];
   @override
   void addInitCallback(Future<void> Function() callback) {
@@ -39,14 +32,13 @@ class BookRepository extends Repository {
   late ReceivePort clientRP;
   late SendPort clientSP;
   late Isolate _isolate;
-  final client = dioCreater();
 
   var _init = false;
 
   @override
   Future<void> initState() async {
     if (_init) {
-      assert(Log.w('已经初始化了', stage: this, name: 'initState'));
+      assert(Log.w('已经初始化了'));
       return;
     }
     await SystemChrome.setPreferredOrientations(
@@ -56,60 +48,100 @@ class BookRepository extends Repository {
     _futures.add(Future(() async {
       final _secF = <Future>{};
 
-      appPath = (await getApplicationDocumentsDirectory()).path;
+      final appPath = (await getApplicationDocumentsDirectory()).path;
       Hive.registerAdapter(ColorAdapter());
       Hive.registerAdapter(AxisAdapter());
       Hive.registerAdapter(TargetPlatformAdapter());
       Hive.registerAdapter(PageBuilderAdapter());
 
       Hive.init('$appPath/shudu/hive');
-      // await Hive.initFlutter();
+
       final _minitCallbacks = List.of(_initCallbacks);
       _initCallbacks.clear();
-      _minitCallbacks.forEach((callback) {
-        _secF.add(callback());
-      });
+      _minitCallbacks.forEach((callback) => _secF.add(callback()));
 
-      _secF.add(Future(() async {
+      _secF.add(Future<void>(() async {
         clientRP = ReceivePort();
         _isolate =
             await Isolate.spawn(_isolateNet, [clientRP.sendPort, appPath]);
-        clientSP = await clientRP.first;
+
+        _clientF ??= Completer<void>();
+        clientRP.listen(_listen);
+
+        await _clientF?.future;
+        _clientF = null;
       }));
+
       await Future.wait(_secF);
     }));
 
-    _futures.add(getBatteryLevel());
+    _futures.add(getBatteryLevel);
     _futures.add(getViewInsets());
-    final _bookEvent = BookEventMain(repository: this);
+    final _bookEvent = BookEventMain(this);
 
     bookEvent = _bookEvent;
 
-    _futures.add(_bookEvent.initState());
     await Future.wait(_futures);
     _init = true;
   }
 
+  Completer<void>? _clientF;
+
+  void _listen(r) {
+    if (r is IsolateReceiveMessage) {
+      final _id = r.messageId;
+      final _completer = _messageIds[_id];
+
+      assert(_completer != null);
+
+      _completer!.complete(r.data);
+
+      if (r.result == Result.failed) Log.i('error');
+      return;
+    } else if (r is SendPort) {
+      _clientF?.complete();
+      clientSP = r;
+      return;
+    }
+
+    Log.i('messager error');
+  }
+
   @override
   void dipose() {
-    client.close();
     clientRP.close();
     _isolate.kill(priority: Isolate.immediate);
     _init = false;
   }
 
+  final _messageIds = <int, Completer>{};
+  var _currentMessageId = 0;
+
+  int get generateId {
+    if (_currentMessageId > 10000 && _messageIds.isEmpty) _currentMessageId = 0;
+
+    _currentMessageId += 1;
+    assert(!_messageIds.containsKey(_currentMessageId));
+
+    return _currentMessageId;
+  }
+
   @override
-  Future<T> sendMessage<T extends Object?>(dynamic type, dynamic args) async {
-    final port = ReceivePort();
-    clientSP.send(IsolateSendMessage(type, args, port.sendPort));
-    final result = (await port.first) as IsolateReceiveMessage;
-    if (result.result == Result.failed) {
-      assert(Log.e('返回错误：${result.data}', stage: this, name: 'sendMessage'));
-    } else if (result.result == Result.error) {
-      Api.moveNext();
-    }
-    port.close();
-    return result.data;
+  Future<T?> sendMessage<T>(dynamic type, dynamic args) async {
+    // final port = ReceivePort();
+    final _id = generateId;
+    final _completer = Completer<T?>();
+    _messageIds[_id] = _completer;
+    clientSP.send(IsolateSendMessage(type, args, _id));
+    // final result = (await port.first) as IsolateReceiveMessage;
+    // if (result.result == Result.failed) {
+    //   assert(Log.e('返回错误：${result.data}'));
+    // } else if (result.result == Result.error) {
+    //   Api.moveNext();
+    // }
+    // port.close();
+    // return result.data;
+    return _completer.future;
   }
 
   Battery? _battery;
@@ -133,18 +165,21 @@ class BookRepository extends Repository {
     return _viewInsets;
   }
 
+  DeviceInfoPlugin? deviceInfo;
   @override
-  Future<int> getBatteryLevel() async {
+  Future<int> get getBatteryLevel async {
     _battery ??= Battery();
-    var deviceInfo = DeviceInfoPlugin();
+
+    deviceInfo ??= DeviceInfoPlugin();
+
     if (defaultTargetPlatform == TargetPlatform.android) {
       // var androidInfo = await deviceInfo.androidInfo;
       level = await _battery!.batteryLevel;
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      var iosInfo = await deviceInfo.iosInfo;
-      if (!iosInfo.isPhysicalDevice) {
-        return level;
-      }
+      var iosInfo = await deviceInfo!.iosInfo;
+
+      if (!iosInfo.isPhysicalDevice) return level;
+
       level = await _battery!.batteryLevel;
     }
 
@@ -156,19 +191,14 @@ void _isolateNet(List args) async {
   final port = args[0];
   final appPath = args[1];
   final receivePort = ReceivePort();
-  // final func = MessageFunc(appPath);
 
-  // await func.init();
-  final db = BookEventIsolate(appPath);
+  final db = BookEventIsolate(appPath, port);
   await db.initState();
 
-  receivePort.listen(
-    (m) async {
-      if (m is IsolateSendMessage) {
-        db.resolveFunc(m);
-      }
-    },
-  );
+  receivePort.listen((m) {
+    if (m is IsolateSendMessage) db.resolve(m);
+  });
+
   port.send(receivePort.sendPort);
 }
 

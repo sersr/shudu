@@ -33,10 +33,10 @@ abstract class NopDatabase {
   }
 
   Execute get execute;
-  List<Row> Function(String sql, [List<Object?> parameters]) get query;
-  ReturnQuery get update;
-  ReturnQuery get delete;
-  ReturnQuery get insert;
+  List<Row> Function(String sql, [List<Object?> parameters]) get rawQuery;
+  ReturnQuery get rawUpdate;
+  ReturnQuery get rawDelete;
+  ReturnQuery get rawInsert;
 }
 
 class NopDatabaseImpl extends NopDatabase {
@@ -47,15 +47,15 @@ class NopDatabaseImpl extends NopDatabase {
   late final execute = db.execute;
 
   @override
-  late var query = _query;
+  late var rawQuery = _query;
 
   @override
-  late var delete = _inneridu;
+  late var rawDelete = _inneridu;
 
   @override
-  late var update = _inneridu;
+  late var rawUpdate = _inneridu;
   @override
-  late var insert = _inneridu;
+  late var rawInsert = _inneridu;
 
   void _open(
     String path, {
@@ -178,12 +178,64 @@ class QueryListener {
   }
 }
 
-class Table {
-  const Table({this.name = ''});
-  final String name;
-}
+// class Table {
+//   const Table({this.name = ''});
+//   final String name;
+// }
 
-class Column {
-  const Column({this.name = ''});
-  final String name;
-}
+// class Column {
+//   const Column({this.name = ''});
+//   final String name;
+// }
+
+// class BookCache {
+//   BookCache({
+//     this.chapterId,
+//     this.img,
+//     this.lastChapter,
+//     this.name,
+//     this.updateTime,
+//     this.id,
+//     this.isTop,
+//     this.sortKey,
+//     this.isNew,
+//     this.page,
+//     this.isShow,
+//   });
+//   final String? name;
+//   final String? img;
+//   final String? updateTime;
+//   final String? lastChapter;
+//   final int? chapterId;
+//   final int? id;
+//   final int? sortKey;
+//   final int? isTop;
+//   final int? page;
+//   final int? isNew;
+//   final int? isShow;
+
+//   factory BookCache.fromMap(Map<String, dynamic> map) {
+//     return BookCache(
+//       img: map['img'] as String?,
+//       updateTime: map['updateTime'] as String?,
+//       lastChapter: map['lastChapter'] as String?,
+//       chapterId: map['chapterId'] as int?,
+//       id: map['bookId'] as int?,
+//       name: map['name'] as String?,
+//       sortKey: map['sortKey'] as int?,
+//       isTop: map['isTop'] as int?,
+//       page: map['cPage'] as int?,
+//       isNew: map['isNew'] as int?,
+//       isShow: map['isShow'] as int? ?? 0,
+//     );
+//   }
+  
+
+//   static const tableName = 'Bookinfo';
+//   static String createTable() {
+//     return 'CREATE TABLE if not exists $tableName ('
+//         'id INTEGER PRIMARY KEY, name TEXT, bookId INTEGER, chapterId INTEGER,'
+//         'img TEXT, updateTime TEXT, lastchapter TEXT, sortKey INTEGER, isTop INTEGER'
+//         'page INTEGER, isNew INTEGER, isShow INTEGER';
+//   }
+// }

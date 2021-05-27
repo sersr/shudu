@@ -6,23 +6,49 @@ abstract class Log {
   static const int warn = 1;
   static const int error = 2;
   static int level = 0;
-  static final List<String> _logMessage = ['Info', 'Warn', 'Error'];
-  
-  static bool i(String info, {Object? stage, Object? name, Object? data}) {
-    return log(Log.info, info, stage: stage, name: name, data: data);
+  static final List<String> _logMessage = ['Info ', 'Warn ', 'Error'];
+
+  static int functionLength = 15;
+
+  static bool i(String info, {bool showPath = true}) {
+    return _log(Log.info, info, StackTrace.current, showPath);
   }
 
-  static bool w(String warn, {Object? stage, Object? name, Object? data}) {
-    return log(Log.warn, warn, stage: stage, name: name, data: data);
+  static bool w(String warn, {bool showPath = true}) {
+    return _log(Log.warn, warn, StackTrace.current, showPath);
   }
 
-  static bool e(String error, {Object? stage, Object? name, Object? data}) {
-    return log(Log.error, error, stage: stage, name: name, data: data);
+  static bool e(String error, {bool showPath = true}) {
+    return _log(Log.error, error, StackTrace.current, showPath);
   }
 
-  static bool log(int lv, String message, {Object? stage, Object? name, Object? data}) {
-    String addMsg;
+  static bool log(int lv, String message, {bool showPath = true}) {
+    return _log(lv, message, StackTrace.current, showPath);
+  }
+
+  static bool _log(
+      int lv, String message, StackTrace stackTrace, bool showPath) {
+    if (!kDebugMode) return true;
+    var addMsg = '';
+
     String l;
+    var path = '', name = '';
+    final st = stackTrace.toString();
+
+    final sp = LineSplitter.split(st).toList();
+
+    final spl = sp[1].split(RegExp(r' +'));
+
+    if (spl.length >= 3) {
+      name = spl[1];
+      path = spl[2];
+
+      if (name.length > functionLength)
+        name = '${name.substring(0, functionLength - 3)}...';
+      else
+        name = name.padRight(functionLength);
+    }
+
     switch (level) {
       case 0:
         l = _logMessage[lv];
@@ -38,11 +64,11 @@ abstract class Log {
       default:
         l = '';
     }
+
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       switch (lv) {
         case 0:
-          // addMsg = '\x1B[34m';
-          addMsg = '';
+          addMsg = '\x1B[39m';
           break;
         case 1:
           addMsg = '\x1B[33m';
@@ -53,29 +79,14 @@ abstract class Log {
         default:
           addMsg = '';
       }
-    } else {
-      addMsg = '';
     }
-    if (stage != null) {
-      addMsg += '${stage.runtimeType}';
-    }
-    if (name != null) {
-      if (stage != null) {
-        addMsg = '$addMsg.${name.toString().padRight(12)}';
-      } else {
-        addMsg = '$addMsg${name.toString().padRight(12)}';
-      }
-    }
-    if (stage != null || name != null) {
-      addMsg = '$addMsg |';
-    }
-    addMsg = '$addMsg $l: $message.';
-    if (data != null) {
-      addMsg = '$addMsg\n<~ data: ${data.toString()} ~>';
-    }
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
-      addMsg += '\x1B[0m';
-    }
+
+    addMsg = '$addMsg$l: $name | $message.';
+
+    if (defaultTargetPlatform != TargetPlatform.iOS) addMsg = '$addMsg\x1B[0m';
+
+    if (showPath) addMsg = '$addMsg $path';
+
     print(addMsg);
     return true;
   }

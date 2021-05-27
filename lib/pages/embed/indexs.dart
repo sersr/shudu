@@ -6,6 +6,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 
 import '../../bloc/bloc.dart';
+import '../../utils/utils.dart';
 import '../../utils/widget/botton.dart';
 
 class IndexsWidget extends StatefulWidget {
@@ -32,7 +33,9 @@ class _IndexsWidgetState extends State<IndexsWidget> {
       removeBottom: true,
       context: context,
       child: DefaultTextStyle(
-        style: Provider.of<TextStylesBloc>(context).title3.copyWith(color: Colors.grey.shade800),
+        style: Provider.of<TextStylesBloc>(context)
+            .title3
+            .copyWith(color: Colors.grey.shade800),
         child: GestureDetector(
           onTap: () {},
           child: LayoutBuilder(
@@ -40,7 +43,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
               final height = constraints.maxHeight;
               final extent = 32.0;
               final headerextent = 21.0;
-              return BlocBuilder<BookIndexBloc, BookIndexState>(builder: (context, state) {
+              return BlocBuilder<BookIndexBloc, BookIndexState>(
+                  builder: (context, state) {
                 if (state is BookIndexWidthData) {
                   final indexs = state.bookIndexs;
                   final volIndex = state.volIndex;
@@ -65,6 +69,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                     thickness: 8,
                     radius: const Radius.circular(5),
                     child: CustomScrollView(
+                      physics: ClampingScrollPhysicsNew(),
                       controller: controller,
                       // key: Key('$max'),
                       slivers: [
@@ -78,7 +83,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                                   // borderRadius:
                                   //     st.isPinned ? const BorderRadius.vertical(top: Radius.circular(6.0)) : null,
                                 ),
-                                child: Center(child: Text('${l.first as String}')),
+                                child:
+                                    Center(child: Text('${l.first as String}')),
                                 // height: headerextent,
                               );
                             },
@@ -87,7 +93,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                                 (context, index) {
                                   final _index = index + 1;
                                   return btn1(
-                                    padding: const EdgeInsets.only(left: 10, right: 10),
+                                    padding: const EdgeInsets.only(
+                                        left: 10, right: 10),
                                     radius: 6,
                                     child: Row(
                                       textBaseline: TextBaseline.ideographic,
@@ -99,19 +106,24 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (state.cacheList.contains((l[_index] as BookIndexShort).cid))
+                                        if (state.cacheList.contains(
+                                            (l[_index] as BookIndexShort).cid))
                                           Text(
                                             '已缓存',
                                             softWrap: false,
                                             overflow: TextOverflow.ellipsis,
-                                            style: BlocProvider.of<TextStylesBloc>(context).body3,
+                                            style:
+                                                BlocProvider.of<TextStylesBloc>(
+                                                        context)
+                                                    .body3,
                                           )
                                       ],
                                     ),
                                     splashColor: Colors.grey[500],
                                     background: false,
                                     onTap: () {
-                                      widget.onTap(context, state.id, l[_index].cid);
+                                      widget.onTap(
+                                          context, state.id, l[_index].cid);
                                     },
                                   );
                                 },
@@ -126,13 +138,15 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                 } else if (state is BookIndexErrorState) {
                   return Center(
                     child: btn1(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 8),
                       bgColor: Colors.blue,
                       splashColor: Colors.blue[200],
                       radius: 40,
                       child: Text('重新加载'),
                       onTap: () {
-                        BlocProvider.of<BookIndexBloc>(context).add(BookIndexReloadEvent());
+                        BlocProvider.of<BookIndexBloc>(context)
+                            .add(BookIndexReloadEvent());
                       },
                     ),
                   );

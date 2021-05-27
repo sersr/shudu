@@ -49,14 +49,14 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
     if (event is BookInfoEventSentWithId) {
       lastId = event.id;
       yield BookInfoStateWithoutData();
-      var data = await repository.customEvent.getInfo(event.id);
-      print('data: $data');
+      var data = await repository.bookEvent.customEvent.getInfo(event.id);
+
       await Future.delayed(Duration(milliseconds: 300));
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.databaseEvent
+          await repository.bookEvent.bookInfoEvent
               .updateBookStatusAndSetNew(event.id, newCname, lastTime);
         }
       }
@@ -64,12 +64,12 @@ class BookInfoBloc extends Bloc<BookInfoEvent, BookInfoState> {
     } else if (event is BookInfoReloadEvent) {
       yield BookInfoStateWithoutData();
       await Future.delayed(Duration(milliseconds: 300));
-      var data = await repository.customEvent.getInfo(lastId);
+      var data = await repository.bookEvent.customEvent.getInfo(lastId);
       if (data.data != null) {
         final lastTime = data.data!.lastTime;
         final newCname = data.data!.lastChapter;
         if (newCname != null && lastTime != null) {
-          await repository.databaseEvent
+          await repository.bookEvent.bookInfoEvent
               .updateBookStatusAndSetNew(lastId, newCname, lastTime);
         }
       }

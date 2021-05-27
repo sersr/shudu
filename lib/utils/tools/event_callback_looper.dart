@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
 
 import '../utils.dart';
 
-typedef WaitCallback = Future<void> Function([String label]);
+typedef FutureOrVoidCallback = FutureOr<void> Function();
+
+typedef WaitCallback = Future<void> Function(
+    [FutureOrVoidCallback? closure, String label]);
 
 /// [TaskEntry._run]
-typedef EventCallback = Future<EventStatus?> Function(WaitCallback wait);
+typedef EventCallback = Future<void> Function();
 
-typedef WaitGetterCallback<T> = Future<T> Function(WaitCallback wait);
+// typedef RunCallback<T> = Future<T> Function();
 
 class EventLooper {
   static EventLooper? _instance;
@@ -19,7 +21,7 @@ class EventLooper {
     return _instance!;
   }
 
-  var _frameId = 0;
+  // var _frameId = 0;
 
   final now = Stopwatch()..start();
 
@@ -27,31 +29,13 @@ class EventLooper {
 
   SchedulerBinding get scheduler => SchedulerBinding.instance!;
 
-  bool _addPersistent = false;
-
-  set addPersistent(bool v) {
-    if (_addPersistent) return;
-    _addPersistent = v;
-    if (_addPersistent) {
-      WidgetsFlutterBinding.ensureInitialized();
-
-      scheduler.addPersistentFrameCallback((_) {
-        if (_frameId > 10000) _frameId = 0;
-        _frameId++;
-      });
-    }
-  }
-
   final _taskLists = <TaskEntry>{};
 
-  /// 安排任务，任务消耗时间查询
+  /// 安排任务
   ///
-  /// 添加一个任务到轮询任务中
-  Future<bool> scheduleEventTask<T>(
-    EventCallback callback, {
-    String debugLabel = '',
-  }) async {
-    final _task = TaskEntry<T>(callback, this, debugLabel);
+  /// 队列模式
+  Future<void> scheduleEventTask<T>(EventCallback callback) async {
+    final _task = TaskEntry<T>(callback, this);
 
     _taskLists.add(_task);
     run();
@@ -85,36 +69,42 @@ class EventLooper {
     return true;
   }
 
+  static const zoneWait = 'eventWait';
   // 运行任务
   //
   // 提供时间消耗及等待其他任务
-  Future<bool> _eventRun(TaskEntry task) =>
+  Future<void> _eventRun(TaskEntry task) =>
       eventCallback(task._run, debugLabel: 'eventRun');
 
-  Future<T> eventCallback<T>(WaitGetterCallback<T> callback,
+  Future<void> eventCallback(EventCallback callback,
       {debugLabel = 'eventCallback'}) async {
-    var start = stopwatch;
+    int? start;
     var low = 0;
     var waitNum = 0;
 
-    final result = await callback(([String label = '']) async {
-      final use = (stopwatch - start) / 1000;
-      var wait = 0;
+    Future<void> wait(
+        [FutureOrVoidCallback? closure, String label = '']) async {
+      start ??= stopwatch;
+
+      if (closure != null) closure();
+
+      final use = (stopwatch - start!) / 1000;
+      var waitUs = 0;
       var loopCount = 0;
 
       /// 回到事件队列，让出资源
       /// 等待空闲
       /// 等待时间过长意味着有其他任务正在执行，如：drawFrame，其他事件
       do {
-        if (loopCount > 10) break;
+        if (loopCount > 1000) break;
 
         final _s = stopwatch;
 
         await releaseUI;
 
-        wait = stopwatch - _s;
+        waitUs = stopwatch - _s;
         loopCount++;
-      } while (wait >= 2000);
+      } while (waitUs >= 1000);
 
       waitNum += loopCount;
 
@@ -130,48 +120,51 @@ class EventLooper {
         Log.log(
             i,
             '$debugLabel use: ${use.toStringAsFixed(3)}ms '
-            'wait: ${(wait / 1000).toStringAsFixed(3)}ms low: $low $label');
+            'wait: ${(waitUs / 1000).toStringAsFixed(3)}ms low: $low |$label',
+            showPath: false);
         low = 0;
       } else {
         low++;
       }
       start = stopwatch;
-    });
+    }
+
+    ;
+
+    await runZoned(callback, zoneValues: {zoneWait: wait});
 
     Log.i(
-        '$debugLabel end: ${((stopwatch - start) / 1000).toStringAsFixed(3)}ms'
+        '$debugLabel end: ${((stopwatch - (start ?? 0)) / 1000).toStringAsFixed(3)}ms'
         ' low: $low, wait: $waitNum');
 
-    return result;
+    // return result;
+  }
+
+  Future<void> wait([FutureOrVoidCallback? closure, label = '']) {
+    final _w = Zone.current[EventLooper.zoneWait];
+    if (_w is WaitCallback) {
+      return _w(closure, label);
+    }
+    if (closure != null) closure();
+    return releaseUI;
   }
 }
 
 class TaskEntry<T> {
-  TaskEntry(this.callback, this._looper, this.debugLabel);
+  TaskEntry(this.callback, this._looper);
 
   final EventLooper _looper;
   final EventCallback callback;
-  final String debugLabel;
 
-  final _completer = Completer<bool>();
+  final _completer = Completer<void>();
 
-  Future<bool> get future => _completer.future;
+  Future<void> get future => _completer.future;
 
-  Future<bool> _run(WaitCallback wait) async {
-    final result = await callback(wait);
+  Future<void> _run() async {
+    await callback();
 
-    switch (result) {
-      case EventStatus.ignoreAndRemove:
-        _completer.complete(false);
-        break;
-      case EventStatus.done:
-      default:
-        _completer.complete(true);
-        assert(Log.i('done...'));
-    }
+    _completer.complete();
     _looper._taskLists.remove(this);
-
-    return true;
   }
 }
 
@@ -181,3 +174,4 @@ enum EventStatus {
 }
 
 Future<void> get releaseUI => Future.delayed(Duration.zero);
+Future<void> release(int time) => Future.delayed(Duration(milliseconds: time));

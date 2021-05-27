@@ -98,6 +98,7 @@ class ContentNotifier extends ChangeNotifier {
     await _loadFirst();
 
     painter();
+    notifyState(ignore: !_inBookView && tData.contentIsEmpty, loading: false);
   }
 
   Future<void> metricsChange() async {
@@ -299,18 +300,20 @@ class ContentNotifier extends ChangeNotifier {
     style = _getStyle(config.value);
     secstyle = style.copyWith(fontSize: pagefooterSize);
 
+    await _configF;
+
     _configF ??= () async {
       final _config = config.value;
-      final box = await Hive.openBox('settings');
-      var _bgcolor = box.get('bgcolor');
-      var _fontColor = box.get('fontColor');
-      var axis = box.get('axis');
-      final _fontSize = box.get('fontSize');
-      final _height = box.get('lineTweenHeight');
-      final _fontFamily = box.get('fontFamily');
-      final _p = box.get('patternList');
-      final _portrait = box.get('portrait');
-      final _autoValue = box.get('autoValue');
+      final box = await Hive.openLazyBox('settings');
+      var _bgcolor = await box.get('bgcolor');
+      var _fontColor = await box.get('fontColor');
+      var axis = await box.get('axis');
+      final _fontSize = await box.get('fontSize');
+      final _height = await box.get('lineTweenHeight');
+      final _fontFamily = await box.get('fontFamily');
+      final _p = await box.get('patternList');
+      final _portrait = await box.get('portrait');
+      final _autoValue = await box.get('autoValue');
 
       if (_bgcolor != _config.bgcolor)
         await box.put('bgcolor', _config.bgcolor);
@@ -330,7 +333,8 @@ class ContentNotifier extends ChangeNotifier {
       if (_fontFamily != _config.fontFamily && _config.fontFamily!.isNotEmpty)
         await box.put('fontFamily', _config.fontFamily);
 
-      if (_autoValue != autoValue.value) box.put('autoValue', autoValue.value);
+      if (_autoValue != autoValue.value)
+        await box.put('autoValue', autoValue.value);
 
       await box.close();
     }()
@@ -353,7 +357,7 @@ class ContentNotifier extends ChangeNotifier {
     if (!_inBookView) _innerIndex = 0;
 
     if (tData.cid != cid || bookid != newBookid) {
-      assert(Log.i('new: $newBookid $cid', stage: this, name: 'newBook'));
+      assert(Log.i('new: $newBookid $cid', ));
 
       notifyState(ignore: true, loading: false);
       final _in = _inBookView;
@@ -481,7 +485,7 @@ class ContentNotifier extends ChangeNotifier {
     if (tData.cid == null || bookid == null) return;
     final _bookid = bookid!;
     final _key = tData.cid!;
-    assert(Log.i('cid: $_key', stage: this, name: 'loadFirst'));
+    assert(Log.i('cid: $_key', ));
     _loadId(_key);
 
     await _futures.awaitId(_key);
@@ -546,7 +550,7 @@ class ContentNotifier extends ChangeNotifier {
 
         // 滑动过半才会进行判定 [currentPage]
         if (changeState) {
-          assert(Log.i('update', stage: this, name: 'getWidget'));
+          assert(Log.i('update', ));
           assert(controller == null || controller!.page.round() == page);
 
           _innerIndex = page;
@@ -624,15 +628,6 @@ class ContentNotifier extends ChangeNotifier {
       contentPadding * 2 + topPad + botPad + pagefooterSize * 2;
   final _regexpEmpty = RegExp('( |\u3000)+');
 
-  Future<bool> _getInnerCallbackLooper(
-    EventCallback callback, {
-    String debugLabel = '',
-  }) async {
-    if (_cancel()) return false;
-    return EventLooper.instance
-        .scheduleEventTask(callback, debugLabel: debugLabel);
-  }
-
   // ---------------------------------------
   Future? _getid;
 
@@ -688,8 +683,11 @@ class ContentNotifier extends ChangeNotifier {
     return _ids;
   }
 
+  Future<void> wait({VoidCallback? closure, label = ''}) =>
+      EventLooper.instance.wait(closure, label);
+
   Future<List<ContentMetrics>> _asyncLayout(
-      List<String> paragraphs, String cname, int contentid, int words) async {
+      List<String> paragraphs, String cname, int contentid) async {
     assert(Log.i('working   >>>'));
     var ignore = false;
     var whiteRows = 0;
@@ -698,8 +696,10 @@ class ContentNotifier extends ChangeNotifier {
     final textPages = <ContentMetrics>[];
 
     final fontSize = style.fontSize!;
-    final ident = shortHash(pages);
+
     final config = this.config.value.copyWith();
+
+    final words = (size.width - paddingRect.horizontal) ~/ fontSize;
 
     final _size = paddingRect.deflateSize(size);
     final width = _size.width;
@@ -745,179 +745,160 @@ class ContentNotifier extends ChangeNotifier {
 
     var incSize = 10;
 
-    // 任务开始
-    var _done = await _getInnerCallbackLooper((wait) async {
-      var done = false;
-      while (true) {
-        for (var i = 1; i < 10; i++) {
-          final s = (lineHeightAndExtra * i - 110);
-          await wait();
+    var done = false;
+    while (true) {
+      for (var i = 1; i < 10; i++) {
+        final s = (lineHeightAndExtra * i - 110);
+        await wait();
 
-          if (incSize > 10) {
-            if (s >= 0 && s < incSize) {
-              whiteRows = i;
-              done = true;
-              break;
-            }
-          } else if (s.abs() < incSize) {
+        if (incSize > 10) {
+          if (s >= 0 && s < incSize) {
             whiteRows = i;
             done = true;
             break;
           }
+        } else if (s.abs() < incSize) {
+          whiteRows = i;
+          done = true;
+          break;
         }
-
-        if (done) break;
-
-        incSize += 10;
       }
 
-      if (lineHeightAndExtra * whiteRows > 200) whiteRows--;
+      if (done) break;
 
-      final _oneHalf = fontSize * 1.2;
-      ignore = _ignoreTask(contentid);
+      incSize += 10;
+    }
 
-      if (ignore) return EventStatus.ignoreAndRemove;
-      await wait('ignore 01');
+    if (lineHeightAndExtra * whiteRows > 200) whiteRows--;
 
-      // ignore = _ignoreTask(contentid);
+    final _oneHalf = fontSize * 1.2;
 
-      // if (ignore) return EventStatus.ignoreAndRemove;
-      _t01();
-      await wait('_t01');
-      _t02();
-      await wait('_t02');
+    ignore = _ignoreTask(contentid);
 
-      final lines = <TextPainter>[];
+    if (ignore) return textPages;
 
-      final _t = TextPainter(textDirection: TextDirection.ltr);
+    // await wait(label: 'ignore 01');
+    await wait(closure: _t01, label: '_t01');
 
-      // 分行布局
-      for (var i = 0; i < paragraphs.length; i++) {
-        await wait();
+    await wait(closure: _t02, label: '_t02');
 
-        // character 版本
-        // 确保每一次递增都是完整字符
-        final pl = paragraphs[i].characters;
-        var start = 0;
-        ignore = _ignoreTask(contentid);
+    final lines = <TextPainter>[];
 
-        if (ignore) return EventStatus.ignoreAndRemove;
-        await wait();
+    final _t = TextPainter(textDirection: TextDirection.ltr);
 
-        while (start < pl.length) {
-          var end = math.min(start + words, pl.length - 1);
+    // 分行布局
+    for (var i = 0; i < paragraphs.length; i++) {
+      // character 版本
+      final pc = paragraphs[i].characters;
+      var start = 0;
+
+      while (start < pc.length) {
+        var end = math.min(start + words, pc.length - 1);
+
+        // 确定每一行的字数
+        while (true) {
+          if (end >= pc.length) break;
 
           await wait();
 
-          // 确定每一行的字数
-          while (true) {
-            if (end >= pl.length) break;
-
-            await wait();
-
-            end++;
-            final s = pl.getRange(start, end).toString();
-            _t
-              ..text = TextSpan(text: s, style: style)
-              ..layout(maxWidth: width);
-
-            await wait();
-
-            if (_t.height > _oneHalf) {
-              final endOffset =
-                  _t.getPositionForOffset(Offset(width, 0.1)).offset;
-              final _s = s.substring(0, endOffset).characters;
-              assert(() {
-                if (endOffset != _s.length) {
-                  // 特殊字符占用更多字节
-                  print('no: $_s |$start, ${pl.length}');
-                }
-                return true;
-              }());
-              end = start + _s.length;
-              break;
-            }
-          }
-          await wait();
-
-          if (end == pl.length &&
-              pl
-                  .getRange(start, end)
-                  .toString()
-                  .replaceAll(_regexpEmpty, '')
-                  .isEmpty) break;
-
-          final _s = pl.getRange(start, end);
-
-          await wait('_text layout');
-
-          final _text = TextPainter(
-              text: TextSpan(text: _s.toString(), style: style),
-              textDirection: TextDirection.ltr)
+          end++;
+          final s = pc.getRange(start, end).toString();
+          _t
+            ..text = TextSpan(text: s, style: style)
             ..layout(maxWidth: width);
 
+          await wait();
 
-          start = end;
-          lines.add(_text);
+          if (_t.height > _oneHalf) {
+            final endOffset =
+                _t.getPositionForOffset(Offset(width, 0.1)).offset;
+            final _s = s.substring(0, endOffset).characters;
+            assert(() {
+              if (endOffset != _s.length) {
+                // 字节占用不一
+                print('no: $_s |$start, ${pc.length}');
+              }
+              return true;
+            }());
+            end = start + _s.length;
+            break;
+          }
         }
-      }
-
-      await wait();
-      var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
-
-      // 首页留白和标题
-      final firstPages = math.max(0, rows - whiteRows - topExtraRows);
-      pages.add(lines.sublist(0, math.min(firstPages, lines.length)));
-
-      // 分页
-      for (var i = firstPages; i < lines.length;) {
-        pages.add(lines.sublist(i, (i + rows).clamp(i, lines.length)));
-        i += rows;
-      }
-
-      var extraHeight = lineHeightAndExtra - fontSize;
-      final isHorizontal = config.axis == Axis.horizontal;
-
-      // 添加页面信息
-      for (var r = 0; r < pages.length; r++) {
         await wait();
 
-        final bottomRight = TextPainter(
-            text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
+        if (end == pc.length &&
+            pc
+                .getRange(start, end)
+                .toString()
+                .replaceAll(_regexpEmpty, '')
+                .isEmpty) break;
+
+        final _s = pc.getRange(start, end);
+
+        await wait(label: '_text layout');
+
+        final _text = TextPainter(
+            text: TextSpan(text: _s.toString(), style: style),
             textDirection: TextDirection.ltr)
           ..layout(maxWidth: width);
 
-        await wait();
-
-        ignore = _ignoreTask(contentid);
-
-        if (ignore) return EventStatus.ignoreAndRemove;
-        await wait();
-
-        final right = width - bottomRight.width - leftExtraPadding * 2;
-
-        final met = ContentMetrics(
-            painters: pages[r],
-            extraHeightInLines: extraHeight,
-            isHorizontal: isHorizontal,
-            secstyle: secstyle,
-            fontSize: fontSize,
-            cPainter: smallTitlePainter,
-            botRightPainter: bottomRight,
-            cBigPainter: _bigTitlePainter,
-            right: right,
-            left: left,
-            index: r,
-            size: _size,
-            windowTopPadding: safePadding.top,
-            showrect: showrect,
-            topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
-
-        textPages.add(met);
+        start = end;
+        lines.add(_text);
       }
-    }, debugLabel: 'pages #<$ident>'.toString().padRight(16));
+    }
 
-    if (!_done || ignore || _ignoreTask(contentid)) return const [];
+    await wait();
+    var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
+
+    // 首页留白和标题
+    final firstPages = math.max(0, rows - whiteRows - topExtraRows);
+    pages.add(lines.sublist(0, math.min(firstPages, lines.length)));
+
+    // 分页
+    for (var i = firstPages; i < lines.length;) {
+      pages.add(lines.sublist(i, (i + rows).clamp(i, lines.length)));
+      i += rows;
+    }
+
+    var extraHeight = lineHeightAndExtra - fontSize;
+    final isHorizontal = config.axis == Axis.horizontal;
+
+    ignore = _ignoreTask(contentid);
+
+    if (ignore) return textPages;
+
+    // 添加页面信息
+    for (var r = 0; r < pages.length; r++) {
+      await wait();
+
+      final bottomRight = TextPainter(
+          text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
+          textDirection: TextDirection.ltr)
+        ..layout(maxWidth: width);
+
+      await wait();
+
+      final right = width - bottomRight.width - leftExtraPadding * 2;
+
+      final met = ContentMetrics(
+          painters: pages[r],
+          extraHeightInLines: extraHeight,
+          isHorizontal: isHorizontal,
+          secstyle: secstyle,
+          fontSize: fontSize,
+          cPainter: smallTitlePainter,
+          botRightPainter: bottomRight,
+          cBigPainter: _bigTitlePainter,
+          right: right,
+          left: left,
+          index: r,
+          size: _size,
+          windowTopPadding: safePadding.top,
+          showrect: showrect,
+          topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
+
+      textPages.add(met);
+    }
 
     assert(Log.i('work done <<<'));
     return textPages;
@@ -925,7 +906,6 @@ class ContentNotifier extends ChangeNotifier {
 
   /// 任务逻辑----------------
   void _loadTasks(int _bookid, int? contentid) {
-    // 超过5个任务，由用户触发调用
     if (!_inBookView || _futures.length > 5) return;
 
     if (_bookid == bookid &&
@@ -933,7 +913,8 @@ class ContentNotifier extends ChangeNotifier {
         contentid != -1 &&
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
-      final _ntask = loadData(contentid, _bookid);
+      final _ntask = EventLooper.instance
+          .scheduleEventTask(() async => loadData(contentid, _bookid));
 
       _getCurrentIds();
       _futures.addTask(contentid, _ntask);
@@ -982,9 +963,7 @@ class ContentNotifier extends ChangeNotifier {
       }
 
       if (_reloadIds.contains(cid)) return;
-
-      assert(Log.i('nid = ${tData.nid}, hasContent: ${tData.hasContent}',
-          stage: this, name: 'loadResolve'));
+      assert(Log.i('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
 
       _reloadIds.add(cid);
       Future.delayed(const Duration(seconds: 10), () => _reloadIds.remove(cid));
@@ -1172,8 +1151,8 @@ class ContentNotifier extends ChangeNotifier {
     final cid = tData.cid!;
     final _bookid = bookid!;
     final _currentPage = currentPage;
-    return repository.databaseEvent
-        .updateBookStatus(_bookid, cid, _currentPage);
+    return repository.bookEvent.bookInfoEvent
+        .updateBookStatusCustom(_bookid, cid, _currentPage);
   }
 
   void notifyState({bool? loading, bool? ignore, NotifyMessage? error}) {
@@ -1211,15 +1190,18 @@ class ContentNotifier extends ChangeNotifier {
   }
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    final words =
-        (size.width - paddingRect.horizontal) ~/ config.value.fontSize!;
-    final lines = await repository.bookEvent
-        .getContent(_bookid, contentid, words, update);
-    if (lines.contentIsNotEmpty) {
-      final pages =
-          await _asyncLayout(lines.pages, lines.cname!, contentid, words);
+    await wait();
 
-      if (pages.isEmpty) return;
+    if (_ignoreTask(contentid)) return;
+
+    final lines =
+        await repository.bookEvent.getContent(_bookid, contentid, update);
+
+    await wait();
+    if (lines.contentIsNotEmpty) {
+      final pages = await _asyncLayout(lines.pages, lines.cname!, contentid);
+
+      if (pages.isEmpty || _ignoreTask(contentid)) return;
       final _cnpid = TextData(
         content: pages,
         nid: lines.nid,
@@ -1228,7 +1210,8 @@ class ContentNotifier extends ChangeNotifier {
         hasContent: lines.hasContent,
         cname: lines.cname,
       );
-      if (!_ignoreTask(contentid)) addCache(_cnpid);
+
+      addCache(_cnpid);
     }
   }
 
@@ -1239,7 +1222,7 @@ class ContentNotifier extends ChangeNotifier {
 
   ///-----------------
   Future<void> deleteCache(int bookId) async {
-    return repository.databaseEvent.deleteCache(bookId);
+    return repository.bookEvent.bookContentEvent.deleteCache(bookId);
   }
 }
 

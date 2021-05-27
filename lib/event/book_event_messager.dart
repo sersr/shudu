@@ -1,6 +1,10 @@
-import '../bloc/bloc.dart';
-import '../data/book_content.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:isolate';
+
 import '../data/data.dart';
+import '../database/table.dart';
+import '../pages/book_list_view/cacheManager.dart';
 import '../utils/utils.dart';
 import 'book_event.dart';
 import 'messages.dart';
@@ -12,44 +16,68 @@ mixin BookEventMessager on CustomEvent {
   late Repository repository;
 
   @override
-  Future<String> getIndexsNet(int id) =>
-      repository.sendMessage<String>(CustomMessage.indexs, id);
+  Future<String> getIndexsNet(int id) => repository
+      .sendMessage<String>(CustomMessage.indexs, id)
+      ._resultResolve('');
 
   @override
-  Future<BookContent> getContentNet(int id, int cid) =>
-      repository.sendMessage<BookContent>(CustomMessage.content, [id, cid]);
+  Future<List<List>> getIndexsDecodeLists(String str) => repository
+      .sendMessage<List<List>>(CustomMessage.mainList, str)
+      ._resultResolve(const []);
 
   @override
-  Future<List<List>> getIndexsDecodeLists(String str) =>
-      repository.sendMessage<List<List>>(CustomMessage.mainList, str);
+  Future<BookInfoRoot> getInfo(int id) => repository
+      .sendMessage<BookInfoRoot>(CustomMessage.info, id)
+      ._resultResolve(const BookInfoRoot());
 
   @override
-  Future<BookInfoRoot> getInfo(int id) =>
-      repository.sendMessage<BookInfoRoot>(CustomMessage.info, id);
-
-  @override
-  Future<List<BookList>> getHiveShudanLists(String c) =>
-      repository.sendMessage<List<BookList>>(CustomMessage.bookList, c);
+  Future<List<BookList>> getHiveShudanLists(String c) => repository
+      .sendMessage<List<BookList>>(CustomMessage.bookList, c)
+      ._resultResolve(const []);
 
   @override
   Future<List<BookList>> getShudanLists(String c, int index) =>
-      repository.sendMessage<List<BookList>>(CustomMessage.shudan, [c, index]);
+      repository.sendMessage<List<BookList>>(
+          CustomMessage.shudan, [c, index])._resultResolve(const []);
 
   @override
-  Future<BookListDetailData> getShudanDetail(int index) =>
-      repository.sendMessage(CustomMessage.shudanDetail, index);
+  Future<BookListDetailData> getShudanDetail(int index) => repository
+      .sendMessage<BookListDetailData>(CustomMessage.shudanDetail, index)
+      ._resultResolve(const BookListDetailData());
 
   @override
-  Future<List<String>> textLayout(String text, String cname, int words) =>
-      repository.sendMessage(CustomMessage.divText, [text, cname, words]);
+  Future<SearchList> getSearchData(String key) => repository
+      .sendMessage<SearchList>(CustomMessage.searchWithKey, key)
+      ._resultResolve(const SearchList());
+}
 
-  @override
-  Future<String> getImagePath(String img) =>
-      repository.sendMessage<String>(CustomMessage.saveImage, img);
+mixin SaveImageMessager {
+  Repository get repository;
+  final _list = <String, String>{};
 
-  @override
-  Future<SearchList> getSearchData(String key) =>
-      repository.sendMessage(CustomMessage.searchWithKey, key);
+  Timer? timer;
+
+  Future<String> getImagePath(String img) async {
+    if (_list.containsKey(img)) {
+      final _l = _list[img]!;
+
+      if (await File(_l).exists()) {
+        return _l;
+      } else {
+        _list.remove(img);
+      }
+    }
+    final _img = await repository
+        .sendMessage<String>(CustomMessage.saveImage, img)
+        ._resultResolve('');
+
+    if (_img.isNotEmpty && !_list.containsKey(_img)) _list[img] = _img;
+
+    timer?.cancel();
+    timer = Timer(const Duration(minutes: 3), _list.clear);
+
+    return _img;
+  }
 }
 
 // 数据库在Isolate中运行
@@ -58,8 +86,6 @@ mixin BookEventDatabaseMessager on DatabaseEvent {
   late Repository repository;
 
   // 在 Isolate 初始化
-  @override
-  Future<void> initState() async {}
 
   @override
   Future<void> insertBook(BookCache bookCache) =>
@@ -67,135 +93,89 @@ mixin BookEventDatabaseMessager on DatabaseEvent {
 
   @override
   Future<void> insertOrUpdateIndexs(int? id, String indexs) =>
-      repository.sendMessage(DatabaseMessage.cacheinnerdb, [id, indexs]);
+      repository.sendMessage(DatabaseMessage.insertBookInfo, [id, indexs]);
 
   @override
-  Future<int> deleteBook(int id) =>
-      repository.sendMessage(DatabaseMessage.deleteBook, id);
+  Future<int> deleteBook(int id) => repository
+      .sendMessage<int>(DatabaseMessage.deleteBook, id)
+      ._resultResolve(0);
 
   @override
   Future<void> deleteCache(int bookId) =>
       repository.sendMessage(DatabaseMessage.deleteCache, bookId);
 
   @override
-  Future<List<Map<String, Object?>>> getMainBookListDb() =>
-      repository.sendMessage(DatabaseMessage.loadBookInfo, null);
+  Future<List<Map<String, Object?>>> getMainBookListDb() => repository
+      .sendMessage<List<Map<String, Object?>>>(
+          DatabaseMessage.loadBookInfo, null)
+      ._resultResolve(const []);
 
   @override
-  Future<List<Map<String, Object?>>> getCacheContentsDb(int bookid) =>
-      repository.sendMessage(DatabaseMessage.getCacheContentsDb, bookid);
-
-  @override
-  Future<void> updateBookStatusAndSetTop(int id, int isTop, int isShow) =>
+  Future<List<Map<String, Object?>>> getCacheContentsCidDb(
+          int bookid) =>
       repository
-          .sendMessage(DatabaseMessage.updateBookIsTop, [id, isTop, isShow]);
+          .sendMessage<List<Map<String, Object?>>>(
+              DatabaseMessage.getCacheContentsDb, bookid)
+          ._resultResolve(const []);
 
   @override
-  Future<void> updateBookStatusAndSetNew(
-          int id, String cname, String updateTime) =>
+  Future<void> updateBookStatusAndSetTop(int id, int isTop, int isShow) {
+    return repository
+        .sendMessage(DatabaseMessage.updateBookIsTop, [id, isTop, isShow]);
+  }
+
+  @override
+  Future<void> updateBookStatusAndSetNew(int id,
+          [String? cname, String? updateTime]) =>
       repository
           .sendMessage(DatabaseMessage.updateCname, [id, cname, updateTime]);
 
   @override
-  Future<void> updateBookStatus(int id, int cid, int page) =>
+  Future<void> updateBookStatusCustom(int id, int cid, int page) =>
       repository.sendMessage(DatabaseMessage.updateMainInfo, [id, cid, page]);
-
-  /// 数据库所有操作都在 Isolate 中完成
-  @override
-  Future<List<Map<String, Object?>>> getContentDb(int bookid, int contentid) =>
-      throw 'getContentDb is protected';
 
   @override
   Future<Set<int>> getAllBookId() {
-    return repository.sendMessage(DatabaseMessage.getAllBookId, '');
+    return repository
+        .sendMessage<Set<int>>(DatabaseMessage.getAllBookId, '')
+        ._resultResolve(const {});
   }
 
   @override
-  Future<void> saveContent(BookContent bookContent) =>
-      throw Exception('messager no impletation');
-
-  @override
   Future<List<Map<String, Object?>>> getIndexsDb(int bookid) {
-    return repository.sendMessage(DatabaseMessage.getIndexDb, bookid);
+    return repository
+        .sendMessage<List<Map<String, Object?>>>(
+            DatabaseMessage.getIndexDb, bookid)
+        ._resultResolve(const []);
   }
 }
 
 /// 数据库 和 网络任务 不在同一个 Isolate
 /// 需要以消息传递
-mixin ContentMessager on BookEvent {
+mixin ComplexMessager {
   Repository get repository;
-  @override
+
   Future<RawContentLines> getContent(
-      int bookid, int contentid, int words, bool update) async {
-    return repository.sendMessage(
-        CustomMessage.getContent, [bookid, contentid, words, update]);
+      int bookid, int contentid, bool update) async {
+    final result = await repository.sendMessage<TransferableTypedData>(
+        CustomMessage.getContent, [bookid, contentid, update]);
+
+    if (result is TransferableTypedData)
+      return RawContentLines.decode(result.materialize());
+
+    return const RawContentLines();
   }
+
+  Future<CacheItem> getCacheItem(int id) => repository
+      .sendMessage<CacheItem>(DatabaseMessage.getCacheItem, id)
+      ._resultResolve(CacheItem.e);
 }
 
-/// 本地数据库实现
-/// 本地是相对而言
-/// 同一个 Isolate
-mixin ContentDatabaseImpl on BookEvent {
-  @override
-  Future<RawContentLines> getContent(
-      int bookid, int contentid, int words, bool update) async {
-    if (update) {
-      return await _getContentNet(bookid, contentid, words) ??
-          await _getContentDb(bookid, contentid, words) ??
-          const RawContentLines();
-    } else {
-      return await _getContentDb(bookid, contentid, words) ??
-          await _getContentNet(bookid, contentid, words) ??
-          const RawContentLines();
-    }
-  }
-
-  Future<RawContentLines?> _getContentNet(
-      int bookid, int contentid, int words) async {
-    assert(Log.i('loading Id: $contentid', stage: this, name: 'download'));
-
-    final bookContent = await getContentNet(bookid, contentid);
-
-    if (bookContent.content != null) {
-      saveContent(bookContent);
-      final lines =
-          await textLayout(bookContent.content!, bookContent.cname!, words);
-
-      if (lines.isNotEmpty) {
-        return RawContentLines(
-          pages: lines,
-          nid: bookContent.nid,
-          pid: bookContent.pid,
-          cid: bookContent.cid,
-          hasContent: bookContent.hasContent,
-          cname: bookContent.cname,
-        );
-      }
-    }
-    return null;
-  }
-
-  Future<RawContentLines?> _getContentDb(
-      int bookid, int contentid, int words) async {
-    final queryList = await getContentDb(bookid, contentid);
-    if (queryList.isNotEmpty) {
-      final map = queryList.first;
-      final bookContent = BookContent.fromJson(map);
-      if (bookContent.content != null) {
-        final lines =
-            await textLayout(bookContent.content!, bookContent.cname!, words);
-        if (lines.isNotEmpty) {
-          return RawContentLines(
-            pages: lines,
-            nid: bookContent.nid,
-            pid: bookContent.pid,
-            cid: bookContent.cid,
-            hasContent: bookContent.hasContent,
-            cname: bookContent.cname,
-          );
-        }
-      }
-    }
-    return null;
+extension _ResultResolve<T> on Future<T?> {
+  Future<T> _resultResolve(T error) async {
+    return then((value) {
+      if (value == null) return error;
+      return value;
+    }, onError: (_) => error);
   }
 }

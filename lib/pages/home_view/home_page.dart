@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import '../../database/table.dart';
 import '../book_content_view/book_content_page.dart';
 import '../../bloc/bloc.dart';
 
@@ -552,6 +553,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             }
             return Scrollbar(
               child: ListView.builder(
+                physics: ClampingScrollPhysicsNew(),
                 itemCount: children.length,
                 padding: const EdgeInsets.all(0.0),
                 itemBuilder: (context, index) {

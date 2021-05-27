@@ -64,7 +64,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchResult> {
       yield SearchWithoutData();
     } else if (event is SearchEventWithKey) {
       yield SearchWithoutData();
-      var list = await repository.customEvent.getSearchData(event.key);
+      var list =
+          await repository.bookEvent.customEvent.getSearchData(event.key);
       yield SearchResultWithData(searchList: list);
       searchHistory
         ..remove(event.key)

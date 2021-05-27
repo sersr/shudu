@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../event/event.dart';
@@ -20,21 +20,13 @@ class BookIndexShowEvent extends BookIndexEvent {
 
 class BookIndexReloadEvent extends BookIndexEvent {}
 
-abstract class BookIndexState extends Equatable {
+abstract class BookIndexState {
   BookIndexState();
-
-  @override
-  List<Object?> get props => [];
 }
 
 class BookIndexIdleState extends BookIndexState {}
 
-class BookIndexErrorState extends BookIndexState {
-  BookIndexErrorState();
-
-  @override
-  List<Object> get props => [];
-}
+class BookIndexErrorState extends BookIndexState {}
 
 class BookIndexShort {
   BookIndexShort(this.bname, this.cname, this.cid);
@@ -57,7 +49,19 @@ class BookIndexWidthData extends BookIndexState {
   final List<int> cacheList;
   final int volIndex;
   @override
-  List<Object?> get props => [id, bookIndexs, index, cacheList, volIndex];
+  bool operator ==(Object other) {
+    return other is BookIndexWidthData &&
+        other.bookIndexs == bookIndexs &&
+        other.id == id &&
+        other.index == index &&
+        other.volIndex == volIndex &&
+        other.cacheList == cacheList;
+  }
+
+  @override
+  int get hashCode {
+    return hashValues(this, bookIndexs, id, index, volIndex, cacheList);
+  }
 }
 
 class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
@@ -86,30 +90,34 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
   }
 
   Future<void> cacheinnerdb(int? id, String indexs) async {
-    return repository.databaseEvent.insertOrUpdateIndexs(id, indexs);
+    return repository.bookEvent.bookIndexEvent.insertOrUpdateIndexs(id, indexs);
+  }
+
+  void removeExpired() {
+    bookUpDateTime.removeWhere((key, value) =>
+        value + updateInterval <= DateTime.now().millisecondsSinceEpoch);
   }
 
   Stream<BookIndexState> sendIndexs(
       {required int bookid, required int contentid}) async* {
-    if (id == bookid &&
-        cid == contentid &&
-        (bookUpDateTime[bookid] ?? 0) + updateInterval >
-            DateTime.now().millisecondsSinceEpoch) {
+    removeExpired();
+    if (id == bookid && cid == contentid && bookUpDateTime.containsKey(bookid))
       return;
-    }
+
     final _id = id;
     var index = 0;
     var volIndex = 0;
     var inIndexs = false;
     var cacheList = <int>[];
     final same = indexs.isNotEmpty && _id == bookid;
-    if (same) yield BookIndexIdleState();
+    if (!same) yield BookIndexIdleState();
 
-    var queryList = await repository.databaseEvent.getCacheContentsDb(bookid);
+    var queryList = await repository.bookEvent.bookContentEvent
+        .getCacheContentsCidDb(bookid);
 
-    for (var l in queryList) {
+    queryList.forEach((l) {
       if (l['cid'] is int) cacheList.add(l['cid'] as int);
-    }
+    });
 
     if (same) {
       for (var i = 0; i < indexs.length; i++) {
@@ -122,6 +130,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
           }
         }
       }
+
       if (inIndexs) {
         yield BookIndexWidthData(
             id: bookid,
@@ -132,7 +141,8 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
       }
     } else {
       indexs = <List>[];
-      var queryList = await repository.databaseEvent.getIndexsDb(bookid);
+      var queryList =
+          await repository.bookEvent.bookIndexEvent.getIndexsDb(bookid);
 
       if (queryList.isNotEmpty) {
         final restr = queryList.first['bIndexs'] as String?;
@@ -160,7 +170,7 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
                   volIndex: volIndex,
                   cacheList: cacheList);
               assert(Log.i('indexs: ${bookIndexShort.length}',
-                  stage: this, name: 'sendIndexs'));
+                  ));
             }
             indexs = bookIndexShort;
           }
@@ -171,17 +181,14 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
     id = bookid;
     cid = contentid;
 
-    if (indexs.isEmpty || // immediate
-        !inIndexs || // immediate
-        (bookUpDateTime[bookid] ?? 0) + updateInterval <=
-            DateTime.now().millisecondsSinceEpoch) {
-      final rawData = await repository.customEvent.getIndexsNet(bookid);
+    if (indexs.isEmpty || !inIndexs || !bookUpDateTime.containsKey(bookid)) {
+      final rawData =
+          await repository.bookEvent.customEvent.getIndexsNet(bookid);
 
       if (rawData.isEmpty) {
         if (indexs.isEmpty) {
           yield BookIndexErrorState();
         } else if (!inIndexs) {
-          calculate(indexs, index, volIndex);
           yield BookIndexWidthData(
               id: bookid,
               bookIndexs: indexs,
@@ -189,85 +196,90 @@ class BookIndexBloc extends Bloc<BookIndexEvent, BookIndexState> {
               volIndex: volIndex,
               cacheList: cacheList);
         }
-        return;
-      }
+      } else {
+        final bookIndexShort = await loadFromList(rawData);
 
-      final bookIndexShort = await loadFromList(rawData);
+        if (bookIndexShort.isNotEmpty) {
+          // 网络请求成功
 
-      if (bookIndexShort.isNotEmpty) {
-        // 网络请求成功
-        bookUpDateTime[bookid] = DateTime.now().millisecondsSinceEpoch;
+          bookUpDateTime[bookid] = DateTime.now().millisecondsSinceEpoch;
 
-        /// indexs 改变了
-        if (indexs.length != bookIndexShort.length ||
-            indexs.last.last.cname != bookIndexShort.last.last.cname ||
-            indexs.last.last.cid != bookIndexShort.last.last.cid) {
-          final newCname = bookIndexShort.last.last.cname;
-
-          await repository.databaseEvent.updateBookStatusAndSetNew(
-              bookid, newCname, DateTime.now().toStringFormat);
-          indexs = bookIndexShort;
-          index = 0;
-          volIndex = 0;
-          for (var i = 0; i < indexs.length; i++) {
-            for (var l = 0; l < indexs[i].length; l++) {
-              if (indexs[i][l] is BookIndexShort &&
-                  indexs[i][l].cid == contentid) {
-                index = l - 1;
-                volIndex = i;
-                break;
+          /// indexs 改变了
+          if (indexs.length != bookIndexShort.length ||
+              indexs.last.last.cname != bookIndexShort.last.last.cname ||
+              indexs.last.last.cid != bookIndexShort.last.last.cid) {
+            indexs = bookIndexShort;
+            index = 0;
+            volIndex = 0;
+            for (var i = 0; i < indexs.length; i++) {
+              for (var l = 0; l < indexs[i].length; l++) {
+                if (indexs[i][l] is BookIndexShort &&
+                    indexs[i][l].cid == contentid) {
+                  index = l - 1;
+                  volIndex = i;
+                  break;
+                }
               }
             }
+            assert(
+                Log.i(
+              'indexs, id == bookid',
+            ));
+
+            yield BookIndexWidthData(
+                id: bookid,
+                bookIndexs: indexs,
+                index: index,
+                volIndex: volIndex,
+                cacheList: cacheList);
+            await cacheinnerdb(id, rawData);
           }
-          assert(
-              Log.i('indexs, id == bookid', stage: this, name: 'sendIndexs'));
-          calculate(indexs, index, volIndex);
-          yield BookIndexWidthData(
-              id: bookid,
-              bookIndexs: indexs,
-              index: index,
-              volIndex: volIndex,
-              cacheList: cacheList);
-          await cacheinnerdb(id, rawData);
         }
       }
-    } else {
-      calculate(indexs, index, volIndex);
     }
+
+    if (indexs.isNotEmpty) calculate(indexs, index, volIndex);
   }
 
   Future<List<List>> loadFromList(String restr) async {
-    return await repository.customEvent.getIndexsDecodeLists(restr);
+    return await repository.bookEvent.customEvent.getIndexsDecodeLists(restr);
   }
 
-  ValueNotifier<int> slide = ValueNotifier(0);
+  final ValueNotifier<int> slide = ValueNotifier(0);
   var sldvalue = SliderValue(index: 0, max: 200);
 
   void calculate(List<List> indexs, int index, int volIndex) {
-    var max = 200;
+    var _index = index;
     for (var i = 0; i < indexs.length; i++) {
       if (i < volIndex) {
-        index += indexs[i].length - 1;
+        _index += indexs[i].length - 1;
       } else {
         break;
       }
     }
-    max = 0;
-    indexs.forEach((element) {
-      max += element.length - 1;
-    });
+
+    var max = indexs.fold<int>(
+        0, (previousValue, element) => previousValue + element.length - 1);
 
     max--;
-    max = math.max(index, max);
+    max = math.max(_index, max);
 
-    slide.value = index;
-
-    sldvalue = SliderValue(index: index, max: max);
+    sldvalue
+      ..index = _index
+      ..max = max;
+    slide.value = _index;
   }
 }
 
 class SliderValue {
   SliderValue({required this.max, required this.index});
-  final int max;
-  final int index;
+  int max;
+  int index;
 }
+
+        
+     
+      
+   
+            
+         

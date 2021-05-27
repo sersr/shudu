@@ -164,6 +164,8 @@ class OptionsNotifier extends ChangeNotifier {
       await _box.put(_resampleOffset, options.resampleOffset!);
     }
 
-    assert(Log.i('$options', stage: this, name: 'saveOptions'));
+    assert(Log.i(
+      '$options',
+    ));
   }
 }

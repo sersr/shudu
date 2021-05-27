@@ -8,7 +8,6 @@ void main() {
   PaintingBinding.shaderWarmUp = const MyShaderWarmUp();
   WidgetsFlutterBinding.ensureInitialized();
 
-  EventLooper.instance.addPersistent = true;
   uiOverlay(hide: false);
   uiStyle();
   // debugProfilePaintsEnabled = true;

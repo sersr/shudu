@@ -31,9 +31,9 @@ class BookContentPage extends StatefulWidget {
         context.read<ContentNotifier>().setNewBookOrCid(newBookid, cid, page);
 
     await _wait;
-    _wait = null;
-    
     await EventLooper.instance.scheduler.endOfFrame;
+    
+    _wait = null;
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return BookContentPage(bookid: newBookid, cid: cid, page: page);
     }));

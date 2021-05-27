@@ -2,87 +2,9 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../database/table.dart';
 import '../event/event.dart';
-
-class BookCache extends Equatable {
-  BookCache({
-    this.chapterId,
-    this.img,
-    this.lastChapter,
-    this.name,
-    this.updateTime,
-    this.id,
-    this.isTop,
-    this.sortKey,
-    this.isNew,
-    this.page,
-    this.isShow,
-  });
-  final String? name;
-  final String? img;
-  final String? updateTime;
-  final String? lastChapter;
-  final int? chapterId;
-  final int? id;
-  final int? sortKey;
-  final int? isTop;
-  final int? page;
-  final int? isNew;
-  final int? isShow;
-  // BookCache copyWith(
-  //     {String? name,
-  //     String? img,
-  //     String? updateTime,
-  //     String? lastChapter,
-  //     int? chapterId,
-  //     int? id,
-  //     int? sortKey,
-  //     int? isTop,
-  //     int? isNew,
-  //     int? page}) {
-  //   return BookCache(
-  //       name: name ?? this.name,
-  //       img: img ?? this.img,
-  //       updateTime: updateTime ?? this.updateTime,
-  //       lastChapter: lastChapter ?? this.lastChapter,
-  //       chapterId: chapterId ?? this.chapterId,
-  //       id: id ?? this.id,
-  //       sortKey: sortKey ?? this.sortKey,
-  //       isTop: isTop ?? this.isTop,
-  //       isNew: isNew ?? this.isNew,
-  //       page: page ?? this.page);
-  // }
-
-  factory BookCache.fromMap(Map<String, dynamic> map) {
-    return BookCache(
-      img: map['img'] as String?,
-      updateTime: map['updateTime'] as String?,
-      lastChapter: map['lastChapter'] as String?,
-      chapterId: map['chapterId'] as int?,
-      id: map['bookId'] as int?,
-      name: map['name'] as String?,
-      sortKey: map['sortKey'] as int?,
-      isTop: map['isTop'] as int?,
-      page: map['cPage'] as int?,
-      isNew: map['isNew'] as int?,
-      isShow: map['isShow'] as int? ?? 0,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        name,
-        img,
-        updateTime,
-        lastChapter,
-        chapterId,
-        id,
-        sortKey,
-        isTop,
-        page,
-        isShow
-      ];
-}
 
 abstract class BookChapterIdEvent extends Equatable {
   BookChapterIdEvent();
@@ -157,13 +79,13 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Stream<BookChapterIdState> _load() async* {
-    final list = await repository.databaseEvent.getMainBookListDb();
+    final list = await repository.bookEvent.bookInfoEvent.getMainBookListDb();
     yield BookChapterIdState.fromMap(list);
     completerLoading();
   }
 
   Future<void> _update() async {
-    final list = await repository.databaseEvent.getMainBookListDb();
+    final list = await repository.bookEvent.bookInfoEvent.getMainBookListDb();
     if (list.isNotEmpty) {
       final s = BookChapterIdState.fromMap(list);
       for (var item in s.sortChildren) {
@@ -184,30 +106,22 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Future<void> addBook(BookCache bookCache) async {
-    await repository.databaseEvent.insertBook(bookCache);
+    await repository.bookEvent.bookInfoEvent.insertBook(bookCache);
     emitUpdate();
   }
 
   Future<void> updateTop(int id, int isTop, {int isShow = 1}) async {
-    await repository.databaseEvent.updateBookStatusAndSetTop(id, isTop, isShow);
+    await repository.bookEvent.bookInfoEvent
+        .updateBookStatusAndSetTop(id, isTop, isShow);
     emitUpdate();
   }
 
   Future<void> deleteBook(int id) async {
-    await repository.databaseEvent.deleteBook(id);
+    await repository.bookEvent.bookInfoEvent.deleteBook(id);
     emitUpdate();
   }
 
   Future<void> loadFromNet(int id) async {
-    final rawData = await repository.customEvent.getInfo(id);
-    final data = rawData.data;
-    if (data != null) {
-      final newCname = data.lastChapter;
-      final lastTime = data.lastTime;
-      if (newCname != null && lastTime != null) {
-        return repository.databaseEvent
-            .updateBookStatusAndSetNew(id, newCname, lastTime);
-      }
-    }
+    return repository.bookEvent.bookInfoEvent.updateBookStatusAndSetNew(id);
   }
 }

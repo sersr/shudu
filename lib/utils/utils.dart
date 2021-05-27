@@ -7,6 +7,8 @@ export './debug/debug.dart';
 export './tools/extensions.dart';
 export 'tools/tools.dart';
 export 'tools/string.dart';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 part 'debug/log.dart';

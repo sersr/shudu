@@ -4,10 +4,13 @@ class Api {
   ///API------------------------------------------------
 
   // pigqq, pysmei
+  // static final _domains = Queue.of(const ['pigqq']);
   static final domains = Queue.of(const ['pigqq', 'pysmei']);
 
   // 由于 api 解析几乎（都）相同，
-  static void moveNext() => domains.addLast(domains.removeFirst());
+  static void moveNext() {
+    domains.addLast(domains.removeFirst());
+  }
 
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
@@ -38,7 +41,7 @@ class Api {
   }
 
   static String searchUrl(String key) {
-    return 'https://souxs.${domains.first}.com/search.aspx?key=$key&page=1&siteid=app2';
+    return 'https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2';
   }
 
   /// -- 未实现

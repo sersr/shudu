@@ -9,16 +9,21 @@ import '../../utils/widget/image_shadow.dart';
 
 class ImageResolve extends StatelessWidget {
   const ImageResolve(
-      {Key? key, this.img, this.builder, this.boxFit = BoxFit.fitWidth})
+      {Key? key,
+      this.img,
+      this.builder,
+      this.boxFit = BoxFit.fitWidth,
+      this.shadow = true})
       : super(key: key);
   final String? img;
   final Widget Function(Widget)? builder;
   final BoxFit boxFit;
+  final bool shadow;
   @override
   Widget build(BuildContext context) {
     if (img == null) return Container();
     final repository = Provider.of<Repository>(context);
-    final _future = repository.customEvent.getImagePath(img!);
+    final _future = repository.bookEvent.customEvent.getImagePath(img!);
     return RepaintBoundary(
       child: _futureBuilder(_future),
     );
@@ -43,7 +48,11 @@ class ImageResolve extends StatelessWidget {
               child = image;
             }
             if (frame != null) {
+              if (shadow) {
               return ImageShadow(child: child);
+
+              }
+              return child;
             } else {
               return Container();
             }
@@ -51,7 +60,8 @@ class ImageResolve extends StatelessWidget {
 
           Widget errorbuilder(context, e, t) {
             final repository = Provider.of<Repository>(context);
-            final _future = repository.customEvent.getImagePath(errorImg);
+            final _future =
+                repository.bookEvent.customEvent.getImagePath(errorImg);
             if (isFirst) {
               return _futureBuilder(_future, isFirst: false);
             }
@@ -83,3 +93,9 @@ class __ImageState extends State<_Image> {
     return Container();
   }
 }
+
+           
+            
+           
+            
+           

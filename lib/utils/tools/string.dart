@@ -82,10 +82,10 @@
 // 其他方法都达不到理想要求
 //
 // 分段返回
-List<String> divText(String text, String cname) {
-  final _pages = <String>[];
-  if (text.isEmpty) return _pages;
-  return text.split('\n')..removeWhere((element) => element.isEmpty);
+// List<String> divText(String text, String cname) {
+//   final _pages = <String>[];
+//   if (text.isEmpty) return _pages;
+//   return text.split('\n')..removeWhere((element) => element.isEmpty);
 
   // for (var p = 0; p < lm.length; p++) {
   //   if (lm[p].isNotEmpty) {
@@ -151,7 +151,7 @@ List<String> divText(String text, String cname) {
   //   }
   // }
   // return _pages;
-}
+// }
 
 // var widths = {
 //   126: 1,

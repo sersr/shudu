@@ -223,6 +223,7 @@ class _WrapWidgetState extends State<WrapWidget> with AutomaticKeepAliveClientMi
     return ListView.builder(
       primary: false,
       // controller: scrollController,
+      physics: ClampingScrollPhysicsNew(),
       itemExtent: 112,
       itemCount: list.length,
       itemBuilder: (context, index) {
@@ -356,14 +357,15 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
     yield shudan(id, status);
     if (id == 0) {
       if (newList.isEmpty) {
-        var data = await repository.customEvent.getHiveShudanLists(c[id]);
+        var data =
+            await repository.bookEvent.customEvent.getHiveShudanLists(c[id]);
         if (data.isNotEmpty) {
           newList = data;
           newCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.customEvent.getShudanLists(c[id], 1);
+        data = await repository.bookEvent.customEvent.getShudanLists(c[id], 1);
         if (data.isNotEmpty) {
           newCount = 1;
           newList = data;
@@ -372,7 +374,8 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         }
       } else {
         final data =
-            await repository.customEvent.getShudanLists(c[id], newCount + 1);
+            await repository.bookEvent.customEvent
+            .getShudanLists(c[id], newCount + 1);
         if (data.isNotEmpty) {
           newCount += 1;
           newList.addAll(data);
@@ -382,14 +385,15 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
       }
     } else if (id == 1) {
       if (hotList.isEmpty) {
-        var data = await repository.customEvent.getHiveShudanLists(c[id]);
+        var data =
+            await repository.bookEvent.customEvent.getHiveShudanLists(c[id]);
         if (data.isNotEmpty) {
           hotList = data;
           hotCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.customEvent.getShudanLists(c[id], 1);
+        data = await repository.bookEvent.customEvent.getShudanLists(c[id], 1);
         if (data.isNotEmpty) {
           hotList = data;
           hotCount = 1;
@@ -398,7 +402,8 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
         }
       } else {
         final data =
-            await repository.customEvent.getShudanLists(c[id], hotCount + 1);
+            await repository.bookEvent.customEvent
+            .getShudanLists(c[id], hotCount + 1);
         if (data.isNotEmpty) {
           hotCount += 1;
           hotList.addAll(data);
@@ -408,21 +413,22 @@ class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
       }
     } else if (id == 2) {
       if (collectList.isEmpty) {
-        var data = await repository.customEvent.getHiveShudanLists(c[id]);
+        var data =
+            await repository.bookEvent.customEvent.getHiveShudanLists(c[id]);
         if (data.isNotEmpty) {
           collectList = data;
           collectCount = 1;
           yield shudan(id, status);
           completerResolve(status);
         }
-        data = await repository.customEvent.getShudanLists(c[id], 1);
+        data = await repository.bookEvent.customEvent.getShudanLists(c[id], 1);
         if (data.isNotEmpty) {
           collectList = data;
         } else {
           status = Status.failed;
         }
       } else {
-        final data = await repository.customEvent
+        final data = await repository.bookEvent.customEvent
             .getShudanLists(c[id], collectCount + 1);
         if (data.isNotEmpty) {
           collectCount += 1;

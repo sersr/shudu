@@ -12,13 +12,7 @@ abstract class Repository {
   Future<void> initState();
   void dipose();
 
-  String get dataPath;
-  String get appPath;
-
   late BookEvent bookEvent;
-
-  CustomEvent get customEvent => bookEvent;
-  DatabaseEvent get databaseEvent => bookEvent;
 
   static Repository? _instance;
 
@@ -32,7 +26,7 @@ abstract class Repository {
     _instance ??= repository;
   }
 
-  Future<T> sendMessage<T extends Object?>(dynamic type, dynamic args);
+  Future<T?> sendMessage<T>(dynamic type, dynamic args);
 
   Future<void> restartClient() async {
     await sendMessage(CustomMessage.restartClient, '');
@@ -44,5 +38,5 @@ abstract class Repository {
   int get bottomHeight;
 
   int level = 50;
-  Future<int> getBatteryLevel() async => level;
+  Future<int> get getBatteryLevel async => level;
 }

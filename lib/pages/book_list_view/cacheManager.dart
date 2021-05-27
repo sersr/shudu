@@ -44,13 +44,12 @@ class _CacheManagerState extends State<CacheManager> {
 
                   return ListView.builder(
                     itemExtent: 60,
+                    padding: const EdgeInsets.only(bottom: 10.0),
                     itemBuilder: (context, index) {
-                      final itemdata =
-                          _CacheBookItemNotifier(repository, data[index]);
-                      return AnimatedBuilder(
-                        animation: itemdata,
-                        builder: (context, child) {
-                          if (itemdata.isEmpty)
+                      return FutureBuilder<CacheItem>(
+                        future: _cacheNotifier.loadItem(index),
+                        builder: (context, snap) {
+                          if (!snap.hasData || snap.data!.isEmpty)
                             return Container(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 6.0),
@@ -67,70 +66,57 @@ class _CacheManagerState extends State<CacheManager> {
                               break;
                             }
                           }
+                          final _e = snap.data!;
 
-                          final progess =
-                              itemdata.cacheItemCounts! / itemdata.itemCounts!;
+                          final progess = _e.cacheItemCounts / _e.itemCounts;
                           return InkWell(
                             onTap: () {
-                              BookInfoPage.push(context, itemdata.id);
-                              // int? cid;
-                              // int? currentPage;
-                              // for (var l in sort) {
-                              //   if (l.id == itemdata.id) {
-                              //     cid = l.chapterId;
-                              //     currentPage = l.page;
-                              //     break;
-                              //   }
-                              // final data = state.
-                              // final _cid = cid ?? data!.firstChapterId!;
-                              // final page = currentPage ?? 1;
-                              // }
+                              BookInfoPage.push(context, _e.id);
                             },
                             child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 6.0),
-                              margin: const EdgeInsets.symmetric(vertical: 2.0),
+                              padding: const EdgeInsets.only(right: 6.0),
+                              margin: const EdgeInsets.symmetric(vertical: 3.0),
                               decoration: BoxDecoration(
                                   color:
                                       const Color.fromARGB(255, 250, 250, 250),
                                   borderRadius: BorderRadius.circular(6)),
                               child: Row(
                                 children: [
+                                  SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
-                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
                                       children: [
-                                        SizedBox(height: 2),
+                                        const SizedBox(height: 1),
                                         Row(
                                           children: [
                                             SizedBox(height: 2),
                                             Expanded(child: Text('$name')),
                                             SizedBox(width: 3),
                                             Text(
-                                              '${itemdata.cacheItemCounts}/ ${itemdata.itemCounts}',
+                                              '${_e.cacheItemCounts}/ ${_e.itemCounts}',
                                             )
                                           ],
                                         ),
-                                        Expanded(
-                                          child: Center(
-                                            child: LinearProgressIndicator(
-                                              value: progess,
-                                              backgroundColor:
-                                                  Colors.blue.shade100,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation(
-                                                      Colors.blueGrey),
-                                            ),
+                                        const SizedBox(height: 1),
+                                        Center(
+                                          child: LinearProgressIndicator(
+                                            value: progess,
+                                            backgroundColor:
+                                                Colors.blue.shade100,
+                                            valueColor: AlwaysStoppedAnimation(
+                                                Colors.blueGrey),
                                           ),
                                         ),
-                                        SizedBox(height: 1),
+                                        const SizedBox(height: 1),
                                       ],
                                     ),
                                   ),
-                                  SizedBox(width: 3),
+                                  SizedBox(width: 10),
                                   btn1(
                                       onTap: () {
-                                        itemdata.deleteCache();
+                                        _cacheNotifier.deleteCache(_e.id);
                                       },
                                       radius: 6.0,
                                       bgColor: Colors.blue.shade400,
@@ -179,53 +165,61 @@ class _CacheNotifier extends ChangeNotifier {
 
   void startLoad() async {
     if (repository == null) return;
-    final _l = await repository!.databaseEvent.getAllBookId();
+    final _l = await repository!.bookEvent.bookInfoEvent.getAllBookId();
 
     if (_l.isNotEmpty) {
       _data.clear();
+      _items.clear();
       _data.addAll(_l);
       notifyListeners();
     }
   }
+
+  final _items = <int, CacheItem>{};
+  Future<CacheItem> loadItem(int index) async {
+    if (index >= _data.length || repository == null) return CacheItem.e;
+    final id = _data.elementAt(index);
+    if (_items.containsKey(id)) return _items[id]!;
+    final _i = await repository!.bookEvent.getCacheItem(id);
+    // var cacheListRaw =
+    //     await repository!.bookEvent.bookContentEvent.getCacheContentsCidDb(id);
+    // final cacheItemCounts = cacheListRaw.length;
+
+    // int? itemCounts;
+    // var queryList = await repository!.bookEvent.bookIndexEvent.getIndexsDb(id);
+
+    // if (queryList.isNotEmpty) {
+    //   final restr = queryList.first['bIndexs'] as String?;
+
+    //   if (restr != null) {
+    //     final indexs =
+    //         await repository!.bookEvent.customEvent.getIndexsDecodeLists(restr);
+    //     if (indexs.isNotEmpty) {
+    //       final _num = indexs.fold<int>(0,
+    //           (previousValue, element) => previousValue + element.length - 1);
+    //       itemCounts = _num;
+    //     }
+    //   }
+    // }
+
+    // itemCounts ??= cacheItemCounts;
+    // final _i = CacheItem(id, itemCounts, cacheItemCounts);
+
+    _items[id] = _i;
+    return _i;
+  }
+
+  Future<void> deleteCache(int id) async {
+    if (repository == null) return;
+    return repository!.bookEvent.bookContentEvent.deleteCache(id);
+  }
 }
 
-class _CacheBookItemNotifier extends ChangeNotifier {
-  _CacheBookItemNotifier(this.repository, this.id) {
-    startLoad();
-  }
-  final id;
-  final Repository repository;
-  String? name;
-  int? itemCounts;
-  int? cacheItemCounts;
-
-  bool get isEmpty => itemCounts == null || cacheItemCounts == null;
-
-  void startLoad() async {
-    var cacheListRaw = await repository.databaseEvent.getCacheContentsDb(id);
-    cacheItemCounts = cacheListRaw.length;
-    print(cacheListRaw);
-    var queryList = await repository.databaseEvent.getIndexsDb(id);
-    if (queryList.isNotEmpty) {
-      final restr = queryList.first['bIndexs'] as String?;
-      if (restr != null) {
-        final indexs = await repository.customEvent.getIndexsDecodeLists(restr);
-        if (indexs.isNotEmpty) {
-          var _num = 0;
-          indexs.forEach((element) {
-            _num += element.length - 1;
-          });
-          itemCounts = _num;
-        }
-      }
-    }
-    itemCounts ??= cacheItemCounts;
-    if (!isEmpty) {
-      notifyListeners();
-    }
-  }
-
-  Future<void> deleteCache() async {
-    return repository.databaseEvent.deleteCache(id);
-  }
+class CacheItem {
+  const CacheItem(this.id, this.itemCounts, this.cacheItemCounts);
+  static const e = CacheItem(0, 1, 1);
+  final int id;
+  final int itemCounts;
+  final int cacheItemCounts;
+  bool get isEmpty => this == e;
 }

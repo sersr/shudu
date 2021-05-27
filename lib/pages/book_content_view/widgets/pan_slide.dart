@@ -3,7 +3,8 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import '../../../utils/utils.dart';
 
-abstract class PanSlideState<T extends StatefulWidget> extends State<T> with TickerProviderStateMixin {
+abstract class PanSlideState<T extends StatefulWidget> extends State<T>
+    with TickerProviderStateMixin {
   late GlobalKey<PanOverlayState> _key;
   PanOverlayState? get _overlay => _key.currentState;
 
@@ -23,7 +24,8 @@ abstract class PanSlideState<T extends StatefulWidget> extends State<T> with Tic
     if (_entries.contains(controller)) return;
     if (_overlay != null) {
       _overlay!.insert(controller._entry);
-      if (_entries.isNotEmpty && controller.connect) _entries.last.next = controller;
+      if (_entries.isNotEmpty && controller.connect)
+        _entries.last.next = controller;
       _entries.add(controller);
     }
   }
@@ -33,7 +35,7 @@ abstract class PanSlideState<T extends StatefulWidget> extends State<T> with Tic
     if (_overlay != null) {
       _entries.remove(controller);
       _overlay!.remove(controller._entry);
-      assert(Log.i('remove #${controller.hashCode}', stage: this));
+      assert(Log.i('remove #${controller.hashCode}'));
     }
   }
 
@@ -158,7 +160,11 @@ class PanSlideController {
     final state = context.findAncestorStateOfType<PanSlideState>();
     assert(state != null, 'PanSlideState == null');
     return PanSlideController(
-        state: state!, builder: builder, onanimating: onanimating, onhide: onhide, onshow: onshow);
+        state: state!,
+        builder: builder,
+        onanimating: onanimating,
+        onhide: onhide,
+        onshow: onshow);
   }
 
   void statusListen(AnimationStatus status) {
@@ -182,7 +188,9 @@ class PanSlideController {
   //   controller.value = v.clamp(0.0, 1.0);
   // }
 
-  bool get isShowing => controller.status == AnimationStatus.completed || controller.status == AnimationStatus.forward;
+  bool get isShowing =>
+      controller.status == AnimationStatus.completed ||
+      controller.status == AnimationStatus.forward;
   bool get isAnimating =>
       controller.status == AnimationStatus.forward ||
       controller.status == AnimationStatus.reverse ||
@@ -203,7 +211,7 @@ class PanSlideController {
   void hide({bool destory = false}) {
     _hide();
     _removeAfter(destory);
-    assert(Log.i('reverse #$hashCode', stage: this));
+    assert(Log.i('reverse #$hashCode'));
   }
 
   void _hide() {
@@ -234,7 +242,7 @@ class PanSlideController {
     init();
     onanimating?.call();
     controller.forward();
-    assert(Log.i('forward #$hashCode', stage: this));
+    assert(Log.i('forward #$hashCode'));
   }
 
   void trigger({bool immediate = true}) {

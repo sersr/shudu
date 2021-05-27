@@ -24,7 +24,8 @@ class ContentPageView extends StatefulWidget {
   ContentPageViewState createState() => ContentPageViewState();
 }
 
-class ContentPageViewState extends State<ContentPageView> with TickerProviderStateMixin {
+class ContentPageViewState extends State<ContentPageView>
+    with TickerProviderStateMixin {
   late NopPageViewController offsetPosition;
   late ContentNotifier bloc;
   late BookIndexBloc indexBloc;
@@ -56,8 +57,12 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
             useDefault: false,
             controller: _controller,
             botChild: (context, animation) {
-              final op = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
-              final curve = CurvedAnimation(parent: animation, curve: Curves.ease, reverseCurve: Curves.ease.flipped);
+              final op =
+                  Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
+              final curve = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.ease,
+                  reverseCurve: Curves.ease.flipped);
               final position = curve.drive(op);
               return RepaintBoundary(
                 child: SlideTransition(
@@ -73,8 +78,12 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
               );
             },
             topChild: (context, animation) {
-              final op = Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
-              final curve = CurvedAnimation(parent: animation, curve: Curves.ease, reverseCurve: Curves.ease.flipped);
+              final op =
+                  Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
+              final curve = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.ease,
+                  reverseCurve: Curves.ease.flipped);
               final position = curve.drive(op);
               return RepaintBoundary(
                 child: SlideTransition(
@@ -159,10 +168,12 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
     final child = ContentView(
       contentMetrics: mes,
       battery: FutureBuilder<int>(
-        future: bloc.repository.getBatteryLevel(),
+        future: bloc.repository.getBatteryLevel,
         builder: (context, snaps) {
           return BatteryView(
-            progress: ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100).clamp(0.0, 1.0),
+            progress:
+                ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100)
+                    .clamp(0.0, 1.0),
             color: bloc.config.value.fontColor!,
           );
         },
@@ -173,7 +184,8 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
   }
 
   Widget wrapChild() {
-    final child = NopPageView(offsetPosition: offsetPosition, builder: getChild);
+    final child =
+        NopPageView(offsetPosition: offsetPosition, builder: getChild);
 
     if (offsetPosition.axis == Axis.horizontal) {
       return child;
@@ -181,7 +193,8 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
       final head = AnimatedBuilder(
         animation: bloc.header,
         builder: (__, _) {
-          return Text('${bloc.header.value}', style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0);
+          return Text('${bloc.header.value}',
+              style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0);
         },
       );
 
@@ -195,10 +208,13 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FutureBuilder<int>(
-                future: bloc.repository.getBatteryLevel(),
+                future: bloc.repository.getBatteryLevel,
                 builder: (_, snaps) {
                   return BatteryView(
-                    progress: ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100).clamp(0.0, 1.0),
+                    progress:
+                        ((snaps.hasData ? snaps.data! : bloc.repository.level) /
+                                100)
+                            .clamp(0.0, 1.0),
                     color: bloc.config.value.fontColor!,
                   );
                 },
@@ -238,7 +254,8 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
                   ? GestureDetector(
                       onTapUp: (d) {
                         if (offsetPosition.page == 0 ||
-                            offsetPosition.page % offsetPosition.page.toInt() == 0 ||
+                            offsetPosition.page % offsetPosition.page.toInt() ==
+                                0 ||
                             !offsetPosition.isScrolling) {
                           final l = d.globalPosition;
                           final halfH = size.height / 2;
@@ -250,7 +267,7 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
                           if (x.abs() < sixW && y.abs() < sixH) {
                             getController().trigger(immediate: false);
                           } else {
-                            offsetPosition.nextPage();
+                            if (!bloc.isActive.value) offsetPosition.nextPage();
                           }
                         }
                       },
@@ -267,7 +284,8 @@ class ContentPageViewState extends State<ContentPageView> with TickerProviderSta
                               bgColor: Colors.blue,
                               splashColor: Colors.blue[200],
                               radius: 40,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               child: Text('重新加载'),
                               onTap: () => bloc.reload()),
                         ),
@@ -315,7 +333,8 @@ class _NopPageViewState extends State<NopPageView> {
   ScrollHoldController? hold;
   // final GlobalKey<RawGestureDetectorState> _gestureDetectorKey = GlobalKey<RawGestureDetectorState>();
 
-  Map<Type, GestureRecognizerFactory> gestures = <Type, GestureRecognizerFactory>{};
+  Map<Type, GestureRecognizerFactory> gestures =
+      <Type, GestureRecognizerFactory>{};
   @override
   void initState() {
     super.initState();
@@ -332,7 +351,8 @@ class _NopPageViewState extends State<NopPageView> {
     final dragStartBehavior = DragStartBehavior.start;
     if (widget.offsetPosition.axis == Axis.vertical) {
       gestures = <Type, GestureRecognizerFactory>{
-        VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
+        VerticalDragGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
           () => VerticalDragGestureRecognizer(debugOwner: this),
           (VerticalDragGestureRecognizer instance) {
             instance
@@ -341,17 +361,18 @@ class _NopPageViewState extends State<NopPageView> {
               ..onUpdate = onUpdate
               ..onEnd = onEnd
               ..onCancel = onCancel
+              ..minFlingDistance = 8.0
+              ..minFlingVelocity = kMinFlingVelocity
+              ..maxFlingVelocity = kMaxFlingVelocity
               ..dragStartBehavior = dragStartBehavior;
-            // ..minFlingDistance = kTouchSlop
-            // ..minFlingVelocity = kMinFlingVelocity
-            // ..maxFlingVelocity = kMaxFlingVelocity
             // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
         )
       };
     } else {
       gestures = <Type, GestureRecognizerFactory>{
-        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+            HorizontalDragGestureRecognizer>(
           () => HorizontalDragGestureRecognizer(debugOwner: this),
           (HorizontalDragGestureRecognizer instance) {
             instance
@@ -360,10 +381,10 @@ class _NopPageViewState extends State<NopPageView> {
               ..onUpdate = onUpdate
               ..onEnd = onEnd
               ..onCancel = onCancel
+              ..minFlingDistance = 8.0
+              ..minFlingVelocity = kMinFlingVelocity
+              ..maxFlingVelocity = kMaxFlingVelocity
               ..dragStartBehavior = dragStartBehavior;
-            // ..minFlingDistance = kTouchSlop
-            // ..minFlingVelocity = kMinFlingVelocity
-            // ..maxFlingVelocity = kMaxFlingVelocity
             // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
         )
@@ -434,7 +455,8 @@ class _SlideWidget extends RenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant _SlideRenderObject renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant _SlideRenderObject renderObject) {
     renderObject.paddingRect = paddingRect;
   }
 }
@@ -445,7 +467,8 @@ class _SlideElement extends RenderObjectElement {
   @override
   _SlideWidget get widget => super.widget as _SlideWidget;
   @override
-  _SlideRenderObject get renderObject => super.renderObject as _SlideRenderObject;
+  _SlideRenderObject get renderObject =>
+      super.renderObject as _SlideRenderObject;
   Element? _header;
   Element? _body;
   Element? _footer;
@@ -555,7 +578,8 @@ class _SlideRenderObject extends RenderBox {
   void performLayout() {
     size = constraints.biggest;
     var height = ContentNotifier.pagefooterSize;
-    final _constraints = BoxConstraints.tight(Size(size.width - paddingRect.horizontal, height));
+    final _constraints =
+        BoxConstraints.tight(Size(size.width - paddingRect.horizontal, height));
 
     if (_header != null) {
       final _height = paddingRect.top + ContentNotifier.topPad;
@@ -564,7 +588,8 @@ class _SlideRenderObject extends RenderBox {
       parentdata.offset = Offset(paddingRect.left, _height);
     }
 
-    final _bottomHeight = size.height - paddingRect.bottom - ContentNotifier.botPad;
+    final _bottomHeight =
+        size.height - paddingRect.bottom - ContentNotifier.botPad;
 
     if (_footer != null) {
       _footer!.layout(_constraints);
@@ -573,13 +598,17 @@ class _SlideRenderObject extends RenderBox {
     }
 
     if (_body != null) {
-      final _constraints =
-          BoxConstraints.tight(Size(size.width, size.height - ContentNotifier.otherHeight - paddingRect.vertical));
+      final _constraints = BoxConstraints.tight(Size(size.width,
+          size.height - ContentNotifier.otherHeight - paddingRect.vertical));
       _body!.layout(_constraints);
 
       final parentdata = _body!.parentData as BoxParentData;
-      parentdata.offset =
-          Offset(.0, ContentNotifier.contentPadding + paddingRect.top + ContentNotifier.topPad + height);
+      parentdata.offset = Offset(
+          .0,
+          ContentNotifier.contentPadding +
+              paddingRect.top +
+              ContentNotifier.topPad +
+              height);
     }
   }
 

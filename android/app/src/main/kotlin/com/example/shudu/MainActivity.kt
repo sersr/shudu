@@ -13,32 +13,6 @@ import io.flutter.embedding.engine.FlutterJNI
 class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
-//         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//             val modes = activity.windowManager.defaultDisplay.supportedModes!!
-//
-//             modes.sortBy {
-//                 it.refreshRate
-//             }
-//
-//             modes.first()?.apply {
-//                 val at = window.attributes
-//                 at.preferredRefreshRate = refreshRate
-//                 at.preferredDisplayModeId = modeId
-//                 window.attributes = at
-//                 val rate = refreshRate
-//                 FlutterJNI.setRefreshRateFPS(refreshRate)
-//                 Log.i("FlutterActivity", "done ....")
-//                 FlutterJNI.setAsyncWaitForVsyncDelegate {
-//                     Choreographer.getInstance()
-//                             .postFrameCallback { frameTimeNanos ->
-//                                 val refreshPeriodNanos = (1000000000.0 / rate).toLong()
-//                                 FlutterJNI.nativeOnVsync(
-//                                         frameTimeNanos, frameTimeNanos + refreshPeriodNanos, it)
-//                             }
-//                 }
-//             }
-//
-//         }
         super.onCreate(savedInstanceState)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -50,6 +24,20 @@ class MainActivity : FlutterActivity() {
 //            window.decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN )
             window.statusBarColor = Color.TRANSPARENT
 //            window.setNavigationBarColor(Color.TRANSPARENT)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val modes = activity.windowManager.defaultDisplay.supportedModes!!
+
+            modes.sortBy {
+                it.refreshRate
+            }
+
+            modes.first()?.apply {
+                val at = window.attributes
+                at.preferredDisplayModeId = modeId
+                window.attributes = at
+            }
+
         }
 
     }
@@ -72,8 +60,8 @@ class MainActivity : FlutterActivity() {
 
     }
 
-    // override fun getCachedEngineId(): String? {
-    //     return "myEngine"
-    // }
+     override fun getCachedEngineId(): String? {
+         return "myEngine"
+     }
 
 }

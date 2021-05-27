@@ -1,144 +1,157 @@
-// 本地
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
-import '../database/book_database.dart';
 
 import '../api/api.dart';
 import '../bloc/bloc.dart';
 import '../data/data.dart';
+import '../database/book_database.dart';
+import '../database/database_mixin.dart';
 import '../utils/utils.dart';
 import 'book_event.dart';
-import 'book_event_delegate.dart';
-import 'book_event_messager.dart';
 import 'book_repository.dart';
 import 'constants.dart';
+import 'event_mxins.dart';
 import 'messages.dart';
 
-// 数据库 `Sqflite` Windows,Linux 是 FFI 实现的，可以在 Isolate 创建
-// 所有网络任务都在 Isolate 运行
-class InnerBookEventIsolate extends BookEvent
-    with NetwrokFuncEvent, ContentDatabaseImpl, BookDatabase {
-  InnerBookEventIsolate(this.appPath) {
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.windows:
-      case TargetPlatform.linux:
-        isOn = true;
-        break;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-      default:
-        isOn = true;
-      // sqlite3.openInMemory();
-    }
-  }
+class BookEventIsolate extends DatabaseEvent
+    with
+        //----base
+        ComputeEvent,
+        MessagerResolver,
+        CustomEvent,
+        //----dataBase
+        BookDatabase,
+        ComplexEventDatabase,
+        DatabaseMixin,
+        //----
+        ComplexEventBase,
+        //----NetWork
+        NetwrokEvent,
+        //----
+        ComplexEvent {
+  BookEventIsolate(this.appPath, this.sp);
 
+  @override
+  final SendPort sp;
   @override
   final String appPath;
-  late final bool isOn;
+
   @override
   Future<void> initState() async {
-    // if (isOn) {
-    await super.initState();
-    // }
+    super.initState();
     return init();
-  }
-}
-
-// 隔离任务
-class BookEventIsolate extends BookEvent with BookEventDelegateMixin {
-  BookEventIsolate(String appPath) {
-    target = InnerBookEventIsolate(appPath);
   }
 
   @override
-  late InnerBookEventIsolate target;
+  Future<bool> resolve(IsolateSendMessage m) async {
+    if (await super.resolve(m)) return false;
 
-  // 函数路径处理
-  void resolveFunc(IsolateSendMessage m) {
-    if (target.resolve(m)) return;
-    // if (!target.isOn) {
-    //   Log.i('something was error');
-    //   return;
-    // }
+    Future? _f;
     switch (m.type) {
       case DatabaseMessage.addBook:
-        insertBook(m.args)._futureNull(m);
+        _f = insertBook(m.args);
         break;
-      case DatabaseMessage.cacheinnerdb:
+      case DatabaseMessage.insertBookInfo:
         final id = m.args[0];
         final indexs = m.args[1];
-        insertOrUpdateIndexs(id, indexs)._futureNull(m);
+        _f = insertOrUpdateIndexs(id, indexs);
         break;
+
       case DatabaseMessage.deleteBook:
-        deleteBook(m.args).then(
-          (value) => m.sp.send(IsolateReceiveMessage(data: value)),
-          onError: (_) =>
-              m.sp.send(IsolateReceiveMessage(data: -1, result: Result.failed)),
-        );
+        _f = deleteBook(m.args);
         break;
+
       case DatabaseMessage.deleteCache:
-        deleteCache(m.args)._futureNull(m);
+        _f = deleteCache(m.args);
         break;
       case DatabaseMessage.loadBookInfo:
-        getMainBookListDb()._futureMap(m);
+        _f = getMainBookListDb();
         break;
-      // case MessageDatabase.loadFromDb:
-      //   final bookid = m.args[0];
-      //   final contentid = m.args[1];
-      //   getContentDb(bookid, contentid)._futureMap(m);
-      // break;
+
       case DatabaseMessage.getCacheContentsDb:
-        getCacheContentsDb(m.args)._futureMap(m);
+        _f = getCacheContentsCidDb(m.args);
         break;
       case DatabaseMessage.updateBookIsTop:
         int id = m.args[0];
         int isTop = m.args[1];
         int isShow = m.args[2];
-        updateBookStatusAndSetTop(id, isTop, isShow)._futureNull(m);
+        _f = updateBookStatusAndSetTop(id, isTop, isShow);
         break;
 
       case DatabaseMessage.updateCname:
-        int id = m.args[0];
-        String cname = m.args[1];
-        String updateTime = m.args[2];
-        updateBookStatusAndSetNew(id, cname, updateTime)._futureNull(m);
+        _f = _updateBookStatusAndSetNew(m);
         break;
 
       case DatabaseMessage.updateMainInfo:
         int id = m.args[0];
         int cid = m.args[1];
         int page = m.args[2];
-        updateBookStatus(id, cid, page)._futureNull(m);
+        _f = updateBookStatusCustom(id, cid, page);
         break;
+
       case DatabaseMessage.getIndexDb:
-        getIndexsDb(m.args)._futureMap(m);
+        _f = getIndexsDb(m.args);
         break;
+
       case DatabaseMessage.getAllBookId:
-        getAllBookId().then(
-          (value) => m.sp.send(IsolateReceiveMessage(data: value)),
-          onError: (_) => m.sp.send(IsolateReceiveMessage(
-              data: const <int>{}, result: Result.failed)),
-        );
+        _f = getAllBookId();
         break;
+
+      case DatabaseMessage.getCacheItem:
+        _f = getCacheItem(m.args);
+        break;
+
       default:
-        Future<void>.value()._futureNull(m);
+        _f = Future<void>.value();
+    }
+
+    _f._futureAutoSend(sp, m.messageId);
+
+    return false;
+  }
+
+  Future<void> _updateBookStatusAndSetNew(IsolateSendMessage m) async {
+    final l = (m.args as List).whereType<Object>().toList();
+    if (l.length == 1) {
+      int id = m.args[0];
+      final rawData = await getInfo(id);
+      final data = rawData.data;
+      if (data != null) {
+        final newCname = data.lastChapter;
+        final lastTime = data.lastTime;
+        if (newCname != null && lastTime != null) {
+          return updateBookStatusAndSetNew(id, newCname, lastTime);
+        }
+      }
+    } else {
+      assert(l.length == 3);
+      final id = l[0] as int;
+      final cname = l[1] as String;
+      final lastTime = l[2] as String;
+      return updateBookStatusAndSetNew(id, cname, lastTime);
     }
   }
 }
 
+mixin MessagerResolver {
+  @mustCallSuper
+  Future<bool> resolve(IsolateSendMessage m) async => false;
+}
+
 // 网络任务
-/// see [BookEventMessager]
-mixin NetwrokFuncEvent on BookEvent {
+// 需要 数据库接口
+mixin NetwrokEvent on MessagerResolver, CustomEvent, ComplexEventBase {
   var frequency = 0;
 
   String get appPath;
+  SendPort get sp;
+
   late Dio dio;
   late Box<int> imageUpdate;
 
@@ -169,34 +182,24 @@ mixin NetwrokFuncEvent on BookEvent {
     }
   }
 
-  bool resolve(IsolateSendMessage m) {
+  @override
+  Future<bool> resolve(IsolateSendMessage m) async {
+    if (await super.resolve(m)) return true;
+
     if (m.type is! CustomMessage) return false;
-    Api.moveNext();
+
+    // Api.moveNext();
     switch (m.type) {
       case CustomMessage.info:
-        _loadInfo(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const BookInfoRoot(), result: Result.failed));
-        });
+        _loadInfo(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.shudanDetail:
-        _loadShudanDetail(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const BookListDetailData(), result: Result.failed));
-        });
+        _loadShudanDetail(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.indexs:
-        _loadIndexs(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(data: '', result: Result.failed));
-        });
+        _loadIndexs(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.content:
@@ -216,224 +219,101 @@ mixin NetwrokFuncEvent on BookEvent {
             await Future.delayed(Duration(milliseconds: 500));
           }
 
-          _loadContent(m.args).then((value) {
-            m.sp.send(IsolateReceiveMessage(data: value));
-          }, onError: (e) {
-            m.sp.send(IsolateReceiveMessage(
-                data: const BookContent(), result: Result.failed));
-          });
+          _loadContent(m.args)._futureAutoSend(sp, m.messageId);
         });
 
         break;
       case CustomMessage.shudan:
-        _loadShudanLists(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const <BookList>[], result: Result.failed));
-        });
+        _loadShudanLists(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.bookList:
-        _loadHiveShudanLists(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const <BookList>[], result: Result.failed));
-        });
+        _loadHiveShudanLists(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.mainList:
-        _decodeIndexsLists(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const <List>[], result: Result.failed));
-        });
+        _decodeIndexsLists(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.searchWithKey:
-        _loadSearchData(m.args).then((value) {
-          m.sp.send(IsolateReceiveMessage(data: value));
-        }, onError: (e) {
-          m.sp.send(IsolateReceiveMessage(
-              data: const SearchList(), result: Result.failed));
-        });
+        _loadSearchData(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.restartClient:
-        Log.i('restartClient....', name: 'restartClient');
+        Log.i('restartClient....');
         dio.close();
         dio = dioCreater();
-        m.sp.send(IsolateReceiveMessage(data: ''));
+        sp.send(IsolateReceiveMessage(data: '', messageId: m.messageId));
 
         break;
       case CustomMessage.saveImage:
-        _saveImage(m.args).then(
-          (path) => m.sp.send(IsolateReceiveMessage(data: path)),
-          onError: (e, t) {
-            m.sp.send(IsolateReceiveMessage(data: '', result: Result.failed));
-          },
-        );
+        _saveImage(m.args)._futureAutoSend(sp, m.messageId);
 
         break;
       case CustomMessage.getContent:
         int bookid = m.args[0];
         int contentid = m.args[1];
-        int words = m.args[2];
-        bool update = m.args[3];
-        getContent(bookid, contentid, words, update).then(
-          (value) => m.sp.send(IsolateReceiveMessage(data: value)),
-          onError: (e) => m.sp.send(IsolateReceiveMessage(
-              data: const RawContentLines(), result: Result.failed)),
-        );
-        break;
-      case CustomMessage.divText:
-        //TransferableTypedData
-        //
-        //   final list = (m.args as TransferableTypedData).materialize();
-        //   var start = 0;
-        //   print(list.lengthInBytes);
-        //   final sizediv = list.asInt32List(start, 2);
-        //   print('sizediv $sizediv');
-        //   start += 8;
-        //   final words = list.asInt32List(start, 1);
-        //   start += 4;
-        //   final text = list.asUint8List(start, sizediv[0]);
-        //   start += sizediv[0];
-        //   final cname = list.asUint8List(start, sizediv[1]);
-
-        //   print('aaa: ${text.lengthInBytes}, ${cname.lengthInBytes}, ${words.lengthInBytes}');
-        //   final pages = divText(utf8.decode(text), utf8.decode(cname), words.first);
-        //   m.sp.send(IsolateReceiveMessage(data: pages));
-        final text = m.args[0];
-        // final cname = m.args[1];
-        // final words = m.args[2];
-        final pages = LineSplitter.split(text);
-
-        m.sp.send(IsolateReceiveMessage(data: pages.toList()));
+        bool update = m.args[2];
+        getContent(bookid, contentid, update)
+            .then<TransferableTypedData?>(RawContentLines.encode,
+                onError: (_) => null)
+            ._futureAutoSend(sp, m.messageId);
         break;
       default:
         return false;
     }
+    // 任务已被处理
     return true;
   }
 
   @override
   Future<String> getIndexsNet(int id) async {
-    late String bookIndexs;
-    await _loadIndexs(id)
-        .then((value) => bookIndexs = value, onError: (_) => bookIndexs = '');
-    return bookIndexs;
+    return _loadIndexs(id).then((value) => value, onError: (_) => '');
   }
 
-  // @override
-  // Future<RawContentLines> getContent(int bookid, int contentid, int words,
-  //     {bool update = false}) async {
-  //   if (update) {
-  //     return await getContentNet(bookid, contentid, words) ??
-  //         await super.getContent(bookid, contentid, words);
-  //   }
-  //   final content =
-  //       await super.getContent(bookid, contentid, words, update: update);
-
-  //   if (content.contentIsEmpty) {
-  //     return await getContentNet(bookid, contentid, words) ?? content;
-  //   }
-  //   return content;
-  // }
-
-  /// 默认实现
-  // @override
-  // Future<RawContentLines?> getContentNet(
-  //     int bookid, int contentid, int words) async {
-  //   assert(Log.i('loading Id: $contentid', stage: this, name: 'download'));
-
-  //   final bookContent = await downloadContent(bookid, contentid);
-
-  //   if (bookContent.content != null) {
-  //     saveContent(bookContent);
-  //     final lines =
-  //         await textLayout(bookContent.content!, bookContent.cname!, words);
-
-  //     if (lines.isNotEmpty) {
-  //       return RawContentLines(
-  //         pages: lines,
-  //         nid: bookContent.nid,
-  //         pid: bookContent.pid,
-  //         cid: bookContent.cid,
-  //         hasContent: bookContent.hasContent,
-  //         cname: bookContent.cname,
-  //       );
-  //     }
-  //   }
-  //   return null;
-  // }
-
   /// 章节内容
-  @override
   Future<BookContent> getContentNet(int bookid, int contentid) async {
-    late BookContent contents;
-    await _loadContent([bookid, contentid]).then((value) => contents = value,
-        onError: (_) => contents = const BookContent());
-    return contents;
+    return _loadContent([bookid, contentid])
+        .then((value) => value, onError: (_) => const BookContent());
   }
 
   @override
   Future<List<List>> getIndexsDecodeLists(String str) async {
-    late List<List> indexs;
-    await _decodeIndexsLists(str).then((value) => indexs = value,
-        onError: (_) => indexs = const <List>[]);
-    return indexs;
+    return _decodeIndexsLists(str)
+        .then((value) => value, onError: (_) => const <List>[]);
   }
 
   @override
   Future<BookInfoRoot> getInfo(int id) async {
-    late BookInfoRoot infoRoot;
-    await _loadInfo(id).then((value) => infoRoot = value,
-        onError: (_) => infoRoot = const BookInfoRoot());
-    return infoRoot;
+    return _loadInfo(id)
+        .then((value) => value, onError: (_) => const BookInfoRoot());
   }
 
   @override
   Future<List<BookList>> getHiveShudanLists(String c) async {
-    late List<BookList> list;
-    await _loadHiveShudanLists(c).then((value) => list = value,
-        onError: (_) => list = const <BookList>[]);
-    return list;
+    return _loadHiveShudanLists(c)
+        .then((value) => value, onError: (_) => const <BookList>[]);
   }
 
   @override
   Future<List<BookList>> getShudanLists(String c, int index) async {
-    late List<BookList> list;
-    await _loadShudanLists([c, index]).then(
-      (value) => list = value,
-      onError: (_) => list = const <BookList>[],
+    return _loadShudanLists([c, index]).then(
+      (value) => value,
+      onError: (_) => const <BookList>[],
     );
-    return list;
   }
 
   @override
   Future<BookListDetailData> getShudanDetail(int index) async {
-    late BookListDetailData data;
-    await _loadShudanDetail(index).then((value) => data = value,
-        onError: (_) => data = const BookListDetailData());
-    return data;
+    return _loadShudanDetail(index)
+        .then((value) => value, onError: (_) => const BookListDetailData());
   }
 
   @override
-  Future<List<String>> textLayout(String text, String cname, int words) async =>
-      divText(text, cname);
-
-  @override
   Future<SearchList> getSearchData(String key) async {
-    late SearchList searchList;
-
-    await _loadSearchData(key)
-        .then((value) => searchList = value)
-        .catchError((e) => searchList = const SearchList());
-
-    return searchList;
+    return _loadSearchData(key)
+        .then((value) => value)
+        .catchError((e) => const SearchList());
   }
 
   @override
@@ -457,7 +337,7 @@ mixin NetwrokFuncEvent on BookEvent {
       return onSuccess(map);
     } catch (e) {
       // 从错误通道发送 `str`
-      Log.i('common, $url');
+      Log.i('common: $e, $url');
       throw str;
     }
   }
@@ -509,7 +389,7 @@ mixin NetwrokFuncEvent on BookEvent {
       }
       return bookIndexShort;
     } catch (e) {
-      Log.e('url:$args, $e', name: '_isolate');
+      Log.e('url:$args, $e');
       rethrow;
     }
   }
@@ -540,7 +420,7 @@ mixin NetwrokFuncEvent on BookEvent {
         return BookListRoot.fromJson(jsonDecode(data)).data ??
             const <BookList>[];
       } catch (e) {
-        Log.e('url:$args, $e', name: '_isolate');
+        Log.e('url:$args, $e');
         rethrow;
       }
     }
@@ -575,7 +455,7 @@ mixin NetwrokFuncEvent on BookEvent {
 
       return BookListRoot.fromJson(jsonDecode(data)).data ?? const <BookList>[];
     } catch (e) {
-      Log.e('url:$args, $e', name: '_isolate');
+      Log.e('url:$args, $e');
       rethrow;
     }
   }
@@ -598,9 +478,7 @@ mixin NetwrokFuncEvent on BookEvent {
     final cid = args[1];
 
     final url = Api.contentUrl(id, cid);
-
-    Log.i(url);
-
+    Log.i('net: $url');
     Api.moveNext();
 
     return _decode(
@@ -746,7 +624,7 @@ mixin NetwrokFuncEvent on BookEvent {
       }
     } catch (e) {
       errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
-      assert(Log.w('$imgName, $e !!!'));
+      assert(Log.w('$imgName,$url !!!'));
     }
 
     final exists = await File(imgPath).exists();
@@ -765,22 +643,13 @@ mixin NetwrokFuncEvent on BookEvent {
   }
 }
 
-extension _FutureMap on Future<List<Map<String, Object?>>> {
-  void _futureMap(IsolateSendMessage m) {
+/// 自动返回消息
+extension _FutureAutoSend<T> on Future<T> {
+  void _futureAutoSend(SendPort sp, int messageId) {
     then(
-      (value) => m.sp.send(IsolateReceiveMessage(data: value)),
-      onError: (_) => m.sp.send(IsolateReceiveMessage(
-          data: const <Map<String, Object?>>[], result: Result.failed)),
-    );
-  }
-}
-
-extension _FutureNull on Future<void> {
-  void _futureNull(IsolateSendMessage m) {
-    then(
-      (_) => m.sp.send(IsolateReceiveMessage(data: null)),
-      onError: (_) =>
-          m.sp.send(IsolateReceiveMessage(data: null, result: Result.failed)),
-    );
+      (value) => IsolateReceiveMessage(data: value, messageId: messageId),
+      onError: (_) => IsolateReceiveMessage(
+          data: null, messageId: messageId, result: Result.failed),
+    ).then(sp.send);
   }
 }

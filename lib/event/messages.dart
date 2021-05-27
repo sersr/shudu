@@ -1,6 +1,3 @@
-
-import 'dart:isolate';
-
 enum CustomMessage {
   info,
   shudanDetail,
@@ -12,13 +9,12 @@ enum CustomMessage {
   restartClient,
   searchWithKey,
   saveImage,
-  divText,
   getContent,
 }
 enum DatabaseMessage {
   // database
   addBook,
-  cacheinnerdb,
+  insertBookInfo,
   deleteBook,
   deleteCache,
   loadBookInfo,
@@ -28,13 +24,14 @@ enum DatabaseMessage {
   updateMainInfo,
   getIndexDb,
   getAllBookId,
+  getCacheItem,
 }
 
 class IsolateSendMessage {
-  IsolateSendMessage(this.type, this.args, this.sp);
+  IsolateSendMessage(this.type, this.args, this.messageId);
   final dynamic type;
   final dynamic args;
-  final SendPort sp;
+  final int messageId;
 }
 
 enum Result {
@@ -44,7 +41,11 @@ enum Result {
 }
 
 class IsolateReceiveMessage {
-  IsolateReceiveMessage({required this.data, this.result = Result.success});
+  IsolateReceiveMessage(
+      {required this.data,
+      required this.messageId,
+      this.result = Result.success});
+  final int messageId;
   final dynamic data;
   final Result result;
 }
