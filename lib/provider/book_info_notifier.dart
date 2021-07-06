@@ -15,18 +15,23 @@ class BookInfoProvider extends ChangeNotifier {
       return;
     }
     lastId = id;
-    data = await repository!.bookEvent.getInfo(id);
+    data = await repository!.bookEvent.getInfo(id) ?? const BookInfoRoot();
 
     notifyListeners();
   }
 
   BookInfoRoot? get(int id) {
-    if (lastId == id && data?.data != null) return data;
+    if (lastId == id) return data;
   }
 
   void remove(int id) {
     if (lastId == id) data = null;
   }
 
-  bool contains(int id) => id == lastId && data != null && data!.data != null;
+  void reload(int id) {
+    remove(id);
+    getData(id);
+  }
+
+  bool contains(int id) => id == lastId && data?.data != null;
 }

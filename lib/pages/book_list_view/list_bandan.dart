@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/src/provider.dart';
 
+import '../../provider/text_styles.dart';
 import 'list_shudan.dart';
 import 'top_view.dart';
 
@@ -11,6 +13,14 @@ class ListBangdanPage extends StatefulWidget {
 class _ListBangdanPageState extends State<ListBangdanPage> {
   final colorv = ValueNotifier(HSVColor.fromColor(Colors.black));
   final change = ValueNotifier(false);
+
+  late TextStyleConfig ts;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    ts = context.read<TextStyleConfig>();
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -20,8 +30,8 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
           body: BarLayout(
         title: Text('榜单'),
         bottom: TabBar(
-          labelColor: Colors.grey.shade500,
-          unselectedLabelColor: Colors.black,
+          labelColor: TextStyleConfig.blackColor7,
+          unselectedLabelColor: TextStyleConfig.blackColor2,
           labelStyle: TextStyle(fontSize: 15),
           tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
         ),

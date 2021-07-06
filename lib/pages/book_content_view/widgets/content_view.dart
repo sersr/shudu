@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../../../bloc/painter_bloc.dart';
+import '../../../provider/painter_notifier.dart';
 import '../../../utils/utils.dart';
 
 class ContentView extends SingleChildRenderObjectWidget {

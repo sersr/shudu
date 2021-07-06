@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'cacheManager.dart';
 
-import '../../event/event.dart';
 import '../../utils/utils.dart';
+import 'cacheManager.dart';
 import 'chat_room.dart';
 import 'list_bandan.dart';
 import 'list_category.dart';
@@ -33,12 +31,7 @@ class ListMainPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
-                        return BlocProvider(
-                          create: (context) =>
-                              ShudanBloc(context.read<Repository>()),
-                          child: RepaintBoundary(
-                              child: wrapData(ListShudanPage())),
-                        );
+                        return wrapData(ListShudanPage());
                       }));
                     }),
               ),

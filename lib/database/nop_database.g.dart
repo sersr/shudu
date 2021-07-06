@@ -7,21 +7,33 @@ part of 'nop_database.dart';
 // **************************************************************************
 
 abstract class _GenBookDatabase extends $Database {
-  late final _tables = <DatabaseTable>[
-    bookCacheTable,
-    bookContentDbTable,
-    bookIndexTable
-  ];
+  late final _tables = <DatabaseTable>[bookCache, bookContentDb, bookIndex];
 
   @override
   List<DatabaseTable> get tables => _tables;
 
-  late final bookCacheTable = _GenBookCacheTable(this);
-  late final bookContentDbTable = _GenBookContentDbTable(this);
-  late final bookIndexTable = _GenBookIndexTable(this);
+  late final bookCache = _GenBookCache(this);
+  late final bookContentDb = _GenBookContentDb(this);
+  late final bookIndex = _GenBookIndex(this);
 }
 
-extension BookCacheExt on BookCache {
+class _BookCache extends BookCache {
+  _BookCache(
+      {this.id,
+      this.name,
+      this.img,
+      this.updateTime,
+      this.lastChapter,
+      this.chapterId,
+      this.bookId,
+      this.page,
+      this.sortKey,
+      this.isTop,
+      this.isNew,
+      this.isShow})
+      : super._();
+
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -39,24 +51,45 @@ extension BookCacheExt on BookCache {
     };
   }
 
-  List get _allItems => List.of([
-        id,
-        name,
-        img,
-        updateTime,
-        lastChapter,
-        chapterId,
-        bookId,
-        page,
-        sortKey,
-        isTop,
-        isNew,
-        isShow
-      ], growable: false);
+  @override
+  final int? id;
+
+  @override
+  final String? name;
+
+  @override
+  final String? img;
+
+  @override
+  final String? updateTime;
+
+  @override
+  final String? lastChapter;
+
+  @override
+  final int? chapterId;
+
+  @override
+  final int? bookId;
+
+  @override
+  final int? page;
+
+  @override
+  final int? sortKey;
+
+  @override
+  final bool? isTop;
+
+  @override
+  final bool? isNew;
+
+  @override
+  final bool? isShow;
 }
 
-class _GenBookCacheTable extends DatabaseTable<BookCache> {
-  _GenBookCacheTable($Database db) : super(db);
+class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
+  _GenBookCache($Database db) : super(db);
 
   @override
   final table = 'BookCache';
@@ -74,25 +107,9 @@ class _GenBookCacheTable extends DatabaseTable<BookCache> {
   final isShow = 'isShow';
 
   @override
-  QueryStatement<BookCache, _GenBookCacheTable> get query =>
-      QueryStatement<BookCache, _GenBookCacheTable>(this, db);
-
-  @override
-  UpdateStatement<BookCache, _GenBookCacheTable> get update =>
-      UpdateStatement<BookCache, _GenBookCacheTable>(this, db);
-
-  @override
-  InsertStatement<BookCache, _GenBookCacheTable> get insert =>
-      InsertStatement<BookCache, _GenBookCacheTable>(this, db);
-
-  @override
-  DeleteStatement<BookCache, _GenBookCacheTable> get delete =>
-      DeleteStatement<BookCache, _GenBookCacheTable>(this, db);
-
-  @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $name TEXT, $img '
-        'TEXT, $updateTime TEXT, $lastChapter TEXT, $chapterId INTEGER, $bookId '
+    return 'CREATE TABLE $table ($id INTEGER, $name TEXT, $img TEXT, '
+        '$updateTime TEXT, $lastChapter TEXT, $chapterId INTEGER, $bookId '
         'INTEGER, $page INTEGER, $sortKey INTEGER, $isTop INTEGER, $isNew '
         'INTEGER, $isShow INTEGER)';
   }
@@ -112,40 +129,99 @@ class _GenBookCacheTable extends DatabaseTable<BookCache> {
       isShow: Table.intToBool(map['isShow'] as int?));
 
   @override
-  List<BookCache> toTable(List<Row> query) =>
+  List<BookCache> toTable(Iterable<Row> query) =>
       query.map((e) => _toTable(e)).toList();
+}
+
+extension ItemExtensionBookCache<T extends ItemExtension<_GenBookCache>> on T {
+  T get id => item(table.id) as T;
+
+  T get name => item(table.name) as T;
+
+  T get img => item(table.img) as T;
+
+  T get updateTime => item(table.updateTime) as T;
+
+  T get lastChapter => item(table.lastChapter) as T;
+
+  T get chapterId => item(table.chapterId) as T;
+
+  T get bookId => item(table.bookId) as T;
+
+  T get page => item(table.page) as T;
+
+  T get sortKey => item(table.sortKey) as T;
+
+  T get isTop => item(table.isTop) as T;
+
+  T get isNew => item(table.isNew) as T;
+
+  T get isShow => item(table.isShow) as T;
+
+  T get bookCache_id => id;
+
+  T get bookCache_name => name;
+
+  T get bookCache_img => img;
+
+  T get bookCache_updateTime => updateTime;
+
+  T get bookCache_lastChapter => lastChapter;
+
+  T get bookCache_chapterId => chapterId;
+
+  T get bookCache_bookId => bookId;
+
+  T get bookCache_page => page;
+
+  T get bookCache_sortKey => sortKey;
+
+  T get bookCache_isTop => isTop;
+
+  T get bookCache_isNew => isNew;
+
+  T get bookCache_isShow => isShow;
+}
+
+extension JoinItemBookCache<J extends JoinItem<_GenBookCache>> on J {
+  J get bookCache_id => joinItem(joinTable.id) as J;
+
+  J get bookCache_name => joinItem(joinTable.name) as J;
+
+  J get bookCache_img => joinItem(joinTable.img) as J;
+
+  J get bookCache_updateTime => joinItem(joinTable.updateTime) as J;
+
+  J get bookCache_lastChapter => joinItem(joinTable.lastChapter) as J;
+
+  J get bookCache_chapterId => joinItem(joinTable.chapterId) as J;
+
+  J get bookCache_bookId => joinItem(joinTable.bookId) as J;
+
+  J get bookCache_page => joinItem(joinTable.page) as J;
+
+  J get bookCache_sortKey => joinItem(joinTable.sortKey) as J;
+
+  J get bookCache_isTop => joinItem(joinTable.isTop) as J;
+
+  J get bookCache_isNew => joinItem(joinTable.isNew) as J;
+
+  J get bookCache_isShow => joinItem(joinTable.isShow) as J;
+}
+
+class _BookContentDb extends BookContentDb {
+  _BookContentDb(
+      {this.id,
+      this.bookId,
+      this.cid,
+      this.cname,
+      this.nid,
+      this.pid,
+      this.content,
+      this.hasContent})
+      : super._();
+
   @override
-  Map<String, dynamic> toJson(BookCache table) => table.toJson();
-}
-
-extension ItemExtensionBookCache<
-    T extends ItemExtension<BookCache, _GenBookCacheTable, T>> on T {
-  T get id => item(table.id);
-
-  T get name => item(table.name);
-
-  T get img => item(table.img);
-
-  T get updateTime => item(table.updateTime);
-
-  T get lastChapter => item(table.lastChapter);
-
-  T get chapterId => item(table.chapterId);
-
-  T get bookId => item(table.bookId);
-
-  T get page => item(table.page);
-
-  T get sortKey => item(table.sortKey);
-
-  T get isTop => item(table.isTop);
-
-  T get isNew => item(table.isNew);
-
-  T get isShow => item(table.isShow);
-}
-
-extension BookContentDbExt on BookContentDb {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -159,13 +235,34 @@ extension BookContentDbExt on BookContentDb {
     };
   }
 
-  List get _allItems =>
-      List.of([id, bookId, cid, cname, nid, pid, content, hasContent],
-          growable: false);
+  @override
+  final int? id;
+
+  @override
+  final int? bookId;
+
+  @override
+  final int? cid;
+
+  @override
+  final String? cname;
+
+  @override
+  final int? nid;
+
+  @override
+  final int? pid;
+
+  @override
+  final String? content;
+
+  @override
+  final bool? hasContent;
 }
 
-class _GenBookContentDbTable extends DatabaseTable<BookContentDb> {
-  _GenBookContentDbTable($Database db) : super(db);
+class _GenBookContentDb
+    extends DatabaseTable<BookContentDb, _GenBookContentDb> {
+  _GenBookContentDb($Database db) : super(db);
 
   @override
   final table = 'BookContentDb';
@@ -179,26 +276,10 @@ class _GenBookContentDbTable extends DatabaseTable<BookContentDb> {
   final hasContent = 'hasContent';
 
   @override
-  QueryStatement<BookContentDb, _GenBookContentDbTable> get query =>
-      QueryStatement<BookContentDb, _GenBookContentDbTable>(this, db);
-
-  @override
-  UpdateStatement<BookContentDb, _GenBookContentDbTable> get update =>
-      UpdateStatement<BookContentDb, _GenBookContentDbTable>(this, db);
-
-  @override
-  InsertStatement<BookContentDb, _GenBookContentDbTable> get insert =>
-      InsertStatement<BookContentDb, _GenBookContentDbTable>(this, db);
-
-  @override
-  DeleteStatement<BookContentDb, _GenBookContentDbTable> get delete =>
-      DeleteStatement<BookContentDb, _GenBookContentDbTable>(this, db);
-
-  @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, $cid '
-        'INTEGER, $cname TEXT, $nid INTEGER, $pid INTEGER, $content TEXT, '
-        '$hasContent INTEGER)';
+    return 'CREATE TABLE $table ($id INTEGER, $bookId INTEGER, $cid INTEGER, '
+        '$cname TEXT, $nid INTEGER, $pid INTEGER, $content TEXT, $hasContent '
+        'INTEGER)';
   }
 
   BookContentDb _toTable(Map<String, dynamic> map) => BookContentDb(
@@ -212,41 +293,83 @@ class _GenBookContentDbTable extends DatabaseTable<BookContentDb> {
       hasContent: Table.intToBool(map['hasContent'] as int?));
 
   @override
-  List<BookContentDb> toTable(List<Row> query) =>
+  List<BookContentDb> toTable(Iterable<Row> query) =>
       query.map((e) => _toTable(e)).toList();
+}
+
+extension ItemExtensionBookContentDb<T extends ItemExtension<_GenBookContentDb>>
+    on T {
+  T get id => item(table.id) as T;
+
+  T get bookId => item(table.bookId) as T;
+
+  T get cid => item(table.cid) as T;
+
+  T get cname => item(table.cname) as T;
+
+  T get nid => item(table.nid) as T;
+
+  T get pid => item(table.pid) as T;
+
+  T get content => item(table.content) as T;
+
+  T get hasContent => item(table.hasContent) as T;
+
+  T get bookContentDb_id => id;
+
+  T get bookContentDb_bookId => bookId;
+
+  T get bookContentDb_cid => cid;
+
+  T get bookContentDb_cname => cname;
+
+  T get bookContentDb_nid => nid;
+
+  T get bookContentDb_pid => pid;
+
+  T get bookContentDb_content => content;
+
+  T get bookContentDb_hasContent => hasContent;
+}
+
+extension JoinItemBookContentDb<J extends JoinItem<_GenBookContentDb>> on J {
+  J get bookContentDb_id => joinItem(joinTable.id) as J;
+
+  J get bookContentDb_bookId => joinItem(joinTable.bookId) as J;
+
+  J get bookContentDb_cid => joinItem(joinTable.cid) as J;
+
+  J get bookContentDb_cname => joinItem(joinTable.cname) as J;
+
+  J get bookContentDb_nid => joinItem(joinTable.nid) as J;
+
+  J get bookContentDb_pid => joinItem(joinTable.pid) as J;
+
+  J get bookContentDb_content => joinItem(joinTable.content) as J;
+
+  J get bookContentDb_hasContent => joinItem(joinTable.hasContent) as J;
+}
+
+class _BookIndex extends BookIndex {
+  _BookIndex({this.id, this.bookId, this.bIndexs}) : super._();
+
   @override
-  Map<String, dynamic> toJson(BookContentDb table) => table.toJson();
-}
-
-extension ItemExtensionBookContentDb<
-    T extends ItemExtension<BookContentDb, _GenBookContentDbTable, T>> on T {
-  T get id => item(table.id);
-
-  T get bookId => item(table.bookId);
-
-  T get cid => item(table.cid);
-
-  T get cname => item(table.cname);
-
-  T get nid => item(table.nid);
-
-  T get pid => item(table.pid);
-
-  T get content => item(table.content);
-
-  T get hasContent => item(table.hasContent);
-}
-
-extension BookIndexExt on BookIndex {
   Map<String, dynamic> toJson() {
     return {'id': id, 'bookId': bookId, 'bIndexs': bIndexs};
   }
 
-  List get _allItems => List.of([id, bookId, bIndexs], growable: false);
+  @override
+  final int? id;
+
+  @override
+  final int? bookId;
+
+  @override
+  final String? bIndexs;
 }
 
-class _GenBookIndexTable extends DatabaseTable<BookIndex> {
-  _GenBookIndexTable($Database db) : super(db);
+class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
+  _GenBookIndex($Database db) : super(db);
 
   @override
   final table = 'BookIndex';
@@ -255,25 +378,8 @@ class _GenBookIndexTable extends DatabaseTable<BookIndex> {
   final bIndexs = 'bIndexs';
 
   @override
-  QueryStatement<BookIndex, _GenBookIndexTable> get query =>
-      QueryStatement<BookIndex, _GenBookIndexTable>(this, db);
-
-  @override
-  UpdateStatement<BookIndex, _GenBookIndexTable> get update =>
-      UpdateStatement<BookIndex, _GenBookIndexTable>(this, db);
-
-  @override
-  InsertStatement<BookIndex, _GenBookIndexTable> get insert =>
-      InsertStatement<BookIndex, _GenBookIndexTable>(this, db);
-
-  @override
-  DeleteStatement<BookIndex, _GenBookIndexTable> get delete =>
-      DeleteStatement<BookIndex, _GenBookIndexTable>(this, db);
-
-  @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$bIndexs TEXT)';
+    return 'CREATE TABLE $table ($id INTEGER, $bookId INTEGER, $bIndexs TEXT)';
   }
 
   BookIndex _toTable(Map<String, dynamic> map) => BookIndex(
@@ -282,17 +388,28 @@ class _GenBookIndexTable extends DatabaseTable<BookIndex> {
       bIndexs: map['bIndexs'] as String?);
 
   @override
-  List<BookIndex> toTable(List<Row> query) =>
+  List<BookIndex> toTable(Iterable<Row> query) =>
       query.map((e) => _toTable(e)).toList();
-  @override
-  Map<String, dynamic> toJson(BookIndex table) => table.toJson();
 }
 
-extension ItemExtensionBookIndex<
-    T extends ItemExtension<BookIndex, _GenBookIndexTable, T>> on T {
-  T get id => item(table.id);
+extension ItemExtensionBookIndex<T extends ItemExtension<_GenBookIndex>> on T {
+  T get id => item(table.id) as T;
 
-  T get bookId => item(table.bookId);
+  T get bookId => item(table.bookId) as T;
 
-  T get bIndexs => item(table.bIndexs);
+  T get bIndexs => item(table.bIndexs) as T;
+
+  T get bookIndex_id => id;
+
+  T get bookIndex_bookId => bookId;
+
+  T get bookIndex_bIndexs => bIndexs;
+}
+
+extension JoinItemBookIndex<J extends JoinItem<_GenBookIndex>> on J {
+  J get bookIndex_id => joinItem(joinTable.id) as J;
+
+  J get bookIndex_bookId => joinItem(joinTable.bookId) as J;
+
+  J get bookIndex_bIndexs => joinItem(joinTable.bIndexs) as J;
 }

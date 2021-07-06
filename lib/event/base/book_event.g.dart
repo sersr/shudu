@@ -31,12 +31,12 @@ enum BookContentEventMessage {
   watchCacheContentsCidDb,
   deleteCache
 }
-enum BookIndexEventMessage { insertOrUpdateIndexs }
 enum ComplexEventMessage {
   getCacheItem,
   getContent,
   getIndexs,
   updateBookStatus,
+  getCacheItemAll,
   getInfo
 }
 
@@ -305,43 +305,9 @@ mixin BookContentEventMessager implements BookContentEvent {
   }
 }
 
-mixin BookIndexEventResolve on Resolve, BookIndexEvent {
-  late final _bookIndexEventResolveFuncList =
-      List<DynamicCallback>.of([_insertOrUpdateIndexs_0], growable: false);
+mixin BookIndexEventResolve on Resolve, BookIndexEvent {}
 
-  @override
-  bool resolve(resolveMessage) {
-    if (resolveMessage is IsolateSendMessage) {
-      final type = resolveMessage.type;
-      if (type is BookIndexEventMessage) {
-        dynamic result;
-        try {
-          result = _bookIndexEventResolveFuncList
-              .elementAt(type.index)(resolveMessage.args);
-          send(result, resolveMessage);
-        } catch (e) {
-          send(result, resolveMessage, e);
-        } finally {
-          return true;
-        }
-      }
-    }
-    return super.resolve(resolveMessage);
-  }
-
-  FutureOr<int?> _insertOrUpdateIndexs_0(args) =>
-      insertOrUpdateIndexs(args[0], args[1]);
-}
-
-mixin BookIndexEventMessager implements BookIndexEvent {
-  SendEvent get send;
-
-  @override
-  FutureOr<int?> insertOrUpdateIndexs(int id, String indexs) async {
-    return send
-        .sendMessage(BookIndexEventMessage.insertOrUpdateIndexs, [id, indexs]);
-  }
-}
+mixin BookIndexEventMessager implements BookIndexEvent {}
 
 mixin DatabaseEventResolve on Resolve, DatabaseEvent {}
 
@@ -359,7 +325,8 @@ mixin ComplexEventResolve
     _getContent_1,
     _getIndexs_2,
     _updateBookStatus_3,
-    _getInfo_4
+    _getCacheItemAll_4,
+    _getInfo_5
   ], growable: false);
 
   @override
@@ -387,7 +354,8 @@ mixin ComplexEventResolve
   FutureOr<List<List<dynamic>>?> _getIndexs_2(args) =>
       getIndexs(args[0], args[1]);
   FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
-  Future<BookInfoRoot?> _getInfo_4(args) => getInfo(args);
+  FutureOr<Map<int, CacheItem>?> _getCacheItemAll_4(args) => getCacheItemAll();
+  FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
 }
 
 mixin ComplexEventMessager implements ComplexEvent {
@@ -414,7 +382,12 @@ mixin ComplexEventMessager implements ComplexEvent {
   }
 
   @override
-  Future<BookInfoRoot?> getInfo(int id) async {
+  FutureOr<Map<int, CacheItem>?> getCacheItemAll() async {
+    return send.sendMessage(ComplexEventMessage.getCacheItemAll, null);
+  }
+
+  @override
+  FutureOr<BookInfoRoot?> getInfo(int id) async {
     return send.sendMessage(ComplexEventMessage.getInfo, id);
   }
 }

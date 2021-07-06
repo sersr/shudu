@@ -7,7 +7,6 @@ import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/database/table.dart';
 import 'package:nop_db/nop_db.dart';
 
-import '../../bloc/bloc.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
 import '../../pages/book_list_view/cacheManager.dart';
@@ -40,7 +39,7 @@ abstract class BookIndexEvent {
   // FutureOr<List<nop.BookIndex>?> getIndexsDb(int bookid);
 
   /// [BookIndexBloc]
-  FutureOr<int?> insertOrUpdateIndexs(int id, String indexs);
+  // FutureOr<int?> insertOrUpdateIndexs(int id, String indexs);
 }
 
 abstract class ComplexEvent {
@@ -50,7 +49,8 @@ abstract class ComplexEvent {
   FutureOr<List<List>?> getIndexs(int bookid, bool update);
   FutureOr<int?> updateBookStatus(int id);
 
-  Future<BookInfoRoot?> getInfo(int id);
+  FutureOr<Map<int, CacheItem>?> getCacheItemAll();
+  FutureOr<BookInfoRoot?> getInfo(int id);
 }
 
 @NopIsolateEventItem()

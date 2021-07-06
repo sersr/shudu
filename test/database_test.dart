@@ -12,7 +12,7 @@ void main() async {
   final db = Database();
   db.watcher.sync = true;
 
-  final table = db.bookCacheTable;
+  final table = db.bookCache;
 
   var _listen = false;
   var listenCount = 0;
@@ -27,9 +27,9 @@ void main() async {
     // table.insert
     //     .insertTable(BookCache(bookId: 1001, chapterId: 101, name: 'test'))
     //     .go;
-    var query = table.query.item(table.bookId);
+    var query = table.query.bookId;
     expect(query.updateItems.length, 1);
-    expect(query.updateItems.first, table.bookId);
+    expect(query.updateItems.first, '${table.table}.${table.bookId}');
 
     print(query);
 
@@ -39,7 +39,7 @@ void main() async {
           'query_listen_02 listenCount2: $listenCount2: $event ,${db.watcher.listeners.length}');
     });
     await Future.delayed(Duration.zero);
-    final query2 = table.query.item('*');
+    final query2 = table.query.all;
     su2 = query2.watchToTable.listen((event) {
       listenCount++;
       print(
@@ -77,10 +77,6 @@ void main() async {
     var i = insert.go;
     expect(i, 1);
 
-    if (_listen) {
-      expect(listenCount, 2);
-    }
-
     // final insert2 = table.insert()..insertTable(_insertItem2);
     // insert2.go;
     // _listen = false;
@@ -96,67 +92,51 @@ void main() async {
 
     // isNew 0, page: 10
     final update = table.update
-      ..items([table.isNew, table.page])
+      ..isNew.page
       ..withArgs([1, 1]);
     // current: bookid 100, chapterId 111, lastChapter '第一章'
     update.where
-      ..item(table.bookId).less(101).or.l
-      ..item(table.chapterId).greaterOrEqual(11).and
-      ..item(table.lastChapter).like('第%').r;
+      ..bookId.lessThan(101).or
+      ..chapterId.greateThanOrEqualTo(11).and
+      ..lastChapter.like('第%');
 
     // start---------
     var q = update.go;
     expect(q, 1, reason: update.toString());
+    await awi;
 
-    if (_listen) {
-      expect(listenCount, 3);
-      expect(listenCount2, 2);
-    }
     //true:           y,  y                     y, or n, and  n
     update.coverWith([0, 2]).where.coverWith([10000, 151, '第']);
 
     q = update.go;
+    await awi;
+
     // change
     expect(q, 1, reason: update.toString());
 
-    if (_listen) {
-      expect(listenCount, 4);
-      expect(listenCount2, 2);
-    }
     //false:          n, y,                   n,   n,   n
     update.coverWith([0, 3]).where.coverWith([99, 151, '第']);
 
     q = update.go;
-    // no change
+    await awi;
+
     expect(q, 0, reason: update.toString());
 
-    if (_listen) {
-      expect(listenCount, 4);
-      expect(listenCount2, 2);
-    }
     //false:          y, y,                   n or  y and   n
     update.coverWith([1, 4]).where.coverWith([99, 110, '第']);
 
     q = update.go;
-    // no change
+    await awi;
     expect(q, 0, reason: update.toString());
-
-    if (_listen) {
-      expect(listenCount, 4);
-      expect(listenCount2, 2);
-    }
 
     //ture:          n, n,                   y or  y and   n
     update.coverWith([0, 2]).where.coverWith([101, 110, '第']);
 
     q = update.go;
+    await awi;
     // update but no send
     expect(q, 1, reason: update.toString());
 
-    if (_listen) {
-      expect(listenCount, 4);
-      expect(listenCount2, 2);
-    }
     final _insertItem2 = BookCache(
         bookId: 10001,
         name: '第二 测试 test',
@@ -170,11 +150,6 @@ void main() async {
         page: 88,
         updateTime: DateTime.now().toString());
     table.insert.insertTable(_insertItem2).go;
-
-    if (_listen) {
-      expect(listenCount, 5);
-      expect(listenCount2, 3);
-    }
   });
 
   test('query_go', () {
@@ -182,12 +157,12 @@ void main() async {
 
     if (!test_insert) _test_insert();
 
-    var query = table.query.item(table.bookId);
+    var query = table.query.bookId;
     print(query);
     var x = query.goToTable;
     print(x);
 
-    query = table.query.item('*');
+    query = table.query.all;
     print(query);
     var xx = query.go;
     print(xx);
@@ -198,14 +173,10 @@ void main() async {
 
     if (!test_insert) _test_insert();
 
-    final delete = table.delete..where.item(table.bookId).less(52000);
+    final delete = table.delete..where.bookId.lessThan(52000);
     final d = delete.go;
     expect(d, 2, reason: delete.toString());
 
-    if (_listen) {
-      expect(listenCount2, 4, reason: '只监听 bookId，delete 操作通知 table 所有监听者');
-      expect(listenCount, 6, reason: '监听通配符，监听整个 table 的所有通知');
-    }
     print(delete);
   });
 }

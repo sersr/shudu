@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'pan_slide.dart';
 
-import '../../../bloc/bloc.dart';
+import '../../../provider/provider.dart';
 import '../../../utils/utils.dart';
 import '../../book_info_view/book_info_page.dart';
 import '../../embed/indexs.dart';
@@ -26,7 +25,7 @@ class Pannel extends StatefulWidget {
 class _PannelState extends State<Pannel> {
   Timer? timer;
   late ContentNotifier bloc;
-  late BookIndexBloc indexBloc;
+  late BookIndexNotifier indexBloc;
 
   @override
   void initState() {
@@ -37,7 +36,7 @@ class _PannelState extends State<Pannel> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
-    indexBloc = context.read<BookIndexBloc>();
+    indexBloc = context.read<BookIndexNotifier>();
   }
 
   @override
@@ -179,7 +178,7 @@ class CnamePan extends StatelessWidget {
     required this.getTimer,
   }) : super(key: key);
 
-  final BookIndexBloc indexBloc;
+  final BookIndexNotifier indexBloc;
   final ContentNotifier bloc;
   // timer 会更改，回调得到当前的引用
   final Timer? Function() getTimer;
@@ -189,57 +188,61 @@ class CnamePan extends StatelessWidget {
       animation: bloc.showCname,
       builder: (context, child) {
         if (bloc.showCname.value) {
-          return BlocBuilder<BookIndexBloc, BookIndexState>(
+          return AnimatedBuilder(
+            animation: indexBloc,
             builder: (context, state) {
-              if (state is BookIndexWidthData) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: AnimatedBuilder(
-                    animation: indexBloc.slide,
-                    builder: (context, child) {
-                      var v = indexBloc.slide.value.toInt();
-                      var text = '';
-                      var cid = -1;
-                      for (var l in state.bookIndexs) {
-                        if (v < l.length - 1) {
-                          final BookIndexShort ins = l[v + 1];
-                          text = ins.cname!;
-                          cid = ins.cid!;
-                          break;
-                        }
-                        v -= (l.length - 1);
-                      }
-                      return GestureDetector(
-                        onTap: () {
-                          if (!bloc.loading.value) {
-                            getTimer()?.cancel();
-                            bloc.showCname.value = false;
-                            bloc.newBookOrCid(state.id, cid, 1, inBook: true);
-                          }
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6.0),
-                            color: Colors.grey.shade900.withAlpha(210),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 6.0),
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                                color: Colors.grey.shade400, fontSize: 15.0),
-                            overflow: TextOverflow.fade,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              } else {
-                return Container();
+              final data = indexBloc.data;
+              if (data == null) {
+                return loadingIndicator();
+              } else if (data.isValid != true) {
+                return reloadBotton(indexBloc.sendIndexs);
               }
+              final indexs = data.indexs!;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: AnimatedBuilder(
+                  animation: indexBloc.slide,
+                  builder: (context, child) {
+                    var v = indexBloc.slide.value.toInt();
+                    var text = '';
+                    var cid = -1;
+                    for (var l in indexs) {
+                      if (v < l.length - 1) {
+                        final BookIndexShort ins = l[v + 1];
+                        text = ins.cname!;
+                        cid = ins.cid!;
+                        break;
+                      }
+                      v -= (l.length - 1);
+                    }
+                    return GestureDetector(
+                      onTap: () {
+                        if (!bloc.loading.value) {
+                          getTimer()?.cancel();
+                          bloc.showCname.value = false;
+                          bloc.newBookOrCid(data.id!, cid, 1, inBook: true);
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6.0),
+                          color: Colors.grey.shade900.withAlpha(210),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 6.0),
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                              color: Colors.grey.shade400, fontSize: 15.0),
+                          overflow: TextOverflow.fade,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
             },
-            buildWhen: (_, newState) => newState is BookIndexWidthData,
           );
         }
         return Container();
@@ -310,13 +313,13 @@ Widget _topButton(
 
 class _BottomEndState extends State<BottomEnd> {
   late ContentNotifier bloc;
-  late BookIndexBloc indexBloc;
+  late BookIndexNotifier indexBloc;
   PanSlideController? controller;
   final ValueNotifier<SettingView> showSettings =
       ValueNotifier(SettingView.none);
   Size bsize = const Size(0.0, 10);
+  final lKey = Object();
 
-  late int listenid;
   @override
   void initState() {
     super.initState();
@@ -326,8 +329,8 @@ class _BottomEndState extends State<BottomEnd> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
-    indexBloc = context.read<BookIndexBloc>();
-    listenid = indexBloc.listenOnId;
+    indexBloc = context.read<BookIndexNotifier>();
+    indexBloc.listener(lKey);
   }
 
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
@@ -413,14 +416,13 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
-  void onshowEnd() =>
-      indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+  void onshowEnd() => indexBloc.sendIndexs(bloc.bookid, bloc.tData.cid);
 
   @override
   void dispose() {
     super.dispose();
     controller?.dispose();
-    indexBloc.removeListener(listenid);
+    indexBloc.rmListener(lKey);
   }
 
   @override
@@ -439,8 +441,9 @@ class _BottomEndState extends State<BottomEnd> {
                   getController().show();
 
                   bloc.showCname.value = false;
-                  context.read<BookIndexBloc>().add(
-                      BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
+                  context
+                      .read<BookIndexNotifier>()
+                      .sendIndexs(bloc.bookid, bloc.tData.cid);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -452,10 +455,9 @@ class _BottomEndState extends State<BottomEnd> {
                 if (showSettings.value != SettingView.indexs) {
                   getController().show();
                   bloc.showCname.value = false;
-                  context.read<BookIndexBloc>()
+                  context.read<BookIndexNotifier>()
                     ..bookUpDateTime.remove(bloc.bookid)
-                    ..add(BookIndexShowEvent(
-                        id: bloc.bookid, cid: bloc.tData.cid));
+                    ..sendIndexs(bloc.bookid, bloc.tData.cid);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -609,13 +611,13 @@ class _TopPannelState extends State<TopPannel> {
                               bloc
                                 ..dump()
                                 ..out();
-
-                              final cache = context.read<BookCacheBloc>();
+                              uiStyle();
+                              final cache = context.read<BookCacheNotifier>();
                               BookInfoPage.push(context, bookid)
                                   .then((_) async {
                                 final list = await cache.getList;
                                 for (final bookCache in list) {
-                                  if (bookCache.id == bookid) {
+                                  if (bookCache.bookId == bookid) {
                                     cid = bookCache.chapterId ?? cid;
                                     page = bookCache.page ?? page;
                                     break;
@@ -999,10 +1001,10 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           case SettingView.indexs:
             return IndexsWidget(
               onTap: (context, id, cid) {
-                final index = context.read<BookIndexBloc>();
+                final index = context.read<BookIndexNotifier>();
                 // 先完成动画再调用
                 widget.close(() {
-                  index.add(BookIndexShowEvent(id: id, cid: cid));
+                  index.sendIndexs(id, cid);
                   bloc.newBookOrCid(id, cid, 1, inBook: true);
                 });
               },

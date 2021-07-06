@@ -89,7 +89,7 @@ Widget reloadBotton(VoidCallback onTap) {
   );
 }
 
-Widget loadingIndicator({double radius = 25}) {
+Widget loadingIndicator({double radius = 30}) {
   return Center(
       child: Container(
           width: radius,

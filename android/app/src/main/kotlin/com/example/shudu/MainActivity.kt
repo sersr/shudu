@@ -18,6 +18,8 @@ import io.flutter.embedding.engine.FlutterJNI
 
 
 class MainActivity : FlutterActivity() {
+    var handler = Handler(Looper.getMainLooper())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -54,22 +56,6 @@ class MainActivity : FlutterActivity() {
                 override fun onDisplayChanged(i: Int) {
                     val display = displayManager.getDisplay(i)
                     Log.i("displayChanged", "${display.refreshRate}, ${display.mode}")
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                        val modes = activity.windowManager.defaultDisplay.supportedModes!!
-//
-//                        modes.sortBy {
-//                            it.refreshRate
-//                        }
-//
-//                        modes.last()?.apply {
-//
-//                            val at = window.attributes
-//                            at.preferredDisplayModeId = modeId
-//                            window.attributes = at
-//
-//                        }
-//
-//                    }
                 }
             }
 
@@ -97,69 +83,6 @@ class MainActivity : FlutterActivity() {
 //        }
 //    }
 
-    var handler = Handler(Looper.getMainLooper())
-    private var s = object : SurfaceHolder.Callback {
-        override fun surfaceCreated(holder: SurfaceHolder) {
-
-//            Log.w("displayChanged", "created....")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                val modes = activity.windowManager.defaultDisplay.supportedModes!!
-//
-//                modes.sortBy {
-//                    it.refreshRate
-//                }
-//
-//                modes.last()?.apply {
-//                    val at = window.attributes
-//                    at.preferredDisplayModeId = modeId
-//                    window.attributes = at
-//                    handler.post {
-//                        holder.surface.setFrameRate(
-//                            90f,
-//                            Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE
-//                        )
-//                        Log.w("displayChanged", "set....")
-//                    }
-//                }
-//                flutterView.holder.surface.setFrameRate(
-//                    90f,
-//                    Surface.FRAME_RATE_COMPATIBILITY_DEFAULT
-//                )
-            }
-        }
-
-        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                  val modes = activity.windowManager.defaultDisplay.supportedModes!!
-//
-//             modes.sortBy {
-//                 it.refreshRate
-//             }
-
-//             modes.last()?.apply {
-//                 val at = window.attributes
-//                 at.preferredDisplayModeId = modeId
-//                 window.attributes = at
-                Log.w("displayChanged", "surfaceChanged....")
-                // holder.surface.setFrameRate(90f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT)
-//             }
-            }
-        }
-
-        override fun surfaceDestroyed(holder: SurfaceHolder) {
-            Log.w("displayChanged", "surfaceDestroyed....")
-        }
-
-    }
-    lateinit var flutterView: FlutterSurfaceView;
-    override fun onFlutterSurfaceViewCreated(flutterSurfaceView: FlutterSurfaceView) {
-        super.onFlutterSurfaceViewCreated(flutterSurfaceView)
-        flutterView = flutterSurfaceView
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            flutterSurfaceView.holder.addCallback(s)
-        }
-    }
 
     //  override fun getCachedEngineId(): String? {
     //      return "myEngine"

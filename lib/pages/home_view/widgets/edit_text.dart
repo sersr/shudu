@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../bloc/bloc.dart';
+import '../../../provider/provider.dart';
 
 class EditText extends StatefulWidget {
   @override
@@ -21,7 +21,7 @@ class _EditTextState extends State<EditText> {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStylesBloc>(context);
+    final ts = Provider.of<TextStyleConfig>(context);
     Draggable;
     return Container(
       child: EditableText(

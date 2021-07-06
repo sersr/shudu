@@ -19,9 +19,13 @@ void main() async {
         chapterId: 121,
         page: 1,
         name: 'helo 你好',
+        lastChapter: 'last',
         isNew: true,
         isTop: false,
-        isShow: true));
+        isShow: true,
+        img: 'img',
+        updateTime: 'updatetime',
+        sortKey: 1111));
 
     expect(x, 1);
 
@@ -64,8 +68,8 @@ void main() async {
     await d2.cancel();
   });
   test('event content', () async {
-    await bookEvent.getContent(598958, 3530092, false);
-    await bookEvent.getContent(598958, 3530092, false);
+    await bookEvent.getContent(326671, 1873701, false);
+    await bookEvent.getContent(326671, 1873701, false);
   });
 
   test('sub cancel', () async {

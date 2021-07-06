@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/src/provider.dart';
 
-import '../../../bloc/bloc.dart';
+import '../../../provider/provider.dart';
 import '../../../utils/utils.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
@@ -26,7 +26,7 @@ class ContentPageViewState extends State<ContentPageView>
     with TickerProviderStateMixin {
   late NopPageViewController offsetPosition;
   late ContentNotifier bloc;
-  late BookIndexBloc indexBloc;
+  late BookIndexNotifier indexBloc;
   PanSlideController? controller;
   late PanSlideState state;
 
@@ -116,7 +116,7 @@ class ContentPageViewState extends State<ContentPageView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>()..controller = offsetPosition;
-    indexBloc = context.read<BookIndexBloc>();
+    indexBloc = context.read<BookIndexNotifier>();
     updateAxis();
   }
 
@@ -241,10 +241,9 @@ class ContentPageViewState extends State<ContentPageView>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final child = AnimatedBuilder(
-      animation: bloc.empty,
+      animation: bloc.notEmptyOrIgnore,
       builder: (context, child) {
-
-        return !bloc.empty.value
+        return bloc.notEmptyOrIgnore.value
             ? GestureDetector(
                 onTapUp: (d) {
                   if (offsetPosition.page == 0 ||
@@ -262,18 +261,8 @@ class ContentPageViewState extends State<ContentPageView>
             : GestureDetector(
                 onTap: () => getController().trigger(immediate: false),
                 child: Container(
-                  color: Colors.transparent,
-                  child: Center(
-                    child: btn1(
-                        bgColor: Colors.blue,
-                        splashColor: Colors.blue[200],
-                        radius: 40,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        child: Text('重新加载'),
-                        onTap: bloc.reload),
-                  ),
-                ),
+                    color: Colors.transparent,
+                    child: reloadBotton(bloc.reload)),
               );
       },
     );
@@ -328,7 +317,6 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void updategest() {
-
     final dragStartBehavior = DragStartBehavior.start;
     if (widget.offsetPosition.axis == Axis.vertical) {
       gestures = <Type, GestureRecognizerFactory>{
@@ -464,7 +452,7 @@ class _SlideElement extends RenderObjectElement {
   Element? _header;
   Element? _body;
   Element? _footer;
-  // Element? _rightFooter;
+
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -482,9 +470,6 @@ class _SlideElement extends RenderObjectElement {
     if (_footer != null) {
       visitor(_footer!);
     }
-    // if (_rightFooter != null) {
-    //   visitor(_rightFooter!);
-    // }
   }
 
   @override
@@ -503,7 +488,6 @@ class _SlideElement extends RenderObjectElement {
     _header = updateChild(_header, widget.header, 'header');
     _body = updateChild(_body, widget.body, 'body');
     _footer = updateChild(_footer, widget.footer, 'leftFooter');
-    // _rightFooter = updateChild(_rightFooter, widget.rightFooter, 'rightFooter');
   }
 
   @override
@@ -522,7 +506,7 @@ class _SlideRenderObject extends RenderBox {
   RenderBox? _header;
   RenderBox? _body;
   RenderBox? _footer;
-  // RenderBox? _rightFooter;
+
   void add(RenderBox child, slot) {
     if (slot == 'header') {
       if (_header != null) dropChild(_header!);

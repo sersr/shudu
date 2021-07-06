@@ -5,14 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import '../../bloc/bloc.dart';
-import '../../bloc/book_cache_bloc.dart';
-import '../../bloc/options_bloc.dart';
-import '../../bloc/painter_bloc.dart';
-import '../../bloc/search_bloc.dart';
+import '../../provider/provider.dart';
+import '../../provider/book_cache_notifier.dart';
+import '../../provider/options_notifier.dart';
+import '../../provider/painter_notifier.dart';
+import '../../provider/search_notifier.dart';
 import '../../database/nop_database.dart';
 import '../../utils/utils.dart';
 import '../book_content_view/book_content_page.dart';
@@ -31,7 +30,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int currentIndex = 0;
   late ContentNotifier painterBloc;
   late OptionsNotifier opts;
-  late BookCacheBloc cache;
+  late BookCacheNotifier cache;
   Future? _future;
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
   @override
@@ -45,8 +44,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.didChangeDependencies();
     painterBloc = context.read<ContentNotifier>();
     opts = context.read<OptionsNotifier>();
-    final search = context.read<SearchBloc>();
-    cache = context.read<BookCacheBloc>();
+    final search = context.read<SearchNotifier>();
+    cache = context.read<BookCacheNotifier>();
     if (_future == null) {
       cache.repository
         ..addInitCallback(opts.init)
@@ -54,11 +53,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ..addInitCallback(search.init);
       _future ??= cache.repository.initState.then((_) {
         painterBloc.metricsChange();
-        cache.add(BookChapterIdFirstLoadEvent());
+        cache.load();
       });
     }
   }
-
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -201,7 +199,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
             return;
           }
-          setState(() => currentIndex = index);
+          setState(() {
+            currentIndex = index;
+          });
         },
         currentIndex: currentIndex,
       ),
@@ -521,71 +521,55 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       key: _refreshKey,
       displacement: 20.0,
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () {
-        final bloc = cache
-          ..completerLoading()
-          ..loading = Completer()
-          ..load(update: true);
-        return bloc.loading!.future;
-      },
-      child: NotificationListener(
-        onNotification: (Notification no) {
-          if (no is OverscrollIndicatorNotification) {
-            no.disallowGlow();
-          }
+      onRefresh: () => cache.load(update: true),
+      child: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (OverscrollIndicatorNotification no) {
+          no.disallowGlow();
           return false;
         },
-        child: BlocBuilder<BookCacheBloc, BookChapterIdState>(
+        child: AnimatedBuilder(
+          animation: cache,
           builder: (context, state) {
-            if (state.first) return SizedBox();
+            if (!cache.initialized) return SizedBox();
 
-            final children = state.showChildren;
-            if (children.isEmpty) {
-              return Center(child: Text('点击右上角按钮搜索'));
-            }
+            final children = cache.showChildren;
+
+            if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
+
             return Scrollbar(
-              child: ListView.builder(
+              child: ListView.separated(
+                separatorBuilder: (context, index) {
+                  return const Divider(height: 1);
+                },
                 itemCount: children.length,
                 padding: const EdgeInsets.all(0.0),
                 itemBuilder: (context, index) {
                   final item = children[index];
-                  return Container(
-                    decoration: index != children.length - 1
-                        ? BoxDecoration(
-                            border: BorderDirectional(
-                              bottom: BorderSide(
-                                  width: 1 /
-                                      MediaQuery.of(context).devicePixelRatio,
-                                  color: Color.fromRGBO(210, 210, 210, 1)),
-                            ),
-                          )
-                        : null,
-                    child: btn1(
-                      background: false,
-                      child: BookItem(
-                        img: item.img,
-                        bookName: item.name,
-                        bookUdateItem: item.lastChapter,
-                        bookUpdateTime: item.updateTime,
-                        isTop: item.isTop ?? false,
-                        isNew: item.isNew ?? false,
-                      ),
-                      radius: 6.0,
-                      bgColor: bgColor,
-                      splashColor: spalColor,
-                      padding: const EdgeInsets.all(0),
-                      onTap: () {
-                        cache.completerLoading();
-                        BookContentPage.push(
-                            context, item.bookId!, item.chapterId!, item.page!);
-                      },
-                      onLongPress: () {
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) => bottomSheet(context, item),
-                        );
-                      },
+                  return btn1(
+                    background: false,
+                    child: BookItem(
+                      img: item.img,
+                      bookName: item.name,
+                      bookUdateItem: item.lastChapter,
+                      bookUpdateTime: item.updateTime,
+                      isTop: item.isTop ?? false,
+                      isNew: item.isNew ?? false,
                     ),
+                    radius: 6.0,
+                    bgColor: bgColor,
+                    splashColor: spalColor,
+                    padding: const EdgeInsets.all(0),
+                    onTap: () {
+                      BookContentPage.push(
+                          context, item.bookId!, item.chapterId!, item.page!);
+                    },
+                    onLongPress: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (context) => bottomSheet(context, item),
+                      );
+                    },
+                    // ),
                   );
                 },
               ),
@@ -633,9 +617,9 @@ class MySearchPage extends SearchDelegate<void> {
   }
 
   Widget suggestions(BuildContext context) {
+    final bloc = Provider.of<SearchNotifier>(context);
     return StatefulBuilder(
       builder: (context, setstate) {
-        final bloc = BlocProvider.of<SearchBloc>(context);
         return Padding(
           padding: const EdgeInsets.all(6.0),
           child: Wrap(
@@ -661,7 +645,7 @@ class MySearchPage extends SearchDelegate<void> {
                             horizontal: 8.0, vertical: 4.0),
                         child: Text(
                           i,
-                          style: Provider.of<TextStylesBloc>(context)
+                          style: Provider.of<TextStyleConfig>(context)
                               .body1
                               .copyWith(color: Colors.grey.shade700),
                         ),
@@ -711,43 +695,43 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final bloc = BlocProvider.of<SearchBloc>(context);
+    final search = Provider.of<SearchNotifier>(context);
 
-    return wrap(context, BlocBuilder<SearchBloc, SearchResult>(
-      builder: (context, state) {
-        if (state is SearchWithoutData) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (state is SearchResultWithData) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ListView(
-              children: [
-                suggestions(context),
-                if (bloc.searchHistory.isNotEmpty) Divider(height: 1),
-                if (state.searchList.data != null)
-                  for (var value in state.searchList.data!)
-                    GestureDetector(
-                      onTap: () =>
-                          BookInfoPage.push(context, int.parse(value.id!)),
-                      child: Container(
-                        height: 40,
-                        alignment: Alignment.centerLeft,
-                        decoration: BoxDecoration(
-                            border: Border(
-                                bottom:
-                                    BorderSide(color: Colors.grey.shade300))),
-                        child: Text('${value.name}'),
+    return wrap(
+        context,
+        AnimatedBuilder(
+          animation: search,
+          builder: (context, _) {
+            final data = search.list;
+            if (data == null) {
+              return loadingIndicator();
+            }
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: ListView(
+                children: [
+                  suggestions(context),
+                  if (search.searchHistory.isNotEmpty) const Divider(height: 1),
+                  if (data.data != null)
+                    for (var value in data.data!)
+                      GestureDetector(
+                        onTap: () =>
+                            BookInfoPage.push(context, int.parse(value.id!)),
+                        child: Container(
+                          height: 40,
+                          alignment: Alignment.centerLeft,
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  bottom:
+                                      BorderSide(color: Colors.grey.shade300))),
+                          child: Text('${value.name}'),
+                        ),
                       ),
-                    ),
-              ],
-            ),
-          );
-        }
-        return Container(child: Text('出问题了!'));
-      },
-    ));
+                ],
+              ),
+            );
+          },
+        ));
   }
 
   @override
@@ -768,9 +752,8 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   void showResults(BuildContext context) {
-    final bloc = BlocProvider.of<SearchBloc>(context);
-
-    bloc.add(SearchEventWithKey(key: query));
+    final search = Provider.of<SearchNotifier>(context);
+    search.load(query);
     super.showResults(context);
   }
 }

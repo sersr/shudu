@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 
 import '../../api/api.dart';
-import '../../bloc/bloc.dart';
+import '../../provider/provider.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
 import '../../utils/utils.dart';
@@ -17,7 +17,11 @@ import '../base/type_adapter.dart';
 mixin NetworkMixin implements CustomEvent {
   var frequency = 0;
   late Dio dio;
+
+  // todo: 使用 sqlite
   late Box<int> imageUpdate;
+  late Box<String> images;
+
   String get appPath;
 
   Future<void> init() => _init();
@@ -102,7 +106,7 @@ mixin NetworkMixin implements CustomEvent {
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
-  String get imageLocalPath => '$appPath/shudu/images/';
+  String get imageLocalPath => '$appPath/shudu/images';
 
   Future<void> _init() async {
     dio = dioCreater();
@@ -129,6 +133,28 @@ extension _NetworkImpl on NetworkMixin {
     if (!exits) {
       await d.create(recursive: true);
     }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var map = imageUpdate.toMap();
+    for (final m in map.entries) {
+      final key = m.key;
+      final value = m.value;
+      if (key == '_version_') continue;
+
+      if (value + threeDays < now) {
+        File(key).delete(recursive: true);
+        await imageUpdate.delete(key);
+      }
+    }
+
+    images = await Hive.openBox<String>('images');
+    map = imageUpdate.toMap();
+
+    images.toMap().forEach((key, value) {
+      if (key == '_version_') return;
+
+      if (!map.containsKey(key)) images.delete(key);
+    });
   }
 
   Future<T> _decode<T>(dynamic url,
@@ -399,12 +425,12 @@ extension _NetworkImpl on NetworkMixin {
 
     final imgPath = '$imageLocalPath$imgName';
     final imgdateTime = imageUpdate.get(imgName.hashCode);
-    final shouldUpdate = imgdateTime == null
-        ? true
-        : imgdateTime + threeDays < DateTime.now().millisecondsSinceEpoch;
+    final shouldUpdate = imgdateTime == null;
     final exits = await File(imgPath).exists();
-    if (!shouldUpdate && exits) {
-      return imgPath;
+    if (exits) {
+      if (!shouldUpdate) return imgPath;
+    } else {
+      images.delete(imgName.hashCode);
     }
 
     return getImageFromNet(img);
@@ -453,6 +479,7 @@ extension _NetworkImpl on NetworkMixin {
         _errorLoading.remove(imgName);
         await imageUpdate.put(
             imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+        await images.put(imgName.hashCode, imgName);
       }
     } catch (e) {
       _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
@@ -464,6 +491,7 @@ extension _NetworkImpl on NetworkMixin {
     if (!success) {
       if (!exists) {
         await imageUpdate.delete(imgName.hashCode);
+        await images.delete(imgName.hashCode);
       }
     }
 

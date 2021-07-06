@@ -5,11 +5,10 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-import '../../bloc/text_styles.dart';
+import '../../provider/text_styles.dart';
 import '../../data/book_list.dart';
 import '../../event/event.dart';
 import '../../utils/utils.dart';
@@ -23,31 +22,34 @@ class ListShudanPage extends StatefulWidget {
 
 class _ListShudanPageState extends State<ListShudanPage>
     with SingleTickerProviderStateMixin {
-  late ShudanBloc bloc;
+  // late ShudanBloc bloc;
   late TabController controller;
+
   @override
   void initState() {
     super.initState();
-    controller = TabController(initialIndex: 0, length: 3, vsync: this)
-      ..addListener(listen);
+    controller = TabController(initialIndex: 0, length: 3, vsync: this);
   }
 
-  void listen() => bloc.add(ShudanLoadFirstEvent(controller.index));
+  // void listen() => bloc.add(ShudanLoadFirstEvent(controller.index));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.read<ShudanBloc>();
-    bloc.add(ShudanLoadFirstEvent(0));
+    // bloc = context.read<ShudanBloc>();
+    // bloc.add(ShudanLoadFirstEvent(0));
   }
 
   @override
   void dispose() {
     super.dispose();
-    controller.removeListener(listen);
+    // controller.removeListener(listen);
     controller.dispose();
-    imageCache?.clear();
+
+    // imageCache?.clear();
   }
+
+  final c = ['new', 'hot', 'collect'];
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +59,8 @@ class _ListShudanPageState extends State<ListShudanPage>
           title: Text('书单'),
           bottom: TabBar(
             controller: controller,
-            labelColor: Colors.grey.shade500,
-            unselectedLabelColor: Colors.black,
+            labelColor: TextStyleConfig.blackColor7,
+            unselectedLabelColor: TextStyleConfig.blackColor2,
             indicatorColor: Colors.pink.shade200,
             tabs: [
               Container(
@@ -77,7 +79,8 @@ class _ListShudanPageState extends State<ListShudanPage>
           ),
           body: TabBarView(
             controller: controller,
-            children: List.generate(3, (index) => WrapWidget(index: index)),
+            children: List.generate(
+                3, (index) => WrapWidget(index: index, urlKey: c[index])),
           ),
         ),
       ),
@@ -89,9 +92,11 @@ class WrapWidget extends StatefulWidget {
   const WrapWidget({
     Key? key,
     required this.index,
+    required this.urlKey,
   }) : super(key: key);
 
   final int index;
+  final String urlKey;
 
   @override
   _WrapWidgetState createState() => _WrapWidgetState();
@@ -101,26 +106,31 @@ class _WrapWidgetState extends State<WrapWidget>
     with AutomaticKeepAliveClientMixin {
   late RefreshController controller;
   late ScrollController scrollController;
-  late ShudanBloc bloc;
+
+  late ShudanCategProvider shudanProvider;
+
   @override
   void initState() {
     super.initState();
     scrollController = ScrollController();
     controller = RefreshController();
+    shudanProvider = ShudanCategProvider(widget.index, widget.urlKey);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.read<ShudanBloc>();
+    shudanProvider.repository = context.read<Repository>();
+    shudanProvider.load();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return RepaintBoundary(
-      child: BlocBuilder<ShudanBloc, ShudanState>(
-        builder: (context, state) {
+      child: AnimatedBuilder(
+        animation: shudanProvider,
+        builder: (context, _) {
           // return Scrollbar(
           //   controller: scrollController,
           //   interactive: true,
@@ -134,16 +144,14 @@ class _WrapWidgetState extends State<WrapWidget>
               enablePullUp: true,
               controller: controller,
               onRefresh: () async {
-                final bloc = BlocProvider.of<ShudanBloc>(context);
-                await bloc.completer?.future;
-                bloc
-                  ..completer = Completer<Status>()
-                  ..add(ShudanLoadEvent(widget.index));
-                final result = await bloc.completer?.future;
+                final _count = shudanProvider._listCounts;
+                await shudanProvider.load();
+                final current = shudanProvider._listCounts;
+
                 if (mounted) {
-                  if (result == Status.done) {
+                  if (_count < current) {
                     controller.refreshCompleted();
-                  } else if (result == Status.failed) {
+                  } else if (_count == current) {
                     controller.refreshFailed();
                   } else {
                     controller.resetNoData();
@@ -151,16 +159,14 @@ class _WrapWidgetState extends State<WrapWidget>
                 }
               },
               onLoading: () async {
-                final bloc = BlocProvider.of<ShudanBloc>(context);
-                await bloc.completer?.future;
-                bloc
-                  ..completer = Completer<Status>()
-                  ..add(ShudanLoadEvent(widget.index));
-                final result = await bloc.completer?.future;
+                final _count = shudanProvider._listCounts;
+                await shudanProvider.load();
+                final current = shudanProvider._listCounts;
+
                 if (mounted) {
-                  if (result == Status.done) {
+                  if (_count < current) {
                     controller.loadComplete();
-                  } else if (result == Status.failed) {
+                  } else if (_count == current) {
                     controller.loadFailed();
                   } else {
                     controller.loadNoData();
@@ -169,10 +175,7 @@ class _WrapWidgetState extends State<WrapWidget>
               },
               header: WaterDropHeader(),
               footer: CustomFooter(
-                onClick: () {
-                  final bloc = BlocProvider.of<ShudanBloc>(context);
-                  bloc.add(ShudanLoadEvent(widget.index));
-                },
+                onClick: shudanProvider.load,
                 builder: (BuildContext context, LoadStatus? mode) {
                   Widget body;
                   if (mode == LoadStatus.idle) {
@@ -195,28 +198,16 @@ class _WrapWidgetState extends State<WrapWidget>
                 },
               ),
               child: () {
-                if (bloc[widget.index].isEmpty) {
-                  if (state.status == Status.failed &&
-                      widget.index == state.id) {
-                    return reloadBotton(() {
-                      BlocProvider.of<ShudanBloc>(context)
-                          .add(ShudanRefreshEvent(widget.index));
-                    });
-                  } else {
-                    return Center(child: CupertinoActivityIndicator());
-                  }
+                final list = shudanProvider.list;
+                if (list == null) {
+                  return loadingIndicator();
+                } else if (list.isEmpty) {
+                  return reloadBotton(shudanProvider.load);
                 }
-                return buildListView(bloc[widget.index], context, widget.index);
-              }()
-              // ),
-              );
-          // return
-        },
-        buildWhen: (o, n) {
-          return widget.index == n.id;
+                return buildListView(list, context, widget.index);
+              }());
         },
       ),
-      // child: Container(),
     );
   }
 
@@ -239,16 +230,10 @@ class _WrapWidgetState extends State<WrapWidget>
           child: btn1(
             onTap: () {
               final route = MaterialPageRoute(builder: (_) {
-                return BlocProvider(
-                  create: (context) =>
-                      ShudanListDetailBloc(context.read<Repository>()),
-                  child: Builder(builder: (context) {
-                    BlocProvider.of<ShudanListDetailBloc>(context)
-                        .add(ShudanListDetailLoadEvent(bookList.listId));
-                    return wrapData(
-                        ShudanDetailPage(total: bookList.bookCount));
-                  }),
-                );
+                return wrapData(ShudanDetailPage(
+                  total: bookList.bookCount,
+                  index: bookList.listId,
+                ));
               });
               Navigator.of(context).push(route);
             },
@@ -279,106 +264,54 @@ class _WrapWidgetState extends State<WrapWidget>
   bool get wantKeepAlive => true;
 }
 
-abstract class ShudanEvent extends Equatable {
-  const ShudanEvent(
-    this.id,
-  );
-  final int id;
-
-  @override
-  List<Object> get props => [];
-}
-
-class ShudanLoadEvent extends ShudanEvent {
-  ShudanLoadEvent(int id) : super(id);
-}
-
-class ShudanLoadFirstEvent extends ShudanEvent {
-  ShudanLoadFirstEvent(int id) : super(id);
-}
-
-class ShudanRefreshEvent extends ShudanEvent {
-  ShudanRefreshEvent(int id) : super(id);
-}
-
-class ShudanState {
-  ShudanState({this.id = 0, this.status = Status.done});
-
-  final int id;
-  final Status status;
-}
-
-enum Status {
-  done,
-  failed,
-  ignore,
-  noMore,
-}
-
-class ShudanBloc extends Bloc<ShudanEvent, ShudanState> {
-  ShudanBloc(this.repository) : super(ShudanState());
-  Repository repository;
+class ShudanCategProvider extends ChangeNotifier {
+  ShudanCategProvider(this.index, this.key);
+  Repository? repository;
   final c = ['new', 'hot', 'collect'];
-  final _lists = List.generate(3, (index) => <BookList>[], growable: false);
+  List<BookList>? list;
 
-  final _listCounts = List.filled(3, 1, growable: false);
-  List<BookList> operator [](int index) => _lists[index];
+  var _listCounts = 0;
+  // List<BookList> operator [](int index) => _lists[index];
 
-  Completer<Status>? completer;
-  @override
-  Stream<ShudanState> mapEventToState(ShudanEvent event) async* {
-    assert(event.id <= 2);
-    await Future.delayed(Duration(milliseconds: 300));
-    if (event is ShudanLoadFirstEvent) {
-      if (_lists[event.id].isNotEmpty) return;
-    } else if (event is ShudanRefreshEvent) {
-      _lists[event.id] = <BookList>[];
-    }
-    yield* resolve(event.id);
-  }
+  int index;
+  String key;
 
-  void completerResolve(Status s) {
-    if (completer != null && !completer!.isCompleted) {
-      completer!.complete(s);
+  void reset(int newIndex, String newKey) {
+    if (newIndex != index || key != newKey) {
+      index = newIndex;
+      key = newKey;
     }
   }
 
-  Stream<ShudanState> resolve(int id) async* {
-    var status = Status.done;
-    yield shudan(id, status);
-    if (_lists[id].isEmpty) {
+  Future<void> load() async {
+    final _repository = repository;
+    if (_repository == null) return;
+    final _list = list;
+    if (_list == null) {
       var data =
-          await repository.bookEvent.customEvent.getHiveShudanLists(c[id]);
+          await _repository.bookEvent.customEvent.getHiveShudanLists(key);
       if (data != null && data.isNotEmpty) {
-        _lists[id] = data;
-        _listCounts[id] = 1;
-        yield shudan(id, status);
-        completerResolve(status);
+        list = data;
+        _listCounts = 1;
       }
-      data = await repository.bookEvent.customEvent.getShudanLists(c[id], 1);
+      data = await _repository.bookEvent.customEvent.getShudanLists(key, 1);
       if (data != null && data.isNotEmpty) {
-        _lists[id] = data;
-        _listCounts[id] = 1;
-      } else {
-        status = Status.failed;
+        list = data;
+        _listCounts = 1;
       }
     } else {
-      final data = await repository.bookEvent.customEvent
-          .getShudanLists(c[id], _listCounts[id] + 1);
+      final data = await _repository.bookEvent.customEvent
+          .getShudanLists(key, _listCounts + 1);
+
       if (data != null && data.isNotEmpty) {
-        _listCounts[id] += 1;
-        _lists[id].addAll(data);
-      } else {
-        status = Status.failed;
+        _listCounts += 1;
+        _list.addAll(data);
       }
     }
-
-    yield shudan(id, status);
-    completerResolve(status);
-  }
-
-  ShudanState shudan(int id, Status status) {
-    return ShudanState(id: id, status: status);
+    if (list != null) {
+      await release(const Duration(milliseconds: 200));
+      notifyListeners();
+    }
   }
 }
 
@@ -395,13 +328,13 @@ class BarLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final ts = Provider.of<TextStylesBloc>(context);
+    final ts = Provider.of<TextStyleConfig>(context);
     return Material(
       color: Color.fromARGB(255, 240, 240, 240),
       child: SafeArea(
         child: Column(children: [
           CustomMultiChildLayout(
-              delegate: MultLayout(mSize: Size(size.width, 72)),
+              delegate: MultLayout(mSize: Size(size.width, 90)),
               children: [
                 LayoutId(
                     id: 'back',
@@ -417,13 +350,10 @@ class BarLayout extends StatelessWidget {
                     )),
                 LayoutId(
                     id: 'title',
-                    child: DefaultTextStyle(
-                        style: ts.title2.copyWith(fontSize: 16), child: title)),
+                    child: DefaultTextStyle(style: ts.bigTitle1, child: title)),
                 LayoutId(id: 'bottom', child: bottom)
               ]),
-          Expanded(
-            child: body,
-          )
+          Expanded(child: body)
         ]),
       ),
     );

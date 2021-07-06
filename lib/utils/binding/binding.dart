@@ -7,7 +7,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 
 // import './resampler.dart' as re;
-import '../debug/log.dart';
 
 typedef _HandleSampleTimeChangedCallback = void Function();
 

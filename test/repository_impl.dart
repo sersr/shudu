@@ -4,19 +4,17 @@ import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/event/base/book_event.dart';
-import 'package:shudu/event/book_event_main.dart';
+import 'package:shudu/event/old/book_event_main.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/event/isolate_side.dart';
+import 'package:shudu/event/old/isolate_side.dart';
 import 'package:shudu/utils/utils.dart';
 
 class RepositoryImplTest extends Repository with SendEventMixin {
   @override
   void addInitCallback(Future<void> Function() callback) {}
 
-  late final _bookEvent = BookEventMain(this);
-
   @override
-  BookEvent get bookEvent => _bookEvent;
+  late BookEvent bookEvent = BookEventMain(this);
 
   late Server server;
   late Client client;
@@ -93,13 +91,15 @@ class Server {
 }
 
 class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendPort sp) : super(Directory.current.path, sp);
+  BookEventIsolateTest(SendPort sp) : super('', sp);
   @override
   bool remove(key) {
-    if (key is KeyController) Log.e('${key.keyType}');
+    if (key is KeyController) Log.e(key.keyType);
     return super.remove(key);
   }
 
+  @override
+  final String appPath = Directory.current.path;
   @override
   String get name => '';
 }

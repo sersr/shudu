@@ -1,11 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 
-import '../../bloc/bloc.dart';
+import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/botton.dart';
 
@@ -25,32 +24,22 @@ class _IndexsWidgetState extends State<IndexsWidget> {
     super.initState();
   }
 
-  late int listenid;
   @override
   void dispose() {
     controller?.dispose();
     super.dispose();
 
-    indexBloc.removeListener(listenid);
+    indexBloc.rmListener(lKey);
   }
 
-  late BookIndexBloc indexBloc;
-  bool _isScroll = false;
+  late BookIndexNotifier indexBloc;
+  final lKey = Object();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    indexBloc = context.read<BookIndexBloc>();
-    listenid = indexBloc.listenOnId;
-  }
-
-  bool onNotification(Notification no) {
-    if (no is ScrollNotification) {
-      if (no is ScrollEndNotification)
-        _isScroll = false;
-      else
-        _isScroll = true;
-    }
-    return false;
+    indexBloc = context.read<BookIndexNotifier>();
+    indexBloc.listener(lKey);
   }
 
   @override
@@ -60,40 +49,45 @@ class _IndexsWidgetState extends State<IndexsWidget> {
       removeBottom: true,
       context: context,
       child: DefaultTextStyle(
-        style: Provider.of<TextStylesBloc>(context)
+        style: Provider.of<TextStyleConfig>(context)
             .title3
             .copyWith(color: Colors.grey.shade800),
-        child: NotificationListener(
-          onNotification: onNotification,
-          child: GestureDetector(
-            onTap: () {},
-            child: RepaintBoundary(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final height = constraints.maxHeight;
-                  final extent = 32.0;
-                  final headerextent = 21.0;
-                  return BlocBuilder<BookIndexBloc, BookIndexState>(
-                      builder: (context, state) {
-                    if (state is BookIndexWidthData) {
-                      final indexs = state.bookIndexs;
-                      final volIndex = state.volIndex;
+        child: GestureDetector(
+          onTap: () {},
+          child: RepaintBoundary(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final height = constraints.maxHeight;
+                final extent = 32.0;
+                final headerextent = 21.0;
+                return AnimatedBuilder(
+                    animation: indexBloc,
+                    builder: (context, _) {
+                      final data = indexBloc.data;
+                      if (data == null) {
+                        return loadingIndicator();
+                      } else if (!data.isValid) {
+                        return reloadBotton(indexBloc.sendIndexs);
+                      }
+                      final indexs = data.indexs!;
+                      final volIndex = data.volIndex!;
+                      final index = data.index!;
                       var offset = 0.0;
                       final halfHeight = (height - headerextent - extent) / 2;
                       for (var i = 0; i < volIndex; i++) {
                         offset += headerextent;
                         offset += (indexs[i].length - 1) * extent;
                       }
-                      offset += state.index * extent - halfHeight;
+                      offset += index * extent - halfHeight;
                       var max = 0.0;
                       for (var l in indexs) {
                         max += (l.length - 1) * extent;
                       }
 
-                      max += state.bookIndexs.length * headerextent;
+                      max += indexs.length * headerextent;
                       offset = math.max(0.0, math.min(offset, max - height));
                       if (controller != null) {
-                        if (controller!.hasClients && !_isScroll) {
+                        if (controller!.hasClients) {
                           controller?.animateTo(offset,
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut);
@@ -115,7 +109,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                         child: CustomScrollView(
                           controller: controller,
                           slivers: [
-                            for (var l in state.bookIndexs)
+                            for (var l in data.indexs!)
                               SliverStickyHeader.builder(
                                 builder: (context, st) {
                                   return Container(
@@ -128,78 +122,79 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                                     // height: headerextent,
                                   );
                                 },
-                                sliver: SliverFixedExtentList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                      final _index = index + 1;
-                                      return btn1(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, right: 10),
-                                        radius: 6,
-                                        child: Row(
-                                          textBaseline:
-                                              TextBaseline.ideographic,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                '${l[_index].cname}',
-                                                softWrap: false,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            if (indexBloc.contains(
-                                                (l[_index] as BookIndexShort)
-                                                    .cid))
-                                              Text(
-                                                '已缓存',
-                                                softWrap: false,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: BlocProvider.of<
-                                                        TextStylesBloc>(context)
-                                                    .body3,
-                                              )
-                                          ],
-                                        ),
-                                        splashColor: Colors.grey[500],
-                                        background: false,
-                                        onTap: () {
-                                          widget.onTap(
-                                              context, state.id, l[_index].cid);
-                                        },
-                                      );
-                                    },
-                                    childCount: l.length - 1,
-                                  ),
-                                  itemExtent: extent,
-                                ),
+                                sliver: _StickyBody(
+                                    l: l,
+                                    id: data.id!,
+                                    indexBloc: indexBloc,
+                                    widget: widget,
+                                    extent: extent),
                               ),
                           ],
                         ),
                       );
-                    } else if (state is BookIndexErrorState) {
-                      return Center(
-                        child: btn1(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 15, vertical: 8),
-                          bgColor: Colors.blue,
-                          splashColor: Colors.blue[200],
-                          radius: 40,
-                          child: Text('重新加载'),
-                          onTap: () {
-                            BlocProvider.of<BookIndexBloc>(context)
-                                .add(BookIndexReloadEvent());
-                          },
-                        ),
-                      );
-                    }
-                    return Center(child: CircularProgressIndicator());
-                  });
-                },
-              ),
+                    });
+              },
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StickyBody extends StatelessWidget {
+  const _StickyBody({
+    Key? key,
+    required this.l,
+    required this.indexBloc,
+    required this.widget,
+    required this.extent,
+    required this.id,
+  }) : super(key: key);
+
+  final List l;
+  final BookIndexNotifier indexBloc;
+  final IndexsWidget widget;
+  final double extent;
+  final int id;
+  @override
+  Widget build(BuildContext context) {
+    return SliverFixedExtentList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final _index = index + 1;
+          return btn1(
+            padding: const EdgeInsets.only(left: 10, right: 10),
+            radius: 6,
+            child: Row(
+              textBaseline: TextBaseline.ideographic,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${l[_index].cname}',
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (indexBloc.contains((l[_index] as BookIndexShort).cid))
+                  Text(
+                    '已缓存',
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: Provider.of<TextStyleConfig>(context).body3,
+                  )
+              ],
+            ),
+            splashColor: Colors.grey[500],
+            background: false,
+            onTap: () {
+              widget.onTap(context, id, l[_index].cid);
+            },
+          );
+        },
+        childCount: l.length - 1,
+      ),
+      itemExtent: extent,
     );
   }
 }

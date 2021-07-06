@@ -2,10 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/text_styles.dart';
-import '../embed/images.dart';
+import 'package:provider/provider.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
+
+import '../../provider/text_styles.dart';
+import '../../widgets/async_text.dart';
+import '../book_list_view/list_shudan_detail.dart';
+import '../embed/images.dart';
 
 class BookItem extends StatelessWidget {
   BookItem(
@@ -24,74 +27,74 @@ class BookItem extends StatelessWidget {
   final String? img;
   final bool isNew;
   final bool isTop;
-  // static final ltsty = TextStyle(fontSize: 11, color: Colors.grey[600]);
-  // static final mdsty = TextStyle(fontSize: 13, fontWeight: FontWeight.w400);
-  // static final lgsty = TextStyle(
-  //   // fontSize: 14,
-  //   fontWeight: FontWeight.w600,
-  // );
 
   @override
   Widget build(BuildContext context) {
-    final ts = BlocProvider.of<TextStylesBloc>(context);
+    final ts = Provider.of<TextStyleConfig>(context);
     return Container(
       height: 98,
-      padding: const EdgeInsets.only(left: 12.0, right: 10.0),
+      width: MediaQuery.of(context).size.width,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Row(
         children: [
-          Container(
-            width: 60,
-            height: 98,
-            // padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+          ConstrainedBox(
+            constraints: const BoxConstraints.tightFor(width: 68, height: 98),
             child: ImageResolve(
               img: img,
               builder: (child) {
-                return UpdateIcon(
-                  isNew: isNew,
-                  isTop: isTop,
-                  child: child,
-                );
+                return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
               },
             ),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text(
-                      bookName!,
-                      style: ts.title3,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text(
-                      '最新：$bookUdateItem',
-                      style: ts.body2,
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text(
-                      bookUpdateTime!,
-                      style: ts.body3,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                ],
-              ),
-            ),
+                padding: const EdgeInsets.only(left: 14.0),
+                child: LayoutBuilder(builder: (context, constraints) {
+                  return FutureBuilder<List<TextPainter>>(
+                      future: Future.wait<TextPainter>([
+                        AsyncText.asyncLayout(
+                            constraints.maxWidth,
+                            TextPainter(
+                                text:
+                                    TextSpan(text: bookName!, style: ts.title3),
+                                maxLines: 1,
+                                textDirection: TextDirection.ltr)),
+                        AsyncText.asyncLayout(
+                            constraints.maxWidth,
+                            TextPainter(
+                                text: TextSpan(
+                                    text: '最新：$bookUdateItem', style: ts.body2),
+                                maxLines: 1,
+                                textDirection: TextDirection.ltr)),
+                        AsyncText.asyncLayout(
+                            constraints.maxWidth,
+                            TextPainter(
+                                text: TextSpan(
+                                    text: bookUpdateTime!, style: ts.body3),
+                                maxLines: 1,
+                                textDirection: TextDirection.ltr)),
+                      ]),
+                      builder: (context, snap) {
+                        if (snap.hasData) {
+                          final data = snap.data!;
+                          return CustomMultiChildLayout(
+                            delegate: ItemDetailWidget(98),
+                            children: [
+                              LayoutId(
+                                  id: 'top', child: AsyncText.async(data[0])),
+                              LayoutId(
+                                  id: 'center',
+                                  child: AsyncText.async(data[1])),
+                              LayoutId(
+                                  id: 'bottom', child: AsyncText.async(data[2]))
+                            ],
+                          );
+                        }
+                        return SizedBox();
+                      });
+                })),
           ),
+          // ),
         ],
       ),
     );
@@ -113,14 +116,16 @@ class UpdateIcon extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant UpdateIconRenderObject renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant UpdateIconRenderObject renderObject) {
     renderObject
       ..isNew = isNew
       ..isTop = isTop;
   }
 }
 
-class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<RenderBox> {
+class UpdateIconRenderObject extends RenderBox
+    with RenderObjectWithChildMixin<RenderBox> {
   UpdateIconRenderObject({RenderBox? child, bool? isNew, bool? isTop})
       : _isNew = isNew,
         _isTop = isTop {
@@ -140,7 +145,10 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
   void resolveNew() {
     if (isNew!) {
       _newPainter = TextPainter(
-          text: TextSpan(text: '更新', style: TextStyle(fontSize: 6, color: Colors.grey[200], height: 1.0)),
+          text: TextSpan(
+              text: '更新',
+              style:
+                  TextStyle(fontSize: 6, color: Colors.grey[200], height: 1.0)),
           textDirection: TextDirection.ltr);
       _newPainter.layout();
     }
@@ -149,7 +157,9 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
   void resolveTop() {
     if (isTop!) {
       _topPainter = TextPainter(
-          text: TextSpan(text: '置顶', style: TextStyle(fontSize: 8, color: Colors.grey[100])),
+          text: TextSpan(
+              text: '置顶',
+              style: TextStyle(fontSize: 8, color: Colors.grey[100])),
           textDirection: TextDirection.ltr);
       _topPainter.layout();
     }
@@ -179,6 +189,7 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
     }
     child!.layout(constraints, parentUsesSize: true);
     size = child!.size;
+    if (size.isEmpty) return;
 
     /// 旋转之后实际的(横轴)宽度，也就是要减去的宽度，达到贴边的效果
     /// degrees：45° 等边直角三角形
@@ -187,7 +198,8 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
       innerWidth = math.sqrt(math.pow(_newPainter.width, 2) / 2);
 
       /// 右上角到4的距离
-      final allWidth = math.sqrt(math.pow(_newPainter.height, 2) * 2) + innerWidth;
+      final allWidth =
+          math.sqrt(math.pow(_newPainter.height, 2) * 2) + innerWidth;
 
       ///4 _____ 1
       ///  \    \
@@ -210,7 +222,8 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
       tP = Path();
       tP.moveTo(0.0, .0);
       tP.lineTo(width + 2.0, .0);
-      tP.arcToPoint(Offset(width + 2.0, height), radius: Radius.circular(height / 2));
+      tP.arcToPoint(Offset(width + 2.0, height),
+          radius: Radius.circular(height / 2));
       tP.lineTo(0.0, height);
       tP.close();
     }
@@ -219,9 +232,8 @@ class UpdateIconRenderObject extends RenderBox with RenderObjectWithChildMixin<R
   @override
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
-      final path = Path();
-      path.addRect(Offset.zero & size);
       context.paintChild(child!, offset);
+      if (size.isEmpty) return;
       final canvas = context.canvas;
       if (isNew!) {
         canvas.save();

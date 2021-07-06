@@ -1,6 +1,7 @@
 import 'dart:async';
+
+import 'package:nop_db/database/nop.dart';
 import 'package:path/path.dart';
-import 'package:nop_db/nop_db.dart';
 
 import '../../database/database.dart';
 import '../../utils/utils.dart';
@@ -12,25 +13,27 @@ mixin DatabaseMixin implements DatabaseEvent {
   String get name => 'nop_book_database.nopdb';
   int get version => 1;
 
-  late final bookCacheTable = db.bookCacheTable;
-  late final bookContentDbTable = db.bookContentDbTable;
-  late final bookIndexTable = db.bookIndexTable;
+  late final bookCache = db.bookCache;
+  late final bookContentDb = db.bookContentDb;
+  late final bookIndex = db.bookIndex;
 
-  String get _url => name.isEmpty ? ':memory:' : join(appPath, name);
+  String get _url => name.isEmpty || name == NopDatabase.memory
+      ? NopDatabase.memory
+      : join(appPath, name);
 
   late final db = BookDatabase(_url, version);
 
   int updateBookStatusImpl(int id, String cname, String updateTime) {
-    final query = bookCacheTable.query.lastChapter..where.bookId.equal(id);
-    final _cname = bookCacheTable.toTable(query.go);
+    final query = bookCache.query.lastChapter..where.bookId.equalTo(id);
+    final _cname = query.goToTable;
 
     if (_cname.isNotEmpty) {
       if (_cname.first.lastChapter != cname) {
-        final update = bookCacheTable.update
+        final update = bookCache.update
           ..lastChapter.set(cname)
           ..isNew.set(true)
           ..updateTime.set(updateTime)
-          ..where.bookId.equal(id);
+          ..where.bookId.equalTo(id);
         return update.go;
       }
     }
@@ -39,56 +42,56 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   @override
   Stream<List<BookCache>> watchBookCacheCid(int id) {
-    final query = bookCacheTable.query
+    final query = bookCache.query
       ..chapterId.bookId
-      ..where.bookId.equal(id);
+      ..where.bookId.equalTo(id);
 
     return query.watchToTable;
   }
 
   @override
   int updateBookStatusCustom(int id, int cid, int page) {
-    final update = bookCacheTable.update
+    final update = bookCache.update
       ..chapterId.page.isNew.sortKey
       ..withArgs([cid, page, false, DateTime.now().millisecondsSinceEpoch])
-      ..where.bookId.equal(id);
+      ..where.bookId.equalTo(id);
     return update.go;
   }
 
   @override
   int updateBookStatusAndSetTop(int id, bool isTop, bool isShow) {
-    final update = bookCacheTable.update
+    final update = bookCache.update
       ..isTop.sortKey.isShow
       ..withArgs([isTop, DateTime.now().millisecondsSinceEpoch, isShow])
-      ..where.bookId.equal(id);
+      ..where.bookId.equalTo(id);
     return update.go;
   }
 
   int insertOrUpdateContent(BookContentDb contentDb) {
-    final query = bookContentDbTable.query
-        .count('*')[(where) => where
-          ..bookId.equal(contentDb.bookId!).and
-          ..cid.equal(contentDb.cid!)]
-        .go;
-
-    final count = query.first.columnAt(0) as int? ?? 0;
+    var count = 0;
+    bookContentDb.query.where
+      ..select.count.all.push
+      ..bookId.equalTo(contentDb.bookId!).and
+      ..cid.equalTo(contentDb.cid!)
+      ..whereEnd.let((s) {
+        count = s.go.first.columnAt(0) as int? ?? count;
+      });
 
     if (count > 0) {
-      final update = bookContentDbTable.update
-        ..pid.nid
-        ..withArgs([contentDb.pid, contentDb.nid])
-        ..hasContent.content
-        ..withArgs([contentDb.hasContent, contentDb.content])
-        ..[(where) => where
-          ..bookId.equal(contentDb.bookId!).and
-          ..cid.equal(contentDb.cid!)];
+      final update = bookContentDb.update
+        ..pid.set(contentDb.pid).nid.set(contentDb.nid)
+        ..hasContent.set(contentDb.hasContent).content.set(contentDb.content);
+
+      update.where
+        ..bookId.equalTo(contentDb.bookId!).and
+        ..cid.equalTo(contentDb.cid!);
 
       final x = update.go;
       Log.i('update: $x, ${update.updateItems}');
       return x;
     } else {
-      bookContentDbTable.pid;
-      final insert = bookContentDbTable.insert.insertTable(contentDb);
+      bookContentDb.pid;
+      final insert = bookContentDb.insert.insertTable(contentDb);
       final x = insert.go;
       Log.i('insert: $x , ${insert.updateItems}, ${contentDb.bookId}');
       return x;
@@ -96,101 +99,136 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   List<BookContentDb> getContentDb(int bookid, int contentid) {
-    final query = bookContentDbTable.query;
+    late List<BookContentDb> c;
 
-    query.where
-      ..bookId.equal(bookid).and
-      ..cid.equal(contentid);
+    bookContentDb.query.where
+      ..bookId.equalTo(bookid)
+      ..and.cid.equalTo(contentid)
+      ..whereEnd.let((s) => c = s.goToTable);
 
-    final c = query.goToTable;
     Log.i('${c.length}');
     return c;
   }
 
   @override
   Set<int> getAllBookId() {
-    final query = bookCacheTable.query.bookId;
+    final query = bookCache.query.bookId;
     return query.goToTable.map((e) => e.bookId).whereType<int>().toSet();
   }
 
   @override
   int deleteCache(int bookId) {
-    final delete = bookContentDbTable.delete..where.bookId.equal(bookId);
+    final delete = bookContentDb.delete..where.bookId.equalTo(bookId);
     final d = delete.go;
     print('delete: $d');
     return d;
   }
 
-  @override
   int insertOrUpdateIndexs(int id, String indexs) {
-    int? count = 0;
+    var count = 0;
     assert(() {
-      final d = bookIndexTable.delete..where.bookId.isNull;
+      final d = bookIndex.delete..where.bookId.is_.null_;
       return d.go == 0;
     }(), 'bookId == null');
 
-    final query = bookIndexTable.query.count('*')..where.bookId.equal(id);
-    final q = query.go;
-    count = q.first.columnAt(0) as int? ?? count;
+    bookIndex.query.where
+      ..select.count.all.push
+      ..bookId.equalTo(id)
+      ..whereEnd.let((s) {
+        final q = s.go;
+        count = q.first.columnAt(0) as int? ?? count;
+      });
 
     if (count > 0) {
-      final update = bookIndexTable.update
-        ..bIndexs.withArgs(indexs)
-        ..where.bookId.equal(id);
+      final update = bookIndex.update
+        ..bIndexs.set(indexs)
+        ..where.bookId.equalTo(id);
       return update.go;
     } else {
-      final insert = bookIndexTable.insert
+      final insert =
+          bookIndex.insert
           .insertTable(BookIndex(bookId: id, bIndexs: indexs));
       return insert.go;
     }
   }
 
   List<BookIndex> getIndexsDb(int bookid) {
-    final query =
-        bookIndexTable.query.bIndexs[(where) => where.bookId.equal(bookid)];
-    return query.goToTable;
+    late List<BookIndex> l;
+
+    bookIndex.query.bIndexs
+      ..where.bookId.equalTo(bookid)
+      ..let((s) => l = s.goToTable);
+
+    return l;
+  }
+
+  List<BookIndex> getIndexsDbAll() {
+    late List<BookIndex> l;
+
+    bookIndex.query
+      ..select.all
+      ..let((s) => l = s.goToTable);
+
+    return l;
   }
 
   @override
   Stream<List<BookContentDb>> watchCacheContentsCidDb(int bookid) {
-    final query = bookContentDbTable.query
-      ..cid
-      ..where.bookId.equal(bookid);
-    return query.watchToTable;
+    late Stream<List<BookContentDb>> w;
+
+    bookContentDb.query.cid
+      ..where.bookId.equalTo(bookid)
+      ..let((s) => w = s.watchToTable);
+
+    return w;
   }
 
   @override
   List<BookContentDb> getCacheContentsCidDb(int bookid) {
-    final query = bookContentDbTable.query
-      ..cid.cname
-      ..where.bookId.equal(bookid);
-    return query.goToTable;
+    late List<BookContentDb> l;
+
+    bookContentDb.query.cid.cname
+      ..where.bookId.equalTo(bookid)
+      ..let((s) => l = s.goToTable);
+
+    return l;
   }
 
   @override
   int insertBook(BookCache cache) {
-    int? count = 0;
-    final query = bookCacheTable.query.count('*')
-      ..where.bookId.equal(cache.bookId!);
-    final q = query.go;
+    assert(cache.notNullIgnores(['id']));
+    var count = 0;
 
-    count = q.first.values.first as int? ?? count;
-    Log.i('insertBook: $count');
-    if (count == 0) return bookCacheTable.insert.insertTable(cache).go;
-    return 0;
+    bookCache.query
+      ..select.count.all.push
+      ..where.bookId.equalTo(cache.bookId!)
+      ..let((s) {
+        final q = s.go;
+        count = q.first.values.first ?? count;
+
+        Log.i('insertBook: $count');
+        if (count == 0) count = bookCache.insert.insertTable(cache).go;
+      });
+
+    return count;
   }
 
   @override
   int deleteBook(int id) {
-    final d = bookCacheTable.delete..where.bookId.equal(id);
-    return d.go;
+    late int d;
+
+    bookCache.delete
+      ..where.bookId.equalTo(id)
+      ..let((s) => d = s.go);
+
+    return d;
   }
 
   @override
-  List<BookCache> getMainBookListDb() => bookCacheTable.query.goToTable;
+  List<BookCache> getMainBookListDb() => bookCache.query.goToTable;
 
   @override
   Stream<List<BookCache>> watchMainBookListDb() {
-    return bookCacheTable.query.watchToTable;
+    return bookCache.query.all.watchToTable;
   }
 }

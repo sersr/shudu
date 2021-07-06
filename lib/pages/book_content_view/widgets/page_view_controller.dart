@@ -4,10 +4,10 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../../../bloc/painter_bloc.dart';
+import '../../../provider/painter_notifier.dart';
 import '../../../utils/utils.dart';
 
-typedef BoolCallback = bool Function();
+typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 
 class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   NopPageViewController({
@@ -555,13 +555,12 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
-    if (canPaint) {
+    if (canPaint)
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         assert(childlist.containsKey(i));
         final child = childlist[i]!;
         context.paintChild(child, offset + childScrollOffset(child)!);
       }
-    }
   }
 
   int getMinChildIndexForScrollOffset(double scrollOffset, double itemExtent) {

@@ -12,15 +12,7 @@ import 'package:hive/hive.dart';
 import '../event/event.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
-import 'book_index_bloc.dart';
-
-typedef WidgetCallback = Widget? Function(int page, {bool changeState});
-typedef SetPageNotifier = void Function(double, void Function(int page));
-typedef FutureCallback<T> = FutureOr<T> Function();
-
-class PainterState {
-  PainterState();
-}
+import 'book_index_notifier.dart';
 
 enum Status { ignore, error, done }
 
@@ -84,7 +76,7 @@ class ContentNotifier extends ChangeNotifier {
   ContentNotifier({required this.repository, required this.indexBloc});
 
   final Repository repository;
-  final BookIndexBloc indexBloc;
+  final BookIndexNotifier indexBloc;
 
   int? bookid;
   int currentPage = 1;
@@ -161,7 +153,7 @@ class ContentNotifier extends ChangeNotifier {
   Future get waitTasks => Future.wait(List.of(_futures.values));
 
   bool _inBookView = false;
-  bool adpotCache = true;
+  bool _scheduled = false;
 
   TextData _tData = TextData();
 
@@ -180,12 +172,12 @@ class ContentNotifier extends ChangeNotifier {
   // 是否直接忽略
   // 显示网络错误信息
   final _loading = ValueNotifier(false);
-  final _empty = ValueNotifier(false);
+  final _ignore = ValueNotifier(false);
   final _error = ValueNotifier(NotifyMessage.hide);
 
   NopPageViewController? controller;
   ValueListenable<bool> get loading => _loading;
-  ValueListenable<bool> get empty => _empty;
+  ValueListenable<bool> get notEmptyOrIgnore => _ignore;
   ValueListenable<NotifyMessage> get error => _error;
   Listenable get listenable => Listenable.merge([loading, error]);
   final header = ValueNotifier<String>('');
@@ -195,8 +187,12 @@ class ContentNotifier extends ChangeNotifier {
   late TextStyle secstyle;
   final showCname = ValueNotifier(false);
 
+  /// [_inBookView] 只有在文本阅读界面中（逻辑上）有效
   void painter() {
-    notifyState(empty: _inBookView && tData.contentIsEmpty, loading: false);
+    notifyState(
+        //                        notEmpty        ||  ignore
+        notEmptyOrIgnore: tData.contentIsNotEmpty || !_inBookView,
+        loading: false);
     notifyListeners();
   }
 }
@@ -204,12 +200,10 @@ class ContentNotifier extends ChangeNotifier {
 extension ContentStatus on ContentNotifier {
   void out() {
     _inBookView = false;
-    adpotCache = false;
   }
 
   bool get inBook => _inBookView;
   void inbook() {
-    adpotCache = true;
     _inBookView = true;
   }
 
@@ -223,21 +217,20 @@ extension ContentStatus on ContentNotifier {
 
 extension DataLoading on ContentNotifier {
   Future<void> reset({bool clearCache = false, int? cid}) async {
-    adpotCache = false;
-
     if (clearCache) {
       _caches.clear();
+
       if (_futures.isNotEmpty) {
-        final tasks = Map.of(_futures);
-        // 还有任务在
-        _disposeFutures.addAll(_futures.values);
-        await Future.wait(tasks.values);
-        assert(_disposeFutures.isEmpty);
+        final _tasks = List.of(_futures.values);
+
+        _disposeFutures.addAll(_tasks);
+        await Future.wait(_disposeFutures);
       }
+
       _caches.clear();
     }
     _getCurrentIds();
-    adpotCache = true;
+
     _tData = TextData()..cid = cid ?? tData.cid;
   }
 
@@ -251,9 +244,10 @@ extension DataLoading on ContentNotifier {
         0;
   }
 
-  void notifyState({bool? loading, bool? empty, NotifyMessage? error}) {
+  void notifyState(
+      {bool? loading, bool? notEmptyOrIgnore, NotifyMessage? error}) {
     if (loading != null) _loading.value = loading;
-    if (empty != null) _empty.value = empty;
+    if (notEmptyOrIgnore != null) _ignore.value = notEmptyOrIgnore;
     if (error != null) _error.value = error;
   }
 
@@ -281,18 +275,13 @@ extension DataLoading on ContentNotifier {
   }
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    await wait();
-
     if (_ignoreTask(contentid, update: update)) return;
 
     final lines =
         await repository.bookEvent.getContent(_bookid, contentid, update);
 
-    await wait();
-
     if (lines != null && lines.contentIsNotEmpty) {
-      final pages =
-          await _asyncLayout(lines.pages, lines.cname!, contentid, update);
+      final pages = await _asyncLayout(lines.pages, lines.cname!);
 
       if (pages.isEmpty || _ignoreTask(contentid, update: update)) return;
       final _cnpid = TextData(
@@ -339,8 +328,6 @@ extension Tasks on ContentNotifier {
         header.value = tData.cname!;
       }
     }
-
-    unDelayedLoad();
   }
 
   void _loadTasks(int _bookid, int? contentid) {
@@ -352,9 +339,9 @@ extension Tasks on ContentNotifier {
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
       final _ntask = EventLooper.instance
-          .scheduleEventTask(() async => loadData(contentid, _bookid));
+          .addEventTask(() async => loadData(contentid, _bookid));
 
-      _futures.addTask(contentid, _ntask);
+      _futures.addTask(contentid, _ntask, solve: _ignoreTask);
     }
   }
 
@@ -363,12 +350,17 @@ extension Tasks on ContentNotifier {
   void unDelayedLoad() => _loadCallback();
 
   void _loadCallback() {
-    _loadResolve();
-    _loadAuto();
+    if (_scheduled) return;
+    scheduleMicrotask(() {
+      _scheduled = false;
+      _loadResolve();
+      _loadAuto();
+    });
+    _scheduled = true;
   }
 
   void _loadAuto() => _getCurrentIds()
-      .where((element) => !_caches.containsKey(element))
+      .where((e) => !_caches.containsKey(e))
       .forEach(_loadWithId);
 
   // 处于最后一章节时，查看是否有更新
@@ -503,8 +495,6 @@ extension Layout on ContentNotifier {
       return true;
     }
 
-    if (!adpotCache || !_inBookView) return true;
-
     return !_idSets.contains(contentid);
   }
 
@@ -534,23 +524,20 @@ extension Layout on ContentNotifier {
     return _ids.whereType<int>();
   }
 
-  Future<void> wait({label = ''}) {
-    return EventLooper.instance.wait(() {
-      if (loading.value) {
-        notifyState(loading: false);
-        return true;
-      } else if (autoRun.value) {
-        return true;
-      }
-      return false;
-    }, label);
-  }
+  Future<void> get wait => EventLooper.instance.wait(() async {
+        final _c = _getTextData(tData.nid);
+        if (tData.contentIsNotEmpty != true ||
+            _c?.contentIsNotEmpty != true ||
+            !inBook) {
+          if (loading.value) notifyState(loading: false);
+          EventLooper.instance.async = false;
+        }
+      });
 
   Future<List<ContentMetrics>> _asyncLayout(
-      List<String> paragraphs, String cname, int contentid, bool update) async {
+      List<String> paragraphs, String cname) async {
     var whiteRows = 0;
 
-    final pages = <List<TextPainter>>[];
     final textPages = <ContentMetrics>[];
 
     final fontSize = style.fontSize!;
@@ -606,9 +593,7 @@ extension Layout on ContentNotifier {
 
     whiteRows = 150 ~/ lineHeightAndExtra + 1;
 
-    bool _ignore() => _ignoreTask(contentid) && !update;
-
-    await wait();
+    await wait;
     while (lineHeightAndExtra * whiteRows > 150) {
       whiteRows--;
       if (lineHeightAndExtra * whiteRows < 120) break;
@@ -616,12 +601,10 @@ extension Layout on ContentNotifier {
 
     final _oneHalf = fontSize * 1.6;
 
-    if (_ignore()) return textPages;
-
-    await wait(label: '_t01');
+    await wait;
     _t01();
 
-    await wait(label: '_t02');
+    await wait;
     _t02();
 
     final lines = <TextPainter>[];
@@ -641,7 +624,7 @@ extension Layout on ContentNotifier {
         while (true) {
           if (end >= pc.length) break;
 
-          await wait();
+          await wait;
 
           end++;
           final s = pc.getRange(start, end).toString();
@@ -649,7 +632,7 @@ extension Layout on ContentNotifier {
             ..text = TextSpan(text: s, style: style)
             ..layout(maxWidth: width);
 
-          await wait();
+          await wait;
 
           if (_t.height > _oneHalf) {
             final endOffset =
@@ -676,7 +659,7 @@ extension Layout on ContentNotifier {
 
         final _s = pc.getRange(start, end);
 
-        await wait(label: '_text layout');
+        await wait;
 
         final _text = TextPainter(
             text: TextSpan(text: _s.toString(), style: style),
@@ -688,9 +671,10 @@ extension Layout on ContentNotifier {
       }
     }
 
-    await wait();
+    await wait;
     var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
 
+    final pages = <List<TextPainter>>[];
     // 首页留白和标题
     final firstPages = math.max(0, rows - whiteRows - topExtraRows);
     pages.add(lines.sublist(0, math.min(firstPages, lines.length)));
@@ -705,11 +689,9 @@ extension Layout on ContentNotifier {
     var extraHeight = lineHeightAndExtra - fontSize;
     final isHorizontal = config.axis == Axis.horizontal;
 
-    if (_ignore()) return textPages;
-
     // 添加页面信息
     for (var r = 0; r < pages.length; r++) {
-      await wait();
+      await wait;
       final bottomRight = TextPainter(
           text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
           textDirection: TextDirection.ltr)
@@ -744,11 +726,10 @@ extension Layout on ContentNotifier {
 extension Event on ContentNotifier {
   Future<void> showdow() async {
     showrect = !showrect;
-    out();
     await reset(clearCache: true);
 
     await _newF;
-    inbook();
+
     await _loadFirst();
     painter();
   }
@@ -770,16 +751,13 @@ extension Event on ContentNotifier {
       assert(Log.i('new: $newBookid $cid'));
       footer.value = '';
       header.value = '';
-      notifyState(empty: false, loading: false);
-      final _in = _inBookView;
-      if (_in) out();
+      notifyState(notEmptyOrIgnore: true, loading: false);
+
       final diff = bookid != newBookid;
 
       await reset(clearCache: diff, cid: cid);
       currentPage = page;
       bookid = newBookid;
-
-      if (_in) inbook();
 
       await dump();
       return true;
@@ -798,28 +776,29 @@ extension Event on ContentNotifier {
     await setNewBookOrCid(newBookid, cid, page);
 
     if (tData.contentIsEmpty) {
-      notifyState(empty: false);
+      notifyState(notEmptyOrIgnore: true);
 
       _getCurrentIds();
 
       final _t = Timer(
-          const Duration(milliseconds: 100), () => notifyState(loading: true));
+          const Duration(milliseconds: 200), () => notifyState(loading: true));
 
       inbook();
       await _loadFirst();
 
       _t.cancel();
 
-      painter();
       resetController();
     }
 
-    indexBloc.add(BookIndexShowEvent(id: bookid, cid: tData.cid));
+    indexBloc.sendIndexs(bookid, tData.cid);
 
     inbook();
-    // 异步
-    // 如果没有加载完成已经退出，应该忽略
-    notifyState(empty: _inBookView && tData.contentIsEmpty, loading: false);
+
+    await _metricsF;
+
+    painter();
+
     uiStyle(dark: false);
   }
 
@@ -834,30 +813,30 @@ extension Event on ContentNotifier {
     // 实时
     final changed = await _modifiedSize();
     if (changed) {
+      // 参数已改变，立即通知
+      // 不过文本可能为空，暂时忽略
+      // 逻辑上不在界面中
+      painter();
+      notifyState(notEmptyOrIgnore: true);
       if (_inBookView && tData.cid != null && bookid != null) {
-        await _newF;
         autoRun.stopTicked();
-        painter();
 
-        out();
         await reset(clearCache: true);
-        inbook();
-        await _loadFirst();
 
+        await _loadFirst();
         painter();
       }
     }
   }
 
   Future<void> reload() async {
-    notifyState(loading: true, empty: false);
-    out();
+    notifyState(loading: true, notEmptyOrIgnore: true);
+
     await _newF;
-    inbook();
+
     await _loadFirst();
 
     painter();
-    notifyState(empty: _inBookView && tData.contentIsEmpty, loading: false);
   }
 
   Future goNext() {
@@ -1032,17 +1011,17 @@ extension Configs on ContentNotifier {
     }
 
     if (flush) {
-      out();
-
       autoRun.stopTicked();
-      await _newF;
+
       await reset(clearCache: true);
-      inbook();
+
       await _loadFirst();
+
       if (resetToZero ||
           currentPage == tData.content.length ||
           currentPage == 1) resetController();
     }
+    await _metricsF?.whenComplete(resetController);
     painter();
   }
 
@@ -1153,7 +1132,6 @@ extension AutoR on ContentNotifier {
       return;
     }
     setPrefs(config.value.copyWith(axis: Axis.vertical)).then((_) async {
-      // await EventLooper.instance.scheduler.endOfFrame;
       if (controller != null && controller!.axis == Axis.vertical) {
         _auto();
         return;
@@ -1197,10 +1175,6 @@ extension AutoR on ContentNotifier {
       autoRun.stopTicked();
       return;
     }
-
-    // if (controller != null && controller!.isScrolling) {
-    //   controller?.goIdle();
-    // }
 
     final _start = controller!.pixels;
 

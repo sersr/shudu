@@ -53,6 +53,8 @@ abstract class PanSlideState<T extends StatefulWidget> extends State<T>
   void hideAll() => _entries.forEach((el) => el.dispose());
 
   int get entriesLength => _entries.length;
+  Iterable<PanSlideController> get showEntries =>
+      _entries.where((element) => !element.controller.isDismissed);
 
   // 立即删除已经隐藏的
   void removeHide() {

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart' show BlocProvider;
 import 'package:provider/src/provider.dart';
 
-import '../../bloc/bloc.dart' show TextStylesBloc;
+import '../../provider/provider.dart' show TextStyleConfig;
 import '../../data/data.dart' show BookTopData, BookTopList;
 import '../../event/event.dart' show Repository;
 import '../../utils/utils.dart' show Log, btn1, loadingIndicator, reloadBotton;
 import '../../utils/widget/page_animation.dart' show PageAnimationMixin;
+import '../../widgets/async_text.dart';
 import '../book_info_view/book_info_page.dart' show BookInfoPage;
 import '../embed/images.dart' show ImageResolve;
+import 'list_shudan_detail.dart';
 
 class BookListItem extends StatelessWidget {
   const BookListItem({Key? key, required this.item}) : super(key: key);
@@ -16,7 +17,7 @@ class BookListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = BlocProvider.of<TextStylesBloc>(context);
+    final ts = Provider.of<TextStyleConfig>(context);
 
     final img = item.img;
     final name = item.name;
@@ -26,56 +27,79 @@ class BookListItem extends StatelessWidget {
     final score = item.score;
     return Container(
       height: 112,
-      padding: EdgeInsets.only(left: 10.0, top: 5.0, right: 10.0),
+      padding: EdgeInsets.only(left: 10.0, right: 10.0),
       child: Row(
         children: [
           Container(
             width: 62,
-            margin: EdgeInsets.only(bottom: 5.0),
-            child: RepaintBoundary(child: ImageResolve(img: img)),
+            height: 112,
+            child: ImageResolve(img: img),
           ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name!,
-                          style: ts.title3,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text('$score分',
-                          style:
-                              ts.body2.copyWith(color: Colors.yellow.shade700),
-                          softWrap: false),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$cname | $author',
-                    style: ts.body2,
-                    softWrap: false,
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    desc!,
-                    style: ts.body3,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final topRight = AsyncText.asyncLayout(
+                      constraints.maxWidth,
+                      TextPainter(
+                          text: TextSpan(
+                            text: '$score分',
+                            style: ts.body2
+                                .copyWith(color: Colors.yellow.shade700),
+                          ),
+                          maxLines: 1,
+                          textDirection: TextDirection.ltr));
+
+                  return FutureBuilder<List<TextPainter>>(
+                      future: Future.wait<TextPainter>([
+                        topRight.then((value) => AsyncText.asyncLayout(
+                            constraints.maxWidth - value.width,
+                            TextPainter(
+                                text: TextSpan(text: name!, style: ts.title3),
+                                maxLines: 1,
+                                textDirection: TextDirection.ltr))),
+                        topRight,
+                        AsyncText.asyncLayout(
+                            constraints.maxWidth,
+                            TextPainter(
+                                text: TextSpan(
+                                    text: '$cname | $author', style: ts.body2),
+                                maxLines: 1,
+                                textDirection: TextDirection.ltr)),
+                        AsyncText.asyncLayout(
+                            constraints.maxWidth,
+                            TextPainter(
+                                text: TextSpan(text: desc!, style: ts.body3),
+                                maxLines: 2,
+                                textDirection: TextDirection.ltr)),
+                      ]),
+                      builder: (context, snap) {
+                        if (snap.hasData) {
+                          final data = snap.data!;
+                          return CustomMultiChildLayout(
+                            delegate: ItemDetailWidget(112),
+                            children: [
+                              LayoutId(
+                                  id: 'top', child: AsyncText.async(data[0])),
+                              LayoutId(
+                                  id: 'topRight',
+                                  child: AsyncText.async(data[1])),
+                              LayoutId(
+                                  id: 'center',
+                                  child: AsyncText.async(data[2])),
+                              LayoutId(
+                                  id: 'bottom',
+                                  child: AsyncText.async(data[3])),
+                            ],
+                          );
+                        }
+                        return SizedBox();
+                      });
+                },
               ),
             ),
-          ),
+          )
         ],
       ),
     );

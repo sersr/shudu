@@ -1,76 +1,7 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-abstract class TextStylesEvent extends Equatable {
-  const TextStylesEvent();
-  @override
-  List<Object> get props => [];
-}
-
-class TextStylesState {
-
-  TextStylesState() {
-    // bold1 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontWeight: FontWeight.bold,
-    //   fontSize: 15,
-    //   color: greyColor2,
-    //   inherit: false,
-    // );
-    // bigTitle ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 17,
-    //   color: greyColor4,
-    //   inherit: false,
-    // );
-    // title1 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 16,
-    //   color: greyColor4,
-    //   inherit: false,
-    // );
-    // title2 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 14,
-    //   color: greyColor4,
-    //   inherit: false,
-    // );
-    // title3 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 14,
-    //   color: greyColor3,
-    //   inherit: false,
-    // );
-    // body1 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 14,
-    //   color: greyColor2,
-    //   inherit: false,
-    // );
-    // body2 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 13,
-    //   color: greyColor2,
-    //   inherit: false,
-    // );
-    // body3 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 12,
-    //   color: greyColor1,
-    //   inherit: false,
-    // );
-    // small1 ??= TextStyle(
-    //   // fontFamily: 'NotoSansSC',
-    //   fontSize: 10,
-    //   color: greyColor3,
-    //   inherit: false,
-    // );
-  }
-}
-
-class TextStylesBloc extends Bloc<TextStylesEvent, TextStylesState> {
-  TextStylesBloc() : super(TextStylesState());
+class TextStyleConfig {
+  TextStyleConfig();
   // TextStyle bold1 = TextStyle(
   //   // fontFamily: 'NotoSansSC',
   //   fontWeight: FontWeight.bold,
@@ -90,6 +21,13 @@ class TextStylesBloc extends Bloc<TextStylesEvent, TextStylesState> {
   //   color: blackColor3,
   //   inherit: false,
   // );
+
+  TextStyle bigTitle1 = TextStyle(
+    // fontFamily: 'NotoSansSC',
+    fontSize: 18,
+    color: blackColor1,
+    inherit: false,
+  );
   TextStyle title2 = TextStyle(
     // fontFamily: 'NotoSansSC',
     fontSize: 14,
@@ -141,7 +79,4 @@ class TextStylesBloc extends Bloc<TextStylesEvent, TextStylesState> {
   static const blackColor8 = Color(0xff7c7c7c);
   static const blackColor9 = Color(0xff858585);
   static const blackColor10 = Color(0xff8b8b8b);
-
-  @override
-  Stream<TextStylesState> mapEventToState(TextStylesEvent event) async* {}
 }

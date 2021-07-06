@@ -6,7 +6,7 @@ import '_database_impl.dart';
 void main() async {
   final db = Database();
   db.watcher.sync = true;
-  final table = db.bookCacheTable;
+  final table = db.bookCache;
   test('bookContent test', () async {
     db.watchMainBookListDb().listen((event) {
       print('1: ${event.length}');

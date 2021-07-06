@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/src/provider.dart';
 
-import '../../bloc/bloc.dart';
+import '../../provider/provider.dart';
 import '../../data/data.dart';
 import '../../event/event.dart';
 import '../../utils/utils.dart';
@@ -20,12 +19,12 @@ class ListCatetoryPage extends StatefulWidget {
 class _ListCatetoryPageState extends State<ListCatetoryPage>
     with PageAnimationMixin {
   final _category = CategoryListNotifier();
-  late TextStylesBloc ts;
+  late TextStyleConfig ts;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
-    ts = context.read<TextStylesBloc>();
+    ts = context.read<TextStyleConfig>();
 
     _category.repository = repository;
   }
@@ -36,7 +35,11 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('分类'), centerTitle: true),
+        appBar: AppBar(
+          title: Text('分类'),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+        ),
         body: Center(
           child: NotificationListener<OverscrollIndicatorNotification>(
             onNotification: disallowGlow,
@@ -72,11 +75,8 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Expanded(child: ImageResolve(img: e.image)),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    '${e.name}',
-                                    style: ts.title2,
-                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('${e.name}', style: ts.title2),
                                 ],
                               ),
                             ),
@@ -128,10 +128,7 @@ class CategegoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Categories(
-      index: ctg,
-      title: title,
-    );
+    return Categories(index: ctg, title: title);
   }
 }
 
@@ -153,25 +150,27 @@ class _CategoriesState extends State<Categories> {
     return DefaultTabController(
       length: _titles.length,
       child: Scaffold(
-        body: BarLayout(
-          title: Text(widget.title),
-          body: TabBarView(
-            children: List.generate(
-              _titles.length,
-              (index) => CategListView(
-                ctg: widget.index,
-                date: _urlKeys[index],
+        body: RepaintBoundary(
+          child: BarLayout(
+            title: Text(widget.title),
+            body: TabBarView(
+              children: List.generate(
+                _titles.length,
+                (index) => CategListView(
+                  ctg: widget.index,
+                  date: _urlKeys[index],
+                ),
               ),
             ),
-          ),
-          bottom: TabBar(
-            labelColor: Colors.grey.shade500,
-            unselectedLabelColor: Colors.black,
-            tabs: _titles
-                .map((e) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Text(e)))
-                .toList(),
+            bottom: TabBar(
+              labelColor: TextStyleConfig.blackColor7,
+              unselectedLabelColor: TextStyleConfig.blackColor2,
+              tabs: _titles
+                  .map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Text(e)))
+                  .toList(),
+            ),
           ),
         ),
       ),

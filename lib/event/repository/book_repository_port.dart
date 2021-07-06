@@ -14,12 +14,11 @@ import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../base/repository.dart';
 import '../../utils/utils.dart';
 import '../base/book_event.dart';
+import '../base/repository.dart';
 import '../base/type_adapter.dart';
-import '../book_event_main.dart';
-import '../isolate_side.dart';
+import '../event.dart';
 
 class BookRepositoryPort extends Repository with SendEventPortMixin {
   final _initCallbacks = <Future<void> Function()>[];

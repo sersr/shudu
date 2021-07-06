@@ -1,15 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:provider/provider.dart';
 
-import '../../bloc/book_cache_bloc.dart';
-import '../../bloc/painter_bloc.dart';
+import '../../provider/book_cache_notifier.dart';
+import '../../provider/painter_notifier.dart';
 import '../../utils/utils.dart';
 import 'widgets/page_view.dart';
 import 'widgets/pan_slide.dart';
@@ -47,20 +43,24 @@ class BookContentPage extends StatefulWidget {
 
 class BookContentPageState extends PanSlideState<BookContentPage> {
   late ContentNotifier bloc;
-  late BookCacheBloc blocCache;
+  late BookCacheNotifier blocCache;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
-    blocCache = context.read<BookCacheBloc>();
-    if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
+    blocCache = context.read<BookCacheNotifier>();
+    // if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
   }
 
+  bool _first = true;
   @override
   void complete() {
-    uiOverlay().whenComplete(
-        () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
+    if (_first) {
+      _first = false;
+      uiOverlay().whenComplete(
+          () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
+    }
   }
 
   Timer? errorTimer;
@@ -155,8 +155,7 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
     if (!isCompleted) return false;
 
-    removeHide();
-    if (entriesLength > 1) {
+    if (showEntries.length > 1) {
       hideLast();
       return false;
     }
@@ -166,10 +165,10 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
     await bloc.enter;
 
-    bloc.notifyState(empty: false, loading: false);
+    bloc.notifyState(notEmptyOrIgnore: true, loading: false);
     await _f;
 
-    blocCache.load();
+    await blocCache.load();
 
     await bloc.waitTasks;
     await EventLooper.instance.runner;
@@ -177,13 +176,11 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
     uiStyle();
 
     // 横屏处理
-    if (!bloc.config.value.portrait!) {
-      SystemChrome.setPreferredOrientations(
-          const [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
-    }
-    await blocCache.awaitloading;
+    if (!bloc.config.value.portrait!) orientation(true);
+
     await EventLooper.instance.scheduler.endOfFrame;
 
+    bloc.out();
     return true;
   }
 }

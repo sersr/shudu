@@ -15,9 +15,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../utils/utils.dart';
 import '../base/book_event.dart';
 import '../base/repository.dart';
-import '../book_event_main.dart';
-import '../isolate_side.dart';
 import '../base/type_adapter.dart';
+import '../event.dart';
 
 class BookRepository extends Repository with SendEventMixin {
   final _initCallbacks = <Future<void> Function()>[];

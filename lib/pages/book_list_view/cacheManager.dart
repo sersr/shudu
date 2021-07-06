@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import '../../utils/widget/page_animation.dart';
 
 import '../../database/database.dart';
 import '../../event/event.dart';
 import '../../utils/utils.dart';
+import '../../utils/widget/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
 
 class CacheManager extends StatefulWidget {
@@ -25,8 +24,14 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
     _cacheNotifier.repository = repository;
   }
 
+  // @override
+  // void complete() => _cacheNotifier.startLoad();
+
   @override
-  void complete() => _cacheNotifier.startLoad();
+  void initState() {
+    super.initState();
+    scheduleMicrotask(_cacheNotifier.startLoad);
+  }
 
   @override
   void dispose() {
@@ -194,9 +199,28 @@ class _CacheNotifier extends ChangeNotifier {
 
     if (_l != null && _l.isNotEmpty) {
       _data.clear();
-      _items.clear();
       _data.addAll(_l);
+      _auto();
+      // Future.delayed(const Duration(seconds: 1), () {
+      //   (repository!.bookEvent.getCacheItemAll()
+      //           as Future<Map<int, CacheItem>?>)
+      //       .then((_all) {
+      //     if (_all != null && _all.isNotEmpty)
+      //       _items
+      //         ..clear()
+      //         ..addAll(_all);
+      //   });
+      // });
       notifyListeners();
+    }
+  }
+
+  void _auto() async {
+    for (var item in _data) {
+      if (_items.containsKey(item)) continue;
+      final _i =
+          await repository!.bookEvent.getCacheItem(item) ?? CacheItem.none;
+      if (!_i.isEmpty) _items[item] = _i;
     }
   }
 
@@ -206,14 +230,14 @@ class _CacheNotifier extends ChangeNotifier {
     final id = _data.elementAt(index);
     if (_items.containsKey(id)) return _items[id]!;
     final _i = await repository!.bookEvent.getCacheItem(id) ?? CacheItem.none;
-    _items[id] = _i;
+    if (!_i.isEmpty) _items[id] = _i;
     return _i;
   }
 
   Future<void> deleteCache(int id) async {
     if (repository == null) return;
+    // _items.remove(id);
     await repository!.bookEvent.bookContentEvent.deleteCache(id);
-    _items.remove(id);
     _data.remove(id);
     notifyListeners();
   }
@@ -221,7 +245,6 @@ class _CacheNotifier extends ChangeNotifier {
   StreamSubscription? _cacheSub;
 
   void cancel() {
-    _timer?.cancel();
     _cacheSub?.cancel();
     _cacheSub = null;
   }
@@ -233,26 +256,21 @@ class _CacheNotifier extends ChangeNotifier {
     return '';
   }
 
-  Timer? _timer;
   void _listen(List<BookCache>? data) {
     Log.e('cache mangaer');
     if (data == null) return;
-    _timer?.cancel();
-    _timer = Timer(const Duration(milliseconds: 100), () async {
-      _cacheList
-        ..clear()
-        ..addAll(data);
-      await EventLooper.instance.wait();
-      notifyListeners();
 
-      _timer = null;
-    });
+    _cacheList
+      ..clear()
+      ..addAll(data);
+
+    notifyListeners();
   }
 
   @override
   void dispose() {
-    super.dispose();
     cancel();
+    super.dispose();
   }
 }
 

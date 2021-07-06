@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-import '../../bloc/bloc.dart';
+import '../../provider/provider.dart';
 
 Dio dioCreater() => Dio(
       BaseOptions(

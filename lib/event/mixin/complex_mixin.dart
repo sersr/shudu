@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:isolate';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
@@ -8,32 +7,31 @@ import '../../pages/book_list_view/cacheManager.dart';
 import '../../utils/utils.dart';
 import '../base/book_event.dart';
 import 'database_mixin.dart';
-import 'network_impl.dart';
+import 'network_mixin.dart';
 
 /// 复合任务
 /// 处理复杂任务
 mixin ComplexMixin
     on DatabaseMixin, NetworkMixin
     implements ComplexEventDynamic {
-  // 频率过高，会被暂时禁止访问
   @override
-  Future<TransferableTypedData?> getContentDynamic(
-      int bookid, int contentid, bool update) async {
-    return getContent(bookid, contentid, update).then(RawContentLines.encode);
+  Future getContentDynamic(int bookid, int contentid, bool update) {
+    return getContent(bookid, contentid, update);
+    // .then(RawContentLines.encode);
   }
 
   @override
   Future<int> updateBookStatus(int id) async {
-    final rawData = await getInfo(id);
-    final data = rawData.data;
+    await getInfo(id);
+    // final data = rawData.data;
 
-    if (data != null) {
-      final newCname = data.lastChapter;
-      final lastTime = data.lastTime;
-      if (newCname != null && lastTime != null) {
-        return updateBookStatusImpl(id, newCname, lastTime);
-      }
-    }
+    // if (data != null) {
+    //   final newCname = data.lastChapter;
+    //   final lastTime = data.lastTime;
+    //   if (newCname != null && lastTime != null) {
+    //     return updateBookStatusImpl(id, newCname, lastTime);
+    //   }
+    // }
     return 0;
   }
 
@@ -78,10 +76,47 @@ mixin ComplexMixin
   }
 
   @override
+  Map<int, CacheItem> getCacheItemAll() {
+    var cacheListRaw = getCacheContentsCidDbALl();
+
+    var queryList = getIndexsDbAll().reversed.toList();
+    final _map = <int, CacheItem>{};
+
+    queryList.forEach((index) {
+      final bookId = index.bookId;
+      final bIndexs = index.bIndexs;
+      if (bookId != null && bIndexs != null) {
+        final cacheItemCounts =
+            cacheListRaw.where((element) => element.bookId == bookId).length;
+        var itemCounts = cacheItemCounts;
+
+        final indexs = getIndexsDecodeLists(bIndexs);
+        if (indexs.isNotEmpty) {
+          final _num = indexs.fold<int>(0,
+              (previousValue, element) => previousValue + element.length - 1);
+          itemCounts = _num;
+        }
+        _map.putIfAbsent(
+            bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
+      }
+    });
+    return _map;
+  }
+
+  List<BookContentDb> getCacheContentsCidDbALl() {
+    late List<BookContentDb> l;
+
+    bookContentDb.query.bookId..let((s) => l = s.goToTable);
+
+    return l;
+  }
+
+  @override
   Future<RawContentLines> getContent(
       int bookid, int contentid, bool update) async {
     final url = Api.contentUrl(bookid, contentid);
     Log.i('url: $url');
+
     if (update) {
       return await _getContentNet(bookid, contentid) ??
           await _getContentDb(bookid, contentid) ??
@@ -119,7 +154,6 @@ mixin ComplexMixin
   }
 
   Future<RawContentLines?> _getContentNet(int bookid, int contentid) async {
-    // assert(Log.i('loading Id: $contentid'));
     Api.moveNext();
 
     final bookContent = await getContentNet(bookid, contentid);

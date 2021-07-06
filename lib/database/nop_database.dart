@@ -7,91 +7,90 @@ import '../data/data.dart';
 
 part 'nop_database.g.dart';
 
-class BookCache extends Table {
-  BookCache({
-    this.id,
-    this.chapterId,
-    this.img,
-    this.lastChapter,
-    this.name,
-    this.updateTime,
-    this.bookId,
-    this.sortKey,
-    this.page,
-    this.isTop,
-    this.isNew,
-    this.isShow,
-  });
+abstract class BookCache extends Table {
+  BookCache._();
+  factory BookCache({
+    int? id,
+    String? name,
+    String? img,
+    String? updateTime,
+    String? lastChapter,
+    int? chapterId,
+    int? bookId,
+    int? page,
+    int? sortKey,
+    bool? isTop,
+    bool? isNew,
+    bool? isShow,
+  }) = _BookCache;
 
   @NopItem(primaryKey: true)
-  final int? id;
-  final String? name;
-  final String? img;
-  final String? updateTime;
-  final String? lastChapter;
-  final int? chapterId;
-  final int? bookId;
-  final int? page;
-  final int? sortKey;
-  final bool? isTop;
-  final bool? isNew;
-  final bool? isShow;
-  @override
-  List get allItems => _allItems;
+  int? get id;
+  String? get name;
+  String? get img;
+  String? get updateTime;
+  String? get lastChapter;
+  int? get chapterId;
+  int? get bookId;
+  int? get page;
+  int? get sortKey;
+  bool? get isTop;
+  bool? get isNew;
+  bool? get isShow;
 }
 
-class BookContentDb extends Table {
-  BookContentDb({
-    this.id,
-    this.bookId,
-    this.cid,
-    this.cname,
-    this.nid,
-    this.pid,
-    this.content,
-    this.hasContent,
-  });
+abstract class BookContentDb extends Table {
+  BookContentDb._();
+  factory BookContentDb({
+    int? id,
+    int? bookId,
+    int? cid,
+    String? cname,
+    int? nid,
+    int? pid,
+    String? content,
+    bool? hasContent,
+  }) = _BookContentDb;
 
-  BookContentDb.fromBookContent(BookContent content)
-      : id = null,
-        bookId = content.id,
-        cid = content.cid,
-        cname = content.cname,
-        nid = content.nid,
-        pid = content.pid,
-        content = content.content,
-        hasContent = Table.intToBool(content.hasContent);
+  factory BookContentDb.fromBookContent(BookContent content) {
+    return BookContentDb(
+        id: null,
+        bookId: content.id,
+        cid: content.cid,
+        cname: content.cname,
+        nid: content.nid,
+        pid: content.pid,
+        content: content.content,
+        hasContent: Table.intToBool(content.hasContent));
+  }
 
   @NopItem(primaryKey: true)
-  final int? id;
-  final int? bookId;
-  final int? cid;
-  final String? cname;
-  final int? nid;
-  final int? pid;
-  final String? content;
-  final bool? hasContent;
-
-  @override
-  List get allItems => _allItems;
+  int? get id;
+  int? get bookId;
+  int? get cid;
+  String? get cname;
+  int? get nid;
+  int? get pid;
+  String? get content;
+  bool? get hasContent;
 }
 
-class BookIndex extends Table {
-  BookIndex({this.id, this.bookId, this.bIndexs});
+abstract class BookIndex extends Table {
+  BookIndex._();
+
+  factory BookIndex({int? id, int? bookId, String? bIndexs}) = _BookIndex;
   @NopItem(primaryKey: true)
-  final int? id;
-  final int? bookId;
-  final String? bIndexs;
-  @override
-  List get allItems => _allItems;
+  int? get id;
+  int? get bookId;
+  String? get bIndexs;
 }
 
 @Nop(tables: [BookCache, BookContentDb, BookIndex])
 class BookDatabase extends _GenBookDatabase {
-  BookDatabase(this.url, this.version);
+  BookDatabase(this.path, this.version);
 
   @override
-  final String url;
+  final String path;
   @override
   int version;
 }

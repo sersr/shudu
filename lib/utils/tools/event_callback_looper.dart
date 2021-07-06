@@ -3,7 +3,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../utils.dart';
 
-typedef FutureOrVoidCallback = FutureOr<bool> Function();
+typedef FutureOrVoidCallback = FutureOr<void> Function();
 
 typedef WaitCallback = Future<void> Function(
     [FutureOrVoidCallback? closure, String label]);
@@ -11,6 +11,15 @@ typedef WaitCallback = Future<void> Function(
 /// [TaskEntry._run]
 typedef EventCallback = Future<void> Function();
 
+/// async tasks => sync tasks
+///
+/// 以队列的形式进行 异步任务。
+///
+/// 异步的本质：将回调函数注册到下一次事件队列中，在本次循环后调用
+/// [await]: 由系统注册  (async/future_impl.dart#_thenAwait)
+///
+/// 在同一次事件循环中执行上一次的异步任务，如果上一次的异步任务过多有可能导致本次循环
+/// 占用过多的 cpu 资源，导致渲染无法及时，造成卡顿。
 class EventLooper {
   static EventLooper? _instance;
 
@@ -30,7 +39,7 @@ class EventLooper {
   /// 安排任务
   ///
   /// 队列模式
-  Future<void> scheduleEventTask<T>(EventCallback callback) async {
+  Future<void> addEventTask<T>(EventCallback callback) async {
     final _task = TaskEntry<T>(callback, this);
 
     _taskLists.add(_task);
@@ -54,7 +63,7 @@ class EventLooper {
       for (final _t in tasks) {
         await releaseUI;
 
-        await _eventRun(_t);
+        await eventRun(_t);
       }
     }
 
@@ -62,61 +71,30 @@ class EventLooper {
   }
 
   static const zoneWait = 'eventWait';
+  static const zoneTask = 'eventTask';
   // 运行任务
   //
   // 提供时间消耗及等待其他任务
-  Future<void> _eventRun(TaskEntry task) =>
-      eventCallback(task._run, debugLabel: 'eventRun');
-
-  Future<void> eventCallback(EventCallback callback,
-      {debugLabel = 'eventCallback'}) async {
-    int? start;
-
-    var waitNum = 0;
-    var low = 0, high = 0, med = 0;
-    Future<void> wait(
-        [FutureOrVoidCallback? closure, String label = '']) async {
-      start ??= stopwatch;
-
-      final use = (stopwatch - start!) / 1000;
-
-      if (use > 3) {
-        high++;
-      } else if (use > 1) {
-        med++;
-      } else if (use > 0.5) {
-        low++;
-      }
-
-      var loopCount = 0;
-      var waitUs = 0;
-
-      /// 回到事件队列，让出资源
-      do {
-        if (loopCount > 100) break;
-
-        final _start = stopwatch;
-        await releaseUI;
-
-        if (closure != null && await closure()) break;
-
-        waitUs = stopwatch - _start;
-
-        loopCount++;
-      } while (waitUs >= 2000);
-
-      waitNum += loopCount;
-
-      start = stopwatch;
-    }
-
-    await runZoned(callback, zoneValues: {zoneWait: wait});
-
-    Log.i('$debugLabel low: ${getV(low)}, med: ${getV(med)}, '
-        'high: ${getV(high)}, wait: $waitNum');
+  Future<void> eventRun(TaskEntry task) {
+    return runZoned(task._run, zoneValues: {zoneWait: _wait, zoneTask: task});
   }
 
-  String getV(int v) => v == 0 ? '' : '$v';
+  Future<void> _wait([FutureOrVoidCallback? onLoop, String label = '']) async {
+    final _task = currentTask;
+    if (_task != null && _task.async) {
+      var count = 0;
+      while (scheduler.hasScheduledFrame) {
+        if (count > 5000) break;
+
+        /// 回到事件队列，让出资源
+        await releaseUI;
+        onLoop?.call();
+        if (!_task.async) break;
+        count++;
+      }
+    }
+    await releaseUI;
+  }
 
   Future<void> wait([FutureOrVoidCallback? closure, label = '']) async {
     final _w = Zone.current[zoneWait];
@@ -125,6 +103,22 @@ class EventLooper {
     }
     if (closure != null) await closure();
     return releaseUI;
+  }
+
+  TaskEntry? get currentTask {
+    final _z = Zone.current[zoneTask];
+    if (_z is TaskEntry) return _z;
+  }
+
+  bool get async {
+    final _z = currentTask;
+    if (_z is TaskEntry) return _z.async;
+    return false;
+  }
+
+  set async(bool v) {
+    final _z = currentTask;
+    if (_z is TaskEntry) _z.async = v;
   }
 }
 
@@ -135,7 +129,7 @@ class TaskEntry<T> {
   final EventCallback callback;
 
   final _completer = Completer<void>();
-
+  var async = true;
   Future<void> get future => _completer.future;
 
   Future<void> _run() async {
@@ -151,5 +145,5 @@ enum EventStatus {
   ignoreAndRemove,
 }
 
-Future<void> get releaseUI => Future.delayed(Duration.zero);
-Future<void> release(int time) => Future.delayed(Duration(milliseconds: time));
+Future<void> get releaseUI => release(Duration.zero);
+Future<void> release(Duration time) => Future.delayed(time);

@@ -130,25 +130,23 @@ void main() async {
   test('stream', () async {
     late StreamController c;
     final a = StreamController.broadcast(onListen: () {
-      print('on.aaa..');
+      print('onListen.');
     });
     c = StreamController(onListen: () {
-      print('on...');
+      print('on...c');
       c.addStream(a.stream).then((_) {
-        print('......[');
+        print('......');
         c.close();
       });
     });
     a.stream.listen((event) {
-      print('a....lisne');
+      print('a....listen');
     });
-    a.add('aaa');
+    a.add('add');
     await a.close();
-    final s = c.stream.listen((event) {
+    c.stream.listen((event) {
       print('...');
     });
-    // c.add('haha');
-    // c.add('haha');
 
     await c.close();
   });

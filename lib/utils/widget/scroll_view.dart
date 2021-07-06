@@ -10,7 +10,5 @@ class StickyView extends Widget {
 
 class StickyViewRender extends RenderSliver with RenderSliverHelpers {
   @override
-  void performLayout() {
-    // TODO: implement performLayout
-  }
+  void performLayout() {}
 }
