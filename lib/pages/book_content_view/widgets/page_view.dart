@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +16,7 @@ import 'pannel.dart';
 class ContentPageView extends StatefulWidget {
   const ContentPageView({
     Key? key,
-    required this.showCname,
   }) : super(key: key);
-
-  final ValueNotifier<bool> showCname;
 
   @override
   ContentPageViewState createState() => ContentPageViewState();
@@ -38,8 +36,7 @@ class ContentPageViewState extends State<ContentPageView>
     offsetPosition = NopPageViewController(
       vsync: this,
       scrollingNotify: scrollingNotify,
-      // getDragState: canDrag,
-      hasContent: isBoundary,
+      getBounds: isBoundary,
     );
     state = context.findAncestorStateOfType<PanSlideState>()!;
   }
@@ -69,10 +66,7 @@ class ContentPageViewState extends State<ContentPageView>
                   position: position,
                   child: FadeTransition(
                     opacity: curve.drive(Tween<double>(begin: 0, end: 0.9)),
-                    child: Pannel(
-                      controller: offsetPosition,
-                      showCname: widget.showCname,
-                    ),
+                    child: Pannel(controller: offsetPosition),
                   ),
                 ),
               );
@@ -90,7 +84,7 @@ class ContentPageViewState extends State<ContentPageView>
                   position: position,
                   child: FadeTransition(
                     opacity: curve.drive(Tween<double>(begin: 0, end: 0.9)),
-                    child: TopPannel(showCname: widget.showCname),
+                    child: TopPannel(),
                   ),
                 ),
               );
@@ -104,7 +98,6 @@ class ContentPageViewState extends State<ContentPageView>
 
   void onshowEnd() {
     if (bloc.config.value.portrait! && bloc.inBook) uiOverlay(hide: false);
-    indexBloc.add(BookIndexShowEvent(id: bloc.bookid, cid: bloc.tData.cid));
   }
 
   void onhideEnd() {
@@ -133,34 +126,17 @@ class ContentPageViewState extends State<ContentPageView>
     }
   }
 
-  int isBoundary(int index) {
-    return bloc.hasContent(index);
+  int isBoundary() {
+    return bloc.hasContent();
   }
-
-  bool laststate = false;
 
   void scrollingNotify(bool isScrolling) {
-    // if (!isScrolling) {
-    //   bloc
-    //     ..unDelayedLoad()
-    //     ..completercanCompute();
-    // } else {
-    //   bloc.setcanCompute();
-    // }
-    // EventLooper.instance.stop = isScrolling;
     if (isScrolling) {
-      if (bloc.isActive.value) {
-        laststate = true;
-        bloc.stopAuto();
-      }
-    } else if (laststate) {
-      laststate = false;
-      bloc.auto();
+      bloc.autoRun.stopSave();
+    } else {
+      bloc.autoRun.stopAutoRun();
     }
-    // bloc.resetAuto();
   }
-
-  // bool canDrag() => bloc.computeCount <= 0;
 
   Widget? getChild(int index, {bool changeState = false}) {
     final mes = bloc.getContentMes(index, changeState: changeState);
@@ -170,10 +146,9 @@ class ContentPageViewState extends State<ContentPageView>
       battery: FutureBuilder<int>(
         future: bloc.repository.getBatteryLevel,
         builder: (context, snaps) {
+          final v = snaps.hasData ? snaps.data! : bloc.repository.level;
           return BatteryView(
-            progress:
-                ((snaps.hasData ? snaps.data! : bloc.repository.level) / 100)
-                    .clamp(0.0, 1.0),
+            progress: (v / 100).clamp(0.0, 1.0),
             color: bloc.config.value.fontColor!,
           );
         },
@@ -183,120 +158,125 @@ class ContentPageViewState extends State<ContentPageView>
     return child;
   }
 
+  Widget straight(Widget child) {
+    final head = AnimatedBuilder(
+      animation: bloc.header,
+      builder: (__, _) {
+        return Text(
+          '${bloc.header.value}',
+          style: bloc.secstyle,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+        );
+      },
+    );
+
+    final footer = AnimatedBuilder(
+      animation: bloc.footer,
+      builder: (__, _) {
+        final time = DateTime.now();
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            FutureBuilder<int>(
+              future: bloc.repository.getBatteryLevel,
+              builder: (_, snaps) {
+                return BatteryView(
+                  progress:
+                      ((snaps.hasData ? snaps.data! : bloc.repository.level) /
+                              100)
+                          .clamp(0.0, 1.0),
+                  color: bloc.config.value.fontColor!,
+                );
+              },
+            ),
+            Text(
+              '${time.hour.timePadLeft}:${time.minute.timePadLeft}',
+              style: bloc.secstyle,
+              maxLines: 1,
+            ),
+            Expanded(child: SizedBox()),
+            Text(
+              '${bloc.footer.value}',
+              style: bloc.secstyle,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+            ),
+          ],
+        );
+      },
+    );
+
+    return _SlideWidget(
+      paddingRect: bloc.paddingRect,
+      header: RepaintBoundary(child: head),
+      body: RepaintBoundary(child: child),
+      footer: RepaintBoundary(child: footer),
+    );
+  }
+
   Widget wrapChild() {
     final child =
         NopPageView(offsetPosition: offsetPosition, builder: getChild);
 
-    if (offsetPosition.axis == Axis.horizontal) {
+    if (offsetPosition.axis == Axis.horizontal)
       return child;
-    } else {
-      final head = AnimatedBuilder(
-        animation: bloc.header,
-        builder: (__, _) {
-          return Text('${bloc.header.value}',
-              style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0);
-        },
-      );
+    else
+      return straight(child);
+  }
 
-      final footer = AnimatedBuilder(
-        animation: bloc.footer,
-        builder: (__, _) {
-          final time = DateTime.now();
-
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              FutureBuilder<int>(
-                future: bloc.repository.getBatteryLevel,
-                builder: (_, snaps) {
-                  return BatteryView(
-                    progress:
-                        ((snaps.hasData ? snaps.data! : bloc.repository.level) /
-                                100)
-                            .clamp(0.0, 1.0),
-                    color: bloc.config.value.fontColor!,
-                  );
-                },
-              ),
-              Text('${time.hour.timePadLeft}:${time.minute.timePadLeft}',
-                  style: bloc.secstyle, maxLines: 1, textScaleFactor: 1.0),
-              Expanded(child: SizedBox()),
-              Text(
-                '${bloc.footer.value}',
-                style: bloc.secstyle,
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                textScaleFactor: 1.0,
-              ),
-            ],
-          );
-        },
-      );
-
-      return _SlideWidget(
-        paddingRect: bloc.paddingRect,
-        header: RepaintBoundary(child: head),
-        body: RepaintBoundary(child: child),
-        footer: RepaintBoundary(child: footer),
-      );
-    }
+  bool trigger(Size size, Offset g) {
+    final halfH = size.height / 2;
+    final halfW = size.width / 2;
+    final sixH = size.height / 5;
+    final sixW = size.width / 5;
+    final x = g.dx - halfW;
+    final y = g.dy - halfH;
+    return x.abs() < sixW && y.abs() < sixH;
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final child = AnimatedBuilder(
-        animation: bloc.ignore,
-        builder: (context, child) {
-          return !bloc.ignore.value
-              ? bloc.tData.contentIsNotEmpty
-                  ? GestureDetector(
-                      onTapUp: (d) {
-                        if (offsetPosition.page == 0 ||
-                            offsetPosition.page % offsetPosition.page.toInt() ==
-                                0 ||
-                            !offsetPosition.isScrolling) {
-                          final l = d.globalPosition;
-                          final halfH = size.height / 2;
-                          final halfW = size.width / 2;
-                          final sixH = size.height / 5;
-                          final sixW = size.width / 5;
-                          final x = l.dx - halfW;
-                          final y = l.dy - halfH;
-                          if (x.abs() < sixW && y.abs() < sixH) {
-                            getController().trigger(immediate: false);
-                          } else {
-                            if (!bloc.isActive.value) offsetPosition.nextPage();
-                          }
-                        }
-                      },
-                      child: wrapChild(),
-                    )
-                  : GestureDetector(
-                      onTap: () {
-                        getController().trigger(immediate: false);
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        child: Center(
-                          child: btn1(
-                              bgColor: Colors.blue,
-                              splashColor: Colors.blue[200],
-                              radius: 40,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              child: Text('重新加载'),
-                              onTap: () => bloc.reload()),
-                        ),
-                      ))
-              : GestureDetector(
-                  onTap: () {
-                    getController().trigger(immediate: false);
-                  },
-                  child: Container(color: Colors.transparent),
-                );
-        });
+      animation: bloc.empty,
+      builder: (context, child) {
+
+        return !bloc.empty.value
+            ? GestureDetector(
+                onTapUp: (d) {
+                  if (offsetPosition.page == 0 ||
+                      offsetPosition.page % offsetPosition.page.toInt() == 0 ||
+                      !offsetPosition.isScrolling) {
+                    if (trigger(size, d.globalPosition)) {
+                      getController().trigger(immediate: false);
+                    } else {
+                      offsetPosition.nextPage();
+                    }
+                  }
+                },
+                child: wrapChild(),
+              )
+            : GestureDetector(
+                onTap: () => getController().trigger(immediate: false),
+                child: Container(
+                  color: Colors.transparent,
+                  child: Center(
+                    child: btn1(
+                        bgColor: Colors.blue,
+                        splashColor: Colors.blue[200],
+                        radius: 40,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        child: Text('重新加载'),
+                        onTap: bloc.reload),
+                  ),
+                ),
+              );
+      },
+    );
 
     return child;
   }
@@ -348,6 +328,7 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void updategest() {
+
     final dragStartBehavior = DragStartBehavior.start;
     if (widget.offsetPosition.axis == Axis.vertical) {
       gestures = <Type, GestureRecognizerFactory>{
@@ -361,9 +342,9 @@ class _NopPageViewState extends State<NopPageView> {
               ..onUpdate = onUpdate
               ..onEnd = onEnd
               ..onCancel = onCancel
-              ..minFlingDistance = 8.0
-              ..minFlingVelocity = kMinFlingVelocity
-              ..maxFlingVelocity = kMaxFlingVelocity
+              // ..minFlingDistance = 8.0
+              // ..minFlingVelocity = kMinFlingVelocity
+              // ..maxFlingVelocity = kMaxFlingVelocity
               ..dragStartBehavior = dragStartBehavior;
             // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
@@ -381,9 +362,9 @@ class _NopPageViewState extends State<NopPageView> {
               ..onUpdate = onUpdate
               ..onEnd = onEnd
               ..onCancel = onCancel
-              ..minFlingDistance = 8.0
-              ..minFlingVelocity = kMinFlingVelocity
-              ..maxFlingVelocity = kMaxFlingVelocity
+              // ..minFlingDistance = 8.0
+              // ..minFlingVelocity = kMinFlingVelocity
+              // ..maxFlingVelocity = kMaxFlingVelocity
               ..dragStartBehavior = dragStartBehavior;
             // ..velocityTrackerBuilder = (PointerEvent event) => VelocityTracker.withKind(event.kind);
           },
@@ -418,14 +399,25 @@ class _NopPageViewState extends State<NopPageView> {
     assert(hold == null);
   }
 
+  void pointer(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final delta = event.scrollDelta;
+      widget.offsetPosition
+          .animateTo(500 * delta.dy.sign * math.max(1, delta.dy / 10));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return RawGestureDetector(
-      gestures: gestures,
-      // key: _gestureDetectorKey,
-      child: ContentPreNextWidget(
-        offset: widget.offsetPosition,
-        builder: widget.builder,
+    return Listener(
+      onPointerSignal: pointer,
+      child: RawGestureDetector(
+        gestures: gestures,
+        // key: _gestureDetectorKey,
+        child: ContentPreNextWidget(
+          offset: widget.offsetPosition,
+          builder: widget.builder,
+        ),
       ),
     );
   }

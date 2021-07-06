@@ -3,15 +3,13 @@ import 'package:flutter/scheduler.dart';
 
 import '../utils.dart';
 
-typedef FutureOrVoidCallback = FutureOr<void> Function();
+typedef FutureOrVoidCallback = FutureOr<bool> Function();
 
 typedef WaitCallback = Future<void> Function(
     [FutureOrVoidCallback? closure, String label]);
 
 /// [TaskEntry._run]
 typedef EventCallback = Future<void> Function();
-
-// typedef RunCallback<T> = Future<T> Function();
 
 class EventLooper {
   static EventLooper? _instance;
@@ -20,8 +18,6 @@ class EventLooper {
     _instance ??= EventLooper();
     return _instance!;
   }
-
-  // var _frameId = 0;
 
   final now = Stopwatch()..start();
 
@@ -48,11 +44,7 @@ class EventLooper {
   void run() async {
     if (runner != null || _taskLists.isEmpty) return;
 
-    _runner ??= looper()
-      ..whenComplete(() {
-        _runner = null;
-        Log.i('runner done...');
-      });
+    _runner ??= looper()..whenComplete(() => _runner = null);
   }
 
   Future<bool> looper() async {
@@ -79,73 +71,59 @@ class EventLooper {
   Future<void> eventCallback(EventCallback callback,
       {debugLabel = 'eventCallback'}) async {
     int? start;
-    var low = 0;
-    var waitNum = 0;
 
+    var waitNum = 0;
+    var low = 0, high = 0, med = 0;
     Future<void> wait(
         [FutureOrVoidCallback? closure, String label = '']) async {
       start ??= stopwatch;
 
-      if (closure != null) closure();
-
       final use = (stopwatch - start!) / 1000;
-      var waitUs = 0;
+
+      if (use > 3) {
+        high++;
+      } else if (use > 1) {
+        med++;
+      } else if (use > 0.5) {
+        low++;
+      }
+
       var loopCount = 0;
+      var waitUs = 0;
 
       /// 回到事件队列，让出资源
-      /// 等待空闲
-      /// 等待时间过长意味着有其他任务正在执行，如：drawFrame，其他事件
       do {
-        if (loopCount > 1000) break;
+        if (loopCount > 100) break;
 
-        final _s = stopwatch;
-
+        final _start = stopwatch;
         await releaseUI;
 
-        waitUs = stopwatch - _s;
+        if (closure != null && await closure()) break;
+
+        waitUs = stopwatch - _start;
+
         loopCount++;
-      } while (waitUs >= 1000);
+      } while (waitUs >= 2000);
 
       waitNum += loopCount;
 
-      // 耗时过小不打印
-      if (use > 0.5) {
-        var i = Log.info;
-
-        if (use > 3) {
-          i = Log.error;
-        } else if (use > 1) {
-          i = Log.warn;
-        }
-        Log.log(
-            i,
-            '$debugLabel use: ${use.toStringAsFixed(3)}ms '
-            'wait: ${(waitUs / 1000).toStringAsFixed(3)}ms low: $low |$label',
-            showPath: false);
-        low = 0;
-      } else {
-        low++;
-      }
       start = stopwatch;
     }
 
-    ;
-
     await runZoned(callback, zoneValues: {zoneWait: wait});
 
-    Log.i(
-        '$debugLabel end: ${((stopwatch - (start ?? 0)) / 1000).toStringAsFixed(3)}ms'
-        ' low: $low, wait: $waitNum');
-
-    // return result;
+    Log.i('$debugLabel low: ${getV(low)}, med: ${getV(med)}, '
+        'high: ${getV(high)}, wait: $waitNum');
   }
 
-  Future<void> wait([FutureOrVoidCallback? closure, label = '']) {
-    final _w = Zone.current[EventLooper.zoneWait];
+  String getV(int v) => v == 0 ? '' : '$v';
+
+  Future<void> wait([FutureOrVoidCallback? closure, label = '']) async {
+    final _w = Zone.current[zoneWait];
     if (_w is WaitCallback) {
       return _w(closure, label);
     }
-    if (closure != null) closure();
+    if (closure != null) await closure();
     return releaseUI;
   }
 }

@@ -44,12 +44,12 @@ class Api {
     return 'https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2';
   }
 
-  /// -- 未实现
   // 榜单
   static String topUrl(String catg, String date, int index) {
     return 'https://scxs.${domains.first}.com/top/man/top/$catg/$date/$index.html';
   }
 
+  /// -- 未实现
   // 分类
   static String bookCategory() {
     return 'https://scxs.${domains.first}.com/Categories/BookCategory.html';

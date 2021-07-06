@@ -71,7 +71,7 @@ class RenderContentView extends RenderBox with RenderObjectWithChildMixin<Render
   }
 
   void dpaint(PaintingContext context, Offset offset) {
-    context.setIsComplexHint();
+    // context.setIsComplexHint();
     final canvas = context.canvas;
     final isHorizontal = contentMetrics.isHorizontal;
     final topPad = ContentNotifier.topPad;

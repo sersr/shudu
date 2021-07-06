@@ -1,10 +1,11 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import '../../../utils/widget/page_animation.dart';
 import '../../../utils/utils.dart';
 
 abstract class PanSlideState<T extends StatefulWidget> extends State<T>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, PageAnimationMixin {
   late GlobalKey<PanOverlayState> _key;
   PanOverlayState? get _overlay => _key.currentState;
 
@@ -211,7 +212,7 @@ class PanSlideController {
   void hide({bool destory = false}) {
     _hide();
     _removeAfter(destory);
-    assert(Log.i('reverse #$hashCode'));
+    // assert(Log.i('reverse #$hashCode'));
   }
 
   void _hide() {
@@ -242,7 +243,7 @@ class PanSlideController {
     init();
     onanimating?.call();
     controller.forward();
-    assert(Log.i('forward #$hashCode'));
+    // assert(Log.i('forward #$hashCode'));
   }
 
   void trigger({bool immediate = true}) {

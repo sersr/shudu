@@ -12,12 +12,11 @@ class ServerBase {
         if (req.uri.path == ConnectURI.path) {
           final args = req.uri.queryParameters;
           final key = '${args['name']}_${args['password']}';
-          // 服务器管理登录用户
+
           var socket = await WebSocketTransformer.upgrade(req);
           users[key]?.close();
           users[key] = socket;
           socket.listen((data) {
-            // // 数据解析，移交管理权
             // socket.add('receive #${shortHash(socket)}: $data');
 
             if (data == 'close') {
@@ -28,10 +27,9 @@ class ServerBase {
             handleMessager(data, key);
           }, onDone: () {
             users.remove(key);
-            // 移除
           }, onError: (error) {
             users.remove(key);
-            // 移除，处理错误
+
             print('$error');
           });
         }
@@ -87,7 +85,8 @@ abstract class ConnectURI {
   static int port = 9999;
   static String path = '/ws';
 
-  static String uriString(String name, String pwd) => 'ws://$host:$port$path?name=$name&password=$pwd';
+  static String uriString(String name, String pwd) =>
+      'ws://$host:$port$path?name=$name&password=$pwd';
 }
 
 class User {
@@ -102,7 +101,8 @@ class User {
   Future<User> init() async {
     if (_webSocket != null && _webSocket!.readyState < 2) return this;
 
-    final webSocket = _webSocket = await WebSocket.connect(ConnectURI.uriString(name, pwd));
+    final webSocket =
+        _webSocket = await WebSocket.connect(ConnectURI.uriString(name, pwd));
     _userConsumer = UserSink(webSocket, this);
     stream = _MessageTransformer().bind(webSocket);
     return this;
@@ -111,7 +111,8 @@ class User {
   Future<StreamSubscription<Message>> listen(void Function(dynamic)? onData,
       {Function? onError, void Function()? onDone, bool? cancelOnError}) async {
     if (stream == null) await init();
-    return stream!.listen(onData, onDone: onDone, onError: onError, cancelOnError: cancelOnError);
+    return stream!.listen(onData,
+        onDone: onDone, onError: onError, cancelOnError: cancelOnError);
   }
 
   Sink get sink => _userConsumer;
@@ -132,7 +133,12 @@ class Message {
   final data;
 
   Map<String, Object> toJson() {
-    return <String, Object>{'date': date.toString(), 'type': type, 'data': data.toString(), 'user': user};
+    return <String, Object>{
+      'date': date.toString(),
+      'type': type,
+      'data': data.toString(),
+      'user': user
+    };
   }
 
   static Message? formJson(Map map) {

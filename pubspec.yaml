@@ -1,11 +1,11 @@
 name: shudu
 description: 小说阅读·仿
 
-publish_to: "none"
+publish_to: none
 version: 1.0.1
 
 environment:
-  sdk: ">=2.12.0-0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -20,10 +20,10 @@ dependencies:
   device_info: ^2.0.1
   dio: ^4.0.0
   equatable: ^2.0.2
+  fake_async: ^1.2.0
   flutter_bloc: ^7.0.0
-  # flutter_sticky_header: ^0.6.0
-  flutter_sticky_header:
-    path: ../plugins/flutter_sticky_header
+  flutter_sticky_header: ^0.6.0
+  flutter_displaymode: ^0.3.2
   hive: ^2.0.4
   hive_flutter: ^1.0.0
   # http: ^0.13.3
@@ -33,43 +33,47 @@ dependencies:
   path_provider: ^2.0.1
   provider: ^5.0.0
   # retrofit: ^2.0.0-beta1
-  sqlite3: ^1.1.1
-  sqlite3_flutter_libs: ^0.4.3
-  sqlite3_library_windows: ^2.0.0
+  # sqlite3: ^1.1.1
+  # sqlite3_flutter_libs: ^0.4.3
+  # sqlite3_library_windows: ^2.0.0
   stream_channel: ^2.1.0
+  stack_trace: ^1.10.0
   url_launcher: ^6.0.3
   video_player: ^2.1.0
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
   bangs:
-    path: ./plugins/bangs
-  pull_to_refresh:
-    path: ./plugins/pull_to_refresh
+    git: https://github.com/sersr/bangs
+  pull_to_refresh: ^2.0.0
+
   shared_preferences: ^2.0.5
+  nop_db:
+    git: https://github.com/sersr/nop_db
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.0.3
+  build_runner: ^2.0.4
   hive_generator: ^1.1.0
   json_serializable: ^4.1.2
-  moor_generator: ^4.3.0
   pedantic: ^1.11.0
+  nop_db_gen:
+    git: https://github.com/sersr/nop_db_gen
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:
   uses-material-design: true
-  fonts:
+  # fonts:
     # - family: SourceHanSerif
     #   fonts:
     #     - asset: assets/fonts/SourceHanSerif-Regular.ttc
     #     - asset: assets/fonts/SourceHanSerif-Bold.ttc
     #       weight: 700
-    - family: NotoSansSC
-      fonts:
-        - asset: assets/fonts/NotoSansSC-Regular.otf
+    # - family: NotoSansSC
+    #   fonts:
+    #     - asset: assets/fonts/NotoSansSC-Regular.otf
         # - asset: assets/fonts/NotoSansSC-Bold.otf
     #       weight: 700
     # - family: RobotoMono

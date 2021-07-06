@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -29,9 +30,9 @@ class ImageResolve extends StatelessWidget {
     );
   }
 
-  Widget _futureBuilder(Future<String> _future, {bool isFirst = true}) {
+  Widget _futureBuilder(FutureOr<String?> _future, {bool isFirst = true}) {
     return FutureBuilder(
-      future: _future,
+      future: Future.value(_future),
       builder: (context, AsyncSnapshot<String?> snap) {
         if (snap.hasData) {
           if (snap.data!.isEmpty) {
@@ -49,8 +50,7 @@ class ImageResolve extends StatelessWidget {
             }
             if (frame != null) {
               if (shadow) {
-              return ImageShadow(child: child);
-
+                return ImageShadow(child: child);
               }
               return child;
             } else {
@@ -93,9 +93,3 @@ class __ImageState extends State<_Image> {
     return Container();
   }
 }
-
-           
-            
-           
-            
-           

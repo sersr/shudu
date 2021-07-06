@@ -8,7 +8,12 @@ import 'package:hive/hive.dart';
 import '../utils/utils.dart';
 
 class ConfigOptions {
-  ConfigOptions({this.pageBuilder, this.platform, this.resample, this.resampleOffset, this.showPerformanceOverlay});
+  ConfigOptions(
+      {this.pageBuilder,
+      this.platform,
+      this.resample,
+      this.resampleOffset,
+      this.showPerformanceOverlay});
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
   bool? resample;
@@ -26,7 +31,7 @@ class ConfigOptions {
   @override
   bool operator ==(Object? other) {
     return
-        //  identical(other, this) &&
+         identical(other, this) ||
         other is ConfigOptions &&
             other.platform == platform &&
             other.pageBuilder == pageBuilder &&
@@ -142,8 +147,11 @@ class OptionsNotifier extends ChangeNotifier {
       ..resamplingEnabled = resample
       ..samplingOffset = Duration(milliseconds: resampleOffset!);
 
-    options =
-        ConfigOptions(platform: platform, pageBuilder: pageBuilder, resample: resample, resampleOffset: resampleOffset);
+    options = ConfigOptions(
+        platform: platform,
+        pageBuilder: pageBuilder,
+        resample: resample,
+        resampleOffset: resampleOffset);
   }
 
   Future<void> saveOptions() async {
@@ -151,21 +159,22 @@ class OptionsNotifier extends ChangeNotifier {
     if (options.platform != null && _box.get(_platform) != options.platform!)
       await _box.put(_platform, options.platform!);
 
-    if (options.pageBuilder != null && _box.get(_pageBuilder) != options.pageBuilder!) {
+    if (options.pageBuilder != null &&
+        _box.get(_pageBuilder) != options.pageBuilder!) {
       await _box.put(_pageBuilder, options.pageBuilder!);
     }
     if (options.resample != null && _box.get(_resample) != options.resample!) {
       GestureBinding.instance!.resamplingEnabled = options.resample!;
       await _box.put(_resample, options.resample!);
     }
-    
-    if (options.resampleOffset != null && _box.get(_resampleOffset) != options.resampleOffset!) {
-      GestureBinding.instance!.samplingOffset = Duration(milliseconds: options.resampleOffset!);
+
+    if (options.resampleOffset != null &&
+        _box.get(_resampleOffset) != options.resampleOffset!) {
+      GestureBinding.instance!.samplingOffset =
+          Duration(milliseconds: options.resampleOffset!);
       await _box.put(_resampleOffset, options.resampleOffset!);
     }
 
-    assert(Log.i(
-      '$options',
-    ));
+    assert(Log.i('$options'));
   }
 }

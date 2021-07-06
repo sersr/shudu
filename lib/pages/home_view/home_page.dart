@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import '../../database/table.dart';
-import '../book_content_view/book_content_page.dart';
-import '../../bloc/bloc.dart';
 
+import '../../bloc/bloc.dart';
 import '../../bloc/book_cache_bloc.dart';
-import '../../bloc/book_info_bloc.dart';
 import '../../bloc/options_bloc.dart';
 import '../../bloc/painter_bloc.dart';
 import '../../bloc/search_bloc.dart';
+import '../../database/nop_database.dart';
 import '../../utils/utils.dart';
+import '../book_content_view/book_content_page.dart';
 import '../book_info_view/book_info_page.dart';
 import '../book_list_view/list_main.dart';
 import 'book_item.dart';
@@ -52,28 +52,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ..addInitCallback(opts.init)
         ..addInitCallback(painterBloc.initConfigs)
         ..addInitCallback(search.init);
-      _future ??= cache.repository.initState().then((_) {
+      _future ??= cache.repository.initState.then((_) {
         painterBloc.metricsChange();
         cache.add(BookChapterIdFirstLoadEvent());
       });
     }
-    // 创建实例（第一次使用才开始创建）
-    context.read<BookInfoBloc>();
   }
 
-  var autoState = false;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      if (painterBloc.isActive.value) {
-        autoState = true;
-        painterBloc.stopAuto();
-      }
+      painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
-      if (autoState) {
-        autoState = false;
-        painterBloc.auto();
-      }
+      painterBloc.autoRun.stopAutoRun();
     }
   }
 
@@ -99,10 +91,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Timer? dialogtimer;
+  Timer? _exitTimer;
   @override
   Future<bool> didPopRoute() async {
-    final inTime = dialogtimer == null ? false : dialogtimer!.isActive;
+    final inTime = _exitTimer?.isActive == true;
     if (inTime) {
       // 退出 app
       return false;
@@ -129,9 +121,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       );
     });
     Overlay.of(context)!.insert(entry);
-    dialogtimer = Timer(Duration(seconds: 2), () {
-      entry.remove();
-    });
+    _exitTimer = Timer(const Duration(seconds: 2), entry.remove);
     return true;
   }
 
@@ -222,18 +212,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       future: _future,
       builder: (context, snap) {
         //
-        var data = MediaQuery.of(context);
-        final changep = data.padding == EdgeInsets.zero;
+        // var data = MediaQuery.of(context);
+        // final changep = data.padding == EdgeInsets.zero;
         return AbsorbPointer(
           absorbing: snap.connectionState != ConnectionState.done,
-          child: changep
-              ? MediaQuery(
-                  data: data.copyWith(
-                      padding: EdgeInsets.fromWindowPadding(
-                          ui.window.systemGestureInsets,
-                          ui.window.devicePixelRatio)),
-                  child: child)
-              : child,
+          child: child,
+          // child: changep
+          //     ? MediaQuery(
+          //         data: data.copyWith(
+          //             padding: EdgeInsets.fromWindowPadding(
+          //                 ui.window.systemGestureInsets,
+          //                 ui.window.devicePixelRatio)),
+          //         child: child)
+          //     : child,
         );
       },
     );
@@ -502,20 +493,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               text: '书籍详情',
               onTap: () {
                 Navigator.of(context).pop();
-                BookInfoPage.push(context, item.id!);
+                BookInfoPage.push(context, item.bookId!);
               }),
           btn2(
               icon: Icons.touch_app_sharp,
-              text: item.isTop == 1 ? '取消置顶' : '书籍置顶',
+              text: item.isTop ?? false ? '取消置顶' : '书籍置顶',
               onTap: () {
-                cache.updateTop(item.id!, item.isTop == 1 ? 0 : 1);
+                cache.updateTop(item.bookId!, item.isTop ?? false);
                 Navigator.of(context).pop();
               }),
           btn2(
               icon: Icons.delete_forever_outlined,
               text: '删除书籍',
               onTap: () {
-                cache.deleteBook(item.id!);
+                cache.deleteBook(item.bookId!);
                 Navigator.of(context).pop();
               }),
         ],
@@ -529,6 +520,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return RefreshIndicator(
       key: _refreshKey,
       displacement: 20.0,
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () {
         final bloc = cache
           ..completerLoading()
@@ -553,7 +545,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             }
             return Scrollbar(
               child: ListView.builder(
-                physics: ClampingScrollPhysicsNew(),
                 itemCount: children.length,
                 padding: const EdgeInsets.all(0.0),
                 itemBuilder: (context, index) {
@@ -576,8 +567,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         bookName: item.name,
                         bookUdateItem: item.lastChapter,
                         bookUpdateTime: item.updateTime,
-                        isTop: item.isTop == 1,
-                        isNew: item.isNew == 1,
+                        isTop: item.isTop ?? false,
+                        isNew: item.isNew ?? false,
                       ),
                       radius: 6.0,
                       bgColor: bgColor,
@@ -586,7 +577,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       onTap: () {
                         cache.completerLoading();
                         BookContentPage.push(
-                            context, item.id!, item.chapterId!, item.page!);
+                            context, item.bookId!, item.chapterId!, item.page!);
                       },
                       onLongPress: () {
                         showModalBottomSheet(

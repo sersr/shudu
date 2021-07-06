@@ -39,7 +39,8 @@ Widget btn1(
   );
 }
 
-Widget btn2({VoidCallback? onTap, required String text, required IconData icon}) {
+Widget btn2(
+    {VoidCallback? onTap, required String text, required IconData icon}) {
   return RepaintBoundary(
     child: InkWell(
       borderRadius: BorderRadius.circular(4.0),
@@ -70,4 +71,28 @@ Widget btn2({VoidCallback? onTap, required String text, required IconData icon})
       ),
     ),
   );
+}
+
+Widget reloadBotton(VoidCallback onTap) {
+  return Center(
+    child: btn1(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      bgColor: Colors.blue,
+      splashColor: Colors.blue[200],
+      radius: 40,
+      child: Text(
+        '重新加载',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
+      onTap: onTap,
+    ),
+  );
+}
+
+Widget loadingIndicator({double radius = 25}) {
+  return Center(
+      child: Container(
+          width: radius,
+          height: radius,
+          child: CircularProgressIndicator(strokeWidth: 3.0)));
 }

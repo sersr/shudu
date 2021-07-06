@@ -4,16 +4,28 @@ PODS:
   - device_info (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - FMDB (2.7.5):
-    - FMDB/standard (= 2.7.5)
-  - FMDB/standard (2.7.5)
   - path_provider (0.0.1):
     - Flutter
   - shared_preferences (0.0.1):
     - Flutter
-  - sqflite (0.0.2):
+  - sqlite3 (3.35.5):
+    - sqlite3/common (= 3.35.5)
+  - sqlite3/common (3.35.5)
+  - sqlite3/fts5 (3.35.5):
+    - sqlite3/common
+  - sqlite3/json1 (3.35.5):
+    - sqlite3/common
+  - sqlite3/perf-threadsafe (3.35.5):
+    - sqlite3/common
+  - sqlite3/rtree (3.35.5):
+    - sqlite3/common
+  - sqlite3_flutter_libs (0.0.1):
     - Flutter
-    - FMDB (>= 2.7.5)
+    - sqlite3 (~> 3.35.4)
+    - sqlite3/fts5
+    - sqlite3/json1
+    - sqlite3/perf-threadsafe
+    - sqlite3/rtree
   - url_launcher (0.0.1):
     - Flutter
   - video_player (0.0.1):
@@ -25,13 +37,13 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
   - shared_preferences (from `.symlinks/plugins/shared_preferences/ios`)
-  - sqflite (from `.symlinks/plugins/sqflite/ios`)
+  - sqlite3_flutter_libs (from `.symlinks/plugins/sqlite3_flutter_libs/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
   - video_player (from `.symlinks/plugins/video_player/ios`)
 
 SPEC REPOS:
   trunk:
-    - FMDB
+    - sqlite3
 
 EXTERNAL SOURCES:
   battery:
@@ -44,8 +56,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider/ios"
   shared_preferences:
     :path: ".symlinks/plugins/shared_preferences/ios"
-  sqflite:
-    :path: ".symlinks/plugins/sqflite/ios"
+  sqlite3_flutter_libs:
+    :path: ".symlinks/plugins/sqlite3_flutter_libs/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
   video_player:
@@ -55,10 +67,10 @@ SPEC CHECKSUMS:
   battery: 6b19dafdbba590f03b1f0cd2f1224e3ffedadbe6
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
-  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   shared_preferences: af6bfa751691cdc24be3045c43ec037377ada40d
-  sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
+  sqlite3: 75da32fd4e3574f6c38566a9f0114cfe792c8db5
+  sqlite3_flutter_libs: aedb7b6ba191f9a052dcef77691cf5d37437431c
   url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
   video_player: 9cc823b1d9da7e8427ee591e8438bfbcde500e6e
 

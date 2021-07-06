@@ -1,17 +1,11 @@
-import 'book_event.dart';
-import 'book_event_messager.dart';
-import 'repository.dart';
+import 'package:nop_db/nop_db.dart';
 
-/// 中间层
-///
-/// 由 main Isolate 传输到另一个 Isolate
-class BookEventMain extends BookEvent
-    with
-        BookEventDatabaseMessager,
-        ComplexMessager,
-        SaveImageMessager,
-        BookEventMessager {
-  BookEventMain(this.repository);
+import 'base/book_event.dart';
+import 'mixin/event_messager_mixin.dart';
+
+class BookEventMain extends BookEventMessager
+    with ComplexMessager, SaveImageMessager {
+  BookEventMain(this.send);
   @override
-  final Repository repository;
+  final SendEvent send;
 }

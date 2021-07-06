@@ -3,34 +3,33 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../database/table.dart';
+import '../database/nop_database.dart';
 import '../event/event.dart';
 
 abstract class BookChapterIdEvent extends Equatable {
-  BookChapterIdEvent();
+  const BookChapterIdEvent();
   @override
   List<Object?> get props => [];
 }
 
-class _BookCacheInnerEvent extends BookChapterIdEvent {}
+class _BookCacheInnerEvent extends BookChapterIdEvent {
+  const _BookCacheInnerEvent();
+}
 
 class BookChapterIdFirstLoadEvent extends BookChapterIdEvent {}
 
 class BookChapterIdState {
   BookChapterIdState({this.list = const [], this.first = false});
-  List<Map> list;
+  List<BookCache> list;
   List<BookCache>? _sortChildren;
   List<BookCache> get sortChildren {
-    var _bookCaches = <BookCache>[];
+    var _bookCaches = list;
     if (_sortChildren != null) return _sortChildren!;
 
     if (list.isNotEmpty) {
-      for (var bookCache in list) {
-        _bookCaches.add(BookCache.fromMap(bookCache as Map<String, dynamic>));
-      }
       _bookCaches.sort((p, n) => n.sortKey! - p.sortKey!);
-      final isTop = _bookCaches.where((element) => element.isTop == 1);
-      final custom = _bookCaches.where((element) => element.isTop != 1);
+      final isTop = _bookCaches.where((element) => element.isTop == true);
+      final custom = _bookCaches.where((element) => element.isTop != true);
       _sortChildren = isTop.toList()..addAll(custom);
     } else {
       _sortChildren = <BookCache>[];
@@ -43,13 +42,13 @@ class BookChapterIdState {
   List<BookCache> get showChildren {
     final sort = sortChildren;
 
-    _showChildren ??= sort.where((element) => element.isShow != 0).toList();
+    _showChildren ??= sort.where((element) => element.isShow == true).toList();
 
     return _showChildren!;
   }
 
   final bool first;
-  factory BookChapterIdState.fromMap(List<Map> list) {
+  factory BookChapterIdState.fromMap(List<BookCache> list) {
     return BookChapterIdState(list: list);
   }
 }
@@ -58,16 +57,40 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   BookCacheBloc(this.repository) : super(BookChapterIdState(first: true));
   Repository repository;
 
-  // 不在 [mapEventToState] 中处理异步，不然事件无法即时处理
   @override
   Stream<BookChapterIdState> mapEventToState(BookChapterIdEvent event) async* {
     if (event is BookChapterIdFirstLoadEvent) {
-      // update(); // 正式版
       load();
+      // _cacheSub ??= repository.bookEvent.bookCacheEvent
+      //     .watchMainBookListDb()
+      //     .listen(_listen);
     } else if (event is _BookCacheInnerEvent) {
       yield* _load();
     }
   }
+
+  // StreamSubscription? _cacheSub;
+
+  // void cancel() {
+  //   _cacheSub?.cancel();
+  //   _cacheSub = null;
+  // }
+
+  // void get pause => _cacheSub?.pause();
+
+  // var _cacheList = <BookCache>[];
+
+  // Completer? _receive;
+  // void _listen(List<BookCache>? data) {
+  //   if (data == null) return;
+  //   if (_cacheList.isEmpty && data.isNotEmpty)
+  //     add(const _BookCacheInnerEvent());
+
+  //   _cacheList = data;
+  //   _receive?.complete();
+  //   _receive = null;
+  //   Log.e('_main list listen');
+  // }
 
   Completer<void>? loading;
   Future<void>? get awaitloading => loading?.future;
@@ -78,19 +101,23 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
     }
   }
 
+  FutureOr<List<BookCache>> get getList async {
+    return await repository.bookEvent.bookCacheEvent.getMainBookListDb() ??
+        const [];
+  }
+
   Stream<BookChapterIdState> _load() async* {
-    final list = await repository.bookEvent.bookInfoEvent.getMainBookListDb();
-    yield BookChapterIdState.fromMap(list);
+    yield BookChapterIdState.fromMap(await getList);
     completerLoading();
   }
 
   Future<void> _update() async {
-    final list = await repository.bookEvent.bookInfoEvent.getMainBookListDb();
+    final list = await getList;
     if (list.isNotEmpty) {
       final s = BookChapterIdState.fromMap(list);
       for (var item in s.sortChildren) {
         await Future.delayed(Duration(milliseconds: 200));
-        await loadFromNet(item.id!);
+        await loadFromNet(item.bookId!);
       }
     }
   }
@@ -106,22 +133,24 @@ class BookCacheBloc extends Bloc<BookChapterIdEvent, BookChapterIdState> {
   }
 
   Future<void> addBook(BookCache bookCache) async {
-    await repository.bookEvent.bookInfoEvent.insertBook(bookCache);
-    emitUpdate();
+    await repository.bookEvent.bookCacheEvent.insertBook(bookCache);
   }
 
-  Future<void> updateTop(int id, int isTop, {int isShow = 1}) async {
-    await repository.bookEvent.bookInfoEvent
+  Future<void> updateTop(int id, bool isTop, {bool isShow = true}) async {
+    // _receive ??= Completer<void>()..future.whenComplete(emitUpdate);
+    await repository.bookEvent.bookCacheEvent
         .updateBookStatusAndSetTop(id, isTop, isShow);
     emitUpdate();
   }
 
   Future<void> deleteBook(int id) async {
-    await repository.bookEvent.bookInfoEvent.deleteBook(id);
+    // _receive ??= Completer<void>()..future.whenComplete(emitUpdate);
+
+    await repository.bookEvent.bookCacheEvent.deleteBook(id);
     emitUpdate();
   }
 
-  Future<void> loadFromNet(int id) async {
-    return repository.bookEvent.bookInfoEvent.updateBookStatusAndSetNew(id);
+  Future<int> loadFromNet(int id) async {
+    return await repository.bookEvent.updateBookStatus(id) ?? 0;
   }
 }

@@ -1,6 +1,7 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+
+import 'list_shudan.dart';
+import 'top_view.dart';
 
 class ListBangdanPage extends StatefulWidget {
   @override
@@ -12,115 +13,75 @@ class _ListBangdanPageState extends State<ListBangdanPage> {
   final change = ValueNotifier(false);
   @override
   Widget build(BuildContext context) {
-    var r = math.sqrt(math.pow(30, 2) + math.pow(40, 2)) / 50;
     return DefaultTabController(
       initialIndex: 0,
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('榜单'),
-          toolbarHeight: 86,
-          bottom: TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.black,
-            labelStyle: TextStyle(fontSize: 15),
-            tabs: [
-              Text('周榜'),
-              Text('月榜'),
-              Text('总榜'),
-            ],
-          ),
+          body: BarLayout(
+        title: Text('榜单'),
+        bottom: TabBar(
+          labelColor: Colors.grey.shade500,
+          unselectedLabelColor: Colors.black,
+          labelStyle: TextStyle(fontSize: 15),
+          tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
         ),
         body: TabBarView(
-          children: [
-            // ListView.builder(itemBuilder: (context, index) {
-            //   if (index == 5) {
-            //     return InkWell(
-            //       onTap: () {
-            //         change.value = !change.value;
-            //       },
-            //       child: RepaintBoundary(
-            //         child: AnimatedBuilder(
-            //             animation: change,
-            //             builder: (context, child) {
-            //               return Container(
-            //                 height: change.value ? 50 : 100,
-            //                 color: Colors.grey,
-            //                 // child: Text('value :${change.value ? 'slslsl' : 'hello'}'),
-            //               );
-            //             }),
-            //       ),
-            //     );
-            //   }
-            //   return Container(
-            //     color: Colors.blue,
-            //     height: 50,
-            //   );
-            // }),
-            wrap(
-              child: Container(
-                color: Colors.lightGreen,
-              ),
-              div: 1,
-            ),
-            wrap(
-              child: Container(
-                color: Colors.amber,
-              ),
-              div: 2,
-            ),
-            wrap(
-              child: Container(
-                color: HSVColor.fromAHSV(1.0, math.atan2(-10, 100) * 180 / math.pi + 180, r, 1).toColor(),
-              ),
-              div: 3,
-            ),
-          ],
+          children: List.generate(3, (index) => Top(index: index)),
         ),
-      ),
+      )),
     );
   }
 }
 
-Widget wrap({required Widget child, int? div}) {
-  var listnotf = ValueNotifier(0);
-
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisAlignment: MainAxisAlignment.start,
-    children: [
-      Column(
-        children: [
-          animationBuilder('最热榜', listnotf, 0, div),
-          animationBuilder('完结榜', listnotf, 1, div),
-          animationBuilder('推荐榜', listnotf, 2, div),
-          animationBuilder('新书榜', listnotf, 3, div),
-          animationBuilder('评分榜', listnotf, 4, div),
-          animationBuilder('收藏榜', listnotf, 5, div),
-        ],
-      ),
-      Expanded(
-        child: child,
-      ),
-    ],
-  );
+class Top extends StatefulWidget {
+  const Top({Key? key, required this.index}) : super(key: key);
+  final int index;
+  @override
+  _TopState createState() => _TopState();
 }
 
-Widget animationBuilder(String text, ValueNotifier<int> notifier, int index, int? div) {
-  return GestureDetector(
-    onTap: () {
-      notifier.value = index;
-    },
-    child: RepaintBoundary(
-      child: AnimatedBuilder(
-          animation: notifier,
-          builder: (context, child) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
-              color: notifier.value == index ? Colors.grey[300] : Colors.transparent,
-              child: Text(text),
-            );
-          }),
-    ),
-  );
+class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
+  final _titles = <String>['最热榜', '完结榜', '推荐榜', '新书榜', '评分榜', '收藏榜'];
+  final _urlKeys = <String>['hot', 'over', 'commend', 'new', 'vote', 'collect'];
+  final _urlDates = <String>['week', 'month', 'total'];
+  var _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Row(
+      children: [
+        Container(
+            width: 80,
+            child: Center(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(top: 10),
+                itemBuilder: (context, index) {
+                  return Material(
+                    color: _currentIndex == index
+                        ? const Color.fromARGB(255, 210, 210, 210)
+                        : null,
+                    child: InkWell(
+                      onTap: () => setState(() => _currentIndex = index),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12.0, horizontal: 8.0),
+                        child: Center(child: Text(_titles[index])),
+                      ),
+                    ),
+                  );
+                },
+                itemCount: _titles.length,
+              ),
+            )),
+        Expanded(
+            child: TopListView(
+                ctg: _urlKeys[_currentIndex], date: _urlDates[widget.index]))
+      ],
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }

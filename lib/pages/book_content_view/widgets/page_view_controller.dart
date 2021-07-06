@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -16,8 +14,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     required this.scrollingNotify,
     required this.vsync,
     // required this.getDragState,
-    required this.hasContent,
-  })   : _maxExtent = double.infinity,
+    required this.getBounds,
+  })  : _maxExtent = double.infinity,
         _minExtent = double.negativeInfinity {
     _activity = IdleActivity(this);
   }
@@ -26,7 +24,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   // BoolCallback getDragState;
   void Function(bool) scrollingNotify;
-  int Function(int) hasContent;
+  int Function() getBounds;
 
   Activity? _activity;
 
@@ -75,7 +73,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   );
 
   Simulation getSimulation(double velocity) {
-    return ClampingScrollSimulationNew(position: pixels, velocity: velocity);
+    return ClampingScrollSimulation(position: pixels, velocity: velocity);
   }
 
   Simulation getSpringSimulation(double velocity, double end) {
@@ -84,24 +82,22 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   void nextPage() {
     if (_lastActivityIsIdle) {
-      final nextPage = page.round();
-
       if (axis == Axis.horizontal) {
-        if (ContentBounds.hasRight(hasContent(nextPage))) {
+        if (ContentBounds.hasRight(getBounds())) {
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
       } else {
-        if (hasContent(nextPage) & ContentBounds.addRight != 0) {
+        if (getBounds() & ContentBounds.addRight != 0) {
           var _n = page;
 
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
 
-          if (ContentBounds.hasRight(hasContent((page + 0.5).round()))) {
+          if (ContentBounds.hasRight(getBounds())) {
             _n += 1;
           } else {
             _n = (page + 0.5).roundToDouble();
@@ -116,8 +112,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void prePage() {
-    if (_activity is IdleActivity &&
-        ContentBounds.hasLeft(hasContent(page.toInt() - 1))) {
+    if (_activity is IdleActivity && ContentBounds.hasLeft(getBounds())) {
       if (minExtent!.isFinite) {
         _minExtent = double.negativeInfinity;
       }
@@ -132,7 +127,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goIdle() {
-    // _canDrag = true;
     scrollingnotifier(false);
     beginActivity(IdleActivity(this));
   }
@@ -140,15 +134,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void setPixels(double v) {
     if (v == _pixels) return;
-    // 边界信息，在 [performLayout] 中设置，
-    // 只要 [v] 值不同，就要更新并重新设置边界，不然会卡住
+
     v = v.clamp(minExtent!, maxExtent!);
-    // if (_pixels == v && v != minExtent) {
-    //   // 帧后回调
-    //   SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
-    //     goBallisticResolveWithLastActivity();
-    //   });
-    // }
     _pixels = v;
     notifyListeners();
   }
@@ -170,47 +157,36 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     }
   }
 
+  void animateTo(double velocity, {double f = 0.8}) {
+    int to;
+    if (pixels == minExtent || pixels == maxExtent) notifyListeners();
+
+    if (velocity < -200.0) {
+      to = (page - f).round();
+      velocity = velocity < -500 ? velocity / 2 : velocity;
+    } else if (velocity > 200.0) {
+      to = (page + f).round();
+      velocity = velocity > 500 ? velocity / 2 : velocity;
+    } else {
+      to = page.round();
+    }
+
+    final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
+
+    beginActivity(BallisticActivity(
+      delegate: this,
+      vsync: vsync,
+      end: () => end,
+      simulation: getSpringSimulation(velocity, end),
+    ));
+  }
+
   @override
   void goBallistic(double velocity) {
-    // if (!_canDrag) {
-    // goIdle();
-    // return;
-    // }
-
-    int to;
-
     if (axis == Axis.horizontal) {
-      if (velocity < -200.0) {
-        to = (page - 0.5).round();
-        velocity = velocity < -500 ? velocity / 2 : velocity;
-      } else if (velocity > 200.0) {
-        to = (page + 0.5).round();
-        velocity = velocity > 500 ? velocity / 2 : velocity;
-      } else {
-        to = page.round();
-      }
-
-      final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
-
-      // var duration = ((end - pixels).abs() * ui.window.devicePixelRatio).toInt();
-      // duration = duration > 400 ? 400 : duration;
-
-      // beginActivity(DrivenAcitvity(
-      //   delegate: this,
-      //   vsync: vsync,
-      //   to: end,
-      //   from: pixels,
-      //   duration: Duration(milliseconds: duration),
-      //   curve: Curves.ease,
-      // ));
-
-      beginActivity(BallisticActivity(
-        delegate: this,
-        vsync: vsync,
-        end: () => end,
-        simulation: getSpringSimulation(velocity, end),
-      ));
+      animateTo(velocity, f: 0.5);
     } else {
+      if (pixels == minExtent || pixels == maxExtent) notifyListeners();
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
@@ -345,6 +321,7 @@ class ContentPreNextElement extends RenderObjectElement {
   void performRebuild() {
     super.performRebuild();
     removeAll();
+    renderObject.willLayout();
   }
 
   void removeAll() {
@@ -427,6 +404,10 @@ class ContentPreNextRenderObject extends RenderBox {
     assert(childlist[index] == child);
     childlist.remove(index);
     dropChild(child);
+  }
+
+  void willLayout() {
+    markNeedsLayout();
   }
 
   @override
@@ -519,26 +500,27 @@ class ContentPreNextRenderObject extends RenderBox {
     /// 更正
     if (canPaint) {
       for (var i = firstIndex!; i <= lastIndex!; i++) {
+        final leftRight = nopController.getBounds();
+        final hasLeft = ContentBounds.hasLeft(leftRight);
+        final hasRight = ContentBounds.hasRight(leftRight);
+
+        _element!._build(nopController.page.round(), changeState: true);
+        nopController.applyConentDimension(
+          minExtent: hasLeft
+              ? double.negativeInfinity
+              : indexToLayoutOffset(extent, firstIndex!),
+          maxExtent: hasRight
+              ? double.infinity
+              : indexToLayoutOffset(extent, lastIndex!),
+        );
         assert(childlist.containsKey(i));
         final data = childlist[i]!.parentData as NopPageViewParenData;
-        data.layoutOffset =
-            computeAbsolutePaintOffset(indexToLayoutOffset(extent, i), pixels);
+        data.layoutOffset = computeAbsolutePaintOffset(
+            indexToLayoutOffset(extent, i)
+                .clamp(nopController.minExtent!, nopController.maxExtent!),
+            pixels);
       }
       collectGarbage(firstIndex!, lastIndex!);
-      _element!._build(nopController.page.round(), changeState: true);
-
-      final leftRight = nopController.hasContent(firstIndex!);
-      final hasLeft = ContentBounds.hasLeft(leftRight);
-      final hasRight = ContentBounds.hasRight(leftRight);
-
-      nopController.applyConentDimension(
-        minExtent: hasLeft
-            ? double.negativeInfinity
-            : indexToLayoutOffset(extent, firstIndex!),
-        maxExtent: hasRight
-            ? double.infinity
-            : indexToLayoutOffset(extent, lastIndex!),
-      );
     }
   }
 
@@ -644,4 +626,3 @@ class ContentPreNextRenderObject extends RenderBox {
     });
   }
 }
-

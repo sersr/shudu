@@ -24,11 +24,16 @@ class ShuduApp extends StatelessWidget {
           platform: list[0] ?? defaultTargetPlatform,
           brightness: Brightness.light,
           fontFamily: 'NotoSansSC',
-          pageTransitionsTheme: PageTransitionsTheme(builders: {TargetPlatform.iOS: SlidePageTransition()}),
+          pageTransitionsTheme: const PageTransitionsTheme(builders: {
+            TargetPlatform.iOS: SlidePageTransition(),
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+          }),
         ),
         showPerformanceOverlay: list[1] ?? false,
         home: RepaintBoundary(child: const MyHomePage()),
-        navigatorObservers: [Provider.of<OptionsNotifier>(context).routeObserver],
+        navigatorObservers: [
+          Provider.of<OptionsNotifier>(context).routeObserver
+        ],
       );
     });
   }
@@ -48,17 +53,16 @@ class MulProvider extends StatelessWidget {
             create: (context) => BookCacheBloc(context.read<Repository>()),
           ),
           BlocProvider(
-            create: (context) => BookIndexBloc(repository: context.read<Repository>()),
+            create: (context) =>
+                BookIndexBloc(repository: context.read<Repository>()),
           ),
-          BlocProvider(create: (context) => SearchBloc(context.read<Repository>())),
-          BlocProvider(create: (context) => BookInfoBloc(context.read<Repository>())),
+          BlocProvider(
+              create: (context) => SearchBloc(context.read<Repository>())),
           ChangeNotifierProvider(
-            create: (context) => ContentNotifier(repository: context.read<Repository>()),
+            create: (context) => ContentNotifier(
+                repository: context.read<Repository>(),
+                indexBloc: context.read<BookIndexBloc>()),
           ),
-          // Provider(
-          //   create: (context) =>
-          //       PainterBloc(repository: context.read<Repository>(), bookCacheBloc: context.read<BookCacheBloc>()),
-          // ),
           BlocProvider(create: (context) => TextStylesBloc()),
         ],
         child: ShuduApp(),

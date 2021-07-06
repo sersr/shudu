@@ -14,13 +14,20 @@ class BookVote {
   @JsonKey(name: 'Score')
   final double? scroe;
 
-  factory BookVote.fromJson(Map<String, dynamic> json) => _$BookVoteFromJson(json);
+  factory BookVote.fromJson(Map<String, dynamic> json) =>
+      _$BookVoteFromJson(json);
   Map<String, dynamic> toJson() => _$BookVoteToJson(this);
 }
 
 @JsonSerializable()
 class SameUserBook {
-  const SameUserBook({this.id, this.img, this.lastChapter, this.lastChapterId, this.name, this.score});
+  const SameUserBook(
+      {this.id,
+      this.img,
+      this.lastChapter,
+      this.lastChapterId,
+      this.name,
+      this.score});
   @JsonKey(name: 'Id')
   final int? id;
   @JsonKey(name: 'Name')
@@ -34,7 +41,8 @@ class SameUserBook {
   @JsonKey(name: 'Score')
   final double? score;
 
-  factory SameUserBook.fromJson(Map<String, dynamic> json) => _$SameUserBookFromJson(json);
+  factory SameUserBook.fromJson(Map<String, dynamic> json) =>
+      _$SameUserBookFromJson(json);
   Map<String, dynamic> toJson() => _$SameUserBookToJson(this);
 }
 
@@ -50,7 +58,8 @@ class SameCategoryBook {
   @JsonKey(name: 'Score')
   final double? score;
 
-  factory SameCategoryBook.fromJson(Map<String, dynamic> json) => _$SameCategoryBookFromJson(json);
+  factory SameCategoryBook.fromJson(Map<String, dynamic> json) =>
+      _$SameCategoryBookFromJson(json);
   Map<String, dynamic> toJson() => _$SameCategoryBookToJson(this);
 }
 
@@ -103,8 +112,28 @@ class BookInfo {
   final List<SameUserBook>? sameUserBooks;
   @JsonKey(name: 'SameCategoryBooks')
   final List<SameCategoryBook>? sameCategoryBooks;
+  bool get isNull {
+    return author == null ||
+        bookStatus == null ||
+        bookVote == null ||
+        cId == null ||
+        cName == null ||
+        desc == null ||
+        id == null ||
+        img == null ||
+        lastChapterId == null ||
+        lastTime == null ||
+        name == null ||
+        sameCategoryBooks == null ||
+        sameUserBooks == null ||
+        firstChapterId == null ||
+        lastChapter == null;
+  }
 
-  factory BookInfo.fromJson(Map<String, dynamic> json) => _$BookInfoFromJson(json);
+  bool get isNotNull => !isNull;
+
+  factory BookInfo.fromJson(Map<String, dynamic> json) =>
+      _$BookInfoFromJson(json);
   Map<String, dynamic> toJson() => _$BookInfoToJson(this);
 }
 
@@ -114,6 +143,7 @@ class BookInfoRoot {
   final int? status;
   final String? info;
   final BookInfo? data;
-  factory BookInfoRoot.fromJson(Map<String, dynamic> json) => _$BookInfoRootFromJson(json);
+  factory BookInfoRoot.fromJson(Map<String, dynamic> json) =>
+      _$BookInfoRootFromJson(json);
   Map<String, dynamic> toJson() => _$BookInfoRootToJson(this);
 }

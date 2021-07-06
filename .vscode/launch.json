@@ -12,6 +12,17 @@
             "flutterMode": "release",
         },
         {
+            "name": "release_engine",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "release",
+            "args": [
+                "--local-engine-src-path=/Volumes/mbp/macos/engine/src",
+                "--local-engine=android_release_arm64",
+            ]
+        },
+        {
             "name": "debug",
             "request": "launch",
             "type": "dart",

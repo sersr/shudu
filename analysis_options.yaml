@@ -6,6 +6,7 @@ linter:
     unawaited_futures: false
     prefer_relative_imports: true
     curly_braces_in_flow_control_structures: false
+    avoid_single_cascade_in_expression_statements: false
 
 analyzer:
   errors:

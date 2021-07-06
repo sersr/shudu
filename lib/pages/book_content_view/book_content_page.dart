@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:provider/provider.dart';
 
 import '../../bloc/book_cache_bloc.dart';
@@ -32,7 +34,7 @@ class BookContentPage extends StatefulWidget {
 
     await _wait;
     await EventLooper.instance.scheduler.endOfFrame;
-    
+
     _wait = null;
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return BookContentPage(bookid: newBookid, cid: cid, page: page);
@@ -46,27 +48,19 @@ class BookContentPage extends StatefulWidget {
 class BookContentPageState extends PanSlideState<BookContentPage> {
   late ContentNotifier bloc;
   late BookCacheBloc blocCache;
-  late Animation animation;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheBloc>();
-    animation = ModalRoute.of(context)!.animation!..addStatusListener(canLoad);
-  }
-
-  void canLoad(AnimationStatus status) {
-    if (status == AnimationStatus.completed) {
-      uiOverlay().whenComplete(
-          () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
-    }
+    if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
   }
 
   @override
-  void dispose() {
-    animation.removeStatusListener(canLoad);
-    super.dispose();
+  void complete() {
+    uiOverlay().whenComplete(
+        () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
   }
 
   Timer? errorTimer;
@@ -89,45 +83,21 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: RepaintBoundary(
-                      child: ContentPageView(
-                        showCname: bloc.showCname,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: IgnorePointer(
-                        child: AnimatedBuilder(
-                          animation: bloc.loading,
-                          builder: (context, child) {
-                            if (bloc.loading.value) {
-                              return child!;
-                            }
-                            return Container();
-                          },
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                      child: RepaintBoundary(child: ContentPageView())),
                   Positioned.fill(
                     child: RepaintBoundary(
                       child: AnimatedBuilder(
-                        animation: bloc.error,
+                        animation: bloc.listenable,
                         builder: (context, _) {
                           if (bloc.error.value.error) {
                             errorTimer?.cancel();
                             errorTimer = Timer(const Duration(seconds: 2), () {
-                              bloc.notifyState(
-                                  error: const NotifyMessage(false));
+                              bloc.notifyState(error: NotifyMessage.hide);
                             });
+
                             return GestureDetector(
                               onTap: () {
-                                bloc.notifyState(
-                                    error: const NotifyMessage(false));
+                                bloc.notifyState(error: NotifyMessage.hide);
                               },
                               child: Center(
                                 child: Container(
@@ -147,8 +117,24 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
                                 ),
                               ),
                             );
+                          } else if (bloc.loading.value) {
+                            return IgnorePointer(
+                              child: RepaintBoundary(
+                                child: AnimatedBuilder(
+                                  animation: bloc.loading,
+                                  builder: (context, child) {
+                                    if (bloc.loading.value) return child!;
+
+                                    return const SizedBox();
+                                  },
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              ),
+                            );
                           }
-                          return SizedBox();
+                          return const SizedBox();
                         },
                       ),
                     ),
@@ -161,16 +147,13 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
         );
       },
     );
-    return WillPopScope(
-      onWillPop: willPop,
-      child: child,
-    );
+    return WillPopScope(onWillPop: willPop, child: child);
   }
 
   Future<bool> willPop() async {
     bloc.showCname.value = false;
 
-    if (!animation.isCompleted) return false;
+    if (!isCompleted) return false;
 
     removeHide();
     if (entriesLength > 1) {
@@ -183,7 +166,7 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
     await bloc.enter;
 
-    bloc.notifyState(ignore: bloc.tData.contentIsEmpty, loading: false);
+    bloc.notifyState(empty: false, loading: false);
     await _f;
 
     blocCache.load();
