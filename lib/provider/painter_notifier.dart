@@ -437,7 +437,9 @@ extension Tasks on ContentNotifier {
     if (tData.contentIsEmpty) return;
 
     autoRun.stopTicked();
-    notifyState(loading: true);
+    final timer = Timer(const Duration(milliseconds: 100), () {
+      notifyState(loading: true);
+    });
 
     var getid = -1;
 
@@ -457,7 +459,7 @@ extension Tasks on ContentNotifier {
         notifyState(error: NotifyMessage.netWorkError);
       }
     }
-
+    timer.cancel();
     notifyState(loading: false);
   }
 
@@ -486,6 +488,7 @@ extension Layout on ContentNotifier {
   bool _ignoreTask(int contentid, {bool update = false}) {
     if (_disposeFutures.remove(_futures[contentid])) return true;
 
+    if (!inBook) return true;
     if (update) return false;
     final _thatData = _getTextData(contentid);
     if (_thatData != null && _thatData.contentIsNotEmpty) {
@@ -525,10 +528,10 @@ extension Layout on ContentNotifier {
   }
 
   Future<void> get wait => EventLooper.instance.wait(() async {
-        final _c = _getTextData(tData.nid);
-        if (tData.contentIsNotEmpty != true ||
-            _c?.contentIsNotEmpty != true ||
-            !inBook) {
+        if (tData.contentIsEmpty ||
+            _willGoF != null ||
+            !inBook ||
+            autoRun.value) {
           if (loading.value) notifyState(loading: false);
           EventLooper.instance.async = false;
         }
@@ -610,7 +613,7 @@ extension Layout on ContentNotifier {
     final lines = <TextPainter>[];
 
     final _t = TextPainter(textDirection: TextDirection.ltr);
-
+    final _offset = Offset(width, 0.1);
     // 分行布局
     for (var i = 0; i < paragraphs.length; i++) {
       // character 版本
@@ -635,8 +638,7 @@ extension Layout on ContentNotifier {
           await wait;
 
           if (_t.height > _oneHalf) {
-            final endOffset =
-                _t.getPositionForOffset(Offset(width, 0.1)).offset;
+            final endOffset = _t.getPositionForOffset(_offset).offset;
             final _s = s.substring(0, endOffset).characters;
             assert(() {
               if (endOffset != _s.length) {
@@ -791,7 +793,7 @@ extension Event on ContentNotifier {
       resetController();
     }
 
-    indexBloc.sendIndexs(bookid, tData.cid);
+    indexBloc.loadIndexs(bookid, tData.cid);
 
     inbook();
 

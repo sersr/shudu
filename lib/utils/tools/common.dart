@@ -33,31 +33,6 @@ Future<void> orientation(bool portrait) async {
   }
 }
 
-Widget wrapData(Widget child) {
-  return child;
-  // return Builder(
-  //   builder: (context) {
-  //     var data = MediaQuery.of(context);
-  //     final changep = data.padding == EdgeInsets.zero;
-  //     final padding = EdgeInsets.fromWindowPadding(ui.window.systemGestureInsets, ui.window.devicePixelRatio);
-  //     return changep
-  //         ? MediaQuery(
-  //             data: data.copyWith(padding: padding),
-  //             child: Column(
-  //               children: [
-  //                 Expanded(child: child),
-  //                 Container(
-  //                   color: Colors.white,
-  //                   height: padding.bottom,
-  //                 ),
-  //               ],
-  //             ),
-  //           )
-  //         : child;
-  //   },
-  // );
-}
-
 class ZoomTransition extends PageTransitionsBuilder {
   const ZoomTransition();
 

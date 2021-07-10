@@ -38,33 +38,29 @@ class NopWidgetsFlutterBinding extends BindingBase
   final imageLooper = EventLooper();
   final imagesTasks = <Object, Future>{};
 
-  // Future<void>? awaitImage(ImageProvider key) async {
-  //   return imagesTasks[await key.obtainKey(ImageConfiguration.empty)];
-  // }
-
   ResizeImage getResize(ImageProvider key) {
-    return ResizeImage(key, width: (120 * window.devicePixelRatio).toInt());
+    return ResizeImage(key, width: 160);
   }
 
-  Future<void> preCacheImage(ImageProvider provider) async {
-    final key = await provider.obtainKey(ImageConfiguration.empty);
-    var contain = imageCache?.containsKey(key) ?? false;
+  Future<void> preCacheImage(ImageProvider provider) {
+    return provider.obtainKey(ImageConfiguration.empty).then((_key) {
+      final contain = imageCache?.containsKey(_key) ?? false;
 
-    if (!contain) {
-      final _w = imagesTasks.putIfAbsent(
-        key,
-        () => imageLooper.addEventTask(
-          () async {
-            // await imageLooper.wait();
-            if (imageCache?.containsKey(key) ?? false) return;
-            await _preImage(provider);
-            await releaseUI;
-          },
-        ),
-      )..whenComplete(() => imagesTasks.remove(key));
-
-      await _w;
-    }
+      if (!contain) {
+        return imagesTasks.putIfAbsent(
+          _key,
+          () => imageLooper.addEventTask(
+            () async {
+              // await imageLooper.wait();
+              if (imageCache?.containsKey(_key) ?? false) return;
+              await _preImage(provider);
+              await releaseUI;
+            },
+          ),
+        )..whenComplete(() => imagesTasks.remove(_key));
+      }
+    });
+    // }
   }
 
   ImageStream resolve(ImageProvider provider) {

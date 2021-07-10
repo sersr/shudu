@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-import '../../provider/text_styles.dart';
 import '../../data/book_list.dart';
 import '../../event/event.dart';
+import '../../provider/text_styles.dart';
 import '../../utils/utils.dart';
+import '../embed/list_builder.dart';
 import 'list_shudan_detail.dart';
 import 'shudan_item.dart';
 
@@ -22,7 +22,6 @@ class ListShudanPage extends StatefulWidget {
 
 class _ListShudanPageState extends State<ListShudanPage>
     with SingleTickerProviderStateMixin {
-  // late ShudanBloc bloc;
   late TabController controller;
 
   @override
@@ -31,19 +30,14 @@ class _ListShudanPageState extends State<ListShudanPage>
     controller = TabController(initialIndex: 0, length: 3, vsync: this);
   }
 
-  // void listen() => bloc.add(ShudanLoadFirstEvent(controller.index));
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // bloc = context.read<ShudanBloc>();
-    // bloc.add(ShudanLoadFirstEvent(0));
   }
 
   @override
   void dispose() {
     super.dispose();
-    // controller.removeListener(listen);
     controller.dispose();
 
     // imageCache?.clear();
@@ -131,116 +125,51 @@ class _WrapWidgetState extends State<WrapWidget>
       child: AnimatedBuilder(
         animation: shudanProvider,
         builder: (context, _) {
-          // return Scrollbar(
-          //   controller: scrollController,
-          //   interactive: true,
-          //   isAlwaysShown: true,
-          //   thickness: 8,
-          //   radius: Radius.circular(8),
-          //   child:
-          return SmartRefresher(
-              scrollController: scrollController,
-              enablePullDown: true,
-              enablePullUp: true,
-              controller: controller,
-              onRefresh: () async {
-                final _count = shudanProvider._listCounts;
-                await shudanProvider.load();
-                final current = shudanProvider._listCounts;
+          final list = shudanProvider.list;
+          if (list == null) {
+            return loadingIndicator();
+          } else if (list.isEmpty) {
+            return reloadBotton(shudanProvider.load);
+          }
 
-                if (mounted) {
-                  if (_count < current) {
-                    controller.refreshCompleted();
-                  } else if (_count == current) {
-                    controller.refreshFailed();
-                  } else {
-                    controller.resetNoData();
-                  }
-                }
-              },
-              onLoading: () async {
-                final _count = shudanProvider._listCounts;
-                await shudanProvider.load();
-                final current = shudanProvider._listCounts;
-
-                if (mounted) {
-                  if (_count < current) {
-                    controller.loadComplete();
-                  } else if (_count == current) {
-                    controller.loadFailed();
-                  } else {
-                    controller.loadNoData();
-                  }
-                }
-              },
-              header: WaterDropHeader(),
-              footer: CustomFooter(
-                onClick: shudanProvider.load,
-                builder: (BuildContext context, LoadStatus? mode) {
-                  Widget body;
-                  if (mode == LoadStatus.idle) {
-                    body = Text('上拉加载');
-                  } else if (mode == LoadStatus.loading) {
-                    body = CupertinoActivityIndicator();
-                  } else if (mode == LoadStatus.failed) {
-                    body = Text('加载失败');
-                  } else if (mode == LoadStatus.canLoading) {
-                    body = Text('释放加载');
-                  } else {
-                    body = Text('没有更多了');
-                  }
-                  return Container(
-                    height: 55.0,
-                    child: DefaultTextStyle(
-                        style: TextStyle(color: Colors.grey[800]),
-                        child: Center(child: body)),
-                  );
-                },
-              ),
-              child: () {
-                final list = shudanProvider.list;
-                if (list == null) {
-                  return loadingIndicator();
-                } else if (list.isEmpty) {
-                  return reloadBotton(shudanProvider.load);
-                }
-                return buildListView(list, context, widget.index);
-              }());
+          return buildListView(list);
         },
       ),
     );
   }
 
-  Widget buildListView(List<BookList> list, BuildContext context, int index) {
-    final width = 1 / MediaQuery.of(context).devicePixelRatio;
-    return ListView.builder(
-      primary: false,
-      // controller: scrollController,
-      itemExtent: 112,
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final bookList = list[index];
-        return Container(
-          decoration: BoxDecoration(
-            border: BorderDirectional(
-              bottom: BorderSide(
-                  width: width, color: Color.fromRGBO(210, 210, 210, 1)),
-            ),
-          ),
-          child: btn1(
+  Widget buildListView(List<BookList> list) {
+    return ListViewBuilder(
+        primary: false,
+        itemCount: list.length + 1,
+        cacheExtent: 100,
+        itemBuilder: (context, index) {
+          if (index == list.length) {
+            final state = shudanProvider.state;
+            var child = loadingIndicator();
+
+            if (state == _LoadingStatus.error ||
+                state == _LoadingStatus.faild) {
+              child = reloadBotton(() => shudanProvider.loadNext(index));
+            } else if (state != _LoadingStatus.loading) {
+              shudanProvider.loadNext(index);
+            }
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: child,
+            );
+          }
+
+          final bookList = list[index];
+          return ListItemBuilder(
             onTap: () {
               final route = MaterialPageRoute(builder: (_) {
-                return wrapData(ShudanDetailPage(
-                  total: bookList.bookCount,
-                  index: bookList.listId,
-                ));
+                return ShudanDetailPage(
+                    total: bookList.bookCount, index: bookList.listId);
               });
               Navigator.of(context).push(route);
             },
-            radius: 0,
-            bgColor: Colors.grey[100],
-            splashColor: Colors.grey[300],
-            padding: const EdgeInsets.all(0),
             child: ShudanItem(
               desc: bookList.description,
               name: bookList.title,
@@ -248,10 +177,8 @@ class _WrapWidgetState extends State<WrapWidget>
               img: bookList.cover,
               title: bookList.title,
             ),
-          ),
-        );
-      },
-    );
+          );
+        });
   }
 
   @override
@@ -283,9 +210,42 @@ class ShudanCategProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> load() async {
+  final _loop = EventLooper();
+
+  bool get onWork => _loop.runner == null;
+
+  void load() => _loop.addOneEventTask(_load);
+
+  _LoadingStatus state = _LoadingStatus.success;
+
+  var _index = 0;
+  void loadNext(int index) async {
+    if (state == _LoadingStatus.loading && onWork && _index == index) return;
+    state = _LoadingStatus.loading;
+    _index = index;
+    notifyListeners();
+    load();
+    await _loop.runner;
+    if (_index == index) {
+      state = list == null
+          ? _LoadingStatus.error
+          : list?.length != index
+              ? _LoadingStatus.success
+              : _LoadingStatus.faild;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _load() async {
     final _repository = repository;
     if (_repository == null) return;
+
+    final _olist = list;
+    if (_olist != null && _olist.isEmpty) {
+      list = null;
+      notifyListeners();
+    }
+
     final _list = list;
     if (_list == null) {
       var data =
@@ -308,11 +268,19 @@ class ShudanCategProvider extends ChangeNotifier {
         _list.addAll(data);
       }
     }
-    if (list != null) {
-      await release(const Duration(milliseconds: 200));
-      notifyListeners();
-    }
+
+    if (_list == null) await release(const Duration(milliseconds: 400));
+    list ??= const [];
+
+    notifyListeners();
   }
+}
+
+enum _LoadingStatus {
+  loading,
+  success,
+  faild,
+  error,
 }
 
 class BarLayout extends StatelessWidget {

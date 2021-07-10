@@ -21,7 +21,7 @@ class _EditTextState extends State<EditText> {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
     Draggable;
     return Container(
       child: EditableText(

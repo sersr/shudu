@@ -7,6 +7,7 @@ import 'package:vector_math/vector_math.dart' as vec4;
 
 import '../../provider/text_styles.dart';
 import '../../widgets/async_text.dart';
+import '../../widgets/image_text.dart';
 import '../book_list_view/list_shudan_detail.dart';
 import '../embed/images.dart';
 
@@ -30,25 +31,31 @@ class BookItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
     return Container(
       height: 98,
       width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 68),
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints.tightFor(width: 68, height: 98),
-            child: ImageResolve(
-              img: img,
-              builder: (child) {
-                return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
-              },
+          LayoutId(
+            id: 'image',
+            child: Container(
+              // constraints: const BoxConstraints.tightFor(width: 68, height: 98),
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(
+                img: img,
+                builder: (child) {
+                  return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
+                },
+              ),
             ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
-                padding: const EdgeInsets.only(left: 14.0),
+                padding: const EdgeInsets.only(left: 12.0),
                 child: LayoutBuilder(builder: (context, constraints) {
                   return FutureBuilder<List<TextPainter>>(
                       future: Future.wait<TextPainter>([
@@ -126,16 +133,17 @@ class UpdateIcon extends SingleChildRenderObjectWidget {
 
 class UpdateIconRenderObject extends RenderBox
     with RenderObjectWithChildMixin<RenderBox> {
-  UpdateIconRenderObject({RenderBox? child, bool? isNew, bool? isTop})
+  UpdateIconRenderObject(
+      {RenderBox? child, required bool isNew, required bool isTop})
       : _isNew = isNew,
         _isTop = isTop {
     this.child = child;
     resolveNew();
     resolveTop();
   }
-  bool? _isNew;
-  bool? get isNew => _isNew;
-  set isNew(bool? v) {
+  bool _isNew;
+  bool get isNew => _isNew;
+  set isNew(bool v) {
     if (_isNew == v) return;
     _isNew = v;
     resolveNew();
@@ -143,7 +151,7 @@ class UpdateIconRenderObject extends RenderBox
   }
 
   void resolveNew() {
-    if (isNew!) {
+    if (isNew) {
       _newPainter = TextPainter(
           text: TextSpan(
               text: '更新',
@@ -155,7 +163,7 @@ class UpdateIconRenderObject extends RenderBox
   }
 
   void resolveTop() {
-    if (isTop!) {
+    if (isTop) {
       _topPainter = TextPainter(
           text: TextSpan(
               text: '置顶',
@@ -168,9 +176,9 @@ class UpdateIconRenderObject extends RenderBox
   late TextPainter _newPainter;
   late TextPainter _topPainter;
 
-  bool? _isTop;
-  bool? get isTop => _isTop;
-  set isTop(bool? v) {
+  bool _isTop;
+  bool get isTop => _isTop;
+  set isTop(bool v) {
     if (_isTop == v) return;
     _isTop = v;
     resolveTop();
@@ -193,7 +201,7 @@ class UpdateIconRenderObject extends RenderBox
 
     /// 旋转之后实际的(横轴)宽度，也就是要减去的宽度，达到贴边的效果
     /// degrees：45° 等边直角三角形
-    if (isNew!) {
+    if (isNew) {
       /// 右上角到1的距离
       innerWidth = math.sqrt(math.pow(_newPainter.width, 2) / 2);
 
@@ -216,7 +224,7 @@ class UpdateIconRenderObject extends RenderBox
       nP.lineTo(size.width - (allWidth + 1), 0.0); // 4
       nP.close();
     }
-    if (isTop!) {
+    if (isTop) {
       final width = _topPainter.width;
       height = _topPainter.height;
       tP = Path();
@@ -235,7 +243,7 @@ class UpdateIconRenderObject extends RenderBox
       context.paintChild(child!, offset);
       if (size.isEmpty) return;
       final canvas = context.canvas;
-      if (isNew!) {
+      if (isNew) {
         canvas.save();
         canvas.translate(offset.dx, offset.dy);
         canvas.drawPath(nP, Paint()..color = Colors.orange.shade600);
@@ -245,7 +253,7 @@ class UpdateIconRenderObject extends RenderBox
         canvas.restore();
       }
 
-      if (isTop!) {
+      if (isTop) {
         canvas.save();
         canvas.translate(offset.dx, offset.dy + size.height - height);
         canvas.drawPath(tP, Paint()..color = Colors.blue.shade300);

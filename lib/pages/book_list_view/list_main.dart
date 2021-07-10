@@ -31,7 +31,7 @@ class ListMainPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
-                        return wrapData(ListShudanPage());
+                        return ListShudanPage();
                       }));
                     }),
               ),
@@ -52,7 +52,7 @@ class ListMainPage extends StatelessWidget {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
                         return RepaintBoundary(
-                            child: wrapData(ListCatetoryPage()));
+                            child: ListCatetoryPage());
                       }));
                     }),
               ),
@@ -75,7 +75,7 @@ class ListMainPage extends StatelessWidget {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
                         return RepaintBoundary(
-                            child: wrapData(ListBangdanPage()));
+                            child: ListBangdanPage());
                       }));
                     }),
               ),
@@ -92,7 +92,7 @@ class ListMainPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(child: wrapData(ChatRoom()));
+                        return RepaintBoundary(child: ChatRoom());
                       }));
                     }),
               ),
@@ -112,7 +112,7 @@ class ListMainPage extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context)
                         .push(MaterialPageRoute(builder: (context) {
-                      return RepaintBoundary(child: wrapData(CacheManager()));
+                      return RepaintBoundary(child: CacheManager());
                     }));
                   }),
             ),

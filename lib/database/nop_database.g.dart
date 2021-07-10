@@ -17,75 +17,21 @@ abstract class _GenBookDatabase extends $Database {
   late final bookIndex = _GenBookIndex(this);
 }
 
-class _BookCache extends BookCache {
-  _BookCache(
-      {this.id,
-      this.name,
-      this.img,
-      this.updateTime,
-      this.lastChapter,
-      this.chapterId,
-      this.bookId,
-      this.page,
-      this.sortKey,
-      this.isTop,
-      this.isNew,
-      this.isShow})
-      : super._();
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'img': img,
-      'updateTime': updateTime,
-      'lastChapter': lastChapter,
-      'chapterId': chapterId,
-      'bookId': bookId,
-      'page': page,
-      'sortKey': sortKey,
-      'isTop': isTop,
-      'isNew': isNew,
-      'isShow': isShow
-    };
-  }
-
-  @override
-  final int? id;
-
-  @override
-  final String? name;
-
-  @override
-  final String? img;
-
-  @override
-  final String? updateTime;
-
-  @override
-  final String? lastChapter;
-
-  @override
-  final int? chapterId;
-
-  @override
-  final int? bookId;
-
-  @override
-  final int? page;
-
-  @override
-  final int? sortKey;
-
-  @override
-  final bool? isTop;
-
-  @override
-  final bool? isNew;
-
-  @override
-  final bool? isShow;
+Map<String, dynamic> _BookCache_toJson(BookCache table) {
+  return {
+    'id': table.id,
+    'name': table.name,
+    'img': table.img,
+    'updateTime': table.updateTime,
+    'lastChapter': table.lastChapter,
+    'chapterId': table.chapterId,
+    'bookId': table.bookId,
+    'page': table.page,
+    'sortKey': table.sortKey,
+    'isTop': table.isTop,
+    'isNew': table.isNew,
+    'isShow': table.isShow
+  };
 }
 
 class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
@@ -108,8 +54,8 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER, $name TEXT, $img TEXT, '
-        '$updateTime TEXT, $lastChapter TEXT, $chapterId INTEGER, $bookId '
+    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $name TEXT, $img '
+        'TEXT, $updateTime TEXT, $lastChapter TEXT, $chapterId INTEGER, $bookId '
         'INTEGER, $page INTEGER, $sortKey INTEGER, $isTop INTEGER, $isNew '
         'INTEGER, $isShow INTEGER)';
   }
@@ -209,55 +155,17 @@ extension JoinItemBookCache<J extends JoinItem<_GenBookCache>> on J {
   J get bookCache_isShow => joinItem(joinTable.isShow) as J;
 }
 
-class _BookContentDb extends BookContentDb {
-  _BookContentDb(
-      {this.id,
-      this.bookId,
-      this.cid,
-      this.cname,
-      this.nid,
-      this.pid,
-      this.content,
-      this.hasContent})
-      : super._();
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'bookId': bookId,
-      'cid': cid,
-      'cname': cname,
-      'nid': nid,
-      'pid': pid,
-      'content': content,
-      'hasContent': hasContent
-    };
-  }
-
-  @override
-  final int? id;
-
-  @override
-  final int? bookId;
-
-  @override
-  final int? cid;
-
-  @override
-  final String? cname;
-
-  @override
-  final int? nid;
-
-  @override
-  final int? pid;
-
-  @override
-  final String? content;
-
-  @override
-  final bool? hasContent;
+Map<String, dynamic> _BookContentDb_toJson(BookContentDb table) {
+  return {
+    'id': table.id,
+    'bookId': table.bookId,
+    'cid': table.cid,
+    'cname': table.cname,
+    'nid': table.nid,
+    'pid': table.pid,
+    'content': table.content,
+    'hasContent': table.hasContent
+  };
 }
 
 class _GenBookContentDb
@@ -277,9 +185,9 @@ class _GenBookContentDb
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER, $bookId INTEGER, $cid INTEGER, '
-        '$cname TEXT, $nid INTEGER, $pid INTEGER, $content TEXT, $hasContent '
-        'INTEGER)';
+    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, $cid '
+        'INTEGER, $cname TEXT, $nid INTEGER, $pid INTEGER, $content TEXT, '
+        '$hasContent INTEGER)';
   }
 
   BookContentDb _toTable(Map<String, dynamic> map) => BookContentDb(
@@ -350,22 +258,8 @@ extension JoinItemBookContentDb<J extends JoinItem<_GenBookContentDb>> on J {
   J get bookContentDb_hasContent => joinItem(joinTable.hasContent) as J;
 }
 
-class _BookIndex extends BookIndex {
-  _BookIndex({this.id, this.bookId, this.bIndexs}) : super._();
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'bookId': bookId, 'bIndexs': bIndexs};
-  }
-
-  @override
-  final int? id;
-
-  @override
-  final int? bookId;
-
-  @override
-  final String? bIndexs;
+Map<String, dynamic> _BookIndex_toJson(BookIndex table) {
+  return {'id': table.id, 'bookId': table.bookId, 'bIndexs': table.bIndexs};
 }
 
 class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
@@ -379,7 +273,8 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER, $bookId INTEGER, $bIndexs TEXT)';
+    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
+        '$bIndexs TEXT)';
   }
 
   BookIndex _toTable(Map<String, dynamic> map) => BookIndex(

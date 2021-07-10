@@ -96,11 +96,17 @@ class ContentPageViewState extends State<ContentPageView>
     return controller!;
   }
 
+  final lKey = Object();
+
   void onshowEnd() {
+    indexBloc.addRegisterKey(lKey);
+
     if (bloc.config.value.portrait! && bloc.inBook) uiOverlay(hide: false);
   }
 
   void onhideEnd() {
+    indexBloc.removeRegisterKey(lKey);
+
     if (bloc.config.value.portrait! && bloc.inBook) uiOverlay();
   }
 
@@ -275,6 +281,7 @@ class ContentPageViewState extends State<ContentPageView>
     controller?.dispose();
     offsetPosition.dispose();
     bloc.controller = null;
+    indexBloc.removeRegisterKey(lKey);
     super.dispose();
   }
 }

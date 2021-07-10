@@ -56,12 +56,12 @@ dev_dependencies:
   hive_generator: ^1.1.0
   json_serializable: ^4.1.2
   pedantic: ^1.11.0
-  nop_db_gen:
-    git: 
-      url: https://github.com/sersr/nop_db_gen
-      ref: master
   # nop_db_gen:
-  #     path: ../nop_db_gen
+  #   git: 
+  #     url: https://github.com/sersr/nop_db_gen
+  #     ref: master
+  nop_db_gen:
+      path: ../nop_db_gen
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:

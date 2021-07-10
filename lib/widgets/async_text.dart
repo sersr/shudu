@@ -41,7 +41,7 @@ class AsyncText extends LeafRenderObjectWidget {
             }).then((_) => text)
               ..whenComplete(() {
                 Timer(
-                    const Duration(seconds: 2), () => _asyncTexts.remove(key));
+                    const Duration(seconds: 30), () => _asyncTexts.remove(key));
               }));
   }
 

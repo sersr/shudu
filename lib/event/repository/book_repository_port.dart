@@ -1,26 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:ui';
 
-import 'package:bangs/bangs.dart';
-import 'package:battery/battery.dart';
-import 'package:device_info/device_info.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path_provider/path_provider.dart';
 
+import './book_repository_base.dart';
 import '../../utils/utils.dart';
 import '../base/book_event.dart';
-import '../base/repository.dart';
 import '../base/type_adapter.dart';
 import '../event.dart';
 
-class BookRepositoryPort extends Repository with SendEventPortMixin {
+class BookRepositoryPort extends BookRepositoryBase with SendEventPortMixin {
   final _initCallbacks = <Future<void> Function()>[];
   @override
   void addInitCallback(Future<void> Function() callback) {
@@ -43,12 +36,12 @@ class BookRepositoryPort extends Repository with SendEventPortMixin {
   }
 
   Future<void> _initState() async {
-    await SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
-
     final _futures = <Future>{};
+    _futures.add(orientation(true));
+
     if (Platform.isAndroid)
       _futures.add(FlutterDisplayMode.setHighRefreshRate());
+      
     _futures.add(Future(() async {
       final _secF = <Future>{};
 
@@ -60,11 +53,12 @@ class BookRepositoryPort extends Repository with SendEventPortMixin {
         ..registerAdapter(PageBuilderAdapter());
 
       Hive.init('$appPath/shudu/hive');
-
+      /// init callback
       final _minitCallbacks = List.of(_initCallbacks);
       _initCallbacks.clear();
       _minitCallbacks.forEach((callback) => _secF.add(callback()));
 
+      /// Isolate event
       _secF.add(Future<void>(() async {
         final clientRP = ReceivePort();
         _isolate =
@@ -77,6 +71,7 @@ class BookRepositoryPort extends Repository with SendEventPortMixin {
       await Future.wait(_secF);
     }));
 
+    /// PlatformChannel
     _futures.add(getBatteryLevel);
     _futures.add(getViewInsets());
 
@@ -92,48 +87,6 @@ class BookRepositoryPort extends Repository with SendEventPortMixin {
   @override
   void send(message) {
     clientSP.send(message);
-  }
-
-  Battery? _battery;
-  ViewInsets _viewInsets = ViewInsets.zero;
-  @override
-  ViewInsets get viewInsets => _viewInsets;
-
-  var _bottomHeight = 0;
-  @override
-  int get bottomHeight => _bottomHeight;
-
-  @override
-  Future<ViewInsets> getViewInsets() async {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      final viewInsets = await Bangs.safePadding;
-      _viewInsets = viewInsets;
-      _bottomHeight = await Bangs.bottomHeight ~/ window.devicePixelRatio;
-
-      assert(Log.i('bottomHeight: $_bottomHeight'));
-    }
-    return _viewInsets;
-  }
-
-  DeviceInfoPlugin? deviceInfo;
-  @override
-  Future<int> get getBatteryLevel async {
-    _battery ??= Battery();
-
-    deviceInfo ??= DeviceInfoPlugin();
-
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      // var androidInfo = await deviceInfo.androidInfo;
-      level = await _battery!.batteryLevel;
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      var iosInfo = await deviceInfo!.iosInfo;
-
-      if (!iosInfo.isPhysicalDevice) return level;
-
-      level = await _battery!.batteryLevel;
-    }
-
-    return level;
   }
 }
 

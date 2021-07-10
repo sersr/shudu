@@ -27,7 +27,7 @@ mixin NetworkMixin implements CustomEvent {
   Future<void> init() => _init();
   Timer? frequencyTimer;
 
-  Future<String> getIndexsNet(int id) async {
+  Future<String> getIndexsNet(int id) {
     return _loadIndexs(id);
   }
 
@@ -57,7 +57,7 @@ mixin NetworkMixin implements CustomEvent {
   }
 
   // @override
-  List<List> getIndexsDecodeLists(String str) => _decodeIndexsLists(str);
+  NetBookIndex getIndexsDecodeLists(String str) => _decodeIndexsLists(str);
 
   Future<BookInfoRoot> getInfoNet(int id) => _loadInfo(id);
 
@@ -142,7 +142,6 @@ extension _NetworkImpl on NetworkMixin {
       if (key == '_version_') continue;
 
       if (value + threeDays < now) {
-        File(key).delete(recursive: true);
         await imageUpdate.delete(key);
       }
     }
@@ -214,18 +213,20 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  List<List> _decodeIndexsLists(args) {
-    var bookIndexShort = <List>[];
+  NetBookIndex _decodeIndexsLists(args) {
+    // var bookIndexShort = <List>[];
     try {
-      final map = BookIndexRoot.fromJson(jsonDecode(args)).data!;
-      for (var bookVol in map.list!) {
-        final _inl = <dynamic>[bookVol.name];
-        for (var bookChapter in bookVol.list!) {
-          _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
-        }
-        bookIndexShort.add(_inl);
-      }
-      return bookIndexShort;
+      return BookIndexRoot.fromJson(jsonDecode(args)).data ??
+          const NetBookIndex();
+
+      // for (var bookVol in map.list!) {
+      //   final _inl = <dynamic>[bookVol.name];
+      //   for (var bookChapter in bookVol.list!) {
+      //     _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
+      //   }
+      //   bookIndexShort.add(_inl);
+      // }
+      // return bookIndexShort;
     } catch (e) {
       Log.e('url:$args, $e');
       rethrow;

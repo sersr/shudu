@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
 
 import '../utils/utils.dart';
@@ -30,8 +32,7 @@ class ConfigOptions {
 
   @override
   bool operator ==(Object? other) {
-    return
-         identical(other, this) ||
+    return identical(other, this) ||
         other is ConfigOptions &&
             other.platform == platform &&
             other.pageBuilder == pageBuilder &&
@@ -140,18 +141,45 @@ class OptionsNotifier extends ChangeNotifier {
 
     final platform = _box.get(_platform, defaultValue: defaultTargetPlatform);
     final pageBuilder = _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
-    final resample = _box.get(_resample, defaultValue: true);
-    final resampleOffset = _box.get(_resampleOffset, defaultValue: -38);
+    bool resample = _box.get(_resample, defaultValue: true);
+    final resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
 
     GestureBinding.instance!
       ..resamplingEnabled = resample
-      ..samplingOffset = Duration(milliseconds: resampleOffset!);
+      ..samplingOffset = Duration(milliseconds: resampleOffset);
+
+    // resample = await listenRate();
 
     options = ConfigOptions(
         platform: platform,
         pageBuilder: pageBuilder,
         resample: resample,
         resampleOffset: resampleOffset);
+  }
+
+  Future<bool> listenRate() async {
+    if (!Platform.isAndroid) return false;
+    await Future.delayed(const Duration(seconds: 1));
+    final modes = await FlutterDisplayMode.supported;
+    final activeMode = await FlutterDisplayMode.active;
+
+    var newMode = modes.first;
+    for (final mode in modes) {
+      if (mode.refreshRate > newMode.refreshRate) {
+        newMode = mode;
+      }
+    }
+
+    final resample = newMode != activeMode;
+
+    GestureBinding.instance!..resamplingEnabled = resample;
+    return resample;
+  }
+
+  Future<void> changeRate() async {
+    await Future.delayed(const Duration(seconds: 1));
+    final resample = await listenRate();
+    options = ConfigOptions(resample: resample);
   }
 
   Future<void> saveOptions() async {

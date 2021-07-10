@@ -18,11 +18,11 @@ import io.flutter.embedding.engine.FlutterJNI
 
 
 class MainActivity : FlutterActivity() {
-    var handler = Handler(Looper.getMainLooper())
+//    var handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val modes = activity.windowManager.defaultDisplay.supportedModes!!
 
             modes.sortBy {
@@ -47,20 +47,20 @@ class MainActivity : FlutterActivity() {
             window.statusBarColor = Color.TRANSPARENT
 //            window.setNavigationBarColor(Color.TRANSPARENT)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //     val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
-            val listener = object : DisplayListener {
-                override fun onDisplayAdded(i: Int) {}
-                override fun onDisplayRemoved(i: Int) {}
-                override fun onDisplayChanged(i: Int) {
-                    val display = displayManager.getDisplay(i)
-                    Log.i("displayChanged", "${display.refreshRate}, ${display.mode}")
-                }
-            }
+        //     val listener = object : DisplayListener {
+        //         override fun onDisplayAdded(i: Int) {}
+        //         override fun onDisplayRemoved(i: Int) {}
+        //         override fun onDisplayChanged(i: Int) {
+        //             val display = displayManager.getDisplay(i)
+        //             Log.i("displayChanged", "${display.refreshRate}, ${display.mode}")
+        //         }
+        //     }
 
-            displayManager.registerDisplayListener(listener, handler)
-        }
+        //     displayManager.registerDisplayListener(listener, handler)
+        // }
 
     }
 

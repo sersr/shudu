@@ -63,27 +63,25 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
       children: [
         Container(
             width: 80,
-            child: Center(
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.only(top: 10),
-                itemBuilder: (context, index) {
-                  return Material(
-                    color: _currentIndex == index
-                        ? const Color.fromARGB(255, 210, 210, 210)
-                        : null,
-                    child: InkWell(
-                      onTap: () => setState(() => _currentIndex = index),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12.0, horizontal: 8.0),
-                        child: Center(child: Text(_titles[index])),
-                      ),
+            child: ListView.builder(
+              // shrinkWrap: true,
+              padding: const EdgeInsets.only(top: 10),
+              itemBuilder: (context, index) {
+                return Material(
+                  color: _currentIndex == index
+                      ? const Color.fromARGB(255, 210, 210, 210)
+                      : null,
+                  child: InkWell(
+                    onTap: () => setState(() => _currentIndex = index),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12.0, horizontal: 8.0),
+                      child: Center(child: Text(_titles[index])),
                     ),
-                  );
-                },
-                itemCount: _titles.length,
-              ),
+                  ),
+                );
+              },
+              itemCount: _titles.length,
             )),
         Expanded(
             child: TopListView(

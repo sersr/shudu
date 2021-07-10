@@ -6,8 +6,8 @@ part of 'book_index.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-BookIndex _$BookIndexFromJson(Map<String, dynamic> json) {
-  return BookIndex(
+NetBookIndex _$NetBookIndexFromJson(Map<String, dynamic> json) {
+  return NetBookIndex(
     id: json['id'] as int?,
     list: (json['list'] as List<dynamic>?)
         ?.map((e) => BookIndexDiv.fromJson(e as Map<String, dynamic>))
@@ -16,7 +16,8 @@ BookIndex _$BookIndexFromJson(Map<String, dynamic> json) {
   );
 }
 
-Map<String, dynamic> _$BookIndexToJson(BookIndex instance) => <String, dynamic>{
+Map<String, dynamic> _$NetBookIndexToJson(NetBookIndex instance) =>
+    <String, dynamic>{
       'id': instance.id,
       'list': instance.list?.map((e) => e.toJson()).toList(),
       'name': instance.name,
@@ -56,7 +57,7 @@ BookIndexRoot _$BookIndexRootFromJson(Map<String, dynamic> json) {
   return BookIndexRoot(
     data: json['data'] == null
         ? null
-        : BookIndex.fromJson(json['data'] as Map<String, dynamic>),
+        : NetBookIndex.fromJson(json['data'] as Map<String, dynamic>),
     id: json['id'] as int?,
     info: json['info'] as String?,
     status: json['status'] as int?,

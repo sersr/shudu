@@ -14,7 +14,7 @@ packages:
       name: analyzer
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.7.0"
+    version: "1.7.2"
   args:
     dependency: transitive
     description:
@@ -431,19 +431,17 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: c1e31d7c2a160449276128ccfe849310c821b7bc
+      resolved-ref: f2356de19d002182f7bc3d0b901e28147cf4dd06
       url: "https://github.com/sersr/nop_db"
     source: git
-    version: "0.0.4+4"
+    version: "0.0.4+5"
   nop_db_gen:
     dependency: "direct dev"
     description:
-      path: "."
-      ref: master
-      resolved-ref: "5be916d8e31e1f5240a6f94e2853506d5d6d5a4c"
-      url: "https://github.com/sersr/nop_db_gen"
-    source: git
-    version: "0.0.2+3"
+      path: "../nop_db_gen"
+      relative: true
+    source: path
+    version: "0.0.2+4"
   package_config:
     dependency: transitive
     description:

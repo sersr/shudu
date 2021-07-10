@@ -19,8 +19,8 @@ abstract class Repository {
   static Repository? _instance;
 
   factory Repository.create() {
-    // _instance ??= BookRepositoryPort();
-    _instance ??= BookRepository();
+    _instance ??= BookRepositoryPort();
+    // _instance ??= BookRepository();
 
     return _instance!;
   }

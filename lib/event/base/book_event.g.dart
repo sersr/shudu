@@ -351,8 +351,7 @@ mixin ComplexEventResolve
 
   FutureOr<CacheItem?> _getCacheItem_0(args) => getCacheItem(args);
   dynamic _getContent_1(args) => getContentDynamic(args[0], args[1], args[2]);
-  FutureOr<List<List<dynamic>>?> _getIndexs_2(args) =>
-      getIndexs(args[0], args[1]);
+  FutureOr<NetBookIndex?> _getIndexs_2(args) => getIndexs(args[0], args[1]);
   FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
   FutureOr<Map<int, CacheItem>?> _getCacheItemAll_4(args) => getCacheItemAll();
   FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
@@ -372,22 +371,22 @@ mixin ComplexEventMessager implements ComplexEvent {
   }
 
   @override
-  FutureOr<List<List<dynamic>>?> getIndexs(int bookid, bool update) async {
+  FutureOr<NetBookIndex?> getIndexs(int bookid, bool update) async {
     return send.sendMessage(ComplexEventMessage.getIndexs, [bookid, update]);
   }
 
   @override
-  FutureOr<int?> updateBookStatus(int id) async {
+  FutureOr<int?> updateBookStatus(int id) {
     return send.sendMessage(ComplexEventMessage.updateBookStatus, id);
   }
 
   @override
-  FutureOr<Map<int, CacheItem>?> getCacheItemAll() async {
+  FutureOr<Map<int, CacheItem>?> getCacheItemAll() {
     return send.sendMessage(ComplexEventMessage.getCacheItemAll, null);
   }
 
   @override
-  FutureOr<BookInfoRoot?> getInfo(int id) async {
+  FutureOr<BookInfoRoot?> getInfo(int id) {
     return send.sendMessage(ComplexEventMessage.getInfo, id);
   }
 }

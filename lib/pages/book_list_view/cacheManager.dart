@@ -45,6 +45,8 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
       appBar: AppBar(
         centerTitle: true,
         title: Text('缓存管理'),
+        backgroundColor: Colors.white,
+        elevation: 1.0,
       ),
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6.0),

@@ -39,6 +39,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
           title: Text('分类'),
           centerTitle: true,
           backgroundColor: Colors.white,
+          elevation: 1.0,
         ),
         body: Center(
           child: NotificationListener<OverscrollIndicatorNotification>(
@@ -52,7 +53,6 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                 } else if (data.isEmpty) {
                   return reloadBotton(_category.getCategories);
                 }
-
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: GridView.builder(
@@ -60,28 +60,34 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       final e = data[index];
+
                       return Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            btn1(
-                              onTap: () {
-                                CategegoryView.push(context, e.name ?? '',
-                                    int.tryParse(e.id ?? '') ?? index);
-                              },
-                              radius: 6,
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Expanded(child: ImageResolve(img: e.image)),
-                                  const SizedBox(height: 4),
-                                  Text('${e.name}', style: ts.title2),
-                                ],
-                              ),
-                            ),
-                          ],
+                        // child: Row(
+                        //   mainAxisSize: MainAxisSize.min,
+                        //   children: [
+                        child: btn1(
+                          onTap: () {
+                            final name = e.name;
+                            final id = e.id;
+                            if (name != null && id != null) {
+                              final _index = int.tryParse(id);
+                              if (_index != null)
+                                CategegoryView.push(context, name, _index);
+                            }
+                          },
+                          radius: 6,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Expanded(child: ImageResolve(img: e.image)),
+                              const SizedBox(height: 4),
+                              Text('${e.name}', style: ts.title2),
+                            ],
+                          ),
                         ),
+                        //   ],
+                        // ),
                       );
                     },
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

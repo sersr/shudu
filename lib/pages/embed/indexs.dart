@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/data.dart';
 import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/botton.dart';
@@ -20,16 +21,11 @@ class _IndexsWidgetState extends State<IndexsWidget> {
   ScrollController? controller;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void dispose() {
     controller?.dispose();
     super.dispose();
 
-    indexBloc.rmListener(lKey);
+    indexBloc.removeRegisterKey(lKey);
   }
 
   late BookIndexNotifier indexBloc;
@@ -39,7 +35,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     indexBloc = context.read<BookIndexNotifier>();
-    indexBloc.listener(lKey);
+    indexBloc.addRegisterKey(lKey);
   }
 
   @override
@@ -49,7 +45,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
       removeBottom: true,
       context: context,
       child: DefaultTextStyle(
-        style: Provider.of<TextStyleConfig>(context)
+        style: context
+            .read<TextStyleConfig>()
             .title3
             .copyWith(color: Colors.grey.shade800),
         child: GestureDetector(
@@ -60,38 +57,43 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                 final height = constraints.maxHeight;
                 final extent = 32.0;
                 final headerextent = 21.0;
+                final halfHeight = (height - extent - headerextent) / 2;
+
                 return AnimatedBuilder(
                     animation: indexBloc,
                     builder: (context, _) {
                       final data = indexBloc.data;
+
                       if (data == null) {
                         return loadingIndicator();
                       } else if (!data.isValid) {
-                        return reloadBotton(indexBloc.sendIndexs);
-                      }
-                      final indexs = data.indexs!;
-                      final volIndex = data.volIndex!;
-                      final index = data.index!;
-                      var offset = 0.0;
-                      final halfHeight = (height - headerextent - extent) / 2;
-                      for (var i = 0; i < volIndex; i++) {
-                        offset += headerextent;
-                        offset += (indexs[i].length - 1) * extent;
-                      }
-                      offset += index * extent - halfHeight;
-                      var max = 0.0;
-                      for (var l in indexs) {
-                        max += (l.length - 1) * extent;
+                        return reloadBotton(indexBloc.loadIndexs);
                       }
 
-                      max += indexs.length * headerextent;
+                      final indexs = data.chapters!;
+                      final volIndex = data.volIndex!;
+                      final index = data.index!;
+                      final vols = data.vols!;
+
+                      var offset = 0.0;
+                      offset = headerextent * volIndex;
+                      for (var i = 0; i < volIndex; i++) {
+                        offset += indexs[i].length * extent;
+                      }
+                      offset += index * extent - halfHeight;
+
+                      final allChapters = data.allChapters!;
+
+                      final max = allChapters.length * extent +
+                          vols.length * headerextent;
+
                       offset = math.max(0.0, math.min(offset, max - height));
                       if (controller != null) {
-                        if (controller!.hasClients) {
+                        if (controller!.hasClients && data.animation) {
                           controller?.animateTo(offset,
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut);
-                        } else {
+                          } else {
                           controller!.dispose();
                           controller =
                               ScrollController(initialScrollOffset: offset);
@@ -100,33 +102,33 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                         controller =
                             ScrollController(initialScrollOffset: offset);
                       }
+                      data.animation = false;
 
                       return Scrollbar(
                         controller: controller,
-                        // interactive: true,
+                        interactive: true,
                         thickness: 8,
                         radius: const Radius.circular(5),
                         child: CustomScrollView(
                           controller: controller,
                           slivers: [
-                            for (var l in data.indexs!)
+                            for (var i = 0; i < indexs.length; i++)
                               SliverStickyHeader.builder(
                                 builder: (context, st) {
                                   return Container(
                                     height: headerextent,
-                                    decoration: BoxDecoration(
-                                      color: Color.fromRGBO(150, 180, 140, 1),
-                                    ),
-                                    child: Center(
-                                        child: Text('${l.first as String}')),
+                                    color:
+                                        const Color.fromRGBO(150, 180, 160, 1),
+
+                                    child: Center(child: Text(vols[i])),
                                     // height: headerextent,
                                   );
                                 },
                                 sliver: _StickyBody(
-                                    l: l,
-                                    id: data.id!,
+                                    l: indexs[i],
+                                    bookid: data.bookid!,
                                     indexBloc: indexBloc,
-                                    widget: widget,
+                                    onTap: widget.onTap,
                                     extent: extent),
                               ),
                           ],
@@ -147,22 +149,21 @@ class _StickyBody extends StatelessWidget {
     Key? key,
     required this.l,
     required this.indexBloc,
-    required this.widget,
+    required this.onTap,
     required this.extent,
-    required this.id,
+    required this.bookid,
   }) : super(key: key);
 
-  final List l;
+  final List<BookIndexChapter> l;
   final BookIndexNotifier indexBloc;
-  final IndexsWidget widget;
+  final void Function(BuildContext context, int id, int cid) onTap;
   final double extent;
-  final int id;
+  final int bookid;
   @override
   Widget build(BuildContext context) {
     return SliverFixedExtentList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final _index = index + 1;
           return btn1(
             padding: const EdgeInsets.only(left: 10, right: 10),
             radius: 6,
@@ -171,28 +172,29 @@ class _StickyBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${l[_index].cname}',
+                    '${l[index].name}',
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (indexBloc.contains((l[_index] as BookIndexShort).cid))
+                if (indexBloc.contains(l[index].id))
                   Text(
                     '已缓存',
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
-                    style: Provider.of<TextStyleConfig>(context).body3,
+                    style: context.read<TextStyleConfig>().body3,
                   )
               ],
             ),
             splashColor: Colors.grey[500],
             background: false,
             onTap: () {
-              widget.onTap(context, id, l[_index].cid);
+              final id = l[index].id;
+              if (id != null) onTap(context, bookid, id);
             },
           );
         },
-        childCount: l.length - 1,
+        childCount: l.length,
       ),
       itemExtent: extent,
     );

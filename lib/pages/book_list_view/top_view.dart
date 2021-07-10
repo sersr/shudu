@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
 
-import '../../provider/provider.dart' show TextStyleConfig;
 import '../../data/data.dart' show BookTopData, BookTopList;
 import '../../event/event.dart' show Repository;
-import '../../utils/utils.dart' show Log, btn1, loadingIndicator, reloadBotton;
+import '../../provider/provider.dart' show TextStyleConfig;
+import '../../utils/utils.dart' show Log, loadingIndicator, reloadBotton;
 import '../../utils/widget/page_animation.dart' show PageAnimationMixin;
 import '../../widgets/async_text.dart';
+import '../../widgets/image_text.dart';
 import '../book_info_view/book_info_page.dart' show BookInfoPage;
 import '../embed/images.dart' show ImageResolve;
+import '../embed/list_builder.dart';
 import 'list_shudan_detail.dart';
 
 class BookListItem extends StatelessWidget {
@@ -17,7 +19,7 @@ class BookListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
 
     final img = item.img;
     final name = item.name;
@@ -27,15 +29,21 @@ class BookListItem extends StatelessWidget {
     final score = item.score;
     return Container(
       height: 112,
-      padding: EdgeInsets.only(left: 10.0, right: 10.0),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 72),
         children: [
-          Container(
-            width: 62,
-            height: 112,
-            child: ImageResolve(img: img),
+          LayoutId(
+            id: 'image',
+            child: Container(
+              // width: 72,
+              // height: 112,
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(img: img),
+            ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
               padding: const EdgeInsets.only(left: 10.0),
               child: LayoutBuilder(
@@ -179,7 +187,7 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
               });
             }
 
-            return ListView.builder(
+            return ListViewBuilder(
               itemBuilder: (context, index) {
                 if (index == _data.length) {
                   if (!_topNotifier._hasNext)
@@ -188,19 +196,12 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
                   return Container(height: 50, child: loadingIndicator());
                 }
                 final _item = _data[index];
-                return btn1(
+                return ListItemBuilder(
                     onTap: () {
                       if (_item.id != null)
                         BookInfoPage.push(context, _item.id!);
                     },
-                    child: Container(
-                      decoration: const BoxDecoration(
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: Color.fromARGB(255, 230, 230, 230),
-                                  width: 1))),
-                      child: BookListItem(item: _item),
-                    ));
+                    child: BookListItem(item: _item));
               },
               itemCount: _data.length + 1,
             );
@@ -221,7 +222,6 @@ class TopNotifier extends ChangeNotifier {
   Future? _task;
   Future<void> getNextData(String ctg, String date) async {
     if (_task != null) return;
-    await _task;
     _task ??= _getNextData(ctg, date)..whenComplete(() => _task = null);
   }
 

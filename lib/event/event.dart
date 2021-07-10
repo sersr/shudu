@@ -32,6 +32,12 @@ class BookEventIsolate extends BookEventResolve
   }
 
   @override
+  bool remove(key) {
+    if (key is KeyController) Log.w(key.keyType);
+    return super.remove(key);
+  }
+
+  @override
   bool resolve(m) {
     if (super.resolve(m)) return true;
 

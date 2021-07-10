@@ -7,16 +7,17 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/provider.dart';
+import '../../database/nop_database.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/options_notifier.dart';
 import '../../provider/painter_notifier.dart';
+import '../../provider/provider.dart';
 import '../../provider/search_notifier.dart';
-import '../../database/nop_database.dart';
 import '../../utils/utils.dart';
 import '../book_content_view/book_content_page.dart';
 import '../book_info_view/book_info_page.dart';
 import '../book_list_view/list_main.dart';
+import '../embed/list_builder.dart';
 import 'book_item.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -48,12 +49,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     cache = context.read<BookCacheNotifier>();
     if (_future == null) {
       cache.repository
-        ..addInitCallback(opts.init)
+        // ..addInitCallback()
         ..addInitCallback(painterBloc.initConfigs)
         ..addInitCallback(search.init);
+
       _future ??= cache.repository.initState.then((_) {
-        painterBloc.metricsChange();
-        cache.load();
+        opts.init();
+        return Future.wait([
+          painterBloc.metricsChange(),
+          cache.load(),
+        ]);
       });
     }
   }
@@ -64,6 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
+      scheduleMicrotask(opts.changeRate);
     }
   }
 
@@ -122,6 +128,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _exitTimer = Timer(const Duration(seconds: 2), entry.remove);
     return true;
   }
+
+  late var indexedStack = <Widget>[
+    RepaintBoundary(child: buildBlocBuilder()),
+    RepaintBoundary(child: ListMainPage())
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -211,21 +222,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return FutureBuilder<void>(
       future: _future,
       builder: (context, snap) {
-        //
-        // var data = MediaQuery.of(context);
-        // final changep = data.padding == EdgeInsets.zero;
         return AbsorbPointer(
-          absorbing: snap.connectionState != ConnectionState.done,
-          child: child,
-          // child: changep
-          //     ? MediaQuery(
-          //         data: data.copyWith(
-          //             padding: EdgeInsets.fromWindowPadding(
-          //                 ui.window.systemGestureInsets,
-          //                 ui.window.devicePixelRatio)),
-          //         child: child)
-          //     : child,
-        );
+            absorbing: snap.connectionState != ConnectionState.done,
+            child: child);
       },
     );
   }
@@ -492,22 +491,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                Navigator.of(context).pop();
-                BookInfoPage.push(context, item.bookId!);
+                // Navigator.of(context).pop();
+                Navigator.of(context)
+                    .pushReplacement(MaterialPageRoute(builder: (context) {
+                  return BookInfoPage(id: item.bookId!);
+                }));
+                // BookInfoPage.push(context, item.bookId!);
               }),
           btn2(
               icon: Icons.touch_app_sharp,
               text: item.isTop ?? false ? '取消置顶' : '书籍置顶',
               onTap: () {
-                cache.updateTop(item.bookId!, item.isTop ?? false);
-                Navigator.of(context).pop();
+                final isTop = item.isTop;
+                if (isTop != null) cache.updateTop(item.bookId!, !isTop);
+                // Navigator.of(context).pop();
               }),
           btn2(
               icon: Icons.delete_forever_outlined,
               text: '删除书籍',
               onTap: () {
                 cache.deleteBook(item.bookId!);
-                Navigator.of(context).pop();
+                // Navigator.of(context).pop();
               }),
         ],
       ),
@@ -515,8 +519,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget buildBlocBuilder() {
-    final bgColor = Color.fromRGBO(250, 250, 250, 1);
-    final spalColor = Color.fromARGB(250, 224, 224, 224);
     return RefreshIndicator(
       key: _refreshKey,
       displacement: 20.0,
@@ -537,16 +539,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
 
             return Scrollbar(
-              child: ListView.separated(
-                separatorBuilder: (context, index) {
-                  return const Divider(height: 1);
-                },
+              child: ListViewBuilder(
                 itemCount: children.length,
-                padding: const EdgeInsets.all(0.0),
                 itemBuilder: (context, index) {
                   final item = children[index];
-                  return btn1(
-                    background: false,
+                  return ListItemBuilder(
+                    onTap: () {
+                      BookContentPage.push(
+                          context, item.bookId!, item.chapterId!, item.page!);
+                    },
+                    onLongPress: () {
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) => bottomSheet(context, item));
+                    },
                     child: BookItem(
                       img: item.img,
                       bookName: item.name,
@@ -555,21 +561,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       isTop: item.isTop ?? false,
                       isNew: item.isNew ?? false,
                     ),
-                    radius: 6.0,
-                    bgColor: bgColor,
-                    splashColor: spalColor,
-                    padding: const EdgeInsets.all(0),
-                    onTap: () {
-                      BookContentPage.push(
-                          context, item.bookId!, item.chapterId!, item.page!);
-                    },
-                    onLongPress: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => bottomSheet(context, item),
-                      );
-                    },
-                    // ),
                   );
                 },
               ),
@@ -617,7 +608,7 @@ class MySearchPage extends SearchDelegate<void> {
   }
 
   Widget suggestions(BuildContext context) {
-    final bloc = Provider.of<SearchNotifier>(context);
+    final bloc = context.read<SearchNotifier>();
     return StatefulBuilder(
       builder: (context, setstate) {
         return Padding(
@@ -645,7 +636,8 @@ class MySearchPage extends SearchDelegate<void> {
                             horizontal: 8.0, vertical: 4.0),
                         child: Text(
                           i,
-                          style: Provider.of<TextStyleConfig>(context)
+                          style: context
+                              .read<TextStyleConfig>()
                               .body1
                               .copyWith(color: Colors.grey.shade700),
                         ),
@@ -695,7 +687,7 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final search = Provider.of<SearchNotifier>(context);
+    final search = context.read<SearchNotifier>();
 
     return wrap(
         context,
@@ -752,7 +744,7 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   void showResults(BuildContext context) {
-    final search = Provider.of<SearchNotifier>(context);
+    final search = context.read<SearchNotifier>();
     search.load(query);
     super.showResults(context);
   }

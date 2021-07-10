@@ -4,13 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/provider.dart';
 import '../../data/book_list_detail.dart';
 import '../../event/event.dart';
+import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../widgets/async_text.dart';
+import '../../widgets/image_text.dart';
 import '../book_info_view/book_info_page.dart';
 import '../embed/images.dart';
+import '../embed/list_builder.dart';
 
 class ShudanDetailPage extends StatefulWidget {
   const ShudanDetailPage({Key? key, this.total, this.index}) : super(key: key);
@@ -43,16 +45,19 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
       height: 120,
       color: const Color.fromARGB(255, 250, 250, 250),
       padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 80),
         children: [
-          Container(
-            width: 80,
-            height: 120,
-            child: ImageResolve(img: data.cover),
+          LayoutId(
+            id: 'image',
+            child: Container(
+              width: 80,
+              height: 120,
+              child: ImageResolve(img: data.cover),
+            ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
               child: Column(
@@ -77,27 +82,31 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
         ],
       ),
     );
-    yield const SizedBox(height: 10);
+    yield const SizedBox(height: 6);
     // intro
     yield buildIntro(ts, data.description);
     // body
-    yield const SizedBox(height: 10);
+    yield const SizedBox(height: 6);
 
     yield Container(
       color: Color.fromARGB(255, 250, 250, 250),
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 10.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0),
       child: Text('书单列表', style: ts.title2),
     );
 
-    yield const SizedBox(height: 1);
+    yield const SizedBox(height: 3);
 
     if (data.bookList != null)
-      for (var l in data.bookList!) yield ShudanListDetailItemWidget(l: l);
+      for (var l in data.bookList!)
+        yield ListItemBuilder(
+          onTap: () => BookInfoPage.push(context, l.bookId!),
+          child: ShudanListDetailItemWidget(l: l),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -116,15 +125,12 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
           }
 
           final children = _getChildren(data, ts);
-          return Container(
-            color: Color.fromARGB(255, 242, 242, 242),
-            child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              itemBuilder: (context, index) {
-                return children.elementAt(index);
-              },
-              itemCount: children.length,
-            ),
+          return ListViewBuilder(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            itemBuilder: (context, index) {
+              return children.elementAt(index);
+            },
+            itemCount: children.length,
           );
         },
       ),
@@ -188,37 +194,32 @@ class ShudanListDetailItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
     return Container(
       height: 108,
-      decoration: BoxDecoration(
-          border: BorderDirectional(
-              bottom: BorderSide(
-                  width: 1 / MediaQuery.of(context).devicePixelRatio,
-                  color: Color.fromRGBO(210, 210, 210, 1)))),
-      child: btn1(
-        radius: 0,
-        bgColor: Color.fromARGB(255, 250, 250, 250),
-        splashColor: Colors.grey[400],
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        onTap: () {
-          BookInfoPage.push(context, l.bookId!);
-        },
-        child: Row(children: [
-          Container(
-            width: 72,
-            height: 108,
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ImageResolve(img: l.bookIamge),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 72),
+        children: [
+          LayoutId(
+            id: 'image',
+            child: Container(
+              // width: 72,
+              // height: 108,
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(img: l.bookIamge),
+            ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
               child: _DetailLayout(l: l, ts: ts),
             ),
           ),
-        ]),
+        ],
       ),
+      // ),
     );
   }
 }
@@ -292,69 +293,30 @@ class _DetailLayout extends StatelessWidget {
   }
 }
 
-// abstract class ShudanListDetailEvent extends Equatable {
-//   const ShudanListDetailEvent();
-//   @override
-//   List<Object> get props => [];
-// }
-
-// class ShudanListDetailLoadEvent extends ShudanListDetailEvent {
-//   ShudanListDetailLoadEvent(this.index);
-//   final int? index;
-// }
-
-// class ShudanListDetailReLoadEvent extends ShudanListDetailEvent {}
-
-// class ShudanListDetailState {
-//   ShudanListDetailState([this.data]);
-//   final BookListDetailData? data;
-// }
-
-// class ShudanListDetailFailed extends ShudanListDetailState {}
-
-// class ShudanListDetailBloc
-//     extends Bloc<ShudanListDetailEvent, ShudanListDetailState> {
-//   ShudanListDetailBloc(this.repository) : super(ShudanListDetailState());
-
-//   final Repository repository;
-//   int? lastIndex;
-//   @override
-//   Stream<ShudanListDetailState> mapEventToState(
-//       ShudanListDetailEvent event) async* {
-//     if (event is ShudanListDetailLoadEvent) {
-//       lastIndex = event.index;
-//       yield* load(lastIndex);
-//     } else if (event is ShudanListDetailReLoadEvent) {
-//       yield* load(lastIndex);
-//     }
-//   }
-
-//   Stream<ShudanListDetailState> load(int? index) async* {
-//     if (index == null) return;
-//     final data =
-//         await repository.bookEvent.customEvent.getShudanDetail(index) ??
-//             const BookListDetailData();
-//     if (data.listId != null) {
-//       await Future.delayed(Duration(milliseconds: 300));
-//       yield ShudanListDetailState(data);
-//     } else {
-//       yield ShudanListDetailFailed();
-//     }
-//   }
-// }
-
 class ShudanProvider extends ChangeNotifier {
   ShudanProvider();
   Repository? repository;
   int? lastIndex;
   BookListDetailData? data;
 
+  bool get _isEmpty => data == null || data == _none;
+  final _none = const BookListDetailData();
+
   Future<void> load(int? index) async {
     if (index == null || repository == null || index == lastIndex) return;
-    data = await repository!.bookEvent.customEvent.getShudanDetail(index) ??
-        const BookListDetailData();
-    lastIndex = index;
-    await release(const Duration(milliseconds: 300));
+    final _data = data;
+    if (_data == _none) {
+      data = null;
+      notifyListeners();
+    }
+
+    data =
+        await repository!.bookEvent.customEvent.getShudanDetail(index) ?? _none;
+
+    if (!_isEmpty) lastIndex = index;
+
+    if (_data == null) await release(const Duration(milliseconds: 300));
+
     notifyListeners();
   }
 }

@@ -1,15 +1,16 @@
 import 'dart:async';
-import 'package:flutter/scheduler.dart';
+import 'dart:ui';
 
-import '../utils.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 typedef FutureOrVoidCallback = FutureOr<void> Function();
 
 typedef WaitCallback = Future<void> Function(
     [FutureOrVoidCallback? closure, String label]);
 
-/// [TaskEntry._run]
-typedef EventCallback = Future<void> Function();
+/// [_TaskEntry._run]
+typedef EventCallback<T> = FutureOr<T> Function();
 
 /// async tasks => sync tasks
 ///
@@ -34,49 +35,68 @@ class EventLooper {
 
   SchedulerBinding get scheduler => SchedulerBinding.instance!;
 
-  final _taskLists = <TaskEntry>{};
+  final _taskLists = <_TaskKey, _TaskEntry>{};
 
-  /// 安排任务
-  ///
-  /// 队列模式
-  Future<void> addEventTask<T>(EventCallback callback) async {
-    final _task = TaskEntry<T>(callback, this);
+  Future<T> _addEventTask<T>(EventCallback<T> callback,
+      {bool onlyLastOne = false}) {
+    var _task = _TaskEntry<T>(callback, this, onlyLastOne: onlyLastOne);
+    final key = _task.key;
 
-    _taskLists.add(_task);
+    if (!_taskLists.containsKey(key)) {
+      _taskLists[key] = _task;
+    } else {
+      _task = _taskLists[key]! as _TaskEntry<T>;
+    }
+
     run();
     return _task.future;
   }
 
-  Future? _runner;
-  Future? get runner => _runner;
+  /// 安排任务
+  ///
+  /// 队列模式
+  Future<T> addEventTask<T>(EventCallback<T> callback) =>
+      _addEventTask<T>(callback);
 
-  void run() async {
-    if (runner != null || _taskLists.isEmpty) return;
+  /// [onlyLastOne] 模式
+  /// 由于此模式下，可能会丢弃任务，因此无返回值
+  Future<void> addOneEventTask(EventCallback<void> callback) =>
+      _addEventTask<void>(callback, onlyLastOne: true);
 
+  Future<void>? _runner;
+  Future<void>? get runner => _runner;
+
+  void run() {
     _runner ??= looper()..whenComplete(() => _runner = null);
   }
 
-  Future<bool> looper() async {
+  @protected
+  Future<void> looper() async {
+    // 由于之前操作都在 `同步` 中执行
+    // 在下一次事件循环时处理任务
+    await releaseUI;
     while (_taskLists.isNotEmpty) {
-      final tasks = List.of(_taskLists);
+      final tasks = List.of(_taskLists.values);
+      final last = tasks.last;
 
       for (final _t in tasks) {
-        await releaseUI;
-
-        await eventRun(_t);
+        if (!_t.onlyLastOne || _t == last) {
+          await eventRun(_t);
+          await releaseUI;
+        } else {
+          _t.completed();
+        }
       }
     }
-
-    return true;
   }
 
-  static const zoneWait = 'eventWait';
-  static const zoneTask = 'eventTask';
+  static const _zoneWait = 'eventWait';
+  static const _zoneTask = 'eventTask';
   // 运行任务
   //
   // 提供时间消耗及等待其他任务
-  Future<void> eventRun(TaskEntry task) {
-    return runZoned(task._run, zoneValues: {zoneWait: _wait, zoneTask: task});
+  Future<void> eventRun(_TaskEntry task) {
+    return runZoned(task._run, zoneValues: {_zoneWait: _wait, _zoneTask: task});
   }
 
   Future<void> _wait([FutureOrVoidCallback? onLoop, String label = '']) async {
@@ -97,7 +117,7 @@ class EventLooper {
   }
 
   Future<void> wait([FutureOrVoidCallback? closure, label = '']) async {
-    final _w = Zone.current[zoneWait];
+    final _w = Zone.current[_zoneWait];
     if (_w is WaitCallback) {
       return _w(closure, label);
     }
@@ -105,39 +125,63 @@ class EventLooper {
     return releaseUI;
   }
 
-  TaskEntry? get currentTask {
-    final _z = Zone.current[zoneTask];
-    if (_z is TaskEntry) return _z;
+  _TaskEntry? get currentTask {
+    final _z = Zone.current[_zoneTask];
+    if (_z is _TaskEntry) return _z;
   }
 
   bool get async {
     final _z = currentTask;
-    if (_z is TaskEntry) return _z.async;
+    if (_z is _TaskEntry) return _z.async;
     return false;
   }
 
   set async(bool v) {
     final _z = currentTask;
-    if (_z is TaskEntry) _z.async = v;
+    if (_z is _TaskEntry) _z.async = v;
   }
 }
 
-class TaskEntry<T> {
-  TaskEntry(this.callback, this._looper);
+class _TaskEntry<T> {
+  _TaskEntry(this.callback, this._looper, {this.onlyLastOne = false});
 
   final EventLooper _looper;
-  final EventCallback callback;
+  final EventCallback<T> callback;
+  final bool onlyLastOne;
+  late final key = _TaskKey<T>(_looper, callback, onlyLastOne);
 
-  final _completer = Completer<void>();
+  final _completer = Completer<T>();
   var async = true;
-  Future<void> get future => _completer.future;
+  Future<T> get future => _completer.future;
 
   Future<void> _run() async {
-    await callback();
-
-    _completer.complete();
-    _looper._taskLists.remove(this);
+    final result = await callback();
+    completed(result);
   }
+
+  void completed([T? result]) {
+    _completer.complete(result);
+    _looper._taskLists.remove(key);
+  }
+}
+
+class _TaskKey<T> {
+  _TaskKey(this._looper, this.callback, this.onlyLastOne);
+  final EventLooper _looper;
+  final EventCallback callback;
+  final bool onlyLastOne;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _TaskKey<T> &&
+            callback == other.callback &&
+            _looper == other._looper &&
+            onlyLastOne == other.onlyLastOne;
+  }
+
+  @override
+  int get hashCode => hashValues(callback, _looper, onlyLastOne, T);
 }
 
 enum EventStatus {

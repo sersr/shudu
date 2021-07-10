@@ -195,9 +195,9 @@ class CnamePan extends StatelessWidget {
               if (data == null) {
                 return loadingIndicator();
               } else if (data.isValid != true) {
-                return reloadBotton(indexBloc.sendIndexs);
+                return reloadBotton(indexBloc.loadIndexs);
               }
-              final indexs = data.indexs!;
+              final indexs = data.allChapters!;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
@@ -207,21 +207,21 @@ class CnamePan extends StatelessWidget {
                     var v = indexBloc.slide.value.toInt();
                     var text = '';
                     var cid = -1;
-                    for (var l in indexs) {
-                      if (v < l.length - 1) {
-                        final BookIndexShort ins = l[v + 1];
-                        text = ins.cname!;
-                        cid = ins.cid!;
-                        break;
-                      }
-                      v -= (l.length - 1);
+
+                    if (v < indexs.length) {
+                      final chapter = indexs[v];
+                      text = chapter.name ?? text;
+                      cid = chapter.id ?? cid;
                     }
+
                     return GestureDetector(
                       onTap: () {
                         if (!bloc.loading.value) {
                           getTimer()?.cancel();
                           bloc.showCname.value = false;
-                          bloc.newBookOrCid(data.id!, cid, 1, inBook: true);
+                          if (cid != -1)
+                            bloc.newBookOrCid(data.bookid!, cid, 1,
+                                inBook: true);
                         }
                       },
                       child: Container(
@@ -318,7 +318,6 @@ class _BottomEndState extends State<BottomEnd> {
   final ValueNotifier<SettingView> showSettings =
       ValueNotifier(SettingView.none);
   Size bsize = const Size(0.0, 10);
-  final lKey = Object();
 
   @override
   void initState() {
@@ -330,7 +329,6 @@ class _BottomEndState extends State<BottomEnd> {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     indexBloc = context.read<BookIndexNotifier>();
-    indexBloc.listener(lKey);
   }
 
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
@@ -416,13 +414,12 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
-  void onshowEnd() => indexBloc.sendIndexs(bloc.bookid, bloc.tData.cid);
+  void onshowEnd() => indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid);
 
   @override
   void dispose() {
     super.dispose();
     controller?.dispose();
-    indexBloc.rmListener(lKey);
   }
 
   @override
@@ -443,7 +440,7 @@ class _BottomEndState extends State<BottomEnd> {
                   bloc.showCname.value = false;
                   context
                       .read<BookIndexNotifier>()
-                      .sendIndexs(bloc.bookid, bloc.tData.cid);
+                      .loadIndexs(bloc.bookid, bloc.tData.cid);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -457,7 +454,7 @@ class _BottomEndState extends State<BottomEnd> {
                   bloc.showCname.value = false;
                   context.read<BookIndexNotifier>()
                     ..bookUpDateTime.remove(bloc.bookid)
-                    ..sendIndexs(bloc.bookid, bloc.tData.cid);
+                    ..loadIndexs(bloc.bookid, bloc.tData.cid);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -1004,7 +1001,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                 final index = context.read<BookIndexNotifier>();
                 // 先完成动画再调用
                 widget.close(() {
-                  index.sendIndexs(id, cid);
+                  index.loadIndexs(id, cid);
                   bloc.newBookOrCid(id, cid, 1, inBook: true);
                 });
               },

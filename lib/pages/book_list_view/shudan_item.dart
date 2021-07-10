@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../provider/provider.dart';
 import '../../widgets/async_text.dart';
+import '../../widgets/image_text.dart';
 import '../embed/images.dart';
 import 'list_shudan_detail.dart';
 
@@ -25,20 +26,27 @@ class ShudanItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
+
     return Container(
       height: height ?? 112,
-      padding: EdgeInsets.only(left: 14.0, right: 10.0),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 72),
         children: [
-          Container(
-            width: 72,
-            height: height ?? 112,
-            child: ImageResolve(img: img),
+          LayoutId(
+            id: 'image',
+            child: Container(
+              // width: 72,
+              // height: height ?? 112,
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(img: img),
+            ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
+              padding: const EdgeInsets.only(left: 12.0),
               child: TextBuilder(
                   title: title,
                   ts: ts,

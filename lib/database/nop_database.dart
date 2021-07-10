@@ -7,50 +7,51 @@ import '../data/data.dart';
 
 part 'nop_database.g.dart';
 
-abstract class BookCache extends Table {
-  BookCache._();
-  factory BookCache({
-    int? id,
-    String? name,
-    String? img,
-    String? updateTime,
-    String? lastChapter,
-    int? chapterId,
-    int? bookId,
-    int? page,
-    int? sortKey,
-    bool? isTop,
-    bool? isNew,
-    bool? isShow,
-  }) = _BookCache;
+class BookCache extends Table {
+  BookCache({
+    this.id,
+    this.name,
+    this.img,
+    this.updateTime,
+    this.lastChapter,
+    this.chapterId,
+    this.bookId,
+    this.page,
+    this.sortKey,
+    this.isTop,
+    this.isNew,
+    this.isShow,
+  });
 
   @NopItem(primaryKey: true)
-  int? get id;
-  String? get name;
-  String? get img;
-  String? get updateTime;
-  String? get lastChapter;
-  int? get chapterId;
-  int? get bookId;
-  int? get page;
-  int? get sortKey;
-  bool? get isTop;
-  bool? get isNew;
-  bool? get isShow;
+  int? id;
+  String? name;
+  String? img;
+  String? updateTime;
+  String? lastChapter;
+  int? chapterId;
+  int? bookId;
+  int? page;
+  int? sortKey;
+  bool? isTop;
+  bool? isNew;
+  bool? isShow;
+
+  @override
+  Map<String, dynamic> toJson() => _BookCache_toJson(this);
 }
 
-abstract class BookContentDb extends Table {
-  BookContentDb._();
-  factory BookContentDb({
-    int? id,
-    int? bookId,
-    int? cid,
-    String? cname,
-    int? nid,
-    int? pid,
-    String? content,
-    bool? hasContent,
-  }) = _BookContentDb;
+class BookContentDb extends Table {
+  BookContentDb({
+    this.id,
+    this.bookId,
+    this.cid,
+    this.cname,
+    this.nid,
+    this.pid,
+    this.content,
+    this.hasContent,
+  });
 
   factory BookContentDb.fromBookContent(BookContent content) {
     return BookContentDb(
@@ -65,24 +66,29 @@ abstract class BookContentDb extends Table {
   }
 
   @NopItem(primaryKey: true)
-  int? get id;
-  int? get bookId;
-  int? get cid;
-  String? get cname;
-  int? get nid;
-  int? get pid;
-  String? get content;
-  bool? get hasContent;
+  int? id;
+  int? bookId;
+  int? cid;
+  String? cname;
+  int? nid;
+  int? pid;
+  String? content;
+  bool? hasContent;
+
+  @override
+  Map<String, dynamic> toJson() => _BookContentDb_toJson(this);
 }
 
-abstract class BookIndex extends Table {
-  BookIndex._();
+class BookIndex extends Table {
+  BookIndex({this.id, this.bookId, this.bIndexs});
 
-  factory BookIndex({int? id, int? bookId, String? bIndexs}) = _BookIndex;
   @NopItem(primaryKey: true)
-  int? get id;
-  int? get bookId;
-  String? get bIndexs;
+  int? id;
+  int? bookId;
+  String? bIndexs;
+
+  @override
+  Map<String, dynamic> toJson() => _BookIndex_toJson(this);
 }
 
 @Nop(tables: [BookCache, BookContentDb, BookIndex])

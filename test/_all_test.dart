@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:shudu/event/old/book_event_main.dart';
-
-import 'repository_impl.dart';
+import 'package:shudu/utils/tools/event_callback_looper.dart';
 
 void main() async {
   test('future', () {
@@ -345,6 +343,47 @@ void main() async {
     TextPainter(text: TextSpan(text: strs), textDirection: TextDirection.ltr)
       ..layout(maxWidth: 500);
     print('tx layout: ${(pointend() - point) / 1000}ms');
+  });
+
+  test('BookContentDb', () {
+    final _db = BookContentDb();
+    _db.bookId = 111;
+    print(_db);
+  });
+
+  test('for', () {
+    for (var i = 0; i < 100; i += 12) {
+      print(': $i');
+    }
+  });
+
+  test('eventLooper', () async {
+    ///
+    final loop = EventLooper();
+    for (var i = 0; i < 10; i++) {
+      loop.addEventTask(() => print('.....$i'));
+    }
+    await loop.runner;
+
+    for (var i = 0; i < 10; i++) {
+      loop.addOneEventTask(() async {
+        await releaseUI;
+        print('2:.....$i');
+      });
+    }
+    await loop.runner;
+    void _print() {
+      print('....');
+    }
+
+    final list = [];
+    for (var i = 0; i < 10; i++) {
+      list.add(loop.addOneEventTask(_print));
+    }
+    for (final i in list) {
+      print(i.hashCode);
+    }
+    await loop.runner;
   });
 }
 

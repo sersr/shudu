@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/book_cache_notifier.dart';
@@ -50,7 +52,7 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
-    // if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
+    if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
   }
 
   bool _first = true;

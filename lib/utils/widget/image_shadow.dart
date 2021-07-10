@@ -7,10 +7,10 @@ class ImageShadow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           boxShadow: [
             BoxShadow(
-              offset: const Offset(-4, 2),
+              offset: Offset(-4, 2),
               color: Color.fromRGBO(180, 180, 180, 1),
               blurRadius: 2.6,
               spreadRadius: 2,

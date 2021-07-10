@@ -23,19 +23,21 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   late final db = BookDatabase(_url, version);
 
-  int updateBookStatusImpl(int id, String cname, String updateTime) {
-    final query = bookCache.query.lastChapter..where.bookId.equalTo(id);
-    final _cname = query.goToTable;
+  int updateBookStatusImpl(int id, String? cname, String? updateTime,
+      String? name, String? img, bool isNew) {
+    final query = bookCache.query..where.bookId.equalTo(id);
+    final contains = query.goToTable;
 
-    if (_cname.isNotEmpty) {
-      if (_cname.first.lastChapter != cname) {
-        final update = bookCache.update
-          ..lastChapter.set(cname)
-          ..isNew.set(true)
-          ..updateTime.set(updateTime)
-          ..where.bookId.equalTo(id);
-        return update.go;
-      }
+    if (contains.isNotEmpty) {
+      final update = bookCache.update
+        ..isNew.set(isNew)
+        ..where.bookId.equalTo(id);
+      if (cname != null) update.lastChapter.set(cname);
+      if (updateTime != null) update.updateTime.set(updateTime);
+      if (name != null) update.name.set(name);
+      if (img != null) update.img.set(img);
+
+      return update.go;
     }
     return 0;
   }
@@ -126,9 +128,11 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   int insertOrUpdateIndexs(int id, String indexs) {
     var count = 0;
+
     assert(() {
-      final d = bookIndex.delete..where.bookId.is_.null_;
-      return d.go == 0;
+      final d = bookIndex.delete..where.bookId.isNull;
+      // return d.go == 0;
+      return true;
     }(), 'bookId == null');
 
     bookIndex.query.where
@@ -146,8 +150,7 @@ mixin DatabaseMixin implements DatabaseEvent {
       return update.go;
     } else {
       final insert =
-          bookIndex.insert
-          .insertTable(BookIndex(bookId: id, bIndexs: indexs));
+          bookIndex.insert.insertTable(BookIndex(bookId: id, bIndexs: indexs));
       return insert.go;
     }
   }
@@ -204,10 +207,10 @@ mixin DatabaseMixin implements DatabaseEvent {
       ..where.bookId.equalTo(cache.bookId!)
       ..let((s) {
         final q = s.go;
-        count = q.first.values.first ?? count;
+        final _count = q.first.values.first ?? 0;
 
         Log.i('insertBook: $count');
-        if (count == 0) count = bookCache.insert.insertTable(cache).go;
+        if (_count == 0) count = bookCache.insert.insertTable(cache).go;
       });
 
     return count;
@@ -226,6 +229,8 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   @override
   List<BookCache> getMainBookListDb() => bookCache.query.goToTable;
+  List<BookCache> getBookCacheDb(int bookid) =>
+      bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;
 
   @override
   Stream<List<BookCache>> watchMainBookListDb() {

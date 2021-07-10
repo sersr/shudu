@@ -23,15 +23,6 @@ mixin ComplexMixin
   @override
   Future<int> updateBookStatus(int id) async {
     await getInfo(id);
-    // final data = rawData.data;
-
-    // if (data != null) {
-    //   final newCname = data.lastChapter;
-    //   final lastTime = data.lastTime;
-    //   if (newCname != null && lastTime != null) {
-    //     return updateBookStatusImpl(id, newCname, lastTime);
-    //   }
-    // }
     return 0;
   }
 
@@ -39,12 +30,42 @@ mixin ComplexMixin
   Future<BookInfoRoot> getInfo(int id) async {
     final rawData = await getInfoNet(id);
     final data = rawData.data;
-
+    final mainBook = getBookCacheDb(id);
     if (data != null) {
-      final newCname = data.lastChapter;
-      final lastTime = data.lastTime;
-      if (newCname != null && lastTime != null) {
-        updateBookStatusImpl(id, newCname, lastTime);
+      BookCache? book;
+      !mainBook.any((e) {
+        final equal = e.bookId == id;
+        if (equal) book = e;
+        return equal;
+      });
+
+      if (book == null) {
+        insertBook(BookCache(
+          name: data.name,
+          img: data.img,
+          updateTime: data.lastTime,
+          lastChapter: data.lastChapter,
+          chapterId: data.firstChapterId,
+          bookId: data.id,
+          sortKey: DateTime.now().millisecondsSinceEpoch,
+          isTop: false,
+          page: 1,
+          isNew: true,
+          isShow: false,
+        ));
+      } else {
+        final _book = book!;
+        final newCname = data.lastChapter;
+        final lastTime = data.lastTime;
+
+        final name = data.name;
+        final img = data.img;
+
+        final isNew =
+            newCname != _book.lastChapter && lastTime != _book.updateTime;
+        final x =
+            updateBookStatusImpl(id, newCname, lastTime, name, img, isNew);
+        Log.w('....update $x');
       }
     }
     return rawData;
@@ -63,10 +84,14 @@ mixin ComplexMixin
 
       if (restr != null) {
         final indexs = getIndexsDecodeLists(restr);
-        if (indexs.isNotEmpty) {
-          final _num = indexs.fold<int>(0,
-              (previousValue, element) => previousValue + element.length - 1);
-          itemCounts = _num;
+        final list = indexs.list;
+        var count = 0;
+        if (list != null && list.isNotEmpty) {
+          for (var item in list) count += item.list?.length ?? 0;
+
+          // final _num = list.fold<int>(
+          //     0, (previousValue, element) => previousValue + element.list - 1);
+          itemCounts = count;
         }
       }
     }
@@ -91,10 +116,14 @@ mixin ComplexMixin
         var itemCounts = cacheItemCounts;
 
         final indexs = getIndexsDecodeLists(bIndexs);
-        if (indexs.isNotEmpty) {
-          final _num = indexs.fold<int>(0,
-              (previousValue, element) => previousValue + element.length - 1);
-          itemCounts = _num;
+        final list = indexs.list;
+        var count = 0;
+        if (list != null && list.isNotEmpty) {
+          for (var item in list) count += item.list?.length ?? 0;
+
+          // final _num = list.fold<int>(
+          //     0, (previousValue, element) => previousValue + element.list - 1);
+          itemCounts = count;
         }
         _map.putIfAbsent(
             bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
@@ -131,25 +160,25 @@ mixin ComplexMixin
   }
 
   @override
-  Future<List<List>> getIndexs(int bookid, bool update) async {
+  Future<NetBookIndex> getIndexs(int bookid, bool update) async {
     if (update) {
       return _getIndexsNet(bookid);
     } else {
       final db = _getIndexsDb(bookid);
-      if (db.isEmpty) return _getIndexsNet(bookid);
+      if (db.list?.isNotEmpty != true) return _getIndexsNet(bookid);
       return db;
     }
   }
 
-  Future<List<List>> _getIndexsNet(int bookid) async {
+  Future<NetBookIndex> _getIndexsNet(int bookid) async {
     final str = await getIndexsNet(bookid);
     insertOrUpdateIndexs(bookid, str);
     return getIndexsDecodeLists(str);
   }
 
-  List<List> _getIndexsDb(bookid) {
+  NetBookIndex _getIndexsDb(bookid) {
     final db = getIndexsDb(bookid);
-    if (db.isEmpty || db.last.bIndexs == null) return const [];
+    if (db.isEmpty || db.last.bIndexs == null) return const NetBookIndex();
     return getIndexsDecodeLists(db.last.bIndexs!);
   }
 

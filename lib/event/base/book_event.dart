@@ -46,7 +46,7 @@ abstract class ComplexEvent {
   FutureOr<CacheItem?> getCacheItem(int id);
   @NopIsolateMethod(isDynamic: true)
   FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
-  FutureOr<List<List>?> getIndexs(int bookid, bool update);
+  FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
   FutureOr<int?> updateBookStatus(int id);
 
   FutureOr<Map<int, CacheItem>?> getCacheItemAll();

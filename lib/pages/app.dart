@@ -30,9 +30,7 @@ class ShuduApp extends StatelessWidget {
         ),
         showPerformanceOverlay: list[1] ?? false,
         home: RepaintBoundary(child: const MyHomePage()),
-        navigatorObservers: [
-          Provider.of<OptionsNotifier>(context).routeObserver
-        ],
+        navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
       );
     });
   }
@@ -48,9 +46,6 @@ class MulProvider extends StatelessWidget {
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => OptionsNotifier()),
-          // BlocProvider(
-          //   create: (context) => BookCacheBloc(context.read<Repository>()),
-          // ),
           ChangeNotifierProvider(
             create: (context) =>
                 BookIndexNotifier(repository: context.read<Repository>()),

@@ -3,13 +3,14 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import '../../utils/binding/widget_binding.dart';
 
 import '../../event/event.dart';
 import '../../utils/widget/image_shadow.dart';
 
-typedef ImageBuilder = Widget Function(Widget image);
+typedef ImageBuilder = Widget Function(Widget image, bool hasImage);
 
 class ImageResolve extends StatelessWidget {
   const ImageResolve(
@@ -25,41 +26,53 @@ class ImageResolve extends StatelessWidget {
   final bool shadow;
   @override
   Widget build(BuildContext context) {
-    if (img == null) return Container();
-    final repository = Provider.of<Repository>(context);
-    final _future = repository.bookEvent.customEvent.getImagePath(img!);
-    return RepaintBoundary(
-      child: _futureBuilder(_future),
-    );
+    final repository = context.read<Repository>();
+    var _img = img ?? errorImg;
+
+    final _future = repository.bookEvent.customEvent.getImagePath(_img);
+    return RepaintBoundary(child: _futureBuilder(_future));
   }
 
   Widget _futureBuilder(FutureOr<String?> _future, {bool isFirst = true}) {
     return FutureBuilder(
       future: Future.value(_future),
       builder: (context, AsyncSnapshot<String?> snap) {
-        if (snap.hasData) {
-          if (snap.data!.isEmpty) return const SizedBox();
+        final repository = context.read<Repository>();
 
-          return _Image(
-            provider: FileImage(File(snap.data!)),
-            boxFit: boxFit,
-            builder: (child) {
-              if (builder != null) child = builder!(child);
-              if (shadow) child = ImageShadow(child: child);
-              return child;
-            },
-            errorBuilder: (context) {
-              final repository = Provider.of<Repository>(context);
+        if (snap.hasData) {
+          if (snap.data!.isEmpty) {
+            if (isFirst) {
               final _future =
                   repository.bookEvent.customEvent.getImagePath(errorImg);
-              if (isFirst) {
-                return _futureBuilder(_future, isFirst: false);
-              }
-              return ColoredBox(color: Colors.grey.shade300);
-            },
-          );
+              return _futureBuilder(_future, isFirst: false);
+            }
+          } else {
+            return _Image(
+              provider: FileImage(File(snap.data!)),
+              boxFit: boxFit,
+              builder: (child, hasImage) {
+                if (hasImage) {
+                  if (builder != null) child = builder!(child);
+                  if (shadow) child = ImageShadow(child: child);
+                }
+                // return child;
+                return AnimatedOpacity(
+                    opacity: hasImage ? 1 : 0,
+                    duration: const Duration(milliseconds: 400),
+                    child: child);
+              },
+              errorBuilder: (context) {
+                if (isFirst) {
+                  final _future =
+                      repository.bookEvent.customEvent.getImagePath(errorImg);
+                  return _futureBuilder(_future, isFirst: false);
+                }
+                return const SizedBox();
+              },
+            );
+          }
         }
-        return Container();
+        return const SizedBox();
       },
     );
   }
@@ -102,21 +115,23 @@ class ImageState extends State<_Image> {
     }
   }
 
-  void _getImage() async {
+  void _getImage() {
     final _oldImagestream = imageStream;
     final _provider = widget.provider;
     final _resize = nop.getResize(_provider);
 
-    await nop.preCacheImage(_resize);
-    if (!mounted || _provider != widget.provider) return;
+    /// [FileImage] 是同步状态的
+    nop.preCacheImage(_resize).then((_) {
+      if (!mounted || _provider != widget.provider) return;
 
-    imageStream = nop.resolve(_resize);
+      imageStream = nop.resolve(_resize);
 
-    if (_oldImagestream?.key != imageStream?.key) {
-      final listener = ImageStreamListener(_update, onError: _errorc);
-      _oldImagestream?.removeListener(listener);
-      imageStream?.addListener(listener);
-    }
+      if (_oldImagestream?.key != imageStream?.key) {
+        final listener = ImageStreamListener(_update, onError: _errorc);
+        _oldImagestream?.removeListener(listener);
+        imageStream?.addListener(listener);
+      }
+    });
   }
 
   void _update(ImageInfo image, bool synchronousCall) {
@@ -144,11 +159,17 @@ class ImageState extends State<_Image> {
   Widget build(BuildContext context) {
     final image = _ImageWidget(image: imageInfo?.image);
 
-    return imageInfo != null && widget.builder != null
-        ? widget.builder!(image)
-        : _error && widget.errorBuilder != null
-            ? widget.errorBuilder!(context)
-            : image;
+    if (_error) {
+      if (widget.errorBuilder != null) {
+        return widget.errorBuilder!(context);
+      }
+    } else {
+      if (widget.builder != null) {
+        return widget.builder!(image, imageInfo?.image != null);
+      }
+    }
+
+    return image;
   }
 }
 
@@ -204,14 +225,38 @@ class _ImageRender extends RenderBox {
     size = _sizeForConstraints(constraints);
   }
 
+  ClipRectLayer? _clipRectLayer;
+
+  @override
+  bool get isRepaintBoundary => true;
+
   @override
   void paint(PaintingContext context, ui.Offset offset) {
+    if (image != null)
+      _clipRectLayer = context.pushClipRect(
+          needsCompositing, offset, Offset.zero & size, _paint,
+          oldLayer: _clipRectLayer);
+    // final canvas = context.canvas;
+    // final _image = image;
+    // if (_image != null) {
+    //   final rect = offset & size;
+    //   final imgRect =
+    //       Offset.zero & Size(_image.width.toDouble(), _image.height.toDouble());
+    //   canvas.drawImageRect(_image, imgRect, rect, Paint());
+
+    //   // canvas.drawRect(rect, Paint()..color = Colors.yellow);
+    //   // canvas.drawRect(imgRect, Paint()..color = Colors.cyan);
+    // }
+  }
+
+  void _paint(PaintingContext context, ui.Offset offset) {
     final canvas = context.canvas;
-    if (image != null) {
+    final _image = image;
+    if (_image != null) {
       final rect = offset & size;
       final imgRect =
-          Offset.zero & Size(image!.width.toDouble(), image!.height.toDouble());
-      canvas.drawImageRect(image!, imgRect, rect, Paint());
+          Offset.zero & Size(_image.width.toDouble(), _image.height.toDouble());
+      canvas.drawImageRect(_image, imgRect, rect, Paint());
 
       // canvas.drawRect(rect, Paint()..color = Colors.yellow);
       // canvas.drawRect(imgRect, Paint()..color = Colors.cyan);

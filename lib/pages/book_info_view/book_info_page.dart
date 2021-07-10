@@ -5,17 +5,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/provider.dart';
 import '../../data/book_info.dart';
 import '../../database/nop_database.dart';
 import '../../event/event.dart';
+import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../../widgets/async_text.dart';
+import '../../widgets/image_text.dart';
 import '../book_content_view/book_content_page.dart';
 import '../book_list_view/list_shudan_detail.dart';
 import '../embed/images.dart';
 import '../embed/indexs.dart';
+import '../embed/list_builder.dart';
 
 class BookInfoPage extends StatefulWidget {
   const BookInfoPage({Key? key, required this.id}) : super(key: key);
@@ -25,13 +27,14 @@ class BookInfoPage extends StatefulWidget {
 
   static Future push(BuildContext context, int bookid) async {
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return wrapData(BookInfoPage(id: bookid));
+      return BookInfoPage(id: bookid);
     }));
   }
 }
 
 class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   ValueNotifier<bool> showIndexs = ValueNotifier(false);
+  ValueNotifier<bool> showSecondary = ValueNotifier(false);
   final info = BookInfoProvider();
   late TextStyleConfig ts;
   late BookCacheNotifier cache;
@@ -63,7 +66,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             final infoData = info.get(widget.id);
             if (infoData == null) {
               return loadingIndicator();
-            } else if (infoData.data == null) {
+            } else if (infoData.data == null || infoData.data?.id == null) {
               return reloadBotton(() => info.reload(widget.id));
             }
 
@@ -71,7 +74,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             final infos = infoData.data!;
 
             children.add(header(infos.author, infos.bookStatus, infos.name,
-                infos.bookVote!, infos.cName, infos.desc, infos.img, ts));
+                infos.bookVote, infos.cName, infos.desc, infos.img, ts));
 
             children.addAll(desc(infos, ts));
             return Stack(
@@ -79,31 +82,28 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 Column(
                   children: [
                     Expanded(
-                      child: Container(
-                        color: Color.fromARGB(255, 242, 242, 242),
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemBuilder: (context, index) {
-                            return children[index];
-                          },
-                          itemCount: children.length,
-                        ),
+                      child: ListViewBuilder(
+                        itemBuilder: (context, index) {
+                          return children[index];
+                        },
+                        itemCount: children.length,
                       ),
                     ),
                     Material(
                       color: Colors.cyan,
                       child: AnimatedBuilder(
                         animation: cache,
-                        builder: (context, child) {
+                        builder: (context, _) {
                           final bookid = infos.id!;
                           var contain = false;
                           int? cid;
                           int? currentPage;
-                          var added = false;
+                          // var added = false;
                           final list = cache.sortChildren;
+
                           for (var l in list) {
                             if (l.bookId == bookid) {
-                              added = true;
+                              // added = true;
                               if (l.isShow ?? false) {
                                 contain = true;
                                 cid = l.chapterId;
@@ -113,26 +113,24 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             }
                           }
 
-                          if (!added) {
-                            var addCache = BookCache(
-                              name: infos.name,
-                              img: infos.img,
-                              updateTime: infos.lastTime,
-                              lastChapter: infos.lastChapter,
-                              chapterId: infos.firstChapterId,
-                              bookId: infos.id,
-                              sortKey: DateTime.now().millisecondsSinceEpoch,
-                              isTop: false,
-                              page: 1,
-                              isNew: true,
-                              isShow: false,
-                            );
-                            Provider.of<BookIndexNotifier>(context)
-                                .repository
-                                .bookEvent
-                                .bookCacheEvent
-                                .insertBook(addCache);
-                          }
+                          // if (!added) {
+                          //   var addCache = BookCache(
+                          //     name: infos.name,
+                          //     img: infos.img,
+                          //     updateTime: infos.lastTime,
+                          //     lastChapter: infos.lastChapter,
+                          //     chapterId: infos.firstChapterId,
+                          //     bookId: infos.id,
+                          //     sortKey: DateTime.now().millisecondsSinceEpoch,
+                          //     isTop: false,
+                          //     page: 1,
+                          //     isNew: true,
+                          //     isShow: false,
+                          //   );
+                          //   Log.i(addCache.notNullIgnores(['id']));
+                          //   cache.repository.bookEvent.bookCacheEvent
+                          //       .insertBook(addCache);
+                          // }
 
                           return Container(
                             padding: EdgeInsets.only(
@@ -201,21 +199,27 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 ),
                 Positioned.fill(
                   child: AnimatedBuilder(
-                    animation: showIndexs,
+                    animation: Listenable.merge([showIndexs, showSecondary]),
                     builder: (_, child) {
-                      if (showIndexs.value) {
-                        return background(
-                          child: IndexsWidget(
-                            onTap: (_, id, cid) {
-                              BookContentPage.push(context, id, cid, 1);
-                              showIndexs.value = false;
-                            },
-                          ),
-                          // child: Container(),
-                        );
-                      } else {
-                        return Container();
-                      }
+                      final show = showIndexs.value;
+                      if (show) showSecondary.value = true;
+                      return AnimatedOpacity(
+                          opacity: show ? 1 : 0,
+                          onEnd: () {
+                            if (!show) showSecondary.value = false;
+                          },
+                          duration: const Duration(milliseconds: 300),
+                          child: showSecondary.value
+                              ? background(
+                                  child: IndexsWidget(
+                                    onTap: (_, id, cid) {
+                                      BookContentPage.push(context, id, cid, 1);
+                                      showIndexs.value = false;
+                                    },
+                                  ),
+                                  // child: Container(),
+                                )
+                              : const SizedBox());
                     },
                   ),
                 )
@@ -241,10 +245,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               right: 24.0,
               bottom: 66.0,
               child: Material(
-                borderRadius: BorderRadius.circular(6.0),
+                borderRadius: const BorderRadius.all(Radius.circular(6.0)),
                 color: Colors.grey.shade300,
                 clipBehavior: Clip.hardEdge,
-                elevation: 4.0,
                 child: child,
               ),
             ),
@@ -256,9 +259,10 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
   var hide = true;
   Iterable<Widget> desc(BookInfo info, TextStyleConfig ts) sync* {
+    yield const SizedBox(height: 6);
     yield Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      color: Color.fromARGB(255, 250, 250, 250),
+      color: const Color.fromRGBO(250, 250, 250, 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -267,9 +271,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             padding: const EdgeInsets.only(top: 2.0),
             child: StatefulBuilder(builder: (context, setstate) {
               return InkWell(
-                onTap: () {
-                  setstate(() => hide = !hide);
-                },
+                onTap: () => setstate(() => hide = !hide),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -293,9 +295,10 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         ],
       ),
     );
+    yield const SizedBox(height: 6);
+
     yield Container(
-      margin: const EdgeInsets.only(top: 10.0),
-      color: Color.fromARGB(255, 250, 250, 250),
+      color: const Color.fromRGBO(250, 250, 250, 1),
       child: AnimatedBuilder(
         animation: cache,
         builder: (context, _) {
@@ -303,23 +306,26 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
           int? cid;
           final list = cache.sortChildren;
-          list.forEach((element) {
-            if (element.bookId == bookid) {
-              cid = element.chapterId;
+
+          list.any((e) {
+            if (e.bookId == bookid) {
+              cid = e.chapterId;
+              return true;
             }
+            return false;
           });
 
           return btn1(
             onTap: () {
               final _cid = cid ?? info.firstChapterId;
 
-              context.read<BookIndexNotifier>().sendIndexs(bookid, _cid);
+              context.read<BookIndexNotifier>().loadIndexs(bookid, _cid);
               showIndexs.value = !showIndexs.value;
             },
             radius: 0,
             bgColor: Color.fromARGB(255, 250, 250, 250),
             splashColor: Colors.grey[300],
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
             child: Row(
               children: [
                 Expanded(
@@ -336,7 +342,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                info.lastTime!,
+                                '${info.lastTime}',
                                 softWrap: false,
                                 style: ts.body3,
                                 overflow: TextOverflow.ellipsis,
@@ -364,44 +370,54 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         },
       ),
     );
+    yield const SizedBox(height: 6);
 
     yield Container(
-      color: Color.fromARGB(255, 250, 250, 250),
-      margin: const EdgeInsets.only(top: 10.0),
+      color: const Color.fromRGBO(250, 250, 250, 1),
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
       child: Text('${info.author} 还写过'),
     );
-    yield const SizedBox(height: 1);
+
+    yield const SizedBox(height: 3);
+
     if (info.sameUserBooks != null)
       for (var l in info.sameUserBooks!)
-        yield _BookInfoSameItemWidget(l: l, author: info.author);
+        yield ListItemBuilder(
+            child: _BookInfoSameItemWidget(l: l, author: info.author),
+            onTap: () =>
+                l.id == null ? null : BookInfoPage.push(context, l.id!));
   }
 
   Widget header(
       String? author,
       String? bookStatus,
       String? name,
-      BookVote bookvote,
+      BookVote? bookvote,
       String? cName,
       String? desc,
       String? img,
       TextStyleConfig ts) {
     return Container(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: 5.0),
+      color: const Color.fromRGBO(250, 250, 250, 1),
       child: RepaintBoundary(
         child: Container(
           height: 130,
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-          color: Color.fromARGB(255, 250, 250, 250),
-          child: Row(
+          child: CustomMultiChildLayout(
+            delegate: ImageLayout(width: 90),
             children: [
-              Container(
-                  height: 130,
-                  width: 86,
-                  child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: ImageResolve(img: img))),
-              Expanded(
+              LayoutId(
+                id: 'image',
+                child: Container(
+                    // height: 130,
+                    // width: 90,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: ImageResolve(img: img))),
+              ),
+              LayoutId(
+                id: 'text',
                 child: Container(
                   padding: const EdgeInsets.only(left: 16.0),
                   child: DefaultTextStyle(
@@ -425,11 +441,12 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
+                                _wrapText('作者：$author'),
                                 _wrapText('类型：$cName'),
                                 _wrapText('状态：$bookStatus'),
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 2.0),
-                                  child: _wrapText('评分：${bookvote.scroe}分'),
+                                  child: _wrapText('评分：${bookvote?.scroe}分'),
                                 ),
                               ],
                             ),
@@ -467,33 +484,43 @@ class _BookInfoSameItemWidget extends StatelessWidget {
   final String? author;
   @override
   Widget build(BuildContext context) {
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>();
     return Container(
-      decoration: BoxDecoration(
-          border: BorderDirectional(
-              bottom: BorderSide(width: 1, color: Colors.grey.shade300))),
-      child: btn1(
-        radius: 0,
-        bgColor: Color.fromARGB(255, 250, 250, 250),
-        splashColor: Colors.grey[300],
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        onTap: () {
-          if (l.id != null) BookInfoPage.push(context, l.id!);
-        },
-        child: Row(children: [
-          Container(
-            width: 72,
-            height: 108,
-            child: ImageResolve(img: l.img),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      height: 108,
+
+      // decoration: BoxDecoration(
+      //   border: BorderDirectional(
+      //       bottom: BorderSide(width: 1, color: Colors.grey.shade300)),
+      // ),
+      // child: btn1(
+      //   radius: 0,
+      //   bgColor: Color.fromARGB(255, 250, 250, 250),
+      //   splashColor: Colors.grey[300],
+      //   padding: const EdgeInsets.symmetric(horizontal: 12.0),
+
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 72),
+        children: [
+          LayoutId(
+            id: 'image',
+            child: Container(
+              // width: 72,
+              // height: 108,
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(img: l.img),
+            ),
           ),
-          Expanded(
+          LayoutId(
+            id: 'text',
             child: Padding(
               padding: const EdgeInsets.only(left: 12.0),
               child: _InfoItem(l: l, ts: ts, author: author),
             ),
           ),
-        ]),
+        ],
       ),
+      // ),
     );
   }
 }

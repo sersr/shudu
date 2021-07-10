@@ -4,9 +4,7 @@ import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/event/base/book_event.dart';
-import 'package:shudu/event/old/book_event_main.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/event/old/isolate_side.dart';
 import 'package:shudu/utils/utils.dart';
 
 class RepositoryImplTest extends Repository with SendEventMixin {
