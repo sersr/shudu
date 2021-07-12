@@ -62,7 +62,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
     return Row(
       children: [
         Container(
-            width: 80,
+            width: 60,
             child: ListView.builder(
               // shrinkWrap: true,
               padding: const EdgeInsets.only(top: 10),
@@ -75,7 +75,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
                     onTap: () => setState(() => _currentIndex = index),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 8.0),
+                          vertical: 12.0, horizontal: 4.0),
                       child: Center(child: Text(_titles[index])),
                     ),
                   ),

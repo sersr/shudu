@@ -98,14 +98,13 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
                             });
 
                             return GestureDetector(
-                              onTap: () {
-                                bloc.notifyState(error: NotifyMessage.hide);
-                              },
+                              onTap: () =>
+                                  bloc.notifyState(error: NotifyMessage.hide),
                               child: Center(
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(6.0),
-                                    color: Colors.grey.shade100.withAlpha(250),
+                                    color: Colors.grey.shade100,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12.0, vertical: 6.0),
@@ -129,9 +128,7 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
 
                                     return const SizedBox();
                                   },
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
+                                  child: loadingIndicator(),
                                 ),
                               ),
                             );
@@ -149,10 +146,10 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
         );
       },
     );
-    return WillPopScope(onWillPop: willPop, child: child);
+    return WillPopScope(onWillPop: onWillPop, child: child);
   }
 
-  Future<bool> willPop() async {
+  Future<bool> onWillPop() async {
     bloc.showCname.value = false;
 
     if (!isCompleted) return false;

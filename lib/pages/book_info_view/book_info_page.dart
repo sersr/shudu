@@ -408,7 +408,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             delegate: ImageLayout(width: 90),
             children: [
               LayoutId(
-                id: 'image',
+                id: ImageLayout.image,
                 child: Container(
                     // height: 130,
                     // width: 90,
@@ -417,7 +417,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                         child: ImageResolve(img: img))),
               ),
               LayoutId(
-                id: 'text',
+                id: ImageLayout.text,
                 child: Container(
                   padding: const EdgeInsets.only(left: 16.0),
                   child: DefaultTextStyle(
@@ -503,7 +503,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
         delegate: ImageLayout(width: 72),
         children: [
           LayoutId(
-            id: 'image',
+            id: ImageLayout.image,
             child: Container(
               // width: 72,
               // height: 108,
@@ -512,7 +512,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 12.0),
               child: _InfoItem(l: l, ts: ts, author: author),

@@ -7,12 +7,13 @@ class ListItemBuilder extends StatelessWidget {
     required this.child,
     this.onLongPress,
     this.onTap,
+    this.background = true,
   }) : super(key: key);
 
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-
+  final bool background;
   final bgColor = const Color.fromRGBO(250, 250, 250, 1);
   final spalColor = const Color.fromRGBO(225, 225, 225, 1);
 
@@ -22,6 +23,7 @@ class ListItemBuilder extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 6.0),
       child: btn1(
           onTap: onTap,
+          background: background,
           onLongPress: onLongPress,
           radius: 6.0,
           bgColor: bgColor,
@@ -51,8 +53,7 @@ class ListViewBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      // color: const Color.fromRGBO(235, 235, 235, 1),
-      color: Color.fromARGB(255, 242, 242, 242),
+      color: const Color.fromRGBO(242, 242, 242, 1),
 
       child: ListView.builder(
           primary: primary,

@@ -1,4 +1,4 @@
-const int threeDays = 1000 * 60 * 60 * 24 * 3;
+const int oneDay = 1000 * 60 * 60 * 24 * 1;
 const int thirtySeconds = 1000 * 30;
 const errorImg = 'guizhenwuji.jpg';
 

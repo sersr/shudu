@@ -40,7 +40,7 @@ class BookItem extends StatelessWidget {
         delegate: ImageLayout(width: 68),
         children: [
           LayoutId(
-            id: 'image',
+            id: ImageLayout.image,
             child: Container(
               // constraints: const BoxConstraints.tightFor(width: 68, height: 98),
               padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -53,7 +53,7 @@ class BookItem extends StatelessWidget {
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
                 padding: const EdgeInsets.only(left: 12.0),
                 child: LayoutBuilder(builder: (context, constraints) {
@@ -189,6 +189,10 @@ class UpdateIconRenderObject extends RenderBox
   late Path tP;
   late double innerWidth;
   late double height;
+
+  @override
+  bool get isRepaintBoundary => isNew || isTop;
+
   @override
   void performLayout() {
     if (child == null) {

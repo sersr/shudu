@@ -44,7 +44,7 @@ class ContentPageViewState extends State<ContentPageView>
   PanSlideController getController() {
     if (controller != null && !controller!.close) return controller!;
     controller = PanSlideController.showPan(
-      context,
+      this,
       onhide: onhideEnd,
       onshow: onshowEnd,
       onanimating: onanimating,

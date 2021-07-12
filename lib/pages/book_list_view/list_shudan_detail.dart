@@ -49,7 +49,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
         delegate: ImageLayout(width: 80),
         children: [
           LayoutId(
-            id: 'image',
+            id: ImageLayout.image,
             child: Container(
               width: 80,
               height: 120,
@@ -57,7 +57,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
               child: Column(
@@ -202,7 +202,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
         delegate: ImageLayout(width: 72),
         children: [
           LayoutId(
-            id: 'image',
+            id: ImageLayout.image,
             child: Container(
               // width: 72,
               // height: 108,
@@ -211,7 +211,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
               child: _DetailLayout(l: l, ts: ts),

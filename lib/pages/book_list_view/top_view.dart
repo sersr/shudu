@@ -34,16 +34,14 @@ class BookListItem extends StatelessWidget {
         delegate: ImageLayout(width: 72),
         children: [
           LayoutId(
-            id: 'image',
-            child: Container(
-              // width: 72,
-              // height: 112,
+            id: ImageLayout.image,
+            child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: ImageResolve(img: img),
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 10.0),
               child: LayoutBuilder(
@@ -242,6 +240,7 @@ class TopNotifier extends ChangeNotifier {
     _failed = false;
     _index++;
     await getData(ctg, date, _index);
+    if (_failed) _index--;
   }
 
   Future<void> getData(String ctg, String date, int index) async {
@@ -253,7 +252,6 @@ class TopNotifier extends ChangeNotifier {
       _data.addAll(_da.bookList!);
     } else {
       Log.e('failed');
-      _index--;
       _failed = true;
     }
     notifyListeners();
@@ -263,6 +261,7 @@ class TopNotifier extends ChangeNotifier {
     _ctg = _date = null;
     _index = 0;
     _hasNext = true;
+    _failed = false;
     _data.clear();
   }
 

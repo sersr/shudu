@@ -141,7 +141,7 @@ extension _NetworkImpl on NetworkMixin {
       final value = m.value;
       if (key == '_version_') continue;
 
-      if (value + threeDays < now) {
+      if (value + oneDay < now) {
         await imageUpdate.delete(key);
       }
     }

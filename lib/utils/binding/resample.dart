@@ -91,7 +91,7 @@ class Resample {
   PointerEvent? lastEvent;
   var _position = Offset.zero;
 
-  void getEvent(Duration vsyncTime) {
+  void _processPointerEvents(Duration vsyncTime) {
     final list = _queuedEvents.toList();
     PointerEvent? _last;
     PointerEvent? _first;
@@ -111,29 +111,53 @@ class Resample {
     firstEvent = _first ?? _last;
   }
 
-  Duration lastTime = Duration.zero;
-
   bool _isTracked = false;
   bool _isDown = false;
   int _pointerIdentifier = 0;
 
-  void resample(Duration vsyncTime, HandleEventCallback callback) {
-    // final _vsyncTime = vsyncTime - const Duration(milliseconds: 5);
+  void resample(Duration vsyncTime, Duration nextTimeStamp,
+      HandleEventCallback callback) {
+    // nextTimeStamp -= const Duration(microseconds: 5);
+    _processPointerEvents(vsyncTime);
 
-    getEvent(vsyncTime);
     final sampleTime = vsyncTime - const Duration(milliseconds: 5);
     final _last = lastEvent;
     final _first = firstEvent;
 
     if (_last == null || _first == null) return;
+    final _lastTimeStamp = _last.timeStamp;
+    var endTime = _lastTimeStamp;
+    // print('diff: ${(vsyncTime - nextTimeStamp).inMicroseconds / 1000} ms');
+    // final it = _queuedEvents.iterator;
 
-    final position = _positionAt(sampleTime);
+    // while (it.moveNext()) {
+    //   final event = it.current;
+    //   if (event.timeStamp > _lastTimeStamp) {
+    //     if (event.timeStamp >= nextTimeStamp) {
+    //       break;
+    //     }
+    //     if (event is PointerUpEvent || event is PointerRemovedEvent) {
+    //       endTime = event.timeStamp;
+    //       continue;
+    //     }
+
+    //     // Stop if event is not move or hover.
+    //     if (event is! PointerMoveEvent && event is! PointerHoverEvent) {
+    //       break;
+    //     }
+    //   }
+    // }
+
+    var position = _positionAt(sampleTime);
+    // final last = _queuedEvents.last;
 
     while (_queuedEvents.isNotEmpty) {
       final event = _queuedEvents.first;
-      if (event.timeStamp > _last.timeStamp) {
+
+      if (event.timeStamp > endTime) {
         break;
       }
+
       final wasTracked = _isTracked;
       final wasDown = _isDown;
 
@@ -164,31 +188,13 @@ class Resample {
       _queuedEvents.removeFirst();
     }
 
-    // if (_isTracked && !wasTracked) {
-    //   _position = position;
-    // }
-
     if (position != _position && _isTracked) {
       final delta = position - _position;
+
       callback(_toMoveOrHoverEvent(
-          _first, position, delta, _pointerIdentifier, sampleTime, _isDown));
+          _last, position, delta, _pointerIdentifier, sampleTime, _isDown));
       _position = position;
     }
-
-    // final touchTimeDiff = _last.timeStamp - _first.timeStamp;
-    // final touchSampleTimeDiff = sampleTime - _last.timeStamp;
-
-    // final diff = touchTimeDiff.inMicroseconds;
-    // final alpha = diff == 0 ? 0 : touchSampleTimeDiff.inMicroseconds / diff;
-
-    // final delta =
-    //     Duration(microseconds: (touchTimeDiff.inMicroseconds * alpha).toInt());
-
-    // final result = _last.timeStamp + delta;
-
-    // print(
-    //     'resample: ${(result.inMicroseconds - lastTime.inMicroseconds) / 1000} ms ');
-    // lastTime = result;
   }
 
   Offset _positionAt(Duration sampleTime) {
@@ -202,8 +208,9 @@ class Resample {
     final touchTimeDiff = _last.timeStamp - _first.timeStamp;
     final touchSampleTimeDiff = sampleTime - _last.timeStamp;
 
-    final diff = touchTimeDiff.inMicroseconds;
-    final alpha = diff == 0 ? 0 : touchSampleTimeDiff.inMicroseconds / diff;
+    final diff = touchTimeDiff.inMicroseconds.toDouble();
+    final alpha =
+        diff == 0 ? 0.0 : touchSampleTimeDiff.inMicroseconds.toDouble() / diff;
 
     final positonDiff = _last.position - _first.position;
     x += positonDiff.dx * alpha;

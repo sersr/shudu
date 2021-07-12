@@ -121,6 +121,8 @@ class PanOverlayState extends State<PanOverlay> {
   }
 }
 
+typedef StatusCallback = void Function(AnimationStatus status);
+
 class PanSlideController {
   PanSlideController({
     required PanSlideState state,
@@ -155,15 +157,17 @@ class PanSlideController {
   final String groups;
   PanSlideController? next;
 
-  static PanSlideController showPan(BuildContext context,
+  static PanSlideController showPan(State state,
       {VoidCallback? onhide,
       VoidCallback? onshow,
       VoidCallback? onanimating,
       required Widget Function(BuildContext, PanSlideController) builder}) {
-    final state = context.findAncestorStateOfType<PanSlideState>();
-    assert(state != null, 'PanSlideState == null');
+    final _state = state is PanSlideState
+        ? state
+        : state.context.findAncestorStateOfType<PanSlideState>();
+    assert(_state != null, 'PanSlideState == null');
     return PanSlideController(
-        state: state!,
+        state: _state!,
         builder: builder,
         onanimating: onanimating,
         onhide: onhide,

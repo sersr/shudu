@@ -35,7 +35,7 @@ class ShudanItem extends StatelessWidget {
         delegate: ImageLayout(width: 72),
         children: [
           LayoutId(
-            id: 'image',
+            id: ImageLayout.image,
             child: Container(
               // width: 72,
               // height: height ?? 112,
@@ -44,7 +44,7 @@ class ShudanItem extends StatelessWidget {
             ),
           ),
           LayoutId(
-            id: 'text',
+            id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 12.0),
               child: TextBuilder(

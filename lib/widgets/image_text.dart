@@ -3,20 +3,25 @@ import 'dart:math' as math;
 
 class ImageLayout extends MultiChildLayoutDelegate {
   ImageLayout({this.width = 62});
-  final _image = 'image';
-  final _text = 'text';
+  static const image = 'image';
+  static const text = 'text';
   final double width;
 
   @override
   void performLayout(Size size) {
     final _width = math.min(size.width, width);
-    final constraints = BoxConstraints.tight(Size(_width, size.height));
-    layoutChild(_image, constraints);
-    positionChild(_image, Offset.zero);
+    final constraints =
+        BoxConstraints.tightFor(width: _width, height: size.height);
+
+    layoutChild(image, constraints);
+    positionChild(image, Offset.zero);
+
     if (_width < size.width) {
-      final _con = BoxConstraints.tight(Size(size.width - _width, size.height));
-      layoutChild(_text, _con);
-      positionChild(_text, Offset(_width, 0));
+      final _textConstaints = BoxConstraints.tightFor(
+          width: size.width - _width, height: size.height);
+
+      layoutChild(text, _textConstaints);
+      positionChild(text, Offset(_width, 0));
     }
   }
 

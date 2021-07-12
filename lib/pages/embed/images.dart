@@ -225,30 +225,15 @@ class _ImageRender extends RenderBox {
     size = _sizeForConstraints(constraints);
   }
 
-  ClipRectLayer? _clipRectLayer;
-
   @override
   bool get isRepaintBoundary => true;
 
   @override
   void paint(PaintingContext context, ui.Offset offset) {
-    if (image != null)
-      _clipRectLayer = context.pushClipRect(
-          needsCompositing, offset, Offset.zero & size, _paint,
-          oldLayer: _clipRectLayer);
-    // final canvas = context.canvas;
-    // final _image = image;
-    // if (_image != null) {
-    //   final rect = offset & size;
-    //   final imgRect =
-    //       Offset.zero & Size(_image.width.toDouble(), _image.height.toDouble());
-    //   canvas.drawImageRect(_image, imgRect, rect, Paint());
-
-    //   // canvas.drawRect(rect, Paint()..color = Colors.yellow);
-    //   // canvas.drawRect(imgRect, Paint()..color = Colors.cyan);
-    // }
+    _paint(context, offset);
   }
 
+  final cPaint = Paint();
   void _paint(PaintingContext context, ui.Offset offset) {
     final canvas = context.canvas;
     final _image = image;
@@ -256,7 +241,7 @@ class _ImageRender extends RenderBox {
       final rect = offset & size;
       final imgRect =
           Offset.zero & Size(_image.width.toDouble(), _image.height.toDouble());
-      canvas.drawImageRect(_image, imgRect, rect, Paint());
+      canvas.drawImageRect(_image, imgRect, rect, cPaint);
 
       // canvas.drawRect(rect, Paint()..color = Colors.yellow);
       // canvas.drawRect(imgRect, Paint()..color = Colors.cyan);

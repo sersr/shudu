@@ -339,30 +339,31 @@ class _BottomEndState extends State<BottomEnd> {
   PanSlideController getController() {
     // 只要不被释放，就意味着还可用
     if (controller != null && !controller!.close) return controller!;
+    context;
     controller = PanSlideController.showPan(
-      context,
+      this,
       onhide: onhideEnd,
       builder: (contxt, _controller) {
         return RepaintBoundary(
           child: PannelSlide(
             useDefault: false,
             controller: _controller,
-            middleChild: (context, animation) {
+            middleChild: (context, animation, state) {
               // return Center(child: Container(color: Colors.blue, height: 100, width: 100));
 
               final curve =
                   CurveTween(curve: Curves.easeInOut).animate(animation);
               final position = curve.drive(op);
               return AnimatedBuilder(
-                animation: animation,
+                animation: state.hide,
                 builder: (context, child) {
-                  if (animation.isDismissed) return Container();
+                  if (state.hide.value) return const SizedBox();
                   return RepaintBoundary(
                     child: Column(
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: controller?.hideOnCallback,
+                            onTap: _controller.hideOnCallback,
                             child: DecoratedBoxTransition(
                               decoration: debx.animate(animation),
                               child: Container(
@@ -1038,6 +1039,8 @@ class PannelSlide extends StatefulWidget {
       this.topChild,
       this.leftChild,
       this.rightChild,
+      this.modal = false,
+      this.ignoreBottomHeight = 0.0,
       required this.controller,
       this.useDefault = true})
       : assert(botChild != null ||
@@ -1046,13 +1049,15 @@ class PannelSlide extends StatefulWidget {
             rightChild != null ||
             middleChild != null);
   final int? milliseconds;
-
+  final bool modal;
+  final double ignoreBottomHeight;
   final PanSlideController controller;
   final ChildBuilder? botChild;
   final ChildBuilder? topChild;
   final ChildBuilder? leftChild;
   final ChildBuilder? rightChild;
-  final ChildBuilder? middleChild;
+  final Widget Function(BuildContext, Animation<double>, _PannelSlideState)?
+      middleChild;
   final bool useDefault;
   @override
   _PannelSlideState createState() => _PannelSlideState();
@@ -1064,7 +1069,7 @@ class _PannelSlideState extends State<PannelSlide> {
   late Animation<Offset> topPositions;
   late Animation<Offset> leftPositions;
   late Animation<Offset> rightPositions;
-
+  late Animation<double> modalAnimation;
   final _topInOffset =
       Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
   final _botInOffset =
@@ -1073,6 +1078,7 @@ class _PannelSlideState extends State<PannelSlide> {
       Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero);
   final _rightInOffset =
       Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero);
+  final modalTween = Tween<double>(begin: 0.0, end: 1.0);
   @override
   void initState() {
     super.initState();
@@ -1087,23 +1093,76 @@ class _PannelSlideState extends State<PannelSlide> {
 
   void updateState() {
     panSlideController = widget.controller;
-    botPositions = CurvedAnimation(
-            parent: panSlideController.controller, curve: Curves.ease)
+    final controller = panSlideController.controller;
+    // final _curve = CurvedAnimation(parent: controller, curve: Curves.ease);
+    // final _curveAnimation = _curve;
+    botPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
         .drive(_botInOffset);
-    topPositions = CurvedAnimation(
-            parent: panSlideController.controller, curve: Curves.ease)
+    topPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
         .drive(_topInOffset);
-    leftPositions = CurvedAnimation(
-            parent: panSlideController.controller, curve: Curves.ease)
+    leftPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
         .drive(_leftInOffset);
-    rightPositions = CurvedAnimation(
-            parent: panSlideController.controller, curve: Curves.ease)
+    rightPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
         .drive(_rightInOffset);
+    modalAnimation = CurvedAnimation(parent: controller, curve: Curves.ease)
+        .drive(modalTween);
+    controller.removeStatusListener(statusListen);
+    controller.addStatusListener(statusListen);
+    statusListen(controller.status);
   }
+
+  @override
+  void dispose() {
+    panSlideController.controller.removeStatusListener(statusListen);
+    super.dispose();
+  }
+
+  void statusListen(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed) {
+      hide.value = true;
+    } else {
+      hide.value = false;
+    }
+  }
+
+  final debx = DecorationTween(
+      begin: BoxDecoration(color: Colors.transparent),
+      end: BoxDecoration(color: Colors.black87.withAlpha(100)));
+
+  final hide = ValueNotifier(true);
 
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
+    if (widget.modal) {
+      children.add(Positioned.fill(
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: hide,
+            builder: (context, child) {
+              if (hide.value) return const SizedBox();
+
+              return child!;
+            },
+            child: DecoratedBoxTransition(
+              decoration: debx.animate(modalAnimation),
+              child: widget.ignoreBottomHeight == 0.0
+                  ? GestureDetector(
+                      onTap: panSlideController.hideOnCallback,
+                      child: const SizedBox.expand())
+                  : Column(
+                      children: [
+                        GestureDetector(
+                            onTap: panSlideController.hideOnCallback,
+                            child: Expanded(child: const SizedBox())),
+                        SizedBox(height: widget.ignoreBottomHeight)
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ));
+    }
     if (widget.botChild != null) {
       var bot = widget.botChild!(context, panSlideController.controller);
       if (widget.useDefault) {
@@ -1134,7 +1193,8 @@ class _PannelSlideState extends State<PannelSlide> {
       children.add(Positioned(top: 0.0, left: 0.0, bottom: 0.0, child: left));
     }
     if (widget.middleChild != null) {
-      var milldle = widget.middleChild!(context, panSlideController.controller);
+      var milldle =
+          widget.middleChild!(context, panSlideController.controller, this);
       if (widget.useDefault) {
         milldle = SlideTransition(position: leftPositions, child: milldle);
       }

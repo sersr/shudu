@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
-      scheduleMicrotask(opts.changeRate);
+      // scheduleMicrotask(opts.changeRate);
     }
   }
 
@@ -189,10 +189,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       body: RepaintBoundary(
         child: IndexedStack(
           index: currentIndex,
-          children: <Widget>[
-            RepaintBoundary(child: buildBlocBuilder()),
-            RepaintBoundary(child: ListMainPage())
-          ],
+          children: indexedStack,
+          // children: <Widget>[
+          //   RepaintBoundary(child: buildBlocBuilder()),
+          //   RepaintBoundary(child: ListMainPage())
+          // ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(

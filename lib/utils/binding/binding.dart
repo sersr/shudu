@@ -217,7 +217,7 @@ class _Resampler {
 
     // Determine next sample time by adding the sampling interval
     // to the current sample time.
-    final nextSampleTime = sampleTime + _samplingInterval;
+    final nextSampleTime = _lastFrameTime + samplingOffset;
 
     // Iterate over active resamplers and sample pointer events for
     // current sample time.
@@ -232,7 +232,7 @@ class _Resampler {
     // final isNotEmpty = _resamplers.isNotEmpty;
 
     for (final resampler in _myresampler.values) {
-      resampler.resample(sampleTime, _handlePointerEvent);
+      resampler.resample(sampleTime, nextSampleTime, _handlePointerEvent);
     }
 
     // Remove inactive resamplers.
