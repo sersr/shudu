@@ -332,9 +332,8 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
-  final debx = DecorationTween(
-      begin: BoxDecoration(color: Colors.transparent),
-      end: BoxDecoration(color: Colors.black87.withAlpha(100)));
+  final debx =
+      ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
 
   PanSlideController getController() {
     // 只要不被释放，就意味着还可用
@@ -354,8 +353,14 @@ class _BottomEndState extends State<BottomEnd> {
               final curve =
                   CurveTween(curve: Curves.easeInOut).animate(animation);
               final position = curve.drive(op);
+              final colors = debx.animate(animation);
+              final padding = EdgeInsets.only(
+                  top: 10.0 + bloc.safePadding.top,
+                  left: 24.0 + bloc.safePadding.left,
+                  right: 24.0 + bloc.safePadding.right,
+                  bottom: 0);
               return AnimatedBuilder(
-                animation: state.hide,
+                animation: colors,
                 builder: (context, child) {
                   if (state.hide.value) return const SizedBox();
                   return RepaintBoundary(
@@ -364,26 +369,18 @@ class _BottomEndState extends State<BottomEnd> {
                         Expanded(
                           child: GestureDetector(
                             onTap: _controller.hideOnCallback,
-                            child: DecoratedBoxTransition(
-                              decoration: debx.animate(animation),
-                              child: Container(
-                                padding: EdgeInsets.only(
-                                    top: 10.0 + bloc.safePadding.top,
-                                    left: 24.0 + bloc.safePadding.left,
-                                    right: 24.0 + bloc.safePadding.right,
-                                    bottom: 0),
-                                child:
-                                    GestureDetector(onTap: () {}, child: child),
-                              ),
+                            child: Container(
+                              color: colors.value ?? Colors.transparent,
+                              padding: padding,
+                              child:
+                                  GestureDetector(onTap: () {}, child: child),
                             ),
                           ),
                         ),
                         IgnorePointer(
-                          child: DecoratedBoxTransition(
-                            decoration: debx.animate(animation),
-                            child: Container(
-                              height: 22 + bsize.height,
-                            ),
+                          child: Container(
+                            color: colors.value ?? Colors.transparent,
+                            height: 22 + bsize.height,
                           ),
                         )
                       ],
@@ -676,7 +673,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   late ValueNotifier<HSVColor> bgColor;
   late ValueNotifier<HSVColor> ftColor;
   late ContentNotifier bloc;
-
+  Widget? _setting;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -702,7 +699,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   }
 
   Widget settings() {
-    return Column(
+    return _setting ??= Column(
       children: [
         Expanded(
           child: Padding(
@@ -989,7 +986,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       ],
     );
   }
-
+  Widget? indexs;
   @override
   Widget build(BuildContext context) {
     Widget child = AnimatedBuilder(
@@ -997,7 +994,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       builder: (context, child) {
         switch (widget.showSettings.value) {
           case SettingView.indexs:
-            return IndexsWidget(
+            return indexs ??= IndexsWidget(
               onTap: (context, id, cid) {
                 final index = context.read<BookIndexNotifier>();
                 // 先完成动画再调用
@@ -1010,7 +1007,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           case SettingView.setting:
             return settings();
           default:
-            return Container();
+            return const SizedBox();
         }
       },
     );
@@ -1024,7 +1021,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           thumbShape: RoundSliderThumbShape(
               enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
         ),
-        child: child);
+        child: RepaintBoundary(child: child));
   }
 }
 
@@ -1125,44 +1122,44 @@ class _PannelSlideState extends State<PannelSlide> {
     }
   }
 
-  final debx = DecorationTween(
-      begin: BoxDecoration(color: Colors.transparent),
-      end: BoxDecoration(color: Colors.black87.withAlpha(100)));
+  final debx =
+      ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
 
   final hide = ValueNotifier(true);
 
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
-    if (widget.modal) {
-      children.add(Positioned.fill(
-        child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: hide,
-            builder: (context, child) {
-              if (hide.value) return const SizedBox();
+    // if (widget.modal) {
+    //   final color = debx.animate(modalAnimation);
+    //   children.add(Positioned.fill(
+    //     child: RepaintBoundary(
+    //       child: AnimatedBuilder(
+    //         animation: color,
+    //         builder: (context, child) {
+    //           if (hide.value) return const SizedBox();
 
-              return child!;
-            },
-            child: DecoratedBoxTransition(
-              decoration: debx.animate(modalAnimation),
-              child: widget.ignoreBottomHeight == 0.0
-                  ? GestureDetector(
-                      onTap: panSlideController.hideOnCallback,
-                      child: const SizedBox.expand())
-                  : Column(
-                      children: [
-                        GestureDetector(
-                            onTap: panSlideController.hideOnCallback,
-                            child: Expanded(child: const SizedBox())),
-                        SizedBox(height: widget.ignoreBottomHeight)
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ));
-    }
+    //           return child!;
+    //         },
+    //         child: ColoredBox(
+    //           color: color.value ?? Colors.transparent,
+    //           child: widget.ignoreBottomHeight == 0.0
+    //               ? GestureDetector(
+    //                   onTap: panSlideController.hideOnCallback,
+    //                   child: const SizedBox.expand())
+    //               : Column(
+    //                   children: [
+    //                     GestureDetector(
+    //                         onTap: panSlideController.hideOnCallback,
+    //                         child: Expanded(child: const SizedBox())),
+    //                     SizedBox(height: widget.ignoreBottomHeight)
+    //                   ],
+    //                 ),
+    //         ),
+    //       ),
+    //     ),
+    //   ));
+    // }
     if (widget.botChild != null) {
       var bot = widget.botChild!(context, panSlideController.controller);
       if (widget.useDefault) {
