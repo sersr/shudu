@@ -986,6 +986,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       ],
     );
   }
+
   Widget? indexs;
   @override
   Widget build(BuildContext context) {
@@ -1026,7 +1027,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
 }
 
 typedef ChildBuilder = Widget Function(
-    BuildContext, Animation<double> animation);
+    BuildContext, Animation<double>, _PannelSlideState);
 
 class PannelSlide extends StatefulWidget {
   const PannelSlide(
@@ -1053,8 +1054,7 @@ class PannelSlide extends StatefulWidget {
   final ChildBuilder? topChild;
   final ChildBuilder? leftChild;
   final ChildBuilder? rightChild;
-  final Widget Function(BuildContext, Animation<double>, _PannelSlideState)?
-      middleChild;
+  final ChildBuilder? middleChild;
   final bool useDefault;
   @override
   _PannelSlideState createState() => _PannelSlideState();
@@ -1067,6 +1067,7 @@ class _PannelSlideState extends State<PannelSlide> {
   late Animation<Offset> leftPositions;
   late Animation<Offset> rightPositions;
   late Animation<double> modalAnimation;
+  late Animation<Color?> colorsAnimation;
   final _topInOffset =
       Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
   final _botInOffset =
@@ -1103,6 +1104,9 @@ class _PannelSlideState extends State<PannelSlide> {
         .drive(_rightInOffset);
     modalAnimation = CurvedAnimation(parent: controller, curve: Curves.ease)
         .drive(modalTween);
+
+    colorsAnimation = debx.animate(modalAnimation);
+
     controller.removeStatusListener(statusListen);
     controller.addStatusListener(statusListen);
     statusListen(controller.status);
@@ -1130,52 +1134,51 @@ class _PannelSlideState extends State<PannelSlide> {
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
-    // if (widget.modal) {
-    //   final color = debx.animate(modalAnimation);
-    //   children.add(Positioned.fill(
-    //     child: RepaintBoundary(
-    //       child: AnimatedBuilder(
-    //         animation: color,
-    //         builder: (context, child) {
-    //           if (hide.value) return const SizedBox();
+    if (widget.modal) {
+      children.add(Positioned.fill(
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: colorsAnimation,
+            builder: (context, child) {
+              if (hide.value) return const SizedBox();
 
-    //           return child!;
-    //         },
-    //         child: ColoredBox(
-    //           color: color.value ?? Colors.transparent,
-    //           child: widget.ignoreBottomHeight == 0.0
-    //               ? GestureDetector(
-    //                   onTap: panSlideController.hideOnCallback,
-    //                   child: const SizedBox.expand())
-    //               : Column(
-    //                   children: [
-    //                     GestureDetector(
-    //                         onTap: panSlideController.hideOnCallback,
-    //                         child: Expanded(child: const SizedBox())),
-    //                     SizedBox(height: widget.ignoreBottomHeight)
-    //                   ],
-    //                 ),
-    //         ),
-    //       ),
-    //     ),
-    //   ));
-    // }
+              return child!;
+            },
+            child: ColoredBox(
+              color: colorsAnimation.value ?? Colors.transparent,
+              child: widget.ignoreBottomHeight == 0.0
+                  ? GestureDetector(
+                      onTap: panSlideController.hideOnCallback,
+                      child: const SizedBox.expand())
+                  : Column(
+                      children: [
+                        GestureDetector(
+                            onTap: panSlideController.hideOnCallback,
+                            child: Expanded(child: const SizedBox())),
+                        SizedBox(height: widget.ignoreBottomHeight)
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ));
+    }
     if (widget.botChild != null) {
-      var bot = widget.botChild!(context, panSlideController.controller);
+      var bot = widget.botChild!(context, panSlideController.controller,this);
       if (widget.useDefault) {
         bot = SlideTransition(position: botPositions, child: bot);
       }
       children.add(Positioned(bottom: 0.0, left: 0.0, right: 0.0, child: bot));
     }
     if (widget.topChild != null) {
-      var top = widget.topChild!(context, panSlideController.controller);
+      var top = widget.topChild!(context, panSlideController.controller,this);
       if (widget.useDefault) {
         top = SlideTransition(position: topPositions, child: top);
       }
       children.add(Positioned(top: 0.0, left: 0.0, right: 0.0, child: top));
     }
     if (widget.rightChild != null) {
-      var right = widget.rightChild!(context, panSlideController.controller);
+      var right = widget.rightChild!(context, panSlideController.controller,this);
       if (widget.useDefault) {
         right = SlideTransition(position: rightPositions, child: right);
       }
@@ -1183,7 +1186,7 @@ class _PannelSlideState extends State<PannelSlide> {
     }
 
     if (widget.leftChild != null) {
-      var left = widget.leftChild!(context, panSlideController.controller);
+      var left = widget.leftChild!(context, panSlideController.controller,this);
       if (widget.useDefault) {
         left = SlideTransition(position: leftPositions, child: left);
       }

@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/src/provider.dart';
+import '../../../provider/constansts.dart';
 
 import '../../../provider/provider.dart';
 import '../../../utils/utils.dart';
@@ -53,7 +54,7 @@ class ContentPageViewState extends State<ContentPageView>
           child: PannelSlide(
             useDefault: false,
             controller: _controller,
-            botChild: (context, animation) {
+            botChild: (context, animation, _) {
               final op =
                   Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
               final curve = CurvedAnimation(
@@ -71,7 +72,7 @@ class ContentPageViewState extends State<ContentPageView>
                 ),
               );
             },
-            topChild: (context, animation) {
+            topChild: (context, animation, _) {
               final op =
                   Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
               final curve = CurvedAnimation(
@@ -149,16 +150,18 @@ class ContentPageViewState extends State<ContentPageView>
     if (mes == null) return null;
     final child = ContentView(
       contentMetrics: mes,
-      battery: FutureBuilder<int>(
-        future: bloc.repository.getBatteryLevel,
-        builder: (context, snaps) {
-          final v = snaps.hasData ? snaps.data! : bloc.repository.level;
-          return BatteryView(
-            progress: (v / 100).clamp(0.0, 1.0),
-            color: bloc.config.value.fontColor!,
-          );
-        },
-      ),
+      battery: offsetPosition.axis == Axis.horizontal
+          ? FutureBuilder<int>(
+              future: bloc.repository.getBatteryLevel,
+              builder: (context, snaps) {
+                final v = snaps.hasData ? snaps.data! : bloc.repository.level;
+                return BatteryView(
+                  progress: (v / 100).clamp(0.0, 1.0),
+                  color: bloc.config.value.fontColor!,
+                );
+              },
+            )
+          : null,
     );
 
     return child;
@@ -560,19 +563,18 @@ class _SlideRenderObject extends RenderBox {
   @override
   void performLayout() {
     size = constraints.biggest;
-    var height = ContentNotifier.pagefooterSize;
+    var height = pagefooterSize;
     final _constraints =
         BoxConstraints.tight(Size(size.width - paddingRect.horizontal, height));
 
     if (_header != null) {
-      final _height = paddingRect.top + ContentNotifier.topPad;
+      final _height = paddingRect.top + topPad;
       _header!.layout(_constraints);
       final parentdata = _header!.parentData as BoxParentData;
       parentdata.offset = Offset(paddingRect.left, _height);
     }
 
-    final _bottomHeight =
-        size.height - paddingRect.bottom - ContentNotifier.botPad;
+    final _bottomHeight = size.height - paddingRect.bottom - botPad;
 
     if (_footer != null) {
       _footer!.layout(_constraints);
@@ -581,17 +583,13 @@ class _SlideRenderObject extends RenderBox {
     }
 
     if (_body != null) {
-      final _constraints = BoxConstraints.tight(Size(size.width,
-          size.height - ContentNotifier.otherHeight - paddingRect.vertical));
+      final _constraints = BoxConstraints.tight(
+          Size(size.width, size.height - otherHeight - paddingRect.vertical));
       _body!.layout(_constraints);
 
       final parentdata = _body!.parentData as BoxParentData;
-      parentdata.offset = Offset(
-          .0,
-          ContentNotifier.contentPadding +
-              paddingRect.top +
-              ContentNotifier.topPad +
-              height);
+      parentdata.offset =
+          Offset(.0, contentPadding + paddingRect.top + topPad + height);
     }
   }
 

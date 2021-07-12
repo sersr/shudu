@@ -191,10 +191,6 @@ class PanSlideController {
     }
   }
 
-  // void jumpTo(double v) {
-  //   controller.value = v.clamp(0.0, 1.0);
-  // }
-
   bool get isShowing =>
       controller.status == AnimationStatus.completed ||
       controller.status == AnimationStatus.forward;

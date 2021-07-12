@@ -13,6 +13,7 @@ import '../event/event.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
 import 'book_index_notifier.dart';
+import 'constansts.dart';
 
 enum Status { ignore, error, done }
 
@@ -128,14 +129,6 @@ class ContentNotifier extends ChangeNotifier {
       // fontFamilyFallback: ['RobotoMono', 'NotoSansSC'],
     );
   }
-
-  static const pagefooterSize = 13.0;
-  static const topPad = 8.0;
-  static const contentPadding = 10.0;
-  static const botPad = 8.0;
-  static const otherHeight =
-      contentPadding * 2 + topPad + botPad + pagefooterSize * 2;
-  final _regexpEmpty = RegExp('[ \u3000]+');
 
   ///-------------------------
 
@@ -531,7 +524,9 @@ extension Layout on ContentNotifier {
         if (tData.contentIsEmpty ||
             _willGoF != null ||
             !inBook ||
-            autoRun.value) {
+            autoRun.value ||
+            !hasPre() ||
+            !hasNext()) {
           if (loading.value) notifyState(loading: false);
           EventLooper.instance.async = false;
         }
@@ -555,7 +550,7 @@ extension Layout on ContentNotifier {
     final left = paddingRect.left + leftExtraPadding;
 
     // 文本占用高度
-    final contentHeight = _size.height - ContentNotifier.otherHeight;
+    final contentHeight = _size.height - otherHeight;
 
     // 配置行高
     final lineHeight = config.lineTweenHeight! * fontSize;
@@ -656,7 +651,7 @@ extension Layout on ContentNotifier {
             pc
                 .getRange(start, end)
                 .toString()
-                .replaceAll(_regexpEmpty, '')
+                .replaceAll(regexpEmpty, '')
                 .isEmpty) break;
 
         final _s = pc.getRange(start, end);
@@ -701,7 +696,9 @@ extension Layout on ContentNotifier {
 
       final right = width - bottomRight.width - leftExtraPadding * 2;
 
-      final met = ContentMetrics(
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      dpaint(canvas,
           painters: pages[r],
           extraHeightInLines: extraHeight,
           isHorizontal: isHorizontal,
@@ -718,12 +715,191 @@ extension Layout on ContentNotifier {
           showrect: showrect,
           topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
 
+      final picture = recorder.endRecording();
+
+      final met = ContentMetrics(
+        // painters: pages[r],
+        picture: picture,
+        // extraHeightInLines: extraHeight,
+        // isHorizontal: isHorizontal,
+        secstyle: secstyle,
+        // fontSize: fontSize,
+        // cPainter: smallTitlePainter,
+        // botRightPainter: bottomRight,
+        // cBigPainter: _bigTitlePainter,
+        // right: right,
+        left: left,
+        // index: r,
+        size: _size,
+        // windowTopPadding: safePadding.top,
+        // showrect: showrect,
+        // topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows)
+      );
       textPages.add(met);
     }
 
     return textPages;
   }
+
+  void dpaint(Canvas canvas,
+      {required List<TextPainter> painters,
+      required double extraHeightInLines,
+      required TextStyle secstyle,
+      required double fontSize,
+      required bool isHorizontal,
+      required TextPainter cPainter,
+      required TextPainter botRightPainter,
+      required TextPainter cBigPainter,
+      required double right,
+      required double left,
+      required int index,
+      required Size size,
+      required double windowTopPadding,
+      required bool showrect,
+      required double topExtraHeight}) {
+    // context.setIsComplexHint();
+
+    final ePadding = contentPadding;
+    final bottomRight = botRightPainter;
+    final e = extraHeightInLines;
+    final _teps = painters;
+
+    final cnamePainter = cPainter;
+    final _size = size;
+    final _windowTopPadding = isHorizontal ? windowTopPadding : 0.0;
+
+    var h = 0.0;
+    canvas.save();
+    canvas.translate(left, _windowTopPadding);
+    if (isHorizontal) {
+      h += topPad;
+      cnamePainter.paint(canvas, Offset(0.0, h));
+      h += cnamePainter.height;
+    }
+    if (index == 0) {
+      if (!isHorizontal) {
+        h -= ePadding;
+      }
+      h += topExtraHeight;
+      cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
+      if (!isHorizontal) {
+        h += ePadding;
+      }
+    }
+
+    if (isHorizontal) h += ePadding;
+
+    // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
+    final xh = h;
+    final _e = e / 2;
+    final _end = _e + fontSize;
+    for (var _tep in _teps) {
+      h += _e;
+      _tep.paint(canvas, Offset(0.0, h));
+      // canvas.drawRect(Offset(0.0, h) & Size(_size.width, _tep.height), Paint()..color = Colors.red.withAlpha(70));
+      h += _end;
+    }
+    if (showrect) {
+      canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h),
+          Paint()..color = Colors.black.withAlpha(100));
+    }
+    // canvas.drawRect(
+    //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
+    // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
+    if (isHorizontal) {
+      bottomRight.paint(
+          canvas, Offset(right, _size.height - bottomRight.height - botPad));
+      // var bleft = 0.0;
+      // final _offset = Offset(0.0, _size.height - bottomRight.height - botPad);
+      // if (child != null) {
+      //   bleft = child!.size.width;
+      //   context.paintChild(
+      //       child!,
+      //       _offset.translate(
+      //           0.0, (bottomRight.height - child!.size.height) / 2));
+      // }
+      // canvas.drawRect(_offset.translate(0.0, 0.0) & Size(bottomLeft.width, bottomLeft.height),
+      //     Paint()..color = Colors.black.withAlpha(100));
+      // bottomLeft.paint(canvas, _offset.translate(bleft, 0.0));
+    }
+    canvas.restore();
+  }
 }
+
+// void dpaint(Canvas canvas, ContentMetrics contentMetrics) {
+//   // context.setIsComplexHint();
+//   final isHorizontal = contentMetrics.isHorizontal;
+
+//   final ePadding = contentPadding;
+//   final bottomRight = contentMetrics.botRightPainter;
+//   final right = contentMetrics.right;
+//   final e = contentMetrics.extraHeightInLines;
+//   final fontSize = contentMetrics.fontSize;
+//   final _teps = contentMetrics.painters;
+//   final index = contentMetrics.index;
+//   final left = contentMetrics.left;
+//   final cnamePainter = contentMetrics.cPainter;
+//   final cBigPainter = contentMetrics.cBigPainter;
+//   final _size = contentMetrics.size;
+//   final topExtraHeight = contentMetrics.topExtraHeight;
+//   final windowTopPadding = isHorizontal ? contentMetrics.windowTopPadding : 0.0;
+
+//   var h = 0.0;
+//   canvas.save();
+//   canvas.translate(left, windowTopPadding);
+//   if (isHorizontal) {
+//     h += topPad;
+//     cnamePainter.paint(canvas, Offset(0.0, h));
+//     h += cnamePainter.height;
+//   }
+//   if (index == 0) {
+//     if (!isHorizontal) {
+//       h -= ePadding;
+//     }
+//     h += topExtraHeight;
+//     cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
+//     if (!isHorizontal) {
+//       h += ePadding;
+//     }
+//   }
+
+//   if (isHorizontal) h += ePadding;
+
+//   // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
+//   final xh = h;
+//   final _e = e / 2;
+//   final _end = _e + fontSize;
+//   for (var _tep in _teps) {
+//     h += _e;
+//     _tep.paint(canvas, Offset(0.0, h));
+//     // canvas.drawRect(Offset(0.0, h) & Size(_size.width, _tep.height), Paint()..color = Colors.red.withAlpha(70));
+//     h += _end;
+//   }
+//   if (contentMetrics.showrect) {
+//     canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h),
+//         Paint()..color = Colors.black.withAlpha(100));
+//   }
+//   // canvas.drawRect(
+//   //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
+//   // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
+//   if (isHorizontal) {
+//     bottomRight.paint(
+//         canvas, Offset(right, _size.height - bottomRight.height - botPad));
+//     // var bleft = 0.0;
+//     // final _offset = Offset(0.0, _size.height - bottomRight.height - botPad);
+//     // if (child != null) {
+//     //   bleft = child!.size.width;
+//     //   context.paintChild(
+//     //       child!,
+//     //       _offset.translate(
+//     //           0.0, (bottomRight.height - child!.size.height) / 2));
+//     // }
+//     // canvas.drawRect(_offset.translate(0.0, 0.0) & Size(bottomLeft.width, bottomLeft.height),
+//     //     Paint()..color = Colors.black.withAlpha(100));
+//     // bottomLeft.paint(canvas, _offset.translate(bleft, 0.0));
+//   }
+//   canvas.restore();
+// }
 
 extension Event on ContentNotifier {
   Future<void> showdow() async {
@@ -909,9 +1085,8 @@ extension ContentGetter on ContentNotifier {
   int hasContent() {
     var _r = 0;
     if (tData.contentIsNotEmpty) {
-      final hasRight =
-          currentPage < tData.content.length || _caches.containsKey(tData.nid);
-      final hasLeft = currentPage > 1 || _caches.containsKey(tData.pid);
+      final hasRight = hasNext();
+      final hasLeft = hasPre();
 
       if (hasRight) _r |= ContentBounds.addRight;
       if (hasLeft) _r |= ContentBounds.addLeft;
@@ -922,6 +1097,14 @@ extension ContentGetter on ContentNotifier {
     _delayedLoad();
 
     return _r;
+  }
+
+  bool hasPre() {
+    return currentPage > 1 || _caches.containsKey(tData.pid);
+  }
+
+  bool hasNext() {
+    return currentPage < tData.content.length || _caches.containsKey(tData.nid);
   }
 
   // 首先确定当前章节首页位置
@@ -1067,7 +1250,7 @@ extension Configs on ContentNotifier {
 
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: ContentNotifier.pagefooterSize,
+      fontSize: pagefooterSize,
       // version: ^2.2.0
       leadingDistribution: TextLeadingDistribution.even,
       // height: 1.2,
@@ -1079,7 +1262,7 @@ extension Configs on ContentNotifier {
   Future? configListen() async {
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: ContentNotifier.pagefooterSize,
+      fontSize: pagefooterSize,
       leadingDistribution: TextLeadingDistribution.even,
       // height: 1.2,
     );
@@ -1197,37 +1380,39 @@ extension AutoR on ContentNotifier {
 
 class ContentMetrics {
   const ContentMetrics({
-    required this.painters,
-    required this.extraHeightInLines,
-    required this.isHorizontal,
+    // required this.painters,
+    // required this.extraHeightInLines,
+    // required this.isHorizontal,
     required this.secstyle,
-    required this.fontSize,
-    required this.cPainter,
-    required this.botRightPainter,
-    required this.cBigPainter,
-    required this.right,
+    // required this.fontSize,
+    // required this.cPainter,
+    // required this.botRightPainter,
+    // required this.cBigPainter,
+    // required this.right,
     required this.left,
-    required this.index,
+    // required this.index,
     required this.size,
-    required this.windowTopPadding,
-    required this.showrect,
-    required this.topExtraHeight,
+    // required this.windowTopPadding,
+    // required this.showrect,
+    // required this.topExtraHeight,
+    required this.picture,
   });
-  final List<TextPainter> painters;
-  final double extraHeightInLines;
+  // final List<TextPainter> painters;
+  // final double extraHeightInLines;
   final TextStyle secstyle;
-  final double fontSize;
-  final bool isHorizontal;
-  final TextPainter cPainter;
-  final TextPainter botRightPainter;
-  final TextPainter cBigPainter;
-  final double right;
+  // final double fontSize;
+  // final bool isHorizontal;
+  // final TextPainter cPainter;
+  // final TextPainter botRightPainter;
+  // final TextPainter cBigPainter;
+  // final double right;
   final double left;
-  final int index;
+  // final int index;
   final Size size;
-  final double windowTopPadding;
-  final bool showrect;
-  final double topExtraHeight;
+  // final double windowTopPadding;
+  // final bool showrect;
+  // final double topExtraHeight;
+  final ui.Picture picture;
 }
 
 class ContentBounds {

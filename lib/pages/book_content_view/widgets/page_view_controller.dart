@@ -482,7 +482,6 @@ class ContentPreNextRenderObject extends RenderBox {
       if (!childlist.containsKey(i)) {
         layoutChild(i);
       }
-      childlist[i]?.layout(constraints, parentUsesSize: true);
     }
     for (var i = _firstIndex; i <= _lastIndex; i++) {
       if (childlist.containsKey(i)) {
@@ -499,22 +498,26 @@ class ContentPreNextRenderObject extends RenderBox {
 
     /// 更正
     if (canPaint) {
-      for (var i = firstIndex!; i <= lastIndex!; i++) {
-        final leftRight = nopController.getBounds();
-        final hasLeft = ContentBounds.hasLeft(leftRight);
-        final hasRight = ContentBounds.hasRight(leftRight);
+      final leftRight = nopController.getBounds();
+      final hasLeft = ContentBounds.hasLeft(leftRight);
+      final hasRight = ContentBounds.hasRight(leftRight);
 
-        _element!._build(nopController.page.round(), changeState: true);
-        nopController.applyConentDimension(
-          minExtent: hasLeft
-              ? double.negativeInfinity
-              : indexToLayoutOffset(extent, firstIndex!),
-          maxExtent: hasRight
-              ? double.infinity
-              : indexToLayoutOffset(extent, lastIndex!),
-        );
+      _element!._build(nopController.page.round(), changeState: true);
+      nopController.applyConentDimension(
+        minExtent: hasLeft
+            ? double.negativeInfinity
+            : indexToLayoutOffset(extent, firstIndex!),
+        maxExtent: hasRight
+            ? double.infinity
+            : indexToLayoutOffset(extent, lastIndex!),
+      );
+      for (var i = firstIndex!; i <= lastIndex!; i++) {
+        final child = childlist[i]!;
         assert(childlist.containsKey(i));
-        final data = childlist[i]!.parentData as NopPageViewParenData;
+        final data = child.parentData as NopPageViewParenData;
+
+        child.layout(constraints, parentUsesSize: true);
+
         data.layoutOffset = computeAbsolutePaintOffset(
             indexToLayoutOffset(extent, i)
                 .clamp(nopController.minExtent!, nopController.maxExtent!),

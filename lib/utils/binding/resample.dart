@@ -117,7 +117,6 @@ class Resample {
 
   void resample(Duration vsyncTime, Duration nextTimeStamp,
       HandleEventCallback callback) {
-    // nextTimeStamp -= const Duration(microseconds: 5);
     _processPointerEvents(vsyncTime);
 
     final sampleTime = vsyncTime - const Duration(milliseconds: 5);
@@ -128,25 +127,25 @@ class Resample {
     final _lastTimeStamp = _last.timeStamp;
     var endTime = _lastTimeStamp;
     // print('diff: ${(vsyncTime - nextTimeStamp).inMicroseconds / 1000} ms');
-    // final it = _queuedEvents.iterator;
+    final it = _queuedEvents.iterator;
 
-    // while (it.moveNext()) {
-    //   final event = it.current;
-    //   if (event.timeStamp > _lastTimeStamp) {
-    //     if (event.timeStamp >= nextTimeStamp) {
-    //       break;
-    //     }
-    //     if (event is PointerUpEvent || event is PointerRemovedEvent) {
-    //       endTime = event.timeStamp;
-    //       continue;
-    //     }
+    while (it.moveNext()) {
+      final event = it.current;
+      if (event.timeStamp > _lastTimeStamp) {
+        if (event.timeStamp >= nextTimeStamp) {
+          break;
+        }
+        if (event is PointerUpEvent || event is PointerRemovedEvent) {
+          endTime = event.timeStamp;
+          continue;
+        }
 
-    //     // Stop if event is not move or hover.
-    //     if (event is! PointerMoveEvent && event is! PointerHoverEvent) {
-    //       break;
-    //     }
-    //   }
-    // }
+        // Stop if event is not move or hover.
+        if (event is! PointerMoveEvent && event is! PointerHoverEvent) {
+          break;
+        }
+      }
+    }
 
     var position = _positionAt(sampleTime);
     // final last = _queuedEvents.last;
