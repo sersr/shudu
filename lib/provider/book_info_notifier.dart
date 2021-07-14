@@ -30,6 +30,7 @@ class BookInfoProvider extends ChangeNotifier {
 
   void reload(int id) {
     remove(id);
+    notifyListeners();
     getData(id);
   }
 

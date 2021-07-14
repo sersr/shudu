@@ -76,7 +76,8 @@ class Server {
     tranf?.cancel();
     tranf = receivePort.listen(_tran);
 
-    bookEventIsolate = BookEventIsolateTest(receivePort.sendPort)..init();
+    bookEventIsolate = BookEventIsolateTest(receivePort.sendPort)
+      ..netEventInit();
     serverListen?.cancel();
     serverListen = server.stream.listen((event) {
       if (bookEventIsolate.resolve(event)) return;
@@ -89,13 +90,15 @@ class Server {
 }
 
 class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendPort sp) : super('', sp);
+  BookEventIsolateTest(SendPort sp) : super(sp, '', '');
   @override
   bool remove(key) {
     if (key is KeyController) Log.e(key.keyType);
     return super.remove(key);
   }
 
+  @override
+  final String cachePath = Directory.current.path;
   @override
   final String appPath = Directory.current.path;
   @override

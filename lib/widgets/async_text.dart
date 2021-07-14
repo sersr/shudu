@@ -30,14 +30,14 @@ class AsyncText extends LeafRenderObjectWidget {
   static final _asyncTexts = <_TextLayoutKey, Future<TextPainter>>{};
 
   static Future<TextPainter> asyncLayout(double width, TextPainter text) {
-    final key = _TextLayoutKey(text.maxLines, text.text);
-    text.ellipsis = '...';
+    final key = _TextLayoutKey([text.maxLines, text.text, text.ellipsis]);
+    text.ellipsis ??= '...';
 
     return _asyncTexts.putIfAbsent(
         key,
         () => _textLooper.addEventTask(() async {
-              text.layout(maxWidth: width);
               await releaseUI;
+              text.layout(maxWidth: width);
             }).then((_) => text)
               ..whenComplete(() {
                 Timer(
@@ -74,7 +74,7 @@ class AsyncTextRenderBox extends RenderBox {
   bool _needLayout;
   set needLayout(bool n) {
     if (_needLayout == n) return;
-    _needLayout = true;
+    _needLayout = n;
     markNeedsLayout();
   }
 
@@ -90,6 +90,11 @@ class AsyncTextRenderBox extends RenderBox {
     size = constraints.constrain(_textPainter.size);
   }
 
+  /// 由于异步导致的重绘，会影响整个 [PictureLayer]
+  /// 减少不必要的消耗，只需要重绘自身就好了
+  // @override
+  // bool get isRepaintBoundary => !_needLayout;
+
   @override
   void paint(PaintingContext context, Offset offset) {
     _textPainter.paint(context.canvas, offset);
@@ -97,10 +102,9 @@ class AsyncTextRenderBox extends RenderBox {
 }
 
 class _TextLayoutKey extends Equatable {
-  _TextLayoutKey(this.maxLines, this.text);
-  final int? maxLines;
-  final InlineSpan? text;
+  _TextLayoutKey(this.list);
+  final List list;
 
   @override
-  List<Object?> get props => [maxLines, text];
+  List<Object?> get props => list;
 }

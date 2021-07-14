@@ -10,7 +10,7 @@ import 'book_event.dart';
 abstract class Repository {
   Repository();
 
-  void addInitCallback(Future<void> Function() callback);
+  // void addInitCallback(Future<void> Function() callback);
   Future<void> get initState;
   void dispose();
 
@@ -32,7 +32,7 @@ abstract class Repository {
 
   // default
   ViewInsets get viewInsets => ViewInsets.zero;
-  Future<ViewInsets> getViewInsets() async => viewInsets;
+  Future<ViewInsets> get getViewInsets async => viewInsets;
   int get bottomHeight => 0;
 
   int level = 50;

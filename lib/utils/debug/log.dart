@@ -28,7 +28,7 @@ abstract class Log {
 
   static bool _log(
       int lv, Object? message, StackTrace stackTrace, bool showPath) {
-    if (!kDebugMode) return true;
+    if (message == null || !kDebugMode) return true;
     var addMsg = '';
 
     var path = '', name = '';

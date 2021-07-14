@@ -72,7 +72,10 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
                       ? const Color.fromARGB(255, 210, 210, 210)
                       : null,
                   child: InkWell(
-                    onTap: () => setState(() => _currentIndex = index),
+                    onTap: () {
+                      // if (_currentIndex != index)
+                      setState(() => _currentIndex = index);
+                    },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 12.0, horizontal: 4.0),

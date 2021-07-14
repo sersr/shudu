@@ -17,33 +17,31 @@ export 'base/repository.dart';
 // 网络任务 mixin
 class BookEventIsolate extends BookEventResolve
     with DatabaseMixin, NetworkMixin, ComplexMixin {
-  BookEventIsolate(this.appPath, this.sp);
+  BookEventIsolate(this.sp, this.appPath, this.cachePath);
 
   @override
   final SendPort sp;
   @override
   final String appPath;
+  @override
+  final String cachePath;
 
-  Future<void> initState() => init();
+  Future<void> initState() => netEventInit();
 
   @override
-  void sendEnd(error) {
+  void onError(error) {
     Log.e(error);
   }
 
   @override
   bool remove(key) {
-    if (key is KeyController) Log.w(key.keyType);
+    assert(key is! KeyController || Log.w(key));
     return super.remove(key);
   }
 
   @override
   bool resolve(m) {
-    if (super.resolve(m)) return true;
-
-    Log.e(m);
-
-    return false;
+    return super.resolve(m);
   }
 }
 
@@ -52,4 +50,21 @@ class BookEventMain extends BookEventMessager
   BookEventMain(this.send);
   @override
   final SendEvent send;
+}
+
+void isolateEvent(List args) async {
+  final port = args[0];
+  final appPath = args[1];
+  final cachePath = args[2];
+  final receivePort = ReceivePort();
+
+  final db = BookEventIsolate(port, appPath, cachePath);
+  await db.initState();
+
+  receivePort.listen((m) {
+    if (db.resolve(m)) return;
+    Log.e('somthing was error: $m');
+  });
+
+  port.send(receivePort.sendPort);
 }

@@ -157,6 +157,7 @@ class OptionsNotifier extends ChangeNotifier {
         resampleOffset: resampleOffset);
   }
 
+  @Deprecated('指针采样算法已修改，默认启用 resamplingEnabled')
   Future<bool> listenRate() async {
     if (!Platform.isAndroid) return false;
     await Future.delayed(const Duration(seconds: 1));
@@ -176,6 +177,7 @@ class OptionsNotifier extends ChangeNotifier {
     return resample;
   }
 
+  @deprecated
   Future<void> changeRate() async {
     await Future.delayed(const Duration(seconds: 1));
     final resample = await listenRate();

@@ -147,7 +147,7 @@ class _Resampler {
   // Resamplers used to filter incoming pointer events.
   final Map<int, PointerEventResampler> _resamplers =
       <int, PointerEventResampler>{};
-  final Map<int, Resample> _myresampler = <int, Resample>{};
+  final Map<int, Resampler> _myresampler = <int, Resampler>{};
   // Flag to track if a frame callback has been scheduled.
   bool _frameCallbackScheduled = false;
 
@@ -190,7 +190,7 @@ class _Resampler {
       // resampler.addEvent(event);
       final _my = _myresampler.putIfAbsent(
         event.device,
-        () => Resample(),
+        () => Resampler(),
       );
 
       _my.addEvent(event);
@@ -236,7 +236,7 @@ class _Resampler {
     }
 
     // Remove inactive resamplers.
-    _myresampler.removeWhere((int key, Resample resampler) {
+    _myresampler.removeWhere((int key, Resampler resampler) {
       return !resampler.hasPendingEvents && !resampler.isDown;
     });
     final isNotEmpty = _myresampler.isNotEmpty;

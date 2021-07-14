@@ -20,6 +20,17 @@ Dio dioCreater() => Dio(
       ),
     );
 
+
+void hiveInit(String path) {
+  Hive
+    ..registerAdapter(ColorAdapter())
+    ..registerAdapter(AxisAdapter())
+    ..registerAdapter(TargetPlatformAdapter())
+    ..registerAdapter(PageBuilderAdapter());
+
+  Hive.init(path);
+}
+
 class ColorAdapter extends TypeAdapter<Color> {
   @override
   Color read(BinaryReader reader) {

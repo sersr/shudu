@@ -42,17 +42,19 @@ void main() async {
     });
     print('first send');
     // await wait;
-    x = await bookEvent.updateBookStatusCustom(bookid, 999, 101);
+    x = await bookEvent.updateBook(
+        bookid, BookCache(chapterId: 999, page: 101));
     expect(x, 1);
 
-    x = await bookEvent.updateBookStatusCustom(bookid, 999, 101);
+    x = await bookEvent.updateBook(
+        bookid, BookCache(chapterId: 999, page: 101));
     expect(x, 1);
 
-    x = await bookEvent.updateBookStatusCustom(bookid, 777, 11);
+    x = await bookEvent.updateBook(bookid, BookCache(chapterId: 777, page: 11));
     expect(x, 1);
     c2.pause();
     c1.pause();
-    x = await bookEvent.updateBookStatusCustom(bookid, 101, 11);
+    x = await bookEvent.updateBook(bookid, BookCache(chapterId: 101, page: 11));
     expect(x, 1);
     c2.resume();
     await wait;

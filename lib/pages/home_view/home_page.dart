@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:lpinyin/lpinyin.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/nop_database.dart';
@@ -47,20 +48,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     opts = context.read<OptionsNotifier>();
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
-    if (_future == null) {
-      cache.repository
-        // ..addInitCallback()
-        ..addInitCallback(painterBloc.initConfigs)
-        ..addInitCallback(search.init);
-
-      _future ??= cache.repository.initState.then((_) {
-        opts.init();
-        return Future.wait([
-          painterBloc.metricsChange(),
-          cache.load(),
-        ]);
-      });
-    }
+    _future ??= cache.repository.initState.then((_) {
+      opts.init();
+      search.init();
+      painterBloc.initConfigs();
+      return Future.wait([
+        painterBloc.metricsChange(),
+        cache.load(),
+      ]);
+    });
   }
 
   @override
@@ -82,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         'data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
         ' ${w.padding} \ndata: viewInsets ${w.viewInsets} \ndata: physicalGeometry ${w.physicalGeometry}'));
     timer?.cancel();
-    timer = Timer(Duration(milliseconds: 100), () {
+    timer = Timer(const Duration(milliseconds: 100), () {
       if (mounted) {
         painterBloc.metricsChange();
       }
@@ -169,11 +165,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           children: [
             Expanded(
               child: LayoutBuilder(
-                builder: (context, contraints) {
+                builder: (_, contraints) {
                   final height = contraints.maxHeight;
                   return InkWell(
                     borderRadius: BorderRadius.circular(height / 2),
-                    onTap: () => showbts(context),
+                    onTap: () => showbts(),
                     child: Container(
                       height: height,
                       width: height,
@@ -230,10 +226,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
-  void showbts(BuildContext context) {
+  void showbts() {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return Container(
           decoration: BoxDecoration(
             color: Colors.grey[200]!.withAlpha(240),
@@ -472,7 +468,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget bottomSheet(BuildContext context, BookCache item) {
+  Widget bottomSheet(BookCache item) {
     return Container(
       decoration: BoxDecoration(
         // color: Colors.grey[200].withAlpha(240),
@@ -499,20 +495,36 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 }));
                 // BookInfoPage.push(context, item.bookId!);
               }),
-          btn2(
-              icon: Icons.touch_app_sharp,
-              text: item.isTop ?? false ? '取消置顶' : '书籍置顶',
-              onTap: () {
-                final isTop = item.isTop;
-                if (isTop != null) cache.updateTop(item.bookId!, !isTop);
-                // Navigator.of(context).pop();
-              }),
+          Selector<BookCacheNotifier, bool>(
+            selector: (_, notifier) {
+              final child = notifier.sortChildren;
+              final it = child.iterator;
+              BookCache? current;
+              final bookid = item.bookId;
+              while (it.moveNext()) {
+                final _cache = it.current;
+                if (bookid == _cache.bookId) {
+                  current = _cache;
+                  break;
+                }
+              }
+              current ??= item;
+              return current.isTop ?? false;
+            },
+            builder: (context, isTop, child) {
+              return btn2(
+                  icon: Icons.touch_app_sharp,
+                  text: isTop ? '取消置顶' : '书籍置顶',
+                  onTap: () => cache.updateTop(item.bookId!, !isTop));
+            },
+            shouldRebuild: (o, n) => o != n,
+          ),
           btn2(
               icon: Icons.delete_forever_outlined,
               text: '删除书籍',
               onTap: () {
                 cache.deleteBook(item.bookId!);
-                // Navigator.of(context).pop();
+                Navigator.of(context).maybePop();
               }),
         ],
       ),
@@ -532,8 +544,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         },
         child: AnimatedBuilder(
           animation: cache,
-          builder: (context, state) {
-            if (!cache.initialized) return SizedBox();
+          builder: (_, state) {
+            if (!cache.initialized) return const SizedBox();
 
             final children = cache.showChildren;
 
@@ -542,7 +554,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             return Scrollbar(
               child: ListViewBuilder(
                 itemCount: children.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (_, index) {
                   final item = children[index];
                   return ListItemBuilder(
                     onTap: () {
@@ -550,9 +562,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           context, item.bookId!, item.chapterId!, item.page!);
                     },
                     onLongPress: () {
+                      /// 选择 this.context 的原因：
+                      /// 其他 context 的生命周期可能会不一致或过早无效
                       showModalBottomSheet(
-                          context: context,
-                          builder: (context) => bottomSheet(context, item));
+                          context: context, builder: (_) => bottomSheet(item));
                     },
                     child: BookItem(
                       img: item.img,

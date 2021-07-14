@@ -49,6 +49,9 @@ class BatteryViewObject extends RenderBox {
 
   static const _radius = 2.5;
 
+@override
+  bool get isRepaintBoundary => true;
+  
   @override
   void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;

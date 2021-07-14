@@ -52,6 +52,35 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
   final isNew = 'isNew';
   final isShow = 'isShow';
 
+  void updateBookCache(
+      UpdateStatement<BookCache, _GenBookCache> update, bookCache) {
+    if (bookCache.id != null) update.id.set(bookCache.id);
+
+    if (bookCache.name != null) update.name.set(bookCache.name);
+
+    if (bookCache.img != null) update.img.set(bookCache.img);
+
+    if (bookCache.updateTime != null)
+      update.updateTime.set(bookCache.updateTime);
+
+    if (bookCache.lastChapter != null)
+      update.lastChapter.set(bookCache.lastChapter);
+
+    if (bookCache.chapterId != null) update.chapterId.set(bookCache.chapterId);
+
+    if (bookCache.bookId != null) update.bookId.set(bookCache.bookId);
+
+    if (bookCache.page != null) update.page.set(bookCache.page);
+
+    if (bookCache.sortKey != null) update.sortKey.set(bookCache.sortKey);
+
+    if (bookCache.isTop != null) update.isTop.set(bookCache.isTop);
+
+    if (bookCache.isNew != null) update.isNew.set(bookCache.isNew);
+
+    if (bookCache.isShow != null) update.isShow.set(bookCache.isShow);
+  }
+
   @override
   String createTable() {
     return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $name TEXT, $img '
@@ -183,6 +212,27 @@ class _GenBookContentDb
   final content = 'content';
   final hasContent = 'hasContent';
 
+  void updateBookContentDb(
+      UpdateStatement<BookContentDb, _GenBookContentDb> update, bookContentDb) {
+    if (bookContentDb.id != null) update.id.set(bookContentDb.id);
+
+    if (bookContentDb.bookId != null) update.bookId.set(bookContentDb.bookId);
+
+    if (bookContentDb.cid != null) update.cid.set(bookContentDb.cid);
+
+    if (bookContentDb.cname != null) update.cname.set(bookContentDb.cname);
+
+    if (bookContentDb.nid != null) update.nid.set(bookContentDb.nid);
+
+    if (bookContentDb.pid != null) update.pid.set(bookContentDb.pid);
+
+    if (bookContentDb.content != null)
+      update.content.set(bookContentDb.content);
+
+    if (bookContentDb.hasContent != null)
+      update.hasContent.set(bookContentDb.hasContent);
+  }
+
   @override
   String createTable() {
     return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, $cid '
@@ -270,6 +320,15 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
   final id = 'id';
   final bookId = 'bookId';
   final bIndexs = 'bIndexs';
+
+  void updateBookIndex(
+      UpdateStatement<BookIndex, _GenBookIndex> update, bookIndex) {
+    if (bookIndex.id != null) update.id.set(bookIndex.id);
+
+    if (bookIndex.bookId != null) update.bookId.set(bookIndex.bookId);
+
+    if (bookIndex.bIndexs != null) update.bIndexs.set(bookIndex.bIndexs);
+  }
 
   @override
   String createTable() {

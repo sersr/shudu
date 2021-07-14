@@ -56,55 +56,72 @@ class BookItem extends StatelessWidget {
             id: ImageLayout.text,
             child: Padding(
                 padding: const EdgeInsets.only(left: 12.0),
-                child: LayoutBuilder(builder: (context, constraints) {
-                  return FutureBuilder<List<TextPainter>>(
-                      future: Future.wait<TextPainter>([
-                        AsyncText.asyncLayout(
-                            constraints.maxWidth,
-                            TextPainter(
-                                text:
-                                    TextSpan(text: bookName!, style: ts.title3),
-                                maxLines: 1,
-                                textDirection: TextDirection.ltr)),
-                        AsyncText.asyncLayout(
-                            constraints.maxWidth,
-                            TextPainter(
-                                text: TextSpan(
-                                    text: '最新：$bookUdateItem', style: ts.body2),
-                                maxLines: 1,
-                                textDirection: TextDirection.ltr)),
-                        AsyncText.asyncLayout(
-                            constraints.maxWidth,
-                            TextPainter(
-                                text: TextSpan(
-                                    text: bookUpdateTime!, style: ts.body3),
-                                maxLines: 1,
-                                textDirection: TextDirection.ltr)),
-                      ]),
-                      builder: (context, snap) {
-                        if (snap.hasData) {
-                          final data = snap.data!;
-                          return CustomMultiChildLayout(
-                            delegate: ItemDetailWidget(98),
-                            children: [
-                              LayoutId(
-                                  id: 'top', child: AsyncText.async(data[0])),
-                              LayoutId(
-                                  id: 'center',
-                                  child: AsyncText.async(data[1])),
-                              LayoutId(
-                                  id: 'bottom', child: AsyncText.async(data[2]))
-                            ],
-                          );
-                        }
-                        return SizedBox();
-                      });
-                })),
+                child: RepaintBoundary(
+                  child: TextAsyncBuilder(
+                      bookName: bookName,
+                      ts: ts,
+                      bookUdateItem: bookUdateItem,
+                      bookUpdateTime: bookUpdateTime),
+                )),
           ),
           // ),
         ],
       ),
     );
+  }
+}
+
+class TextAsyncBuilder extends StatelessWidget {
+  const TextAsyncBuilder({
+    Key? key,
+    required this.bookName,
+    required this.ts,
+    required this.bookUdateItem,
+    required this.bookUpdateTime,
+  }) : super(key: key);
+
+  final String? bookName;
+  final TextStyleConfig ts;
+  final String? bookUdateItem;
+  final String? bookUpdateTime;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return FutureBuilder<List<TextPainter>>(
+          future: Future.wait<TextPainter>([
+            AsyncText.asyncLayout(
+                constraints.maxWidth,
+                TextPainter(
+                    text: TextSpan(text: bookName!, style: ts.title3),
+                    maxLines: 1,
+                    textDirection: TextDirection.ltr)),
+            AsyncText.asyncLayout(
+                constraints.maxWidth,
+                TextPainter(
+                    text: TextSpan(text: '最新：$bookUdateItem', style: ts.body2),
+                    maxLines: 1,
+                    textDirection: TextDirection.ltr)),
+            AsyncText.asyncLayout(
+                constraints.maxWidth,
+                TextPainter(
+                    text: TextSpan(text: bookUpdateTime!, style: ts.body3),
+                    maxLines: 1,
+                    textDirection: TextDirection.ltr)),
+          ]),
+          builder: (context, snap) {
+            if (snap.hasData) {
+              final data = snap.data!;
+
+              return ItemWidget(
+                  height: 98,
+                  top: AsyncText.async(data[0]),
+                  center: AsyncText.async(data[1]),
+                  bottom: AsyncText.async(data[2]));
+            }
+            return SizedBox();
+          });
+    });
   }
 }
 
@@ -191,7 +208,7 @@ class UpdateIconRenderObject extends RenderBox
   late double height;
 
   @override
-  bool get isRepaintBoundary => isNew || isTop;
+  bool get isRepaintBoundary => true;
 
   @override
   void performLayout() {

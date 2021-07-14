@@ -47,12 +47,14 @@ class ShudanItem extends StatelessWidget {
             id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 12.0),
-              child: TextBuilder(
-                  title: title,
-                  ts: ts,
-                  desc: desc,
-                  total: total,
-                  height: height ?? 112),
+              child: RepaintBoundary(
+                child: TextBuilder(
+                    title: title,
+                    ts: ts,
+                    desc: desc,
+                    total: total,
+                    height: height ?? 112),
+              ),
             ),
           ),
         ],
@@ -122,14 +124,11 @@ class _TextBuilderState extends State<TextBuilder> {
           builder: (context, snap) {
             if (snap.hasData) {
               final data = snap.data!;
-              return CustomMultiChildLayout(
-                delegate: ItemDetailWidget(widget.height),
-                children: [
-                  LayoutId(id: 'top', child: AsyncText.async(data[0])),
-                  LayoutId(id: 'center', child: AsyncText.async(data[1])),
-                  LayoutId(id: 'bottom', child: AsyncText.async(data[2]))
-                ],
-              );
+              return ItemWidget(
+                  height: widget.height,
+                  top: AsyncText.async(data[0]),
+                  center: AsyncText.async(data[1]),
+                  bottom: AsyncText.async(data[2]));
             }
             return SizedBox();
           });

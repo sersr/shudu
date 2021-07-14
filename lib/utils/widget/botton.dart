@@ -33,7 +33,7 @@ Widget btn1(
         ? Material(
             borderRadius: BorderRadius.circular(radius),
             color: bgColor,
-            child: child,
+            child: RepaintBoundary(child: child),
           )
         : child,
   );

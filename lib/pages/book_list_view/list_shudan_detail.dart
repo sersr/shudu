@@ -51,8 +51,8 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
           LayoutId(
             id: ImageLayout.image,
             child: Container(
-              width: 80,
-              height: 120,
+              // width: 80,
+              // height: 120,
               child: ImageResolve(img: data.cover),
             ),
           ),
@@ -60,22 +60,25 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
             id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('${data.title}', maxLines: 2, style: ts.title2),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('共${widget.total}本书', style: ts.body2),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('${data.updateTime}', style: ts.body3),
-                  ),
-                ],
+              child: RepaintBoundary(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child:
+                          Text('${data.title}', maxLines: 2, style: ts.title2),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child: Text('共${widget.total}本书', style: ts.body2),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child: Text('${data.updateTime}', style: ts.body3),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -214,7 +217,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
             id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
-              child: _DetailLayout(l: l, ts: ts),
+              child: RepaintBoundary(child: _DetailLayout(l: l, ts: ts)),
             ),
           ),
         ],
@@ -276,14 +279,12 @@ class _DetailLayout extends StatelessWidget {
             builder: (context, snap) {
               if (snap.hasData) {
                 final data = snap.data!;
-                return CustomMultiChildLayout(
-                  delegate: ItemDetailWidget(108),
-                  children: [
-                    LayoutId(id: 'top', child: AsyncText.async(data[0])),
-                    LayoutId(id: 'topRight', child: AsyncText.async(data[1])),
-                    LayoutId(id: 'center', child: AsyncText.async(data[2])),
-                    LayoutId(id: 'bottom', child: AsyncText.async(data[3])),
-                  ],
+                return ItemWidget(
+                  height: 108,
+                  top: AsyncText.async(data[0]),
+                  topRight: AsyncText.async(data[1]),
+                  center: AsyncText.async(data[2]),
+                  bottom: AsyncText.async(data[3]),
                 );
               }
               return SizedBox();
@@ -321,8 +322,8 @@ class ShudanProvider extends ChangeNotifier {
   }
 }
 
-class ItemDetailWidget extends MultiChildLayoutDelegate {
-  ItemDetailWidget(this.height);
+class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
+  _ItemLayoutDelegate(this.height);
   final double height;
 
   @override
@@ -366,4 +367,35 @@ class ItemDetailWidget extends MultiChildLayoutDelegate {
   @override
   Size getSize(BoxConstraints constraints) =>
       Size(constraints.biggest.width, constraints.constrainHeight(height));
+}
+
+class ItemWidget extends StatelessWidget {
+  const ItemWidget({
+    Key? key,
+    this.bottom,
+    this.center,
+    this.top,
+    this.topRight,
+    this.height = 112,
+  }) : super(key: key);
+
+  final Widget? top;
+  final Widget? topRight;
+  final Widget? center;
+  final Widget? bottom;
+  final double height;
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: CustomMultiChildLayout(
+        delegate: _ItemLayoutDelegate(height),
+        children: [
+          if (top != null) LayoutId(id: 'top', child: top!),
+          if (topRight != null) LayoutId(id: 'topRight', child: topRight!),
+          if (center != null) LayoutId(id: 'center', child: center!),
+          if (bottom != null) LayoutId(id: 'bottom', child: bottom!),
+        ],
+      ),
+    );
+  }
 }

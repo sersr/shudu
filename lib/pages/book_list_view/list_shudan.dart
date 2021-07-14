@@ -40,10 +40,10 @@ class _ListShudanPageState extends State<ListShudanPage>
     super.dispose();
     controller.dispose();
 
-    // imageCache?.clear();
+    imageCache?.clear();
   }
 
-  final c = ['new', 'hot', 'collect'];
+  final c = const ['new', 'hot', 'collect'];
 
   @override
   Widget build(BuildContext context) {
@@ -148,10 +148,9 @@ class _WrapWidgetState extends State<WrapWidget>
             final state = shudanProvider.state;
             var child = loadingIndicator();
 
-            if (state == _LoadingStatus.error ||
-                state == _LoadingStatus.faild) {
+            if (state == LoadingStatus.error || state == LoadingStatus.failed) {
               child = reloadBotton(() => shudanProvider.loadNext(index));
-            } else if (state != _LoadingStatus.loading) {
+            } else if (state != LoadingStatus.loading) {
               shudanProvider.loadNext(index);
             }
 
@@ -216,22 +215,22 @@ class ShudanCategProvider extends ChangeNotifier {
 
   void load() => _loop.addOneEventTask(_load);
 
-  _LoadingStatus state = _LoadingStatus.success;
+  LoadingStatus state = LoadingStatus.success;
 
   var _index = 0;
   void loadNext(int index) async {
-    if (state == _LoadingStatus.loading && onWork && _index == index) return;
-    state = _LoadingStatus.loading;
+    if (state == LoadingStatus.loading && onWork && _index == index) return;
+    state = LoadingStatus.loading;
     _index = index;
     notifyListeners();
     load();
     await _loop.runner;
     if (_index == index) {
       state = list == null
-          ? _LoadingStatus.error
+          ? LoadingStatus.error
           : list?.length != index
-              ? _LoadingStatus.success
-              : _LoadingStatus.faild;
+              ? LoadingStatus.success
+              : LoadingStatus.failed;
       notifyListeners();
     }
   }
@@ -276,10 +275,10 @@ class ShudanCategProvider extends ChangeNotifier {
   }
 }
 
-enum _LoadingStatus {
+enum LoadingStatus {
   loading,
   success,
-  faild,
+  failed,
   error,
 }
 

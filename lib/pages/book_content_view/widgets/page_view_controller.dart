@@ -161,10 +161,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     int to;
     if (pixels == minExtent || pixels == maxExtent) notifyListeners();
 
-    if (velocity < -200.0) {
+    if (velocity < -150.0) {
       to = (page - f).round();
       velocity = velocity < -500 ? velocity / 2 : velocity;
-    } else if (velocity > 200.0) {
+    } else if (velocity > 150.0) {
       to = (page + f).round();
       velocity = velocity > 500 ? velocity / 2 : velocity;
     } else {
@@ -184,7 +184,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void goBallistic(double velocity) {
     if (axis == Axis.horizontal) {
-      animateTo(velocity, f: 0.5);
+      animateTo(velocity, f: 0.52);
     } else {
       if (pixels == minExtent || pixels == maxExtent) notifyListeners();
       beginActivity(BallisticActivity(
@@ -321,7 +321,7 @@ class ContentPreNextElement extends RenderObjectElement {
   void performRebuild() {
     super.performRebuild();
     removeAll();
-    renderObject.willLayout();
+    renderObject.needLayout();
   }
 
   void removeAll() {
@@ -406,7 +406,7 @@ class ContentPreNextRenderObject extends RenderBox {
     dropChild(child);
   }
 
-  void willLayout() {
+  void needLayout() {
     markNeedsLayout();
   }
 
@@ -496,13 +496,14 @@ class ContentPreNextRenderObject extends RenderBox {
       }
     }
 
-    /// 更正
     if (canPaint) {
+      /// 通知
       final leftRight = nopController.getBounds();
       final hasLeft = ContentBounds.hasLeft(leftRight);
       final hasRight = ContentBounds.hasRight(leftRight);
 
       _element!._build(nopController.page.round(), changeState: true);
+
       nopController.applyConentDimension(
         minExtent: hasLeft
             ? double.negativeInfinity
@@ -548,13 +549,12 @@ class ContentPreNextRenderObject extends RenderBox {
   @override
   bool get isRepaintBoundary => true;
 
-  ClipRectLayer? _clipRectLayer;
-
+  final _clipRectLayer = LayerHandle<ClipRectLayer>();
   @override
   void paint(PaintingContext context, Offset offset) {
-    _clipRectLayer = context.pushClipRect(
+    _clipRectLayer.layer = context.pushClipRect(
         needsCompositing, offset, Offset.zero & size, defaultPaint,
-        oldLayer: _clipRectLayer);
+        oldLayer: _clipRectLayer.layer);
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {

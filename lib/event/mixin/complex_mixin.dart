@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:lpinyin/lpinyin.dart';
+
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/nop_database.dart';
@@ -29,43 +31,54 @@ mixin ComplexMixin
   @override
   Future<BookInfoRoot> getInfo(int id) async {
     final rawData = await getInfoNet(id);
+
     final data = rawData.data;
     final mainBook = getBookCacheDb(id);
+
     if (data != null) {
       BookCache? book;
-      !mainBook.any((e) {
+      mainBook.any((e) {
         final equal = e.bookId == id;
         if (equal) book = e;
         return equal;
       });
 
-      if (book == null) {
+      final lastChapter = data.lastChapter;
+      final lastTime = data.lastTime;
+
+      final name = data.name;
+      final img =
+          data.img ?? '${PinyinHelper.getPinyinE('$name', separator: '')}.jpg';
+      Log.e(img);
+      final _book = book;
+
+      if (_book == null) {
         insertBook(BookCache(
-          name: data.name,
-          img: data.img,
-          updateTime: data.lastTime,
+          name: name,
+          img: img,
+          updateTime: lastTime,
           lastChapter: data.lastChapter,
           chapterId: data.firstChapterId,
           bookId: data.id,
-          sortKey: DateTime.now().millisecondsSinceEpoch,
+          sortKey: sortKey,
           isTop: false,
           page: 1,
           isNew: true,
           isShow: false,
         ));
       } else {
-        final _book = book!;
-        final newCname = data.lastChapter;
-        final lastTime = data.lastTime;
-
-        final name = data.name;
-        final img = data.img;
-
         final isNew =
-            newCname != _book.lastChapter && lastTime != _book.updateTime;
-        final x =
-            updateBookStatusImpl(id, newCname, lastTime, name, img, isNew);
-        Log.w('....update $x');
+            lastChapter != _book.lastChapter && lastTime != _book.updateTime;
+
+        final book = BookCache(
+            lastChapter: lastChapter,
+            updateTime: lastTime,
+            name: name,
+            img: img,
+            isNew: isNew);
+
+        final x = updateBook(id, book);
+        Log.w('update $x');
       }
     }
     return rawData;

@@ -147,6 +147,7 @@ class _TaskEntry<T> {
 
   final EventLooper _looper;
   final EventCallback<T> callback;
+  Object? ident;
   final bool onlyLastOne;
   late final key = _TaskKey<T>(_looper, callback, onlyLastOne);
 

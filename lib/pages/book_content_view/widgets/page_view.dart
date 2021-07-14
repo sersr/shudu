@@ -29,7 +29,6 @@ class ContentPageViewState extends State<ContentPageView>
   late ContentNotifier bloc;
   late BookIndexNotifier indexBloc;
   PanSlideController? controller;
-  late PanSlideState state;
 
   @override
   void initState() {
@@ -39,11 +38,11 @@ class ContentPageViewState extends State<ContentPageView>
       scrollingNotify: scrollingNotify,
       getBounds: isBoundary,
     );
-    state = context.findAncestorStateOfType<PanSlideState>()!;
   }
 
   PanSlideController getController() {
     if (controller != null && !controller!.close) return controller!;
+    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid);
     controller = PanSlideController.showPan(
       this,
       onhide: onhideEnd,
@@ -206,7 +205,7 @@ class ContentPageViewState extends State<ContentPageView>
               style: bloc.secstyle,
               maxLines: 1,
             ),
-            Expanded(child: SizedBox()),
+            const Expanded(child: SizedBox()),
             Text(
               '${bloc.footer.value}',
               style: bloc.secstyle,
@@ -511,6 +510,8 @@ class _SlideElement extends RenderObjectElement {
   }
 }
 
+/// TODO: 使用 [CustomMultiChildLayout] 代替
+
 class _SlideRenderObject extends RenderBox {
   _SlideRenderObject(EdgeInsets epadding) : _paddingRect = epadding;
   RenderBox? _header;
@@ -563,18 +564,18 @@ class _SlideRenderObject extends RenderBox {
   @override
   void performLayout() {
     size = constraints.biggest;
-    var height = pagefooterSize;
-    final _constraints =
-        BoxConstraints.tight(Size(size.width - paddingRect.horizontal, height));
+    var height = contentFooterSize;
+    final _constraints = BoxConstraints.tightFor(
+        width: size.width - paddingRect.horizontal, height: height);
 
     if (_header != null) {
-      final _height = paddingRect.top + topPad;
+      final _height = paddingRect.top + contentTopPad;
       _header!.layout(_constraints);
       final parentdata = _header!.parentData as BoxParentData;
       parentdata.offset = Offset(paddingRect.left, _height);
     }
 
-    final _bottomHeight = size.height - paddingRect.bottom - botPad;
+    final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
 
     if (_footer != null) {
       _footer!.layout(_constraints);
@@ -583,13 +584,14 @@ class _SlideRenderObject extends RenderBox {
     }
 
     if (_body != null) {
-      final _constraints = BoxConstraints.tight(
-          Size(size.width, size.height - otherHeight - paddingRect.vertical));
+      final _constraints = BoxConstraints.tightFor(
+          width: size.width,
+          height: size.height - contentWhiteHeight - paddingRect.vertical);
       _body!.layout(_constraints);
 
       final parentdata = _body!.parentData as BoxParentData;
       parentdata.offset =
-          Offset(.0, contentPadding + paddingRect.top + topPad + height);
+          Offset(.0, contentPadding + paddingRect.top + contentTopPad + height);
     }
   }
 

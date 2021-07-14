@@ -3,9 +3,7 @@ import 'dart:collection';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../utils.dart';
-
-class Resample {
+class Resampler {
   final Queue<PointerEvent> _queuedEvents = Queue<PointerEvent>();
   void addEvent(PointerEvent event) {
     _queuedEvents.add(event);
@@ -126,7 +124,7 @@ class Resample {
     if (_last == null || _first == null) return;
     final _lastTimeStamp = _last.timeStamp;
     var endTime = _lastTimeStamp;
-    // print('diff: ${(vsyncTime - nextTimeStamp).inMicroseconds / 1000} ms');
+
     final it = _queuedEvents.iterator;
 
     while (it.moveNext()) {
@@ -140,7 +138,6 @@ class Resample {
           continue;
         }
 
-        // Stop if event is not move or hover.
         if (event is! PointerMoveEvent && event is! PointerHoverEvent) {
           break;
         }
@@ -148,7 +145,6 @@ class Resample {
     }
 
     var position = _positionAt(sampleTime);
-    // final last = _queuedEvents.last;
 
     while (_queuedEvents.isNotEmpty) {
       final event = _queuedEvents.first;

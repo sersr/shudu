@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../utils/utils.dart';
+import 'book_history.dart';
 import 'cacheManager.dart';
 import 'chat_room.dart';
 import 'list_bandan.dart';
@@ -17,7 +18,6 @@ class ListMainPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
                 child: btn1(
@@ -35,7 +35,7 @@ class ListMainPage extends StatelessWidget {
                       }));
                     }),
               ),
-              SizedBox(width: 5),
+              const SizedBox(width: 5),
               Expanded(
                 child: btn1(
                     radius: 10.0,
@@ -51,16 +51,14 @@ class ListMainPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(
-                            child: ListCatetoryPage());
+                        return RepaintBoundary(child: ListCatetoryPage());
                       }));
                     }),
               ),
             ],
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
                 child: btn1(
@@ -74,12 +72,11 @@ class ListMainPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context)
                           .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(
-                            child: ListBangdanPage());
+                        return RepaintBoundary(child: ListBangdanPage());
                       }));
                     }),
               ),
-              SizedBox(width: 5),
+              const SizedBox(width: 5),
               Expanded(
                 child: btn1(
                     radius: 10.0,
@@ -98,8 +95,8 @@ class ListMainPage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 5),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          const SizedBox(height: 5),
+          Row(children: [
             Expanded(
               child: btn1(
                   radius: 10.0,
@@ -113,6 +110,23 @@ class ListMainPage extends StatelessWidget {
                     Navigator.of(context)
                         .push(MaterialPageRoute(builder: (context) {
                       return RepaintBoundary(child: CacheManager());
+                    }));
+                  }),
+            ),
+            const SizedBox(width: 5),
+            Expanded(
+              child: btn1(
+                  radius: 10.0,
+                  bgColor: Colors.white,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                    child: Center(child: Text('浏览历史')),
+                  ),
+                  onTap: () {
+                    Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (context) {
+                      return RepaintBoundary(child: BookHistory());
                     }));
                   }),
             ),

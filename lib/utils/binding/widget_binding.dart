@@ -52,12 +52,14 @@ class NopWidgetsFlutterBinding extends BindingBase
           () => imageLooper.addEventTask(
             () async {
               // await imageLooper.wait();
+              await releaseUI;
               if (imageCache?.containsKey(_key) ?? false) return;
               await _preImage(provider);
-              await releaseUI;
             },
           ),
         )..whenComplete(() => imagesTasks.remove(_key));
+      } else {
+        return SynchronousFuture(null);
       }
     });
     // }

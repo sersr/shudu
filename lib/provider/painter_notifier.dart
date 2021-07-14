@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hive/hive.dart';
 
+import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
@@ -74,10 +75,13 @@ class TextData {
 }
 
 class ContentNotifier extends ChangeNotifier {
-  ContentNotifier({required this.repository, required this.indexBloc});
+  ContentNotifier({
+    required this.repository,
+    // required this.indexBloc
+  });
 
   final Repository repository;
-  final BookIndexNotifier indexBloc;
+  // final BookIndexNotifier indexBloc;
 
   int? bookid;
   int currentPage = 1;
@@ -159,6 +163,8 @@ class ContentNotifier extends ChangeNotifier {
     _tData = data;
   }
 
+  final _eventLooper = EventLooper.instance;
+
   ///-------------------------
 
   // 加载状态
@@ -180,11 +186,10 @@ class ContentNotifier extends ChangeNotifier {
   late TextStyle secstyle;
   final showCname = ValueNotifier(false);
 
-  /// [_inBookView] 只有在文本阅读界面中（逻辑上）有效
-  void painter() {
+  void _notify() {
     notifyState(
         //                        notEmpty        ||  ignore
-        notEmptyOrIgnore: tData.contentIsNotEmpty || !_inBookView,
+        notEmptyOrIgnore: tData.contentIsNotEmpty || !inBook,
         loading: false);
     notifyListeners();
   }
@@ -227,14 +232,18 @@ extension DataLoading on ContentNotifier {
     _tData = TextData()..cid = cid ?? tData.cid;
   }
 
-  Future<int> dump() async {
-    if (bookid == null || tData.cid == null) return 0;
-    final cid = tData.cid!;
-    final _bookid = bookid!;
+  Future<void> dump() async {
+    final cid = tData.cid;
+    final _bookid = bookid;
+    if (_bookid == null || cid == null) return;
     final _currentPage = currentPage;
-    return await repository.bookEvent.bookCacheEvent
-            .updateBookStatusCustom(_bookid, cid, _currentPage) ??
-        0;
+    final u = BookCache(
+      page: _currentPage,
+      isNew: false,
+      chapterId: cid,
+      sortKey: sortKey,
+    );
+    await repository.bookEvent.bookCacheEvent.updateBook(_bookid, u);
   }
 
   void notifyState(
@@ -258,7 +267,11 @@ extension DataLoading on ContentNotifier {
     final _keys = _getCurrentIds();
 
     if (_caches.length > _keys.length + 2) {
-      _caches.removeWhere((key, _) => !_keys.contains(key));
+      _caches.removeWhere((key, data) {
+        final remove = !_keys.contains(key);
+        if (remove) data._content.forEach((p) => p.picture.dispose());
+        return remove;
+      });
     }
   }
 
@@ -274,6 +287,7 @@ extension DataLoading on ContentNotifier {
         await repository.bookEvent.getContent(_bookid, contentid, update);
 
     if (lines != null && lines.contentIsNotEmpty) {
+      _eventLooper.currentTask?.ident = contentid;
       final pages = await _asyncLayout(lines.pages, lines.cname!);
 
       if (pages.isEmpty || _ignoreTask(contentid, update: update)) return;
@@ -324,15 +338,15 @@ extension Tasks on ContentNotifier {
   }
 
   void _loadTasks(int _bookid, int? contentid) {
-    if (!_inBookView || _futures.length > 5) return;
+    if (!inBook || _futures.length > 5) return;
 
     if (_bookid == bookid &&
         contentid != null &&
         contentid != -1 &&
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
-      final _ntask = EventLooper.instance
-          .addEventTask(() async => loadData(contentid, _bookid));
+      final _ntask =
+          _eventLooper.addEventTask(() => loadData(contentid, _bookid));
 
       _futures.addTask(contentid, _ntask, solve: _ignoreTask);
     }
@@ -369,7 +383,7 @@ extension Tasks on ContentNotifier {
             if (currentPage > tData.content.length) {
               currentPage = tData.content.length;
             }
-            painter();
+            _notify();
           }
         }
       }
@@ -417,44 +431,14 @@ extension Tasks on ContentNotifier {
   }
 
   Future _delayedLoad() async {
-    if (_inBookView) {
+    if (inBook) {
       await _loadF;
       _loadF ??= Future.delayed(const Duration(seconds: 1), _loadCallback)
         ..whenComplete(() => _loadF = null);
     }
   }
 
-  Future<void> updateCurrent() => _reload().then((_) => painter());
-
-  Future<void> _willGoProOrNext({bool isPid = false}) async {
-    if (tData.contentIsEmpty) return;
-
-    autoRun.stopTicked();
-    final timer = Timer(const Duration(milliseconds: 100), () {
-      notifyState(loading: true);
-    });
-
-    var getid = -1;
-
-    if (isPid) {
-      getid = tData.pid!;
-    } else {
-      await _resolveId();
-      getid = tData.nid!;
-      if (getid == -1) {
-        notifyState(loading: false, error: NotifyMessage.noNextError);
-      }
-    }
-
-    if (getid != -1) {
-      final success = await _getContent(getid);
-      if (!success) {
-        notifyState(error: NotifyMessage.netWorkError);
-      }
-    }
-    timer.cancel();
-    notifyState(loading: false);
-  }
+  Future<void> updateCurrent() => _reload().then((_) => _notify());
 
   Future<bool> _getContent(int getid) async {
     var _data = _getTextData(getid);
@@ -469,8 +453,18 @@ extension Tasks on ContentNotifier {
 
     tData = _data;
     currentPage = 1;
+
+    if (config.value.axis == Axis.vertical) {
+      final footv = '$currentPage/${tData.content.length}页';
+      scheduleMicrotask(() {
+        if (config.value.axis != Axis.vertical) return;
+        footer.value = footv;
+        header.value = tData.cname!;
+      });
+    }
+
     resetController();
-    painter();
+    _notify();
     return true;
   }
 }
@@ -509,28 +503,48 @@ extension Layout on ContentNotifier {
     final current = _getTextData(tData.cid);
     final nid = current?.nid;
     final pid = current?.pid;
-    _ids..add(nid)..add(pid);
+
+    _ids
+      ..add(nid)
+      ..add(pid);
 
     final next = _getTextData(nid);
     final nnid = next?.nid;
-    final thirty = _getTextData(nnid);
-    _ids..add(nnid)..add(thirty?.nid);
+
+    if (nnid != null) {
+      final thirty = _getTextData(nnid);
+      _ids
+        ..add(nnid)
+        ..add(thirty?.nid);
+    }
+
     final pre = _getTextData(pid);
-    _ids.add(pre?.pid);
+    final prePid = pre?.pid;
+
+    if (prePid != null) _ids.add(prePid);
+
     return _ids.whereType<int>();
   }
 
-  Future<void> get wait => EventLooper.instance.wait(() async {
-        if (tData.contentIsEmpty ||
-            _willGoF != null ||
-            !inBook ||
-            autoRun.value ||
-            !hasPre() ||
-            !hasNext()) {
-          if (loading.value) notifyState(loading: false);
-          EventLooper.instance.async = false;
-        }
-      });
+  // void _waitFor() async {
+  //   final ident = _eventLooper.currentTask?.ident;
+  //   if (tData.contentIsEmpty ||
+  //       _willGoF != null ||
+  //       !inBook ||
+  //       autoRun.value ||
+  //       ident != null &&
+  //           (_contains(ident, tData.nid) || _contains(ident, tData.pid))) {
+  //     if (loading.value) notifyState(loading: false);
+  //     _eventLooper.async = false;
+  //   }
+  // }
+
+  // bool _contains(Object? ident, int? id) {
+  //   return ident == id && !_caches.containsKey(id);
+  // }
+
+  // Future<void> get wait => _eventLooper.wait(_waitFor);
+  Future<void> get wait => releaseUI;
 
   Future<List<ContentMetrics>> _asyncLayout(
       List<String> paragraphs, String cname) async {
@@ -550,7 +564,7 @@ extension Layout on ContentNotifier {
     final left = paddingRect.left + leftExtraPadding;
 
     // 文本占用高度
-    final contentHeight = _size.height - otherHeight;
+    final contentHeight = _size.height - contentWhiteHeight;
 
     // 配置行高
     final lineHeight = config.lineTweenHeight! * fontSize;
@@ -571,23 +585,23 @@ extension Layout on ContentNotifier {
     // 小标题
     late final TextPainter smallTitlePainter;
 
-    void _t01() {
-      _bigTitlePainter = TextPainter(
-          text: TextSpan(
-              text: cname,
-              style: style.copyWith(
-                  fontSize: 22, height: 1.2, fontWeight: FontWeight.bold)),
-          textDirection: TextDirection.ltr)
-        ..layout(maxWidth: width);
-    }
+    await wait;
 
-    void _t02() {
-      smallTitlePainter = TextPainter(
-          text: TextSpan(text: cname, style: secstyle),
-          textDirection: TextDirection.ltr,
-          maxLines: 1)
-        ..layout(maxWidth: width);
-    }
+    _bigTitlePainter = TextPainter(
+        text: TextSpan(
+            text: cname,
+            style: style.copyWith(
+                fontSize: 22, height: 1.2, fontWeight: FontWeight.bold)),
+        textDirection: TextDirection.ltr)
+      ..layout(maxWidth: width);
+
+    await wait;
+
+    smallTitlePainter = TextPainter(
+        text: TextSpan(text: cname, style: secstyle),
+        textDirection: TextDirection.ltr,
+        maxLines: 1)
+      ..layout(maxWidth: width);
 
     whiteRows = 150 ~/ lineHeightAndExtra + 1;
 
@@ -598,12 +612,6 @@ extension Layout on ContentNotifier {
     }
 
     final _oneHalf = fontSize * 1.6;
-
-    await wait;
-    _t01();
-
-    await wait;
-    _t02();
 
     final lines = <TextPainter>[];
 
@@ -637,7 +645,8 @@ extension Layout on ContentNotifier {
             final _s = s.substring(0, endOffset).characters;
             assert(() {
               if (endOffset != _s.length) {
-                // 字节占用不一
+                // Unicode 字符占用的字节数不相等
+                // 避免多字节字符导致 [subString] 出错
                 print('no: $_s |$start, ${pc.length}');
               }
               return true;
@@ -698,14 +707,14 @@ extension Layout on ContentNotifier {
 
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
+
       dpaint(canvas,
           painters: pages[r],
-          extraHeightInLines: extraHeight,
+          extraHeight: extraHeight,
           isHorizontal: isHorizontal,
-          secstyle: secstyle,
           fontSize: fontSize,
-          cPainter: smallTitlePainter,
-          botRightPainter: bottomRight,
+          titlePainter: smallTitlePainter,
+          bottomRight: bottomRight,
           cBigPainter: _bigTitlePainter,
           right: right,
           left: left,
@@ -718,22 +727,10 @@ extension Layout on ContentNotifier {
       final picture = recorder.endRecording();
 
       final met = ContentMetrics(
-        // painters: pages[r],
         picture: picture,
-        // extraHeightInLines: extraHeight,
-        // isHorizontal: isHorizontal,
         secstyle: secstyle,
-        // fontSize: fontSize,
-        // cPainter: smallTitlePainter,
-        // botRightPainter: bottomRight,
-        // cBigPainter: _bigTitlePainter,
-        // right: right,
         left: left,
-        // index: r,
         size: _size,
-        // windowTopPadding: safePadding.top,
-        // showrect: showrect,
-        // topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows)
       );
       textPages.add(met);
     }
@@ -741,14 +738,14 @@ extension Layout on ContentNotifier {
     return textPages;
   }
 
+// 返回 一组数据：整体绘制区域，每一行的坐标，矩形面积，每一行的文本内容，
   void dpaint(Canvas canvas,
       {required List<TextPainter> painters,
-      required double extraHeightInLines,
-      required TextStyle secstyle,
+      required double extraHeight,
       required double fontSize,
       required bool isHorizontal,
-      required TextPainter cPainter,
-      required TextPainter botRightPainter,
+      required TextPainter titlePainter,
+      required TextPainter bottomRight,
       required TextPainter cBigPainter,
       required double right,
       required double left,
@@ -757,14 +754,6 @@ extension Layout on ContentNotifier {
       required double windowTopPadding,
       required bool showrect,
       required double topExtraHeight}) {
-    // context.setIsComplexHint();
-
-    final ePadding = contentPadding;
-    final bottomRight = botRightPainter;
-    final e = extraHeightInLines;
-    final _teps = painters;
-
-    final cnamePainter = cPainter;
     final _size = size;
     final _windowTopPadding = isHorizontal ? windowTopPadding : 0.0;
 
@@ -772,134 +761,42 @@ extension Layout on ContentNotifier {
     canvas.save();
     canvas.translate(left, _windowTopPadding);
     if (isHorizontal) {
-      h += topPad;
-      cnamePainter.paint(canvas, Offset(0.0, h));
-      h += cnamePainter.height;
+      h += contentTopPad;
+      titlePainter.paint(canvas, Offset(0.0, h));
+      h += titlePainter.height;
     }
     if (index == 0) {
       if (!isHorizontal) {
-        h -= ePadding;
+        h -= contentPadding;
       }
       h += topExtraHeight;
       cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
       if (!isHorizontal) {
-        h += ePadding;
+        h += contentPadding;
       }
     }
 
-    if (isHorizontal) h += ePadding;
+    if (isHorizontal) h += contentPadding;
 
-    // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
     final xh = h;
-    final _e = e / 2;
+    final _e = extraHeight / 2;
     final _end = _e + fontSize;
-    for (var _tep in _teps) {
+    for (var _tep in painters) {
       h += _e;
       _tep.paint(canvas, Offset(0.0, h));
-      // canvas.drawRect(Offset(0.0, h) & Size(_size.width, _tep.height), Paint()..color = Colors.red.withAlpha(70));
       h += _end;
     }
     if (showrect) {
-      canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h),
+      canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h - xh),
           Paint()..color = Colors.black.withAlpha(100));
     }
-    // canvas.drawRect(
-    //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
-    // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
     if (isHorizontal) {
-      bottomRight.paint(
-          canvas, Offset(right, _size.height - bottomRight.height - botPad));
-      // var bleft = 0.0;
-      // final _offset = Offset(0.0, _size.height - bottomRight.height - botPad);
-      // if (child != null) {
-      //   bleft = child!.size.width;
-      //   context.paintChild(
-      //       child!,
-      //       _offset.translate(
-      //           0.0, (bottomRight.height - child!.size.height) / 2));
-      // }
-      // canvas.drawRect(_offset.translate(0.0, 0.0) & Size(bottomLeft.width, bottomLeft.height),
-      //     Paint()..color = Colors.black.withAlpha(100));
-      // bottomLeft.paint(canvas, _offset.translate(bleft, 0.0));
+      bottomRight.paint(canvas,
+          Offset(right, _size.height - bottomRight.height - contentBotttomPad));
     }
     canvas.restore();
   }
 }
-
-// void dpaint(Canvas canvas, ContentMetrics contentMetrics) {
-//   // context.setIsComplexHint();
-//   final isHorizontal = contentMetrics.isHorizontal;
-
-//   final ePadding = contentPadding;
-//   final bottomRight = contentMetrics.botRightPainter;
-//   final right = contentMetrics.right;
-//   final e = contentMetrics.extraHeightInLines;
-//   final fontSize = contentMetrics.fontSize;
-//   final _teps = contentMetrics.painters;
-//   final index = contentMetrics.index;
-//   final left = contentMetrics.left;
-//   final cnamePainter = contentMetrics.cPainter;
-//   final cBigPainter = contentMetrics.cBigPainter;
-//   final _size = contentMetrics.size;
-//   final topExtraHeight = contentMetrics.topExtraHeight;
-//   final windowTopPadding = isHorizontal ? contentMetrics.windowTopPadding : 0.0;
-
-//   var h = 0.0;
-//   canvas.save();
-//   canvas.translate(left, windowTopPadding);
-//   if (isHorizontal) {
-//     h += topPad;
-//     cnamePainter.paint(canvas, Offset(0.0, h));
-//     h += cnamePainter.height;
-//   }
-//   if (index == 0) {
-//     if (!isHorizontal) {
-//       h -= ePadding;
-//     }
-//     h += topExtraHeight;
-//     cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
-//     if (!isHorizontal) {
-//       h += ePadding;
-//     }
-//   }
-
-//   if (isHorizontal) h += ePadding;
-
-//   // canvas.drawRect(Offset(0.0, h) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
-//   final xh = h;
-//   final _e = e / 2;
-//   final _end = _e + fontSize;
-//   for (var _tep in _teps) {
-//     h += _e;
-//     _tep.paint(canvas, Offset(0.0, h));
-//     // canvas.drawRect(Offset(0.0, h) & Size(_size.width, _tep.height), Paint()..color = Colors.red.withAlpha(70));
-//     h += _end;
-//   }
-//   if (contentMetrics.showrect) {
-//     canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h),
-//         Paint()..color = Colors.black.withAlpha(100));
-//   }
-//   // canvas.drawRect(
-//   //     Offset(0.0, h - e / 2 - 1) & Size(_size.width, e / 2), Paint()..color = Colors.black.withAlpha(100));
-//   // canvas.drawRect(Offset(0.0, 0) & Size(_size.width, h), Paint()..color = Colors.black.withAlpha(100));
-//   if (isHorizontal) {
-//     bottomRight.paint(
-//         canvas, Offset(right, _size.height - bottomRight.height - botPad));
-//     // var bleft = 0.0;
-//     // final _offset = Offset(0.0, _size.height - bottomRight.height - botPad);
-//     // if (child != null) {
-//     //   bleft = child!.size.width;
-//     //   context.paintChild(
-//     //       child!,
-//     //       _offset.translate(
-//     //           0.0, (bottomRight.height - child!.size.height) / 2));
-//     // }
-//     // canvas.drawRect(_offset.translate(0.0, 0.0) & Size(bottomLeft.width, bottomLeft.height),
-//     //     Paint()..color = Colors.black.withAlpha(100));
-//     // bottomLeft.paint(canvas, _offset.translate(bleft, 0.0));
-//   }
-//   canvas.restore();
-// }
 
 extension Event on ContentNotifier {
   Future<void> showdow() async {
@@ -909,7 +806,7 @@ extension Event on ContentNotifier {
     await _newF;
 
     await _loadFirst();
-    painter();
+    _notify();
   }
 
   Future<void> newBookOrCid(int newBookid, int cid, int page,
@@ -923,7 +820,7 @@ extension Event on ContentNotifier {
   }
 
   Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
-    if (!_inBookView) resetController();
+    if (!inBook) resetController();
 
     if (tData.cid != cid || bookid != newBookid) {
       assert(Log.i('new: $newBookid $cid'));
@@ -959,7 +856,7 @@ extension Event on ContentNotifier {
       _getCurrentIds();
 
       final _t = Timer(
-          const Duration(milliseconds: 200), () => notifyState(loading: true));
+          const Duration(milliseconds: 300), () => notifyState(loading: true));
 
       inbook();
       await _loadFirst();
@@ -969,19 +866,17 @@ extension Event on ContentNotifier {
       resetController();
     }
 
-    indexBloc.loadIndexs(bookid, tData.cid);
+    // indexBloc.loadIndexs(bookid, tData.cid);
 
     inbook();
 
     await _metricsF;
 
-    painter();
+    _notify();
 
     uiStyle(dark: false);
   }
 
-  // 进入同步状态
-  // 多个等待任务，会竞争一次同步任务
   Future<void> metricsChange() async {
     await _metricsF;
     _metricsF ??= _metricsChange()..whenComplete(() => _metricsF = null);
@@ -991,18 +886,15 @@ extension Event on ContentNotifier {
     // 实时
     final changed = await _modifiedSize();
     if (changed) {
-      // 参数已改变，立即通知
-      // 不过文本可能为空，暂时忽略
-      // 逻辑上不在界面中
-      painter();
+      _notify();
       notifyState(notEmptyOrIgnore: true);
-      if (_inBookView && tData.cid != null && bookid != null) {
+      if (inBook && tData.cid != null && bookid != null) {
         autoRun.stopTicked();
 
         await reset(clearCache: true);
 
         await _loadFirst();
-        painter();
+        _notify();
       }
     }
   }
@@ -1014,17 +906,44 @@ extension Event on ContentNotifier {
 
     await _loadFirst();
 
-    painter();
+    _notify();
   }
 
   Future goNext() {
-    return _willGoF ??= _willGoProOrNext(isPid: false)
+    return _willGoF ??= _willGoPreOrNext(isPid: false)
       ..whenComplete(() => _willGoF = null);
   }
 
   Future goPre() {
-    return _willGoF ??= _willGoProOrNext(isPid: true)
+    return _willGoF ??= _willGoPreOrNext(isPid: true)
       ..whenComplete(() => _willGoF = null);
+  }
+
+  Future<void> _willGoPreOrNext({bool isPid = false}) async {
+    if (tData.contentIsEmpty) return;
+
+    autoRun.stopTicked();
+    final timer = Timer(const Duration(milliseconds: 100), () {
+      notifyState(loading: true);
+    });
+
+    var getid = -1;
+
+    if (isPid) {
+      getid = tData.pid!;
+    } else {
+      await _resolveId();
+      getid = tData.nid!;
+      if (getid == -1)
+        notifyState(loading: false, error: NotifyMessage.noNextError);
+    }
+
+    if (getid != -1) {
+      final success = await _getContent(getid);
+      if (!success) notifyState(error: NotifyMessage.netWorkError);
+    }
+    timer.cancel();
+    notifyState(loading: false);
   }
 
   Future<bool> _modifiedSize() async {
@@ -1034,7 +953,7 @@ extension Event on ContentNotifier {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        final _sizeOut = (await repository.getViewInsets()).size;
+        final _sizeOut = (await repository.getViewInsets).size;
 
         if (_sizeOut != _size) {
           safeBottom = repository.bottomHeight.toDouble() + 6.0;
@@ -1135,7 +1054,7 @@ extension ContentGetter on ContentNotifier {
           _loadCallback();
           if (config.value.axis == Axis.vertical) {
             final footv = '$currentPage/${text.content.length}页';
-            SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+            scheduleMicrotask(() {
               if (config.value.axis != Axis.vertical) return;
               footer.value = footv;
               header.value = text.cname!;
@@ -1207,7 +1126,7 @@ extension Configs on ContentNotifier {
           currentPage == 1) resetController();
     }
     await _metricsF?.whenComplete(resetController);
-    painter();
+    _notify();
   }
 
   Future<void> initConfigs() async {
@@ -1250,7 +1169,7 @@ extension Configs on ContentNotifier {
 
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: pagefooterSize,
+      fontSize: contentFooterSize,
       // version: ^2.2.0
       leadingDistribution: TextLeadingDistribution.even,
       // height: 1.2,
@@ -1262,7 +1181,7 @@ extension Configs on ContentNotifier {
   Future? configListen() async {
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: pagefooterSize,
+      fontSize: contentFooterSize,
       leadingDistribution: TextLeadingDistribution.even,
       // height: 1.2,
     );
@@ -1338,9 +1257,8 @@ extension AutoR on ContentNotifier {
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
       _loadCallback();
-      _autoF ??= EventLooper.instance.scheduler.endOfFrame
-          .then((_) => autoRun.start())
-            ..whenComplete(() => _autoF = null);
+      _autoF ??= _eventLooper.scheduler.endOfFrame.then((_) => autoRun.start())
+        ..whenComplete(() => _autoF = null);
     } else {
       if (_autoF != null) {
         _autoF!.then((_) => autoRun.stopTicked());
@@ -1353,7 +1271,7 @@ extension AutoR on ContentNotifier {
   void _autoTick(Duration timeStamp) {
     if (controller == null ||
         controller!.pixels == controller!.maxExtent ||
-        !_inBookView ||
+        !inBook ||
         !autoRun.value ||
         enter != null ||
         config.value.axis == Axis.horizontal) {

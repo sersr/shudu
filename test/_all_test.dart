@@ -385,6 +385,11 @@ void main() async {
     }
     await loop.runner;
   });
+  test('dart event looper', () async {
+    print('0');
+    Timer.run(() => print('1'));
+    print(2);
+  });
 }
 
 Future<void> hahah() async {

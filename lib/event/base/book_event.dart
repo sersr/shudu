@@ -56,9 +56,9 @@ abstract class ComplexEvent {
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainBookListDb();
-  FutureOr<int?> updateBookStatusCustom(int id, int cid, int page);
+  // FutureOr<int?> updateBookStatusCustom(int id, int cid, int page);
 
-  FutureOr<int?> updateBookStatusAndSetTop(int id, bool isTop, bool isShow);
+  FutureOr<int?> updateBook(int id, BookCache book);
 
   FutureOr<int?> insertBook(BookCache bookCache);
 
@@ -128,7 +128,9 @@ class RawContentLines {
     final dataString = <TypedData>[];
     final cname = utf8.encode(raw.cname ?? '');
 
-    dataInt..add(cname.length)..add(raw.pages.length);
+    dataInt
+      ..add(cname.length)
+      ..add(raw.pages.length);
     dataString.add(Uint8List.fromList(cname));
 
     raw.pages.forEach((page) {

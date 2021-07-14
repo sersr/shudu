@@ -8,6 +8,7 @@ import '../../event/event.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
+import '../embed/list_builder.dart';
 
 class CacheManager extends StatefulWidget {
   @override
@@ -48,23 +49,19 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
         backgroundColor: Colors.white,
         elevation: 1.0,
       ),
-      body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-        color: const Color.fromARGB(255, 240, 240, 240),
-        child: AnimatedBuilder(
-          animation: _cacheNotifier,
-          builder: (context, child) {
-            final data = _cacheNotifier.data;
-            if (data.isEmpty) return const SizedBox();
+      body: AnimatedBuilder(
+        animation: _cacheNotifier,
+        builder: (context, child) {
+          final data = _cacheNotifier.data;
+          if (data.isEmpty) return const SizedBox();
 
-            return ListView.builder(
-              itemExtent: 60,
-              padding: const EdgeInsets.only(bottom: 10.0),
-              itemBuilder: (_, index) => cacheItemBuilder(index),
-              itemCount: data.length,
-            );
-          },
-        ),
+          return ListViewBuilder(
+            itemExtent: 60,
+            padding: const EdgeInsets.only(bottom: 12.0),
+            itemBuilder: (_, index) => cacheItemBuilder(index),
+            itemCount: data.length,
+          );
+        },
       ),
     );
   }
@@ -88,72 +85,66 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             ? 0.0
             : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
 
-        return InkWell(
+        return ListItemBuilder(
           onTap: () {
             _cacheNotifier.exit = true;
             BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(
                 const Duration(milliseconds: 300),
                 () => _cacheNotifier.exit = false));
           },
-          child: Container(
-            padding: const EdgeInsets.only(right: 6.0),
-            margin: const EdgeInsets.symmetric(vertical: 3.0),
-            decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 250, 250, 250),
-                borderRadius: BorderRadius.circular(6)),
-            child: Row(
-              children: [
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      const SizedBox(height: 1),
-                      Row(
-                        children: [
-                          const SizedBox(height: 2),
-                          Expanded(
-                            child: Text(
-                              '${_cacheNotifier.getName(_e.id)}',
-                              maxLines: 1,
-                            ),
+          child: Row(
+            children: [
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    const SizedBox(height: 1),
+                    Row(
+                      children: [
+                        const SizedBox(height: 2),
+                        Expanded(
+                          child: Text(
+                            '${_cacheNotifier.getName(_e.id)}',
+                            maxLines: 1,
                           ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${_e.cacheItemCounts}/${_e.itemCounts}',
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 1),
-                      Center(
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: Colors.blue.shade100,
-                          valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
                         ),
-                      ),
-                      const SizedBox(height: 1),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                btn1(
-                  radius: 6.0,
-                  bgColor: Colors.blue.shade400,
-                  splashColor: Colors.blue.shade200,
-                  onTap: () => _cacheNotifier.deleteCache(_e.id),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0, vertical: 6.0),
-                  child: Text(
-                    '清除缓存',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade300,
+                        const SizedBox(width: 3),
+                        Text(
+                          '${_e.cacheItemCounts}/${_e.itemCounts}',
+                        )
+                      ],
                     ),
+                    const SizedBox(height: 1),
+                    Center(
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.blue.shade100,
+                        valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              btn1(
+                radius: 6.0,
+                bgColor: Colors.blue.shade400,
+                splashColor: Colors.blue.shade200,
+                onTap: () => _cacheNotifier.deleteCache(_e.id),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                child: Text(
+                  '清除缓存',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade300,
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 6),
+            ],
           ),
         );
       },
@@ -203,16 +194,7 @@ class _CacheNotifier extends ChangeNotifier {
       _data.clear();
       _data.addAll(_l);
       _auto();
-      // Future.delayed(const Duration(seconds: 1), () {
-      //   (repository!.bookEvent.getCacheItemAll()
-      //           as Future<Map<int, CacheItem>?>)
-      //       .then((_all) {
-      //     if (_all != null && _all.isNotEmpty)
-      //       _items
-      //         ..clear()
-      //         ..addAll(_all);
-      //   });
-      // });
+      await release(const Duration(milliseconds: 400));
       notifyListeners();
     }
   }
@@ -238,9 +220,9 @@ class _CacheNotifier extends ChangeNotifier {
 
   Future<void> deleteCache(int id) async {
     if (repository == null) return;
-    // _items.remove(id);
+    _items.remove(id);
     await repository!.bookEvent.bookContentEvent.deleteCache(id);
-    _data.remove(id);
+    loadItem(id);
     notifyListeners();
   }
 

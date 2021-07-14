@@ -4,9 +4,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
+import 'package:path/path.dart';
 
 import '../../api/api.dart';
-import '../../provider/provider.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
 import '../../utils/utils.dart';
@@ -23,8 +23,9 @@ mixin NetworkMixin implements CustomEvent {
   late Box<String> images;
 
   String get appPath;
+  String get cachePath;
 
-  Future<void> init() => _init();
+  Future<void> netEventInit() => _init();
   Timer? frequencyTimer;
 
   Future<String> getIndexsNet(int id) {
@@ -106,13 +107,16 @@ mixin NetworkMixin implements CustomEvent {
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
-  String get imageLocalPath => '$appPath/shudu/images';
+  String get imageLocalPath => join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
     dio = dioCreater();
-    Hive.init(appPath + '/hive');
+    Hive.init(join(appPath, 'hive'));
 
-    final d = Directory('$appPath/shudu/images');
+    final d = Directory(imageLocalPath);
+    // if (!d.existsSync()) {
+    //   d.createSync(recursive: true);
+    // }
 
     imageUpdate = await Hive.openBox<int>('imageUpdate');
     final exits = await d.exists();
@@ -124,15 +128,15 @@ extension _NetworkImpl on NetworkMixin {
 
       await imageUpdate.put('_version_', 1);
       if (exits) {
-        await d.delete(recursive: true);
-        await d.create(recursive: true);
-        return;
+        d.deleteSync(recursive: true);
+        d.createSync(recursive: true);
       }
     }
 
     if (!exits) {
-      await d.create(recursive: true);
+      d.createSync(recursive: true);
     }
+    assert(Log.w((await d.list().toList()).join(' | img.\n')));
 
     final now = DateTime.now().millisecondsSinceEpoch;
     var map = imageUpdate.toMap();
@@ -141,7 +145,7 @@ extension _NetworkImpl on NetworkMixin {
       final value = m.value;
       if (key == '_version_') continue;
 
-      if (value + oneDay < now) {
+      if (value + oneDay / 2 < now) {
         await imageUpdate.delete(key);
       }
     }
@@ -149,11 +153,17 @@ extension _NetworkImpl on NetworkMixin {
     images = await Hive.openBox<String>('images');
     map = imageUpdate.toMap();
 
+    final _f = <Future>{};
     images.toMap().forEach((key, value) {
       if (key == '_version_') return;
 
-      if (!map.containsKey(key)) images.delete(key);
+      if (!map.containsKey(key)) {
+        images.delete(key);
+        Log.w('delete: $value');
+        _f.add(File(join(imageLocalPath, value)).delete(recursive: true));
+      }
     });
+    await Future.wait(_f);
   }
 
   Future<T> _decode<T>(dynamic url,
@@ -302,9 +312,17 @@ extension _NetworkImpl on NetworkMixin {
       final data = respone.data!;
 
       return BookTopWrap.fromJson(jsonDecode(data)).data ?? const BookTopData();
+    } on DioError catch (e, _) {
+      if (e.type == DioErrorType.response) {
+        Log.e('url:$url, $e');
+        // error: return null;
+        rethrow;
+      }
+      // failed
+      return const BookTopData();
     } catch (e) {
-      Log.e('url:$url, $e');
-      rethrow;
+      // failed
+      return const BookTopData();
     }
   }
 
@@ -424,10 +442,12 @@ extension _NetworkImpl on NetworkMixin {
     final imgResolve = imageUrlResolve(img);
     final imgName = imgResolve[1];
 
-    final imgPath = '$imageLocalPath$imgName';
+    final imgPath = join(imageLocalPath, imgName);
+
     final imgdateTime = imageUpdate.get(imgName.hashCode);
     final shouldUpdate = imgdateTime == null;
     final exits = await File(imgPath).exists();
+
     if (exits) {
       if (!shouldUpdate) return imgPath;
     } else {
@@ -442,7 +462,7 @@ extension _NetworkImpl on NetworkMixin {
     final url = imgResolve[0];
     final imgName = imgResolve[1];
 
-    final imgPath = '$imageLocalPath$imgName';
+    final imgPath = join(imageLocalPath, imgName);
 
     // 避免太过频繁访问网络
     if (_errorLoading.containsKey(imgName)) {
@@ -499,7 +519,6 @@ extension _NetworkImpl on NetworkMixin {
     if (!exists && img != errorImg) {
       return _saveImage(errorImg);
     }
-
     return imgPath;
   }
 }

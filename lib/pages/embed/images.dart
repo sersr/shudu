@@ -5,9 +5,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import '../../utils/binding/widget_binding.dart';
 
 import '../../event/event.dart';
+import '../../utils/binding/widget_binding.dart';
 import '../../utils/widget/image_shadow.dart';
 
 typedef ImageBuilder = Widget Function(Widget image, bool hasImage);
@@ -55,11 +55,12 @@ class ImageResolve extends StatelessWidget {
                   if (builder != null) child = builder!(child);
                   if (shadow) child = ImageShadow(child: child);
                 }
-                // return child;
-                return AnimatedOpacity(
-                    opacity: hasImage ? 1 : 0,
-                    duration: const Duration(milliseconds: 400),
-                    child: child);
+                return RepaintBoundary(
+                  child: AnimatedOpacity(
+                      opacity: hasImage ? 1 : 0,
+                      duration: const Duration(milliseconds: 400),
+                      child: child),
+                );
               },
               errorBuilder: (context) {
                 if (isFirst) {
@@ -119,10 +120,12 @@ class ImageState extends State<_Image> {
     final _oldImagestream = imageStream;
     final _provider = widget.provider;
     final _resize = nop.getResize(_provider);
+    sync = null;
 
     /// [FileImage] 是同步状态的
     nop.preCacheImage(_resize).then((_) {
       if (!mounted || _provider != widget.provider) return;
+      sync ??= true;
 
       imageStream = nop.resolve(_resize);
 
@@ -132,19 +135,38 @@ class ImageState extends State<_Image> {
         imageStream?.addListener(listener);
       }
     });
+
+    sync ??= false;
   }
 
-  void _update(ImageInfo image, bool synchronousCall) {
-    setState(() {
-      _error = false;
-      imageInfo?.dispose();
-      imageInfo = image;
-    });
+  bool? sync;
+  // late final _loadLooper = EventLooper();
+
+  void _update(ImageInfo image, bool _) {
+    void _call() {
+      setState(() {
+        _error = false;
+        imageInfo?.dispose();
+        imageInfo = image;
+      });
+    }
+
+    // if (sync != true)
+    //   imageLooper.addEventTask(() {
+    //     if (mounted && sync != true)
+    //       _call();
+    //     else
+    //       image.dispose();
+    //   });
+    // else
+    _call();
   }
 
   var _error = false;
   void _errorc(Object exception, StackTrace? stackTrace) {
-    _error = true;
+    setState(() {
+      _error = true;
+    });
   }
 
   @override
@@ -239,8 +261,8 @@ class _ImageRender extends RenderBox {
     final _image = image;
     if (_image != null) {
       final rect = offset & size;
-      final imgRect =
-          Offset.zero & Size(_image.width.toDouble(), _image.height.toDouble());
+      final imgRect = Rect.fromLTWH(
+          0, 0, _image.width.toDouble(), _image.height.toDouble());
       canvas.drawImageRect(_image, imgRect, rect, cPaint);
 
       // canvas.drawRect(rect, Paint()..color = Colors.yellow);

@@ -18,8 +18,7 @@ enum CustomEventMessage {
 }
 enum BookCacheEventMessage {
   getMainBookListDb,
-  updateBookStatusCustom,
-  updateBookStatusAndSetTop,
+  updateBook,
   insertBook,
   deleteBook,
   getAllBookId,
@@ -67,7 +66,7 @@ abstract class BookEventMessager extends BookEvent
         ComplexEventMessager {}
 
 mixin CustomEventResolve on Resolve, CustomEvent {
-  late final _customEventResolveFuncList = List<DynamicCallback>.of([
+  late final _customEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getSearchData_0,
     _getImagePath_1,
     _getHiveShudanLists_2,
@@ -76,7 +75,7 @@ mixin CustomEventResolve on Resolve, CustomEvent {
     _getCategLists_5,
     _getShudanDetail_6,
     _getCategoryData_7
-  ], growable: false);
+  ]);
 
   @override
   bool resolve(resolveMessage) {
@@ -159,16 +158,16 @@ mixin CustomEventMessager implements CustomEvent {
 }
 
 mixin BookCacheEventResolve on Resolve, BookCacheEvent {
-  late final _bookCacheEventResolveFuncList = List<DynamicCallback>.of([
+  late final _bookCacheEventResolveFuncList =
+      List<DynamicCallback>.unmodifiable([
     _getMainBookListDb_0,
-    _updateBookStatusCustom_1,
-    _updateBookStatusAndSetTop_2,
-    _insertBook_3,
-    _deleteBook_4,
-    _getAllBookId_5,
-    _watchBookCacheCid_6,
-    _watchMainBookListDb_7
-  ], growable: false);
+    _updateBook_1,
+    _insertBook_2,
+    _deleteBook_3,
+    _getAllBookId_4,
+    _watchBookCacheCid_5,
+    _watchMainBookListDb_6
+  ]);
 
   @override
   bool resolve(resolveMessage) {
@@ -191,16 +190,13 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
   }
 
   FutureOr<List<BookCache>?> _getMainBookListDb_0(args) => getMainBookListDb();
-  FutureOr<int?> _updateBookStatusCustom_1(args) =>
-      updateBookStatusCustom(args[0], args[1], args[2]);
-  FutureOr<int?> _updateBookStatusAndSetTop_2(args) =>
-      updateBookStatusAndSetTop(args[0], args[1], args[2]);
-  FutureOr<int?> _insertBook_3(args) => insertBook(args);
-  FutureOr<int?> _deleteBook_4(args) => deleteBook(args);
-  FutureOr<Set<int>?> _getAllBookId_5(args) => getAllBookId();
-  Stream<List<BookCache>?> _watchBookCacheCid_6(args) =>
+  FutureOr<int?> _updateBook_1(args) => updateBook(args[0], args[1]);
+  FutureOr<int?> _insertBook_2(args) => insertBook(args);
+  FutureOr<int?> _deleteBook_3(args) => deleteBook(args);
+  FutureOr<Set<int>?> _getAllBookId_4(args) => getAllBookId();
+  Stream<List<BookCache>?> _watchBookCacheCid_5(args) =>
       watchBookCacheCid(args);
-  Stream<List<BookCache>?> _watchMainBookListDb_7(args) =>
+  Stream<List<BookCache>?> _watchMainBookListDb_6(args) =>
       watchMainBookListDb();
 }
 
@@ -213,16 +209,8 @@ mixin BookCacheEventMessager implements BookCacheEvent {
   }
 
   @override
-  FutureOr<int?> updateBookStatusCustom(int id, int cid, int page) async {
-    return send.sendMessage(
-        BookCacheEventMessage.updateBookStatusCustom, [id, cid, page]);
-  }
-
-  @override
-  FutureOr<int?> updateBookStatusAndSetTop(
-      int id, bool isTop, bool isShow) async {
-    return send.sendMessage(
-        BookCacheEventMessage.updateBookStatusAndSetTop, [id, isTop, isShow]);
+  FutureOr<int?> updateBook(int id, BookCache book) async {
+    return send.sendMessage(BookCacheEventMessage.updateBook, [id, book]);
   }
 
   @override
@@ -253,9 +241,12 @@ mixin BookCacheEventMessager implements BookCacheEvent {
 }
 
 mixin BookContentEventResolve on Resolve, BookContentEvent {
-  late final _bookContentEventResolveFuncList = List<DynamicCallback>.of(
-      [_getCacheContentsCidDb_0, _watchCacheContentsCidDb_1, _deleteCache_2],
-      growable: false);
+  late final _bookContentEventResolveFuncList =
+      List<DynamicCallback>.unmodifiable([
+    _getCacheContentsCidDb_0,
+    _watchCacheContentsCidDb_1,
+    _deleteCache_2
+  ]);
 
   @override
   bool resolve(resolveMessage) {
@@ -320,14 +311,14 @@ abstract class ComplexEventDynamic implements ComplexEvent {
 mixin ComplexEventResolve
     on Resolve, ComplexEvent
     implements ComplexEventDynamic {
-  late final _complexEventResolveFuncList = List<DynamicCallback>.of([
+  late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getCacheItem_0,
     _getContent_1,
     _getIndexs_2,
     _updateBookStatus_3,
     _getCacheItemAll_4,
     _getInfo_5
-  ], growable: false);
+  ]);
 
   @override
   bool resolve(resolveMessage) {
@@ -376,17 +367,17 @@ mixin ComplexEventMessager implements ComplexEvent {
   }
 
   @override
-  FutureOr<int?> updateBookStatus(int id) {
+  FutureOr<int?> updateBookStatus(int id) async {
     return send.sendMessage(ComplexEventMessage.updateBookStatus, id);
   }
 
   @override
-  FutureOr<Map<int, CacheItem>?> getCacheItemAll() {
+  FutureOr<Map<int, CacheItem>?> getCacheItemAll() async {
     return send.sendMessage(ComplexEventMessage.getCacheItemAll, null);
   }
 
   @override
-  FutureOr<BookInfoRoot?> getInfo(int id) {
+  FutureOr<BookInfoRoot?> getInfo(int id) async {
     return send.sendMessage(ComplexEventMessage.getInfo, id);
   }
 }

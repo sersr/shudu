@@ -17,12 +17,14 @@ class ShuduApp extends StatelessWidget {
         color: Colors.white,
         title: 'shudu',
         theme: ThemeData(
-          colorScheme: ColorScheme.light(),
-          primarySwatch: Colors.lightBlue,
+          colorScheme: ColorScheme.light(
+              secondary: const Color(0xFFC1C1C1),
+              secondaryVariant: Colors.grey.shade400),
+          primarySwatch: Colors.grey,
           visualDensity: VisualDensity.standard,
           platform: list[0] ?? defaultTargetPlatform,
           brightness: Brightness.light,
-          fontFamily: 'NotoSansSC',
+          // fontFamily: 'NotoSansSC',
           pageTransitionsTheme: const PageTransitionsTheme(builders: {
             TargetPlatform.iOS: SlidePageTransition(),
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
@@ -41,29 +43,31 @@ class MulProvider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (context) => Repository.create(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (context) => OptionsNotifier()),
-          ChangeNotifierProvider(
-            create: (context) =>
-                BookIndexNotifier(repository: context.read<Repository>()),
+    return MultiProvider(
+      providers: [
+        Provider(create: (_) => Repository.create()),
+        Provider(create: (_) => TextStyleConfig()),
+        ChangeNotifierProvider(create: (_) => OptionsNotifier()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              BookIndexNotifier(repository: context.read<Repository>()),
+        ),
+        ChangeNotifierProvider(
+            create: (context) => SearchNotifier(context.read<Repository>())),
+        ChangeNotifierProvider(
+          create: (context) => ContentNotifier(
+            repository: context.read<Repository>(),
+              // indexBloc: context.read<BookIndexNotifier>()
           ),
-          ChangeNotifierProvider(
-              create: (context) => SearchNotifier(context.read<Repository>())),
-          ChangeNotifierProvider(
-            create: (context) => ContentNotifier(
-                repository: context.read<Repository>(),
-                indexBloc: context.read<BookIndexNotifier>()),
-          ),
-          Provider(create: (context) => TextStyleConfig()),
-          ChangeNotifierProvider(
-            create: (context) => BookCacheNotifier(context.read<Repository>()),
-          )
-        ],
-        child: ShuduApp(),
-      ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => BookCacheNotifier(context.read<Repository>()),
+        )
+      ],
+      child: ShuduApp(),
     );
   }
 }
+
+    
+ 

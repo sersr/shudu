@@ -41,6 +41,8 @@ class BookCache extends Table {
   Map<String, dynamic> toJson() => _BookCache_toJson(this);
 }
 
+int get sortKey => DateTime.now().microsecondsSinceEpoch;
+
 class BookContentDb extends Table {
   BookContentDb({
     this.id,
