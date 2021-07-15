@@ -8,7 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 Future<void> uiOverlay({bool hide = true}) async {
-  return SystemChrome.setEnabledSystemUIOverlays(hide ? const [] : SystemUiOverlay.values);
+  if (hide)
+    return SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  else
+    return SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: SystemUiOverlay.values);
 }
 
 void uiStyle({bool dark = true}) {
@@ -21,12 +25,12 @@ void uiStyle({bool dark = true}) {
 
 Future<void> orientation(bool portrait) async {
   if (portrait) {
-    await SystemChrome.setPreferredOrientations(const [
+    await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitDown,
       DeviceOrientation.portraitUp,
     ]);
   } else {
-    await SystemChrome.setPreferredOrientations(const [
+    await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
@@ -45,22 +49,35 @@ class ZoomTransition extends PageTransitionsBuilder {
   static final secondaryScaleReverse = Tween<double>(begin: 1.0, end: 1.0525);
 
   // reverse
-  static final firstCurveReverse = CurveTween(curve: const Interval(0.867, 1.0, curve: curve));
-  static final secondaryCurveReverse = CurveTween(curve: const Interval(0.625, 1.0, curve: curve2));
-  static final intervalCurve = CurveTween(curve: const Interval(0.0, 0.525, curve: curve));
+  static final firstCurveReverse =
+      CurveTween(curve: const Interval(0.867, 1.0, curve: curve));
+  static final secondaryCurveReverse =
+      CurveTween(curve: const Interval(0.625, 1.0, curve: curve2));
+  static final intervalCurve =
+      CurveTween(curve: const Interval(0.0, 0.525, curve: curve));
 
   @override
-  Widget buildTransitions<T>(PageRoute<T> route, BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child) {
+  Widget buildTransitions<T>(
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child) {
     final reverseOutter = animation.status == AnimationStatus.reverse;
     final reverseInner = secondaryAnimation.status == AnimationStatus.reverse;
 
-    final opacity = reverseOutter ? kAlwaysDismissedAnimation : intervalCurve.animate(animation);
+    final opacity = reverseOutter
+        ? kAlwaysDismissedAnimation
+        : intervalCurve.animate(animation);
 
-    final scaleFirst = reverseOutter ? kAlwaysDismissedAnimation : intervalCurve.animate(animation).drive(firstScale);
+    final scaleFirst = reverseOutter
+        ? kAlwaysDismissedAnimation
+        : intervalCurve.animate(animation).drive(firstScale);
 
     final scaleSecondary = reverseInner
-        ? secondaryCurveReverse.animate(secondaryAnimation).drive(secondaryScale)
+        ? secondaryCurveReverse
+            .animate(secondaryAnimation)
+            .drive(secondaryScale)
         : intervalCurve.animate(secondaryAnimation).drive(secondaryScale);
 
     return RepaintBoundary(
@@ -112,23 +129,31 @@ class SlidePageTransition extends PageTransitionsBuilder {
   static const curve = Cubic(0.44, 0.12, 0.47, 0.73);
   static const curve2 = Cubic(0.24, 0.1, 0.47, 0.73);
 
-  static final firstPosition = Tween<Offset>(begin: Offset(1, 0.0), end: Offset.zero);
+  static final firstPosition =
+      Tween<Offset>(begin: Offset(1, 0.0), end: Offset.zero);
   static final firstOpacity = Tween<double>(begin: 0.75, end: 1.0);
-  static final secondaryPosition = Tween<Offset>(begin: Offset.zero, end: Offset(-0.165, 0.0));
+  static final secondaryPosition =
+      Tween<Offset>(begin: Offset.zero, end: Offset(-0.165, 0.0));
 
   static final intervalCurve = CurveTween(curve: Curves.fastOutSlowIn);
   static final intervalCurveReverse = CurveTween(curve: Curves.ease);
-  static final tweenSequence = TweenSequence<double>(<TweenSequenceItem<double>>[
+  static final tweenSequence =
+      TweenSequence<double>(<TweenSequenceItem<double>>[
     TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 0.5), weight: 0.4),
     TweenSequenceItem(tween: Tween<double>(begin: 0.222, end: 1.0), weight: 0.6)
   ]);
 
   @override
-  Widget buildTransitions<T>(PageRoute<T> route, BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child) {
+  Widget buildTransitions<T>(
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child) {
     final reverseOutter = animation.status == AnimationStatus.reverse;
     final reverseInner = secondaryAnimation.status == AnimationStatus.reverse;
-    final linearTransition = CupertinoRouteTransitionMixin.isPopGestureInProgress(route);
+    final linearTransition =
+        CupertinoRouteTransitionMixin.isPopGestureInProgress(route);
     if (route.fullscreenDialog) {
       return RepaintBoundary(
         child: CupertinoFullscreenDialogTransition(
@@ -230,7 +255,8 @@ class SlidePageTransition extends PageTransitionsBuilder {
     if (route.hasScopedWillPopCallback) return false;
     if (route.fullscreenDialog) return false;
     if (route.animation!.status != AnimationStatus.completed) return false;
-    if (route.secondaryAnimation!.status != AnimationStatus.dismissed) return false;
+    if (route.secondaryAnimation!.status != AnimationStatus.dismissed)
+      return false;
     if (isPopGestureInProgress(route)) return false;
 
     return true;
@@ -240,7 +266,8 @@ class SlidePageTransition extends PageTransitionsBuilder {
     return route.navigator!.userGestureInProgress;
   }
 
-  static _CupertinoBackGestureController<T> _startPopGesture<T>(PageRoute<T> route) {
+  static _CupertinoBackGestureController<T> _startPopGesture<T>(
+      PageRoute<T> route) {
     assert(_isPopGestureEnabled(route));
 
     return _CupertinoBackGestureController<T>(
@@ -296,11 +323,14 @@ class _CupertinoBackGestureController<T> {
       // We want to cap the animation time, but we want to use a linear curve
       // to determine it.
       final droppedPageForwardAnimationTime = min(
-        lerpDouble(_kMaxDroppedSwipePageForwardAnimationTime, 0, controller.value)!.floor(),
+        lerpDouble(
+                _kMaxDroppedSwipePageForwardAnimationTime, 0, controller.value)!
+            .floor(),
         _kMaxPageBackAnimationTime,
       );
       controller.animateTo(1.0,
-          duration: Duration(milliseconds: droppedPageForwardAnimationTime), curve: animationCurve);
+          duration: Duration(milliseconds: droppedPageForwardAnimationTime),
+          curve: animationCurve);
     } else {
       // This route is destined to pop at this point. Reuse navigator's pop.
       navigator.pop();
@@ -308,10 +338,12 @@ class _CupertinoBackGestureController<T> {
       // The popping may have finished inline if already at the target destination.
       if (controller.isAnimating) {
         // Otherwise, use a custom popping animation duration and curve.
-        final droppedPageBackAnimationTime =
-            lerpDouble(0, _kMaxDroppedSwipePageForwardAnimationTime, controller.value)!.floor();
+        final droppedPageBackAnimationTime = lerpDouble(
+                0, _kMaxDroppedSwipePageForwardAnimationTime, controller.value)!
+            .floor();
         controller.animateBack(0.0,
-            duration: Duration(milliseconds: droppedPageBackAnimationTime), curve: animationCurve);
+            duration: Duration(milliseconds: droppedPageBackAnimationTime),
+            curve: animationCurve);
       }
     }
 
@@ -346,10 +378,12 @@ class _CupertinoBackGestureDetector<T> extends StatefulWidget {
   final ValueGetter<_CupertinoBackGestureController<T>> onStartPopGesture;
 
   @override
-  _CupertinoBackGestureDetectorState<T> createState() => _CupertinoBackGestureDetectorState<T>();
+  _CupertinoBackGestureDetectorState<T> createState() =>
+      _CupertinoBackGestureDetectorState<T>();
 }
 
-class _CupertinoBackGestureDetectorState<T> extends State<_CupertinoBackGestureDetector<T>> {
+class _CupertinoBackGestureDetectorState<T>
+    extends State<_CupertinoBackGestureDetector<T>> {
   _CupertinoBackGestureController<T>? _backGestureController;
 
   late HorizontalDragGestureRecognizer _recognizer;
@@ -379,13 +413,15 @@ class _CupertinoBackGestureDetectorState<T> extends State<_CupertinoBackGestureD
   void _handleDragUpdate(DragUpdateDetails details) {
     assert(mounted);
     assert(_backGestureController != null);
-    _backGestureController!.dragUpdate(_convertToLogical(details.primaryDelta! / context.size!.width));
+    _backGestureController!.dragUpdate(
+        _convertToLogical(details.primaryDelta! / context.size!.width));
   }
 
   void _handleDragEnd(DragEndDetails details) {
     assert(mounted);
     assert(_backGestureController != null);
-    _backGestureController!.dragEnd(_convertToLogical(details.velocity.pixelsPerSecond.dx / context.size!.width));
+    _backGestureController!.dragEnd(_convertToLogical(
+        details.velocity.pixelsPerSecond.dx / context.size!.width));
     _backGestureController = null;
   }
 
@@ -464,7 +500,8 @@ class _CupertinoEdgeShadowPainter extends BoxPainter {
         break;
     }
     final rect = (offset & configuration.size!).translate(deltaX, 0.0);
-    final paint = Paint()..shader = gradient.createShader(rect, textDirection: textDirection);
+    final paint = Paint()
+      ..shader = gradient.createShader(rect, textDirection: textDirection);
 
     canvas.drawRect(rect, paint);
   }
@@ -475,7 +512,8 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
 
   // An edge shadow decoration where the shadow is null. This is used
   // for interpolating from no shadow.
-  static const _CupertinoEdgeShadowDecoration none = _CupertinoEdgeShadowDecoration();
+  static const _CupertinoEdgeShadowDecoration none =
+      _CupertinoEdgeShadowDecoration();
 
   // A gradient to draw to the left of the box being decorated.
   // Alignments are relative to the original box translated one box
@@ -512,13 +550,15 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
 
   @override
   _CupertinoEdgeShadowDecoration lerpFrom(Decoration? a, double t) {
-    if (a is _CupertinoEdgeShadowDecoration) return _CupertinoEdgeShadowDecoration.lerp(a, this, t)!;
+    if (a is _CupertinoEdgeShadowDecoration)
+      return _CupertinoEdgeShadowDecoration.lerp(a, this, t)!;
     return _CupertinoEdgeShadowDecoration.lerp(null, this, t)!;
   }
 
   @override
   _CupertinoEdgeShadowDecoration lerpTo(Decoration? b, double t) {
-    if (b is _CupertinoEdgeShadowDecoration) return _CupertinoEdgeShadowDecoration.lerp(this, b, t)!;
+    if (b is _CupertinoEdgeShadowDecoration)
+      return _CupertinoEdgeShadowDecoration.lerp(this, b, t)!;
     return _CupertinoEdgeShadowDecoration.lerp(this, null, t)!;
   }
 
@@ -530,7 +570,8 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
   @override
   bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) return false;
-    return other is _CupertinoEdgeShadowDecoration && other.edgeGradient == edgeGradient;
+    return other is _CupertinoEdgeShadowDecoration &&
+        other.edgeGradient == edgeGradient;
   }
 
   @override
@@ -539,7 +580,8 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<LinearGradient>('edgeGradient', edgeGradient));
+    properties
+        .add(DiagnosticsProperty<LinearGradient>('edgeGradient', edgeGradient));
   }
 }
 
@@ -582,13 +624,17 @@ class CupertinoPageTransition extends StatelessWidget {
   })  : _primaryPositionAnimation = (linearTransition
                 ? primaryRouteAnimation
                 : CurveTween(
-                    curve: !reverse ? Curves.linearToEaseOut : Curves.easeInToLinear,
+                    curve: !reverse
+                        ? Curves.linearToEaseOut
+                        : Curves.easeInToLinear,
                   ).animate(primaryRouteAnimation))
             .drive(_kRightMiddleTween),
         _secondaryPositionAnimation = (linearTransition
                 ? secondaryRouteAnimation
                 : CurveTween(
-                    curve: !reverseSecondary ? Curves.linearToEaseOut : Curves.easeInToLinear,
+                    curve: !reverseSecondary
+                        ? Curves.linearToEaseOut
+                        : Curves.easeInToLinear,
                   ).animate(secondaryRouteAnimation))
             .drive(_kMiddleLeftTween),
         _primaryShadowAnimation = (linearTransition
@@ -649,12 +695,18 @@ class CupertinoFullscreenDialogTransition extends StatelessWidget {
     required bool linearTransition,
     bool reverse = false,
     bool reverseSecondary = false,
-  })  : _positionAnimation = CurveTween(curve: !reverse ? Curves.linearToEaseOut : Curves.linearToEaseOut.flipped)
+  })  : _positionAnimation = CurveTween(
+                curve: !reverse
+                    ? Curves.linearToEaseOut
+                    : Curves.linearToEaseOut.flipped)
             .animate(primaryRouteAnimation)
             .drive(_kBottomUpTween),
         _secondaryPositionAnimation = (linearTransition
                 ? secondaryRouteAnimation
-                : CurveTween(curve: !reverseSecondary ? Curves.linearToEaseOut : Curves.easeInToLinear)
+                : CurveTween(
+                        curve: !reverseSecondary
+                            ? Curves.linearToEaseOut
+                            : Curves.easeInToLinear)
                     .animate(secondaryRouteAnimation))
             .drive(_kMiddleLeftTween),
         super(key: key);

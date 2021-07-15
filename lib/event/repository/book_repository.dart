@@ -19,19 +19,19 @@ class BookRepository extends BookRepositoryBase with SendEventMixin {
   }
 
   Future<void> _initState() async {
-    final clientRP = ReceivePort();
+    // if (init) return;
+    if (closeTask != null) await closeTask;
 
-    final success = await initBase(clientRP);
-    if (success) {
+    final rcPort = await initBase();
+
+    if (rcPort != null) {
       _clientF ??= Completer<void>();
 
-      clientRP.listen(_listen);
+      rcPort.listen(_listen);
 
       await _clientF?.future;
       _clientF = null;
-      _clientRP = clientRP;
-    } else {
-      clientRP.close();
+      _clientRP = rcPort;
     }
   }
 
@@ -56,9 +56,12 @@ class BookRepository extends BookRepositoryBase with SendEventMixin {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() {
     super.dispose();
-    _clientRP?.close();
+    return close().then((_) {
+      _clientRP?.close();
+      dispose();
+    });
   }
 
   @override

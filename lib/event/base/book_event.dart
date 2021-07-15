@@ -17,14 +17,14 @@ part 'book_event.g.dart';
 abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
-  BookIndexEvent get bookIndexEvent => this;
+  // BookIndexEvent get bookIndexEvent => this;
   CustomEvent get customEvent => this;
   DatabaseEvent get databaseEvent => this;
 }
 
 @NopIsolateEventItem(separate: true)
 abstract class DatabaseEvent
-    with BookCacheEvent, BookContentEvent, BookIndexEvent {}
+    with BookCacheEvent, BookContentEvent {}
 
 @NopIsolateEventItem()
 abstract class BookContentEvent {
@@ -32,14 +32,6 @@ abstract class BookContentEvent {
   Stream<List<BookContentDb>?> watchCacheContentsCidDb(int bookid);
 
   FutureOr<int?> deleteCache(int bookId);
-}
-
-@NopIsolateEventItem()
-abstract class BookIndexEvent {
-  // FutureOr<List<nop.BookIndex>?> getIndexsDb(int bookid);
-
-  /// [BookIndexBloc]
-  // FutureOr<int?> insertOrUpdateIndexs(int id, String indexs);
 }
 
 abstract class ComplexEvent {
@@ -56,7 +48,7 @@ abstract class ComplexEvent {
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainBookListDb();
-  // FutureOr<int?> updateBookStatusCustom(int id, int cid, int page);
+
 
   FutureOr<int?> updateBook(int id, BookCache book);
 
@@ -75,10 +67,6 @@ abstract class CustomEvent {
 
   FutureOr<String?> getImagePath(String img);
 
-  // FutureOr<List<List>?> getIndexsNet(int id);
-
-  // FutureOr<List<List>?> getIndexsDecodeLists(String str);
-
   FutureOr<List<BookList>?> getHiveShudanLists(String c);
 
   FutureOr<List<BookList>?> getShudanLists(String c, int index);
@@ -87,11 +75,6 @@ abstract class CustomEvent {
 
   FutureOr<BookListDetailData?> getShudanDetail(int index);
   FutureOr<List<BookCategoryData>?> getCategoryData();
-  // @protected
-  // FutureOr<BookContentDb?> getContentNet(int id, int cid);
-
-  // @protected
-  // FutureOr<List<String>?> textLayout(String text, String cname, int words);
 }
 
 class RawContentLines {

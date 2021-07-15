@@ -438,7 +438,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "7bb0a1827dc0bb8c2eabc843197d43ab5916631d"
+      resolved-ref: a2baf01f71a909d6cacfddec684473e549edbbaa
       url: "https://github.com/sersr/nop_db"
     source: git
     version: "0.0.4+6"

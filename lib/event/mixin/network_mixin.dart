@@ -119,7 +119,7 @@ extension _NetworkImpl on NetworkMixin {
     // }
 
     imageUpdate = await Hive.openBox<int>('imageUpdate');
-    final exits = await d.exists();
+    final exists = await d.exists();
 
     if (imageUpdate.get('_version_', defaultValue: -1) == -1) {
       await imageUpdate.deleteFromDisk();
@@ -127,16 +127,16 @@ extension _NetworkImpl on NetworkMixin {
       imageUpdate = await Hive.openBox<int>('imageUpdate');
 
       await imageUpdate.put('_version_', 1);
-      if (exits) {
+      if (exists) {
         d.deleteSync(recursive: true);
         d.createSync(recursive: true);
       }
     }
 
-    if (!exits) {
+    if (!exists) {
       d.createSync(recursive: true);
     }
-    assert(Log.w((await d.list().toList()).join(' | img.\n')));
+    // assert(Log.w((await d.list().toList()).join(' | img.\n')));
 
     final now = DateTime.now().millisecondsSinceEpoch;
     var map = imageUpdate.toMap();
@@ -160,7 +160,11 @@ extension _NetworkImpl on NetworkMixin {
       if (!map.containsKey(key)) {
         images.delete(key);
         Log.w('delete: $value');
-        _f.add(File(join(imageLocalPath, value)).delete(recursive: true));
+
+        final f = File(join(imageLocalPath, value));
+        _f.add(f
+            .exists()
+            .then((exists) => exists ? f.delete(recursive: true) : null));
       }
     });
     await Future.wait(_f);

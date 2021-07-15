@@ -14,16 +14,22 @@ class ShuduApp extends StatelessWidget {
       return [opt.options.platform, opt.options.showPerformanceOverlay];
     }, builder: (context, list, _) {
       return MaterialApp(
-        color: Colors.white,
+        // color: Colors.white,
         title: 'shudu',
         theme: ThemeData(
           colorScheme: ColorScheme.light(
+              primary: Colors.grey.shade900,
+              primaryVariant: Colors.grey.shade800,
               secondary: const Color(0xFFC1C1C1),
+              onPrimary: Colors.grey.shade700,
+              onSurface: Colors.grey.shade100,
               secondaryVariant: Colors.grey.shade400),
-          primarySwatch: Colors.grey,
+          // primarySwatch: Colors.grey,
           visualDensity: VisualDensity.standard,
           platform: list[0] ?? defaultTargetPlatform,
           brightness: Brightness.light,
+          primaryColorBrightness: Brightness.light,
+          primaryColor: Colors.grey.shade900,
           // fontFamily: 'NotoSansSC',
           pageTransitionsTheme: const PageTransitionsTheme(builders: {
             TargetPlatform.iOS: SlidePageTransition(),
@@ -31,7 +37,7 @@ class ShuduApp extends StatelessWidget {
           }),
         ),
         showPerformanceOverlay: list[1] ?? false,
-        home: RepaintBoundary(child: const MyHomePage()),
+        home: const MyHomePage(),
         navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
       );
     });
@@ -57,7 +63,7 @@ class MulProvider extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => ContentNotifier(
             repository: context.read<Repository>(),
-              // indexBloc: context.read<BookIndexNotifier>()
+            // indexBloc: context.read<BookIndexNotifier>()
           ),
         ),
         ChangeNotifierProvider(
@@ -68,6 +74,3 @@ class MulProvider extends StatelessWidget {
     );
   }
 }
-
-    
- 

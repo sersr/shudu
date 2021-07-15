@@ -43,9 +43,15 @@ class BookContentPage extends StatefulWidget {
   BookContentPageState createState() => BookContentPageState();
 }
 
-class BookContentPageState extends PanSlideState<BookContentPage> {
+class BookContentPageState extends PanSlideState<BookContentPage>
+    with WidgetsBindingObserver {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -53,6 +59,17 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
     if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
+  }
+
+  @override
+  void didChangeMetrics() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
   }
 
   bool _first = true;
@@ -68,6 +85,9 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
   Timer? errorTimer;
   @override
   Widget wrapOverlay(context, overlay) {
+    //
+    bloc.metricsChange(MediaQuery.of(context));
+
     Widget child = Consumer<ContentNotifier>(
       builder: (context, bloc, _) {
         return Material(
@@ -82,64 +102,67 @@ class BookContentPageState extends PanSlideState<BookContentPage> {
               minHeight: bloc.size.height,
               minWidth: bloc.size.width,
               alignment: Alignment.topLeft,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                      child: RepaintBoundary(child: ContentPageView())),
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: AnimatedBuilder(
-                        animation: bloc.listenable,
-                        builder: (context, _) {
-                          if (bloc.error.value.error) {
-                            errorTimer?.cancel();
-                            errorTimer = Timer(const Duration(seconds: 2), () {
-                              bloc.notifyState(error: NotifyMessage.hide);
-                            });
+              child: RepaintBoundary(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                        child: RepaintBoundary(child: ContentPageView())),
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: AnimatedBuilder(
+                          animation: bloc.listenable,
+                          builder: (context, _) {
+                            if (bloc.error.value.error) {
+                              errorTimer?.cancel();
+                              errorTimer =
+                                  Timer(const Duration(seconds: 2), () {
+                                bloc.notifyState(error: NotifyMessage.hide);
+                              });
 
-                            return GestureDetector(
-                              onTap: () =>
-                                  bloc.notifyState(error: NotifyMessage.hide),
-                              child: Center(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(6.0),
-                                    color: Colors.grey.shade100,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0, vertical: 6.0),
-                                  child: Text(
-                                    bloc.error.value.msg,
-                                    style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 13.0),
-                                    overflow: TextOverflow.fade,
+                              return GestureDetector(
+                                onTap: () =>
+                                    bloc.notifyState(error: NotifyMessage.hide),
+                                child: Center(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                      color: Colors.grey.shade100,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0, vertical: 6.0),
+                                    child: Text(
+                                      bloc.error.value.msg,
+                                      style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 13.0),
+                                      overflow: TextOverflow.fade,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          } else if (bloc.loading.value) {
-                            return IgnorePointer(
-                              child: RepaintBoundary(
-                                child: AnimatedBuilder(
-                                  animation: bloc.loading,
-                                  builder: (context, child) {
-                                    if (bloc.loading.value) return child!;
+                              );
+                            } else if (bloc.loading.value) {
+                              return IgnorePointer(
+                                child: RepaintBoundary(
+                                  child: AnimatedBuilder(
+                                    animation: bloc.loading,
+                                    builder: (context, child) {
+                                      if (bloc.loading.value) return child!;
 
-                                    return const SizedBox();
-                                  },
-                                  child: loadingIndicator(),
+                                      return const SizedBox();
+                                    },
+                                    child: loadingIndicator(),
+                                  ),
                                 ),
-                              ),
-                            );
-                          }
-                          return const SizedBox();
-                        },
+                              );
+                            }
+                            return const SizedBox();
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned.fill(child: RepaintBoundary(child: overlay)),
-                ],
+                    Positioned.fill(child: RepaintBoundary(child: overlay)),
+                  ],
+                ),
               ),
             ),
           ),

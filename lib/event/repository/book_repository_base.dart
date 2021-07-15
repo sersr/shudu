@@ -8,7 +8,8 @@ import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter/services.dart';
+// import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
@@ -65,52 +66,81 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     return level;
   }
 
+  bool _systemOverlaysAreVisible = false;
+  @override
+  bool get systemOverlaysAreVisible => _systemOverlaysAreVisible;
+
+  Future<void> _onSystemOverlaysChanges(bool visible) async {
+    _systemOverlaysAreVisible = visible;
+    if (_changesListeners.isNotEmpty)
+      _changesListeners.forEach((c) => c(visible));
+  }
+
+  final _changesListeners = <BoolCallback>{};
+  @override
+  void addSystemOverlaysListener(BoolCallback callback) {
+    if (!_changesListeners.contains(callback)) {
+      _changesListeners.add(callback);
+    }
+  }
+
+  @override
+  void removeSystemOverlaysListener(BoolCallback callback) {
+    _changesListeners.remove(callback);
+  }
+
   Isolate? _isolate;
   Isolate? get isolate => _isolate;
 
-  Future<bool> initBase(ReceivePort rcPort) async {
-    if (_init) return false;
-    final _waits = <Future>{};
-    if (Platform.isAndroid) _waits.add(FlutterDisplayMode.setHighRefreshRate());
+  Future<ReceivePort?> initBase() async {
+    if (init) return null;
 
-    _waits.add(orientation(true));
-    _waits.add(getBatteryLevel);
-    _waits.add(getViewInsets);
+    SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
+    final _waits = <Future>{};
 
     late Directory appDir;
-    _waits.add(
-        getApplicationDocumentsDirectory().then((value) => appDir = value));
+    List<Directory>? cacheDirs;
 
-    List<Directory>? cachePaths;
     if (Platform.isAndroid) {
-      _waits.add(
-          getExternalCacheDirectories().then((value) => cachePaths = value));
+      _waits
+        // ..add(FlutterDisplayMode.setHighRefreshRate())
+        ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs));
     }
+
+    _waits
+      ..add(getApplicationDocumentsDirectory().then((dir) => appDir = dir))
+      ..add(orientation(true))
+      ..add(getBatteryLevel)
+      ..add(getViewInsets);
+
     await Future.wait(_waits);
 
     final appPath = appDir.path;
-    final cachePath = cachePaths?.isNotEmpty == true
-        ? cachePaths!.first.path
+    final cachePath = cacheDirs?.isNotEmpty == true
+        ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
-    hiveInit('$appPath/shudu/hive');
+    hiveInit(join(appPath, 'shudu', 'hive'));
 
     // print('${cachePaths?.map((e) => e.path).join(',')}');
     // print((await appDir.list().toList()).join('\n'));
+    final rcPort = ReceivePort();
 
     /// Isolate event
     await Isolate.spawn(isolateEvent, [rcPort.sendPort, appPath, cachePath])
         .then((value) => _isolate = value);
 
-    _init = true;
-    return true;
+    return rcPort;
   }
 
-  var _init = false;
-
-  @override
-  void dispose() {
-    Hive.close().then((value) => _init = false);
-    isolate?.kill(priority: Isolate.immediate);
+  bool get init => _isolate != null;
+  Future? closeTask;
+  
+  Future<void> close() {
+    return closeTask ??= Hive.close().then((_) {
+      _isolate?.kill(priority: Isolate.immediate);
+      _isolate = null;
+    })
+      ..whenComplete(() => closeTask = null);
   }
 }

@@ -106,6 +106,7 @@ class ContentNotifier extends ChangeNotifier {
   bool showrect = false;
 
   Size size = Size.zero;
+  Size _rawSize = Size.zero;
 
   final safePaddingNotifier = ValueNotifier<bool>(false);
 
@@ -120,7 +121,15 @@ class ContentNotifier extends ChangeNotifier {
   }
 
   var paddingRect = EdgeInsets.zero;
-  var safeBottom = 6.0;
+  var _safeBottom = 6.0;
+  final safeBottomNotifier = ValueNotifier<bool>(false);
+
+  double get safeBottom => _safeBottom;
+  set safeBottom(double v) {
+    if (_safeBottom == v) return;
+    _safeBottom = v;
+    safeBottomNotifier.value = !safeBottomNotifier.value;
+  }
 
   TextStyle _getStyle(ContentViewConfig config) {
     return TextStyle(
@@ -192,6 +201,39 @@ class ContentNotifier extends ChangeNotifier {
         notEmptyOrIgnore: tData.contentIsNotEmpty || !inBook,
         loading: false);
     notifyListeners();
+  }
+
+  bool _visible = false;
+  void visible(bool _v) async {
+    if (_visible == _v) return;
+    _visible = _v;
+    Log.w('_modifiedSize: $_visible');
+    _onTouch();
+  }
+
+  bool _hasNav = false;
+
+  void _onTouch() {
+    final v = !_visible;
+    Log.i(v);
+
+    final _bottomHeight = repository.bottomHeight.toDouble();
+    late Offset nav;
+    if (config.value.portrait == true) {
+      nav = Offset(0, _bottomHeight);
+    } else {
+      nav = Offset(_bottomHeight, 0);
+    }
+    // 只支持常规的显示模式，即占用了UI显示面积
+    if (v) {
+      _hasNav = size == _rawSize + nav;
+    }
+    Log.i('_hasNav  $_hasNav');
+    if (_hasNav) {
+      safeBottom = _bottomHeight + 6.0;
+    } else {
+      safeBottom = 6.0;
+    }
   }
 }
 
@@ -877,14 +919,15 @@ extension Event on ContentNotifier {
     uiStyle(dark: false);
   }
 
-  Future<void> metricsChange() async {
-    await _metricsF;
-    _metricsF ??= _metricsChange()..whenComplete(() => _metricsF = null);
+  Future<void> metricsChange(MediaQueryData data) async {
+    if (_metricsF != null) await _metricsF;
+    if (size.isEmpty) size = data.size;
+    _metricsF ??= _metricsChange(data)..whenComplete(() => _metricsF = null);
   }
 
-  Future<void> _metricsChange() async {
+  Future<void> _metricsChange(MediaQueryData data) async {
     // 实时
-    final changed = await _modifiedSize();
+    final changed = await _modifiedSize(data);
     if (changed) {
       _notify();
       notifyState(notEmptyOrIgnore: true);
@@ -946,23 +989,44 @@ extension Event on ContentNotifier {
     notifyState(loading: false);
   }
 
-  Future<bool> _modifiedSize() async {
-    final w = ui.window;
-    var _size = w.physicalSize / w.devicePixelRatio;
-    var _p = EdgeInsets.fromWindowPadding(w.padding, w.devicePixelRatio);
+  Future<bool> _modifiedSize(MediaQueryData data) async {
+    var _size = data.size;
+    var _p = data.padding;
+
+    safePadding = _p;
+    paddingRect = EdgeInsets.only(
+      left: safePadding.left + 16,
+      top: safePadding.top,
+      right: safePadding.right + 16,
+      bottom: safePadding.bottom,
+    );
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        final _sizeOut = (await repository.getViewInsets).size;
-
-        if (_sizeOut != _size) {
-          safeBottom = repository.bottomHeight.toDouble() + 6.0;
+        final _bottomHeight = repository.bottomHeight.toDouble();
+        late Offset nav;
+        if (config.value.portrait == true) {
+          nav = Offset(0, _bottomHeight);
+        } else {
+          nav = Offset(_bottomHeight, 0);
         }
 
-        _p = repository.viewInsets.padding;
-        _size = _sizeOut;
-        break;
+        final view = await repository.getViewInsets;
+        final _phySize = view.size;
 
+        final _oSize = size;
+        size = _phySize;
+        _rawSize = _size;
+
+        _onTouch();
+
+        if (_phySize == _size + nav || _phySize == _size) {
+          if (_phySize == _oSize) return false;
+        } else {
+          if (_size == _phySize && _size == size) return false;
+        }
+
+        return true;
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
@@ -983,9 +1047,8 @@ extension Event on ContentNotifier {
           return false;
         }
     }
-    if (size != _size || safePadding != _p) {
+    if (size != _size) {
       size = _size;
-      safePadding = _p;
 
       paddingRect = EdgeInsets.only(
         left: safePadding.left + 16,

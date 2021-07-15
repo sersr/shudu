@@ -9,9 +9,6 @@ import 'package:shudu/utils/utils.dart';
 
 class RepositoryImplTest extends Repository with SendEventMixin {
   @override
-  void addInitCallback(Future<void> Function() callback) {}
-
-  @override
   late BookEvent bookEvent = BookEventMain(this);
 
   late Server server;
@@ -33,6 +30,15 @@ class RepositoryImplTest extends Repository with SendEventMixin {
     super.dispose();
     server.close();
   }
+
+  @override
+  void addSystemOverlaysListener(BoolCallback callback) {}
+
+  @override
+  void removeSystemOverlaysListener(BoolCallback callback) {}
+
+  @override
+  bool get systemOverlaysAreVisible => throw UnimplementedError();
 }
 
 class Client {

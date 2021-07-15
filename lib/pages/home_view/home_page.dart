@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:lpinyin/lpinyin.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/nop_database.dart';
@@ -48,14 +47,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     opts = context.read<OptionsNotifier>();
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
-    _future ??= cache.repository.initState.then((_) {
-      opts.init();
-      search.init();
-      painterBloc.initConfigs();
+    final data = MediaQuery.of(context);
+    final rep = cache.repository;
+    _future ??= rep.initState.then((_) {
       return Future.wait([
-        painterBloc.metricsChange(),
+        opts.init(),
+        search.init(),
+        painterBloc.initConfigs(),
         cache.load(),
-      ]);
+        painterBloc.metricsChange(data),
+      ])
+        ..whenComplete(
+            () => rep.addSystemOverlaysListener(painterBloc.visible));
     });
   }
 
@@ -69,21 +72,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  Timer? timer;
-  @override
-  void didChangeMetrics() {
-    // 桌面窗口大小改变
-    final w = ui.window;
-    assert(Log.i(
-        'data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
-        ' ${w.padding} \ndata: viewInsets ${w.viewInsets} \ndata: physicalGeometry ${w.physicalGeometry}'));
-    timer?.cancel();
-    timer = Timer(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        painterBloc.metricsChange();
-      }
-    });
-  }
+  // Timer? timer;
+  // @override
+  // void didChangeMetrics() {
+  //   // 桌面窗口大小改变
+  //   // final w = ui.window;
+  //   // assert(Log.i(
+  //   //     'data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
+  //   //     ' ${w.padding} \ndata: viewInsets ${w.viewInsets} \ndata: physicalGeometry ${w.physicalGeometry}'));
+  //   // timer?.cancel();
+  //   // timer = Timer(const Duration(milliseconds: 100), () {
+  //   //   if (mounted) {
+  //   //     painterBloc.metricsChange();
+  //   //   }
+  //   // });
+  // }
 
   @override
   void dispose() {
@@ -295,6 +298,34 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ],
                   ),
                 ),
+                Row(
+                  children: [
+                    btn1(
+                        onTap: () {
+                          SystemChrome.setEnabledSystemUIMode(
+                              SystemUiMode.immersive);
+                        },
+                        child: Text('immersive')),
+                    btn1(
+                        onTap: () {
+                          SystemChrome.setEnabledSystemUIMode(
+                              SystemUiMode.edgeToEdge);
+                        },
+                        child: Text('edgeToEdge')),
+                    btn1(
+                        onTap: () {
+                          SystemChrome.setEnabledSystemUIMode(
+                              SystemUiMode.immersiveSticky);
+                        },
+                        child: Text('immersiveSticky')),
+                    btn1(
+                        onTap: () {
+                          SystemChrome.setEnabledSystemUIMode(
+                              SystemUiMode.leanBack);
+                        },
+                        child: Text('leanBack')),
+                  ],
+                ),
                 // Divider(height: 1),
                 // Center(
                 //   child: Padding(
@@ -401,6 +432,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 //     ],
                 //   ),
                 // ),
+
                 Divider(height: 1),
                 Center(
                   child: Padding(

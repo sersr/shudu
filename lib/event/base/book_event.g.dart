@@ -46,7 +46,6 @@ abstract class BookEventResolve extends BookEvent
         DatabaseEventResolve,
         BookCacheEventResolve,
         BookContentEventResolve,
-        BookIndexEventResolve,
         ComplexEventResolve {
   @override
   bool resolve(m) {
@@ -62,7 +61,6 @@ abstract class BookEventMessager extends BookEvent
         DatabaseEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
-        BookIndexEventMessager,
         ComplexEventMessager {}
 
 mixin CustomEventResolve on Resolve, CustomEvent {
@@ -295,10 +293,6 @@ mixin BookContentEventMessager implements BookContentEvent {
     return send.sendMessage(BookContentEventMessage.deleteCache, bookId);
   }
 }
-
-mixin BookIndexEventResolve on Resolve, BookIndexEvent {}
-
-mixin BookIndexEventMessager implements BookIndexEvent {}
 
 mixin DatabaseEventResolve on Resolve, DatabaseEvent {}
 

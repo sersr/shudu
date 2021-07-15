@@ -37,4 +37,9 @@ abstract class Repository {
 
   int level = 50;
   Future<int> get getBatteryLevel async => level;
+  bool get systemOverlaysAreVisible;
+  void addSystemOverlaysListener(BoolCallback callback);
+  void removeSystemOverlaysListener(BoolCallback callback);
 }
+
+typedef BoolCallback = void Function(bool visible);

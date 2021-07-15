@@ -12,7 +12,7 @@ import '../../utils/widget/image_shadow.dart';
 
 typedef ImageBuilder = Widget Function(Widget image, bool hasImage);
 
-class ImageResolve extends StatelessWidget {
+class ImageResolve extends StatefulWidget {
   const ImageResolve(
       {Key? key,
       this.img,
@@ -24,49 +24,57 @@ class ImageResolve extends StatelessWidget {
   final Widget Function(Widget)? builder;
   final BoxFit boxFit;
   final bool shadow;
+
+  @override
+  State<ImageResolve> createState() => _ImageResolveState();
+}
+
+class _ImageResolveState extends State<ImageResolve> {
+  late Repository repository;
+  var _error = false;
+
   @override
   Widget build(BuildContext context) {
-    final repository = context.read<Repository>();
-    var _img = img ?? errorImg;
+    var _img = widget.img ?? errorImg;
 
-    final _future = repository.bookEvent.customEvent.getImagePath(_img);
+    final _future =
+        repository.bookEvent.customEvent.getImagePath(_error ? errorImg : _img);
     return RepaintBoundary(child: _futureBuilder(_future));
   }
 
-  Widget _futureBuilder(FutureOr<String?> _future, {bool isFirst = true}) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    repository = context.read<Repository>();
+  }
+
+  Widget _futureBuilder(FutureOr<String?> _future) {
     return FutureBuilder(
       future: Future.value(_future),
       builder: (context, AsyncSnapshot<String?> snap) {
-        final repository = context.read<Repository>();
-
         if (snap.hasData) {
           if (snap.data!.isEmpty) {
-            if (isFirst) {
-              final _future =
-                  repository.bookEvent.customEvent.getImagePath(errorImg);
-              return _futureBuilder(_future, isFirst: false);
+            if (!_error) {
+              setState(() => _error = true);
             }
           } else {
             return _Image(
               provider: FileImage(File(snap.data!)),
-              boxFit: boxFit,
+              boxFit: widget.boxFit,
               builder: (child, hasImage) {
                 if (hasImage) {
-                  if (builder != null) child = builder!(child);
-                  if (shadow) child = ImageShadow(child: child);
+                  if (widget.builder != null)
+                    child = RepaintBoundary(child: widget.builder!(child));
+                  if (widget.shadow) child = ImageShadow(child: child);
                 }
-                return RepaintBoundary(
-                  child: AnimatedOpacity(
-                      opacity: hasImage ? 1 : 0,
-                      duration: const Duration(milliseconds: 400),
-                      child: child),
-                );
+                return AnimatedOpacity(
+                    opacity: hasImage ? 1 : 0,
+                    duration: const Duration(milliseconds: 400),
+                    child: RepaintBoundary(child: child));
               },
-              errorBuilder: (context) {
-                if (isFirst) {
-                  final _future =
-                      repository.bookEvent.customEvent.getImagePath(errorImg);
-                  return _futureBuilder(_future, isFirst: false);
+              errorBuilder: (_) {
+                if (!_error) {
+                  setState(() => _error = true);
                 }
                 return const SizedBox();
               },
@@ -140,26 +148,13 @@ class ImageState extends State<_Image> {
   }
 
   bool? sync;
-  // late final _loadLooper = EventLooper();
 
   void _update(ImageInfo image, bool _) {
-    void _call() {
-      setState(() {
-        _error = false;
-        imageInfo?.dispose();
-        imageInfo = image;
-      });
-    }
-
-    // if (sync != true)
-    //   imageLooper.addEventTask(() {
-    //     if (mounted && sync != true)
-    //       _call();
-    //     else
-    //       image.dispose();
-    //   });
-    // else
-    _call();
+    setState(() {
+      _error = false;
+      imageInfo?.dispose();
+      imageInfo = image;
+    });
   }
 
   var _error = false;

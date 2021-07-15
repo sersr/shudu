@@ -45,6 +45,7 @@ class _PannelState extends State<Pannel> {
       data: SliderTheme.of(context).copyWith(
         thumbColor: Colors.grey.shade300,
         inactiveTrackColor: Colors.grey,
+        activeTrackColor: Colors.blue,
         minThumbSeparation: 2,
         valueIndicatorTextStyle: TextStyle(),
         overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
@@ -61,103 +62,108 @@ class _PannelState extends State<Pannel> {
           RepaintBoundary(
             child: Material(
               color: Colors.grey.shade900,
-              child: AnimatedBuilder(
-                animation: bloc.safePaddingNotifier,
-                builder: (context, child) {
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0 + bloc.safePadding.left,
-                      right: 10.0 + bloc.safePadding.right,
-                    ),
-                    child: child!,
-                  );
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          btn1(
-                              radius: 40,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 7),
-                              onTap: () {
-                                if (!bloc.loading.value) {
-                                  bloc.goPre();
-                                }
-                              },
-                              child: Center(
-                                  child: Text(
-                                '上一章',
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.grey.shade300),
-                              )),
-                              bgColor: Colors.transparent,
-                              splashColor: Colors.grey.shade700),
-                          Expanded(
-                            child: RepaintBoundary(
-                              child: AnimatedBuilder(
-                                animation: indexBloc.slide,
-                                builder: (context, child) {
-                                  return Slider(
-                                    value: indexBloc.slide.value.toDouble(),
-                                    // divisions: sldvalue.max,
-                                    onChanged: (double value) {
-                                      indexBloc.slide.value = value.toInt();
-                                    },
-                                    onChangeEnd: (value) {
-                                      timer?.cancel();
-                                      timer = Timer(
-                                          Duration(milliseconds: 1500), () {
-                                        bloc.showCname.value = false;
-                                        indexBloc.slide.value =
-                                            indexBloc.sldvalue.index;
-                                      });
-                                    },
-                                    onChangeStart: (value) {
-                                      timer?.cancel();
-                                      bloc.showCname.value = true;
-                                    },
-                                    min: 0.0,
-                                    max: indexBloc.sldvalue.max.toDouble(),
-                                  );
-                                },
-                              ),
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: bloc.safePaddingNotifier,
+                  builder: (context, child) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        left: 10.0 + bloc.safePadding.left,
+                        right: 10.0 + bloc.safePadding.right,
+                      ),
+                      child: child!,
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            RepaintBoundary(
+                              child: btn1(
+                                  radius: 40,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 7),
+                                  onTap: () {
+                                    if (!bloc.loading.value) {
+                                      bloc.goPre();
+                                    }
+                                  },
+                                  child: Center(
+                                      child: Text(
+                                    '上一章',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade300),
+                                  )),
+                                  bgColor: Colors.transparent,
+                                  splashColor: Colors.grey.shade700),
                             ),
-                          ),
-                          btn1(
-                              radius: 40,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 7),
-                              onTap: () {
-                                if (!bloc.loading.value) {
-                                  bloc.goNext();
-                                }
-                              },
-                              child: Center(
-                                child: Text(
-                                  '下一章',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade300),
+                            Expanded(
+                              child: RepaintBoundary(
+                                child: AnimatedBuilder(
+                                  animation: indexBloc.slide,
+                                  builder: (context, child) {
+                                    return Slider(
+                                      value: indexBloc.slide.value.toDouble(),
+                                      // divisions: sldvalue.max,
+                                      onChanged: (double value) {
+                                        indexBloc.slide.value = value.toInt();
+                                      },
+                                      onChangeEnd: (value) {
+                                        timer?.cancel();
+                                        timer = Timer(
+                                            Duration(milliseconds: 1500), () {
+                                          bloc.showCname.value = false;
+                                          indexBloc.slide.value =
+                                              indexBloc.sldvalue.index;
+                                        });
+                                      },
+                                      onChangeStart: (value) {
+                                        timer?.cancel();
+                                        bloc.showCname.value = true;
+                                      },
+                                      min: 0.0,
+                                      max: indexBloc.sldvalue.max.toDouble(),
+                                    );
+                                  },
                                 ),
                               ),
-                              bgColor: Colors.transparent,
-                              // radius: 6.0,
-                              splashColor: Colors.grey.shade700),
-                        ],
+                            ),
+                            btn1(
+                                radius: 40,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 7),
+                                onTap: () {
+                                  if (!bloc.loading.value) {
+                                    bloc.goNext();
+                                  }
+                                },
+                                child: Center(
+                                  child: Text(
+                                    '下一章',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade300),
+                                  ),
+                                ),
+                                bgColor: Colors.transparent,
+                                // radius: 6.0,
+                                splashColor: Colors.grey.shade700),
+                          ],
+                        ),
                       ),
-                    ),
-                    RepaintBoundary(
-                      child: BottomEnd(controller: widget.controller),
-                    ),
-                  ],
+                      RepaintBoundary(
+                        child: BottomEnd(controller: widget.controller),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -423,135 +429,131 @@ class _BottomEndState extends State<BottomEnd> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final bottom = size.height >= size.width ? bloc.safeBottom : 0.0;
-    return Padding(
-      padding: EdgeInsets.only(top: 4.0, bottom: 8.0 + bottom),
-      child: Row(
-        children: [
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+          animation: bloc.safeBottomNotifier,
+          builder: (context, _) {
+            final bottom = size.height >= size.width ? bloc.safeBottom : 0.0;
+            return Padding(
+              padding: EdgeInsets.only(top: 4.0, bottom: 8.0 + bottom),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: bottomButton(
+                      onTap: () {
+                        bsize = context.size ?? bsize;
+                        if (showSettings.value != SettingView.indexs) {
+                          getController().show();
 
-                  bloc.showCname.value = false;
-                  context
-                      .read<BookIndexNotifier>()
-                      .loadIndexs(bloc.bookid, bloc.tData.cid);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              onLongPress: () {
-                bsize = context.size ?? bsize;
+                          bloc.showCname.value = false;
+                          context
+                              .read<BookIndexNotifier>()
+                              .loadIndexs(bloc.bookid, bloc.tData.cid);
+                          showSettings.value = SettingView.indexs;
+                        } else {
+                          getController().trigger();
+                        }
+                      },
+                      onLongPress: () {
+                        bsize = context.size ?? bsize;
 
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  context.read<BookIndexNotifier>()
-                    ..bookUpDateTime.remove(bloc.bookid)
-                    ..loadIndexs(bloc.bookid, bloc.tData.cid);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '目录',
-              icon: Icons.menu_book_outlined,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.setting) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  showSettings.value = SettingView.setting;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '设置',
-              icon: Icons.settings_rounded,
-            ),
-          ),
-          // Expanded(
-          //   child: StatefulBuilder(builder: (context, setstate) {
-          //     return bottomButton(
-          //       onTap: () {
-          //         setstate(bloc.auto);
-          //       },
-          //       child: Text(
-          //         '${!bloc.isActive ? '开始' : '停止'}滚动',
-          //         style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-          //       ),
-          //       icon: Icons.auto_stories,
-          //     );
-          //   }),
-          // ),
-          Expanded(
-            child: bottomButton(
-              onTap: bloc.auto,
-              child: AnimatedBuilder(
-                animation: bloc.autoRun.isActive,
-                builder: (context, child) {
-                  return Text(
-                    '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
-                },
+                        if (showSettings.value != SettingView.indexs) {
+                          getController().show();
+                          bloc.showCname.value = false;
+                          context.read<BookIndexNotifier>()
+                            ..bookUpDateTime.remove(bloc.bookid)
+                            ..loadIndexs(bloc.bookid, bloc.tData.cid);
+                          showSettings.value = SettingView.indexs;
+                        } else {
+                          getController().trigger();
+                        }
+                      },
+                      text: '目录',
+                      icon: Icons.menu_book_outlined,
+                    ),
+                  ),
+                  Expanded(
+                    child: bottomButton(
+                      onTap: () {
+                        bsize = context.size ?? bsize;
+                        if (showSettings.value != SettingView.setting) {
+                          getController().show();
+                          bloc.showCname.value = false;
+                          showSettings.value = SettingView.setting;
+                        } else {
+                          getController().trigger();
+                        }
+                      },
+                      text: '设置',
+                      icon: Icons.settings_rounded,
+                    ),
+                  ),
+                  Expanded(
+                    child: bottomButton(
+                      onTap: bloc.auto,
+                      child: AnimatedBuilder(
+                        animation: bloc.autoRun.isActive,
+                        builder: (context, child) {
+                          return Text(
+                            '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade300),
+                          );
+                        },
+                      ),
+                      icon: Icons.auto_stories,
+                    ),
+                  ),
+                  Expanded(
+                    child: bottomButton(
+                      onTap: () {
+                        getController().hide();
+                        bloc.autoRun.stopTicked();
+                        final portrait = !bloc.config.value.portrait!;
+                        uiOverlay(hide: !portrait);
+                        bloc.setPrefs(
+                            bloc.config.value.copyWith(portrait: portrait));
+                      },
+                      child: AnimatedBuilder(
+                        animation: bloc.config,
+                        builder: (context, _) {
+                          return Text(
+                            '切换${bloc.config.value.portrait! ? '横屏' : '竖屏'}',
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade300),
+                          );
+                        },
+                      ),
+                      icon: Icons.screen_rotation_outlined,
+                    ),
+                  ),
+                  Expanded(
+                    child: bottomButton(
+                      onTap: () {
+                        final _axis = widget.controller.axis == Axis.horizontal
+                            ? Axis.vertical
+                            : Axis.horizontal;
+
+                        bloc.autoRun.stopTicked();
+                        bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
+                      },
+                      child: AnimatedBuilder(
+                        animation: bloc.config,
+                        builder: (context, _) {
+                          return Text(
+                            '${bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动'}',
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade300),
+                          );
+                        },
+                      ),
+                      icon: Icons.swap_vert_circle_rounded,
+                    ),
+                  ),
+                ],
               ),
-              icon: Icons.auto_stories,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                getController().hide();
-                bloc.autoRun.stopTicked();
-                final portrait = !bloc.config.value.portrait!;
-                uiOverlay(hide: !portrait);
-                bloc.setPrefs(bloc.config.value.copyWith(portrait: portrait));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    '切换${bloc.config.value.portrait! ? '横屏' : '竖屏'}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
-                },
-              ),
-              icon: Icons.screen_rotation_outlined,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                final _axis = widget.controller.axis == Axis.horizontal
-                    ? Axis.vertical
-                    : Axis.horizontal;
-                // widget.controller.axis = _axis;
-                bloc.autoRun.stopTicked();
-                bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    '${bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动'}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
-                },
-              ),
-              icon: Icons.swap_vert_circle_rounded,
-            ),
-          ),
-        ],
-      ),
+            );
+          }),
     );
   }
 }
@@ -1016,6 +1018,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         data: SliderTheme.of(context).copyWith(
           thumbColor: Colors.grey.shade300,
           inactiveTrackColor: Colors.grey,
+          activeTrackColor: Colors.blue,
           minThumbSeparation: 2,
           valueIndicatorTextStyle: TextStyle(),
           overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
@@ -1164,21 +1167,22 @@ class _PannelSlideState extends State<PannelSlide> {
       ));
     }
     if (widget.botChild != null) {
-      var bot = widget.botChild!(context, panSlideController.controller,this);
+      var bot = widget.botChild!(context, panSlideController.controller, this);
       if (widget.useDefault) {
         bot = SlideTransition(position: botPositions, child: bot);
       }
       children.add(Positioned(bottom: 0.0, left: 0.0, right: 0.0, child: bot));
     }
     if (widget.topChild != null) {
-      var top = widget.topChild!(context, panSlideController.controller,this);
+      var top = widget.topChild!(context, panSlideController.controller, this);
       if (widget.useDefault) {
         top = SlideTransition(position: topPositions, child: top);
       }
       children.add(Positioned(top: 0.0, left: 0.0, right: 0.0, child: top));
     }
     if (widget.rightChild != null) {
-      var right = widget.rightChild!(context, panSlideController.controller,this);
+      var right =
+          widget.rightChild!(context, panSlideController.controller, this);
       if (widget.useDefault) {
         right = SlideTransition(position: rightPositions, child: right);
       }
@@ -1186,7 +1190,8 @@ class _PannelSlideState extends State<PannelSlide> {
     }
 
     if (widget.leftChild != null) {
-      var left = widget.leftChild!(context, panSlideController.controller,this);
+      var left =
+          widget.leftChild!(context, panSlideController.controller, this);
       if (widget.useDefault) {
         left = SlideTransition(position: leftPositions, child: left);
       }
