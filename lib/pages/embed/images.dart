@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../event/event.dart';
 import '../../utils/binding/widget_binding.dart';
 import '../../utils/widget/image_shadow.dart';
+import '../../widgets/draw_picture.dart';
 
 typedef ImageBuilder = Widget Function(Widget image, bool hasImage);
 
@@ -17,6 +18,7 @@ class ImageResolve extends StatefulWidget {
       {Key? key,
       this.img,
       this.builder,
+      this.error,
       this.boxFit = BoxFit.fitWidth,
       this.shadow = true})
       : super(key: key);
@@ -24,22 +26,29 @@ class ImageResolve extends StatefulWidget {
   final Widget Function(Widget)? builder;
   final BoxFit boxFit;
   final bool shadow;
-
+  final ImageProvider? error;
   @override
   State<ImageResolve> createState() => _ImageResolveState();
 }
 
 class _ImageResolveState extends State<ImageResolve> {
   late Repository repository;
-  var _error = false;
 
   @override
   Widget build(BuildContext context) {
-    var _img = widget.img ?? errorImg;
+    var _img = widget.img;
+    Widget child;
 
-    final _future =
-        repository.bookEvent.customEvent.getImagePath(_error ? errorImg : _img);
-    return RepaintBoundary(child: _futureBuilder(_future));
+    if (_img == null)
+      child = _errorBuilder(true);
+    else
+      child = _futureBuilder(getPath(_img));
+
+    return RepaintBoundary(child: child);
+  }
+
+  Future<String?> getPath(String img) {
+    return Future.value(repository.bookEvent.customEvent.getImagePath(img));
   }
 
   @override
@@ -48,41 +57,52 @@ class _ImageResolveState extends State<ImageResolve> {
     repository = context.read<Repository>();
   }
 
-  Widget _futureBuilder(FutureOr<String?> _future) {
-    return FutureBuilder(
-      future: Future.value(_future),
-      builder: (context, AsyncSnapshot<String?> snap) {
-        if (snap.hasData) {
-          if (snap.data!.isEmpty) {
-            if (!_error) {
-              setState(() => _error = true);
+  Widget _futureBuilder(FutureOr<String?> _future, {isFirst = true}) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return FutureBuilder(
+        future: Future.value(_future),
+        builder: (context, AsyncSnapshot<String?> snap) {
+          if (snap.hasData) {
+            if (snap.data!.isEmpty) {
+              return _errorBuilder(isFirst);
+            } else {
+              return _Image(
+                f: File(snap.data!),
+                height: constraints.maxHeight,
+                width: constraints.maxWidth,
+                boxFit: widget.boxFit,
+                builder: _imageBuilder,
+                errorBuilder: (_) => _errorBuilder(isFirst),
+              );
             }
-          } else {
-            return _Image(
-              provider: FileImage(File(snap.data!)),
-              boxFit: widget.boxFit,
-              builder: (child, hasImage) {
-                if (hasImage) {
-                  if (widget.builder != null)
-                    child = RepaintBoundary(child: widget.builder!(child));
-                  if (widget.shadow) child = ImageShadow(child: child);
-                }
-                return AnimatedOpacity(
-                    opacity: hasImage ? 1 : 0,
-                    duration: const Duration(milliseconds: 400),
-                    child: RepaintBoundary(child: child));
-              },
-              errorBuilder: (_) {
-                if (!_error) {
-                  setState(() => _error = true);
-                }
-                return const SizedBox();
-              },
-            );
           }
-        }
-        return const SizedBox();
-      },
+          return const SizedBox();
+        },
+      );
+    });
+  }
+
+  Widget _errorBuilder(bool isFirst) {
+    if (isFirst) {
+      final error = widget.error;
+      return error != null
+          ? Image(image: error, fit: widget.boxFit)
+          : _futureBuilder(getPath(errorImg), isFirst: false);
+    }
+    return const SizedBox();
+  }
+
+  Widget _imageBuilder(Widget child, bool hasImage) {
+    if (widget.builder != null) child = widget.builder!(child);
+    if (widget.shadow)
+      child = ImageShadow(child: RepaintBoundary(child: child));
+
+    // return child;
+    return RepaintBoundary(
+      child: AnimatedOpacity(
+          opacity: hasImage ? 1 : 0,
+          duration: const Duration(milliseconds: 300),
+          child: RepaintBoundary(child: child)),
     );
   }
 }
@@ -92,12 +112,18 @@ class _Image extends StatefulWidget {
       {Key? key,
       this.builder,
       this.errorBuilder,
-      required this.provider,
+      required this.f,
+      required this.height,
+      required this.width,
+      // required this.provider,
       this.boxFit = BoxFit.fitHeight})
       : super(key: key);
-  final ImageProvider provider;
+  // final ImageProvider provider;
+  final File f;
   final BoxFit boxFit;
   final ImageBuilder? builder;
+  final double height;
+  final double width;
   final Widget Function(BuildContext context)? errorBuilder;
 
   @override
@@ -105,84 +131,74 @@ class _Image extends StatefulWidget {
 }
 
 class ImageState extends State<_Image> {
-  ImageStream? imageStream;
-  ImageInfo? imageInfo;
   final nop = NopWidgetsFlutterBinding.instance!;
-  late final imageLooper = nop.imageLooper;
+  // late final imageLooper = nop.imageLooper;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _getImage();
+    // _getImage();
+    _sub();
   }
 
   @override
   void didUpdateWidget(covariant _Image oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.provider != oldWidget.provider) {
-      _getImage();
+    // if (widget.provider != oldWidget.provider) {
+    //   _getImage();
+    // }
+    if (widget.f.path != oldWidget.f.path ||
+        widget.height != oldWidget.height ||
+        widget.width != oldWidget.width) {
+      _sub();
     }
   }
 
-  void _getImage() {
-    final _oldImagestream = imageStream;
-    final _provider = widget.provider;
-    final _resize = nop.getResize(_provider);
-    sync = null;
+  PictureInfo? pictureInfo;
+  PictureListener? listener;
 
-    /// [FileImage] 是同步状态的
-    nop.preCacheImage(_resize).then((_) {
-      if (!mounted || _provider != widget.provider) return;
-      sync ??= true;
+  void _sub() {
+    final _ofile = widget.f;
 
-      imageStream = nop.resolve(_resize);
-
-      if (_oldImagestream?.key != imageStream?.key) {
-        final listener = ImageStreamListener(_update, onError: _errorc);
-        _oldImagestream?.removeListener(listener);
-        imageStream?.addListener(listener);
-      }
-    });
-
-    sync ??= false;
-  }
-
-  bool? sync;
-
-  void _update(ImageInfo image, bool _) {
-    setState(() {
-      _error = false;
-      imageInfo?.dispose();
-      imageInfo = image;
-    });
+    final width = widget.width;
+    final height = widget.height;
+    final _listener =
+        nop.preCache(_ofile, cacheWidth: width, cacheHeight: height);
+    if (listener != _listener) {
+      listener?.removeListener(onListener);
+      listener = _listener;
+      _listener.addListener(onListener);
+    }
   }
 
   var _error = false;
-  void _errorc(Object exception, StackTrace? stackTrace) {
+  void onListener(PictureInfo? img, bool error) {
     setState(() {
-      _error = true;
+      pictureInfo?.dispose();
+      pictureInfo = img;
+      _error = error;
     });
   }
 
   @override
   void dispose() {
-    imageStream?.removeListener(ImageStreamListener(_update, onError: _errorc));
-    imageInfo?.dispose();
-    imageInfo = null;
     super.dispose();
+    listener?.removeListener(onListener);
+    pictureInfo?.dispose();
+    pictureInfo = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final image = _ImageWidget(image: imageInfo?.image);
-
+    // final image = _ImageWidget(image: this.image);
+    final image = PictureWidget(info: pictureInfo);
     if (_error) {
       if (widget.errorBuilder != null) {
         return widget.errorBuilder!(context);
       }
     } else {
       if (widget.builder != null) {
-        return widget.builder!(image, imageInfo?.image != null);
+        return widget.builder!(image, pictureInfo != null);
       }
     }
 

@@ -53,7 +53,7 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
   final isShow = 'isShow';
 
   void updateBookCache(
-      UpdateStatement<BookCache, _GenBookCache> update, bookCache) {
+      UpdateStatement<BookCache, _GenBookCache> update, BookCache bookCache) {
     if (bookCache.id != null) update.id.set(bookCache.id);
 
     if (bookCache.name != null) update.name.set(bookCache.name);
@@ -213,7 +213,8 @@ class _GenBookContentDb
   final hasContent = 'hasContent';
 
   void updateBookContentDb(
-      UpdateStatement<BookContentDb, _GenBookContentDb> update, bookContentDb) {
+      UpdateStatement<BookContentDb, _GenBookContentDb> update,
+      BookContentDb bookContentDb) {
     if (bookContentDb.id != null) update.id.set(bookContentDb.id);
 
     if (bookContentDb.bookId != null) update.bookId.set(bookContentDb.bookId);
@@ -322,7 +323,7 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
   final bIndexs = 'bIndexs';
 
   void updateBookIndex(
-      UpdateStatement<BookIndex, _GenBookIndex> update, bookIndex) {
+      UpdateStatement<BookIndex, _GenBookIndex> update, BookIndex bookIndex) {
     if (bookIndex.id != null) update.id.set(bookIndex.id);
 
     if (bookIndex.bookId != null) update.bookId.set(bookIndex.bookId);

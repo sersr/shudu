@@ -23,12 +23,13 @@ typedef EventCallback<T> = FutureOr<T> Function();
 /// 占用过多的 cpu 资源，导致渲染无法及时，造成卡顿。
 class EventLooper {
   static EventLooper? _instance;
-
+  EventLooper({this.parallels = 1});
   static EventLooper get instance {
     _instance ??= EventLooper();
     return _instance!;
   }
 
+  final int parallels;
   final now = Stopwatch()..start();
 
   int get stopwatch => now.elapsedMicroseconds;
@@ -72,22 +73,53 @@ class EventLooper {
 
   @protected
   Future<void> looper() async {
+    final _f = <_TaskKey, Future>{};
     // 由于之前操作都在 `同步` 中执行
     // 在下一次事件循环时处理任务
     await releaseUI;
+
     while (_taskLists.isNotEmpty) {
       final tasks = List.of(_taskLists.values);
       final last = tasks.last;
 
       for (final _t in tasks) {
         if (!_t.onlyLastOne || _t == last) {
-          await eventRun(_t);
-          await releaseUI;
+          if (parallels > 1) {
+            _f.putIfAbsent(_t.key, () {
+              // 转移管理权
+              _taskLists.remove(_t.key);
+              // 已完成的任务会自动移除
+              return eventRun(_t)..whenComplete(() => _f.remove(_t.key));
+            });
+
+            // 达到 parallels 数        ||   最后一个
+            if (_f.length >= parallels || _t == last) {
+              // 未达到 parallels 数并且是最后一个，
+              // 还有任务待刷新，加入队列
+
+              if (_t == last &&
+                  _f.length < parallels &&
+                  _taskLists.isNotEmpty) {
+                break;
+              }
+
+              await Future.wait(_f.values);
+              _f.clear();
+              await releaseUI;
+
+              // 完成一次 ‘并行’ 任务，刷新当前任务
+              break;
+            }
+          } else {
+            await eventRun(_t);
+            await releaseUI;
+          }
         } else {
           _t.completed();
         }
       }
     }
+    assert(_f.isEmpty);
   }
 
   static const _zoneWait = 'eventWait';

@@ -10,6 +10,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../../data/book_list.dart';
 import '../../event/event.dart';
 import '../../provider/text_styles.dart';
+import '../../utils/binding/widget_binding.dart';
 import '../../utils/utils.dart';
 import '../embed/list_builder.dart';
 import 'list_shudan_detail.dart';
@@ -41,6 +42,7 @@ class _ListShudanPageState extends State<ListShudanPage>
     controller.dispose();
 
     imageCache?.clear();
+    NopWidgetsFlutterBinding.instance?.clear();
   }
 
   final c = const ['new', 'hot', 'collect'];
@@ -222,7 +224,9 @@ class ShudanCategProvider extends ChangeNotifier {
     if (state == LoadingStatus.loading && onWork && _index == index) return;
     state = LoadingStatus.loading;
     _index = index;
+
     notifyListeners();
+
     load();
     await _loop.runner;
     if (_index == index) {
@@ -233,6 +237,13 @@ class ShudanCategProvider extends ChangeNotifier {
               : LoadingStatus.failed;
       notifyListeners();
     }
+  }
+
+  @override
+  void notifyListeners() {
+    scheduleMicrotask(() {
+      super.notifyListeners();
+    });
   }
 
   Future<void> _load() async {

@@ -566,6 +566,12 @@ class ContentPreNextRenderObject extends RenderBox {
       }
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    _clipRectLayer.layer = null;
+  }
+
   int getMinChildIndexForScrollOffset(double scrollOffset, double itemExtent) {
     if (itemExtent > 0.0) {
       final actual = scrollOffset / itemExtent;

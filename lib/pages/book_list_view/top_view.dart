@@ -1,19 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
 
-import '../../data/data.dart' show BookTopData, BookTopList;
+import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
-import '../../provider/provider.dart' show TextStyleConfig;
 import '../../utils/utils.dart'
     show Log, loadingIndicator, release, reloadBotton;
 import '../../utils/widget/page_animation.dart' show PageAnimationMixin;
-import '../../widgets/async_text.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/text_builder.dart';
 import '../book_info_view/book_info_page.dart' show BookInfoPage;
 import '../embed/images.dart' show ImageResolve;
 import '../embed/list_builder.dart';
 import 'list_shudan.dart';
-import 'list_shudan_detail.dart';
 
 class BookListItem extends StatelessWidget {
   const BookListItem({Key? key, required this.item}) : super(key: key);
@@ -21,14 +21,13 @@ class BookListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
-
     final img = item.img;
     final name = item.name;
     final cname = item.cname;
     final author = item.author;
     final desc = item.desc;
-    final score = item.score;
+    final topRightScore = '${item.score}分';
+    final center = '$cname | $author';
     return Container(
       height: 112,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -45,59 +44,12 @@ class BookListItem extends StatelessWidget {
           LayoutId(
             id: ImageLayout.text,
             child: Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: RepaintBoundary(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final topRight = AsyncText.asyncLayout(
-                        constraints.maxWidth,
-                        TextPainter(
-                            text: TextSpan(
-                              text: '$score分',
-                              style: ts.body2
-                                  .copyWith(color: Colors.yellow.shade700),
-                            ),
-                            maxLines: 1,
-                            textDirection: TextDirection.ltr));
-
-                    return FutureBuilder<List<TextPainter>>(
-                        future: Future.wait<TextPainter>([
-                          topRight.then((value) => AsyncText.asyncLayout(
-                              constraints.maxWidth - value.width,
-                              TextPainter(
-                                  text: TextSpan(text: name!, style: ts.title3),
-                                  maxLines: 1,
-                                  textDirection: TextDirection.ltr))),
-                          topRight,
-                          AsyncText.asyncLayout(
-                              constraints.maxWidth,
-                              TextPainter(
-                                  text: TextSpan(
-                                      text: '$cname | $author',
-                                      style: ts.body2),
-                                  maxLines: 1,
-                                  textDirection: TextDirection.ltr)),
-                          AsyncText.asyncLayout(
-                              constraints.maxWidth,
-                              TextPainter(
-                                  text: TextSpan(text: desc!, style: ts.body3),
-                                  maxLines: 2,
-                                  textDirection: TextDirection.ltr)),
-                        ]),
-                        builder: (context, snap) {
-                          if (snap.hasData) {
-                            final data = snap.data!;
-                            return ItemWidget(
-                                top: AsyncText.async(data[0]),
-                                topRight: AsyncText.async(data[1]),
-                                center: AsyncText.async(data[2]),
-                                bottom: AsyncText.async(data[3]));
-                          }
-                          return SizedBox();
-                        });
-                  },
-                ),
-              ),
+              padding: const EdgeInsets.only(left: 14.0),
+              child: TextBuilder(
+                  topRightScore: topRightScore,
+                  top: name,
+                  center: center,
+                  bottom: desc),
             ),
           )
         ],
@@ -236,6 +188,11 @@ class TopNotifier extends ChangeNotifier {
     // TODO: 使用页面动画监听替代
     await release(const Duration(milliseconds: 300));
     notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    scheduleMicrotask(super.notifyListeners);
   }
 
   Future<void> getData(String ctg, String date, int index) async {

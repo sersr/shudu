@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,8 +6,8 @@ import '../../data/book_list_detail.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../utils/utils.dart';
-import '../../widgets/async_text.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/text_builder.dart';
 import '../book_info_view/book_info_page.dart';
 import '../embed/images.dart';
 import '../embed/list_builder.dart';
@@ -197,7 +195,6 @@ class ShudanListDetailItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
     return Container(
       height: 108,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -207,8 +204,6 @@ class ShudanListDetailItemWidget extends StatelessWidget {
           LayoutId(
             id: ImageLayout.image,
             child: Container(
-              // width: 72,
-              // height: 108,
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: ImageResolve(img: l.bookIamge),
             ),
@@ -217,79 +212,16 @@ class ShudanListDetailItemWidget extends StatelessWidget {
             id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
-              child: RepaintBoundary(child: _DetailLayout(l: l, ts: ts)),
+              child: TextBuilder(
+                  height: 108,
+                  topRightScore: '${l.score}分',
+                  top: l.bookName,
+                  center: '${l.categoryName} | ${l.author}',
+                  bottom: '${l.description}'),
             ),
           ),
         ],
       ),
-      // ),
-    );
-  }
-}
-
-class _DetailLayout extends StatelessWidget {
-  const _DetailLayout({
-    Key? key,
-    required this.l,
-    required this.ts,
-  }) : super(key: key);
-
-  final BookListDetail l;
-  final TextStyleConfig ts;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final topRight = AsyncText.asyncLayout(
-            constraints.maxWidth,
-            TextPainter(
-                text: TextSpan(
-                  text: '${l.score}分',
-                  style: ts.title3.copyWith(color: Colors.yellow.shade700),
-                ),
-                maxLines: 2,
-                textDirection: TextDirection.ltr));
-
-        return FutureBuilder<List<TextPainter>>(
-            future: Future.wait<TextPainter>([
-              topRight.then((value) => AsyncText.asyncLayout(
-                  constraints.maxWidth - value.width,
-                  TextPainter(
-                      text: TextSpan(text: '${l.bookName}', style: ts.title3),
-                      maxLines: 2,
-                      textDirection: TextDirection.ltr))),
-              topRight,
-              AsyncText.asyncLayout(
-                  constraints.maxWidth,
-                  TextPainter(
-                      text: TextSpan(
-                          text: '${l.categoryName} | ${l.author}',
-                          style: ts.body1
-                              .copyWith(color: TextStyleConfig.blackColor6)),
-                      maxLines: 1,
-                      textDirection: TextDirection.ltr)),
-              AsyncText.asyncLayout(
-                  constraints.maxWidth,
-                  TextPainter(
-                      text: TextSpan(text: '${l.description}', style: ts.body3),
-                      maxLines: 2,
-                      textDirection: TextDirection.ltr)),
-            ]),
-            builder: (context, snap) {
-              if (snap.hasData) {
-                final data = snap.data!;
-                return ItemWidget(
-                  height: 108,
-                  top: AsyncText.async(data[0]),
-                  topRight: AsyncText.async(data[1]),
-                  center: AsyncText.async(data[2]),
-                  bottom: AsyncText.async(data[3]),
-                );
-              }
-              return SizedBox();
-            });
-      },
     );
   }
 }
@@ -319,83 +251,5 @@ class ShudanProvider extends ChangeNotifier {
     if (_data == null) await release(const Duration(milliseconds: 300));
 
     notifyListeners();
-  }
-}
-
-class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
-  _ItemLayoutDelegate(this.height);
-  final double height;
-
-  @override
-  void performLayout(Size size) {
-    final _top = 'top';
-    final _topRight = 'topRight';
-    final _center = 'center';
-    final _bottom = 'bottom';
-    final constraints = BoxConstraints.loose(size);
-
-    var topRight = Size.zero;
-    if (hasChild(_topRight)) topRight = layoutChild(_topRight, constraints);
-
-    final top = layoutChild(_top,
-        constraints.copyWith(minWidth: constraints.maxWidth - topRight.width));
-
-    final center = layoutChild(_center, constraints);
-    final bottom = layoutChild(_bottom, constraints);
-    var cHeight = 0.0;
-    var height = 0.0;
-    final _topHeight = math.max(top.height, topRight.height);
-    height = _topHeight + center.height + bottom.height;
-
-    final d = (size.height - 10 - height) / 4;
-    cHeight = d + 2.5;
-
-    positionChild(_top, Offset(0, cHeight));
-    if (hasChild(_topRight))
-      positionChild(_topRight, Offset(size.width - topRight.width, cHeight));
-    cHeight += _topHeight + d;
-    positionChild(_center, Offset(0, cHeight));
-    cHeight += center.height + d;
-    positionChild(_bottom, Offset(0, cHeight));
-  }
-
-  @override
-  bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) {
-    return false;
-  }
-
-  @override
-  Size getSize(BoxConstraints constraints) =>
-      Size(constraints.biggest.width, constraints.constrainHeight(height));
-}
-
-class ItemWidget extends StatelessWidget {
-  const ItemWidget({
-    Key? key,
-    this.bottom,
-    this.center,
-    this.top,
-    this.topRight,
-    this.height = 112,
-  }) : super(key: key);
-
-  final Widget? top;
-  final Widget? topRight;
-  final Widget? center;
-  final Widget? bottom;
-  final double height;
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: CustomMultiChildLayout(
-        delegate: _ItemLayoutDelegate(height),
-        children: [
-          if (top != null) LayoutId(id: 'top', child: top!),
-          if (topRight != null) LayoutId(id: 'topRight', child: topRight!),
-          if (center != null) LayoutId(id: 'center', child: center!),
-          if (bottom != null) LayoutId(id: 'bottom', child: bottom!),
-        ],
-      ),
-    );
   }
 }

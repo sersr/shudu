@@ -13,7 +13,6 @@ import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
 import '../utils/utils.dart';
-import 'book_index_notifier.dart';
 import 'constansts.dart';
 
 enum Status { ignore, error, done }
@@ -309,10 +308,18 @@ extension DataLoading on ContentNotifier {
     final _keys = _getCurrentIds();
 
     if (_caches.length > _keys.length + 2) {
+      final _dirtys = <TextData>[];
       _caches.removeWhere((key, data) {
         final remove = !_keys.contains(key);
-        if (remove) data._content.forEach((p) => p.picture.dispose());
+        if (remove) _dirtys.add(data);
         return remove;
+      });
+      scheduleMicrotask(() {
+        _dirtys.forEach((element) {
+          element._content.forEach((element) {
+            element.picture.dispose();
+          });
+        });
       });
     }
   }

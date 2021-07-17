@@ -2,13 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/provider.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
 
-import '../../provider/text_styles.dart';
-import '../../widgets/async_text.dart';
 import '../../widgets/image_text.dart';
-import '../book_list_view/list_shudan_detail.dart';
+import '../../widgets/text_builder.dart';
 import '../embed/images.dart';
 
 class BookItem extends StatelessWidget {
@@ -31,7 +28,6 @@ class BookItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
     return Container(
       height: 98,
       width: MediaQuery.of(context).size.width,
@@ -55,73 +51,19 @@ class BookItem extends StatelessWidget {
           LayoutId(
             id: ImageLayout.text,
             child: Padding(
-                padding: const EdgeInsets.only(left: 12.0),
+                padding: const EdgeInsets.only(left: 14.0),
                 child: RepaintBoundary(
-                  child: TextAsyncBuilder(
-                      bookName: bookName,
-                      ts: ts,
-                      bookUdateItem: bookUdateItem,
-                      bookUpdateTime: bookUpdateTime),
+                  child: TextBuilder(
+                      height: 98,
+                      top: bookName,
+                      center: '最新：$bookUdateItem',
+                      bottom: bookUpdateTime),
                 )),
           ),
           // ),
         ],
       ),
     );
-  }
-}
-
-class TextAsyncBuilder extends StatelessWidget {
-  const TextAsyncBuilder({
-    Key? key,
-    required this.bookName,
-    required this.ts,
-    required this.bookUdateItem,
-    required this.bookUpdateTime,
-  }) : super(key: key);
-
-  final String? bookName;
-  final TextStyleConfig ts;
-  final String? bookUdateItem;
-  final String? bookUpdateTime;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return FutureBuilder<List<TextPainter>>(
-          future: Future.wait<TextPainter>([
-            AsyncText.asyncLayout(
-                constraints.maxWidth,
-                TextPainter(
-                    text: TextSpan(text: bookName!, style: ts.title3),
-                    maxLines: 1,
-                    textDirection: TextDirection.ltr)),
-            AsyncText.asyncLayout(
-                constraints.maxWidth,
-                TextPainter(
-                    text: TextSpan(text: '最新：$bookUdateItem', style: ts.body2),
-                    maxLines: 1,
-                    textDirection: TextDirection.ltr)),
-            AsyncText.asyncLayout(
-                constraints.maxWidth,
-                TextPainter(
-                    text: TextSpan(text: bookUpdateTime!, style: ts.body3),
-                    maxLines: 1,
-                    textDirection: TextDirection.ltr)),
-          ]),
-          builder: (context, snap) {
-            if (snap.hasData) {
-              final data = snap.data!;
-
-              return ItemWidget(
-                  height: 98,
-                  top: AsyncText.async(data[0]),
-                  center: AsyncText.async(data[1]),
-                  bottom: AsyncText.async(data[2]));
-            }
-            return SizedBox();
-          });
-    });
   }
 }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/binding/widget_binding.dart';
 import '../../utils/utils.dart';
+import '../../widgets/async_text.dart';
 import 'book_history.dart';
 import 'cacheManager.dart';
 import 'chat_room.dart';
@@ -131,6 +133,33 @@ class ListMainPage extends StatelessWidget {
                   }),
             ),
           ]),
+          btn1(
+              radius: 10.0,
+              bgColor: Colors.white,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                child: Center(child: Text('清除')),
+              ),
+              onTap: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return RepaintBoundary(
+                      child: Scaffold(
+                    appBar: AppBar(
+                      title: Text('清除'),
+                    ),
+                    body: Center(
+                      child: btn1(
+                          onTap: () {
+                            AsyncText.clear();
+                            NopWidgetsFlutterBinding.instance?.clear();
+                          },
+                          child: Text('清除')),
+                    ),
+                  ));
+                }));
+              }),
         ],
       ),
     );

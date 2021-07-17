@@ -13,8 +13,8 @@ import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../../widgets/async_text.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/text_builder.dart';
 import '../book_content_view/book_content_page.dart';
-import '../book_list_view/list_shudan_detail.dart';
 import '../embed/images.dart';
 import '../embed/indexs.dart';
 import '../embed/list_builder.dart';
@@ -472,8 +472,6 @@ class _BookInfoSameItemWidget extends StatelessWidget {
           LayoutId(
             id: ImageLayout.image,
             child: Container(
-              // width: 72,
-              // height: 108,
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: ImageResolve(img: l.img),
             ),
@@ -481,75 +479,20 @@ class _BookInfoSameItemWidget extends StatelessWidget {
           LayoutId(
             id: ImageLayout.text,
             child: Padding(
-              padding: const EdgeInsets.only(left: 12.0),
+              padding: const EdgeInsets.only(left: 14.0),
               child: RepaintBoundary(
-                  child: _InfoItem(l: l, ts: ts, author: author)),
+                child: TextBuilder(
+                  height: 108,
+                  top: '${l.name}',
+                  center: '作者：$author',
+                  bottom: '最新: ${l.lastChapter}',
+                ),
+              ),
             ),
           ),
         ],
       ),
       // ),
-    );
-  }
-}
-
-class _InfoItem extends StatelessWidget {
-  const _InfoItem({
-    Key? key,
-    required this.l,
-    required this.ts,
-    required this.author,
-  }) : super(key: key);
-
-  final SameUserBook l;
-  final TextStyleConfig ts;
-  final String? author;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 108,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return FutureBuilder<List<TextPainter>>(
-            future: Future.wait<TextPainter>([
-              AsyncText.asyncLayout(
-                  constraints.maxWidth,
-                  TextPainter(
-                      text: TextSpan(text: '${l.name}', style: ts.title3),
-                      maxLines: 1,
-                      textDirection: TextDirection.ltr)),
-              AsyncText.asyncLayout(
-                  constraints.maxWidth,
-                  TextPainter(
-                      text: TextSpan(text: '作者：$author', style: ts.body2),
-                      maxLines: 1,
-                      textDirection: TextDirection.ltr)),
-              AsyncText.asyncLayout(
-                  constraints.maxWidth,
-                  TextPainter(
-                      text: TextSpan(
-                        text: '最新: ${l.lastChapter}',
-                        style: ts.body3,
-                      ),
-                      maxLines: 2,
-                      textDirection: TextDirection.ltr)),
-            ]),
-            builder: (context, snap) {
-              if (snap.hasData) {
-                final data = snap.data!;
-                return ItemWidget(
-                  height: 108,
-                  top: AsyncText.async(data[0]),
-                  center: AsyncText.async(data[1]),
-                  bottom: AsyncText.async(data[2]),
-                );
-              }
-              return SizedBox();
-            },
-          );
-        },
-      ),
     );
   }
 }

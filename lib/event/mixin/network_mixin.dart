@@ -103,6 +103,7 @@ mixin NetworkMixin implements CustomEvent {
 
   final _ei = RegExp('https?://');
   final _e2f = RegExp('/|%2F');
+  final imageSave = EventLooper(parallels: 2);
 }
 
 /// 以扩展的形式实现
@@ -114,9 +115,6 @@ extension _NetworkImpl on NetworkMixin {
     Hive.init(join(appPath, 'hive'));
 
     final d = Directory(imageLocalPath);
-    // if (!d.existsSync()) {
-    //   d.createSync(recursive: true);
-    // }
 
     imageUpdate = await Hive.openBox<int>('imageUpdate');
     final exists = await d.exists();
@@ -461,6 +459,16 @@ extension _NetworkImpl on NetworkMixin {
     return getImageFromNet(img);
   }
 
+  bool _isVaild(Headers header) {
+    final contentType = header.value(HttpHeaders.contentTypeHeader);
+    if (contentType != null && contentType.contains(RegExp('image/*'))) {
+      return true;
+    } else {
+      assert(Log.w('..无法识别..'));
+      return false;
+    }
+  }
+
   Future<String> getImageFromNet(String img) async {
     final imgResolve = imageUrlResolve(img);
     final url = imgResolve[0];
@@ -485,30 +493,37 @@ extension _NetworkImpl on NetworkMixin {
 
     var success = false;
 
-    String _path(Headers header) {
-      final contentType = header.value(HttpHeaders.contentTypeHeader);
-      if (contentType != null && contentType.contains(RegExp('image/*'))) {
-        success = true;
-        // assert(Log.i('..识别正确..$imgName'));
-      } else {
-        success = false;
-        assert(Log.w('..无法识别..$imgName'));
-      }
-      return imgPath;
-    }
-
     try {
-      await dio.download(url, _path);
+      final data = await dio.get<ResponseBody>(url,
+          options: Options(responseType: ResponseType.stream));
 
-      if (success) {
-        _errorLoading.remove(imgName);
-        await imageUpdate.put(
-            imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
-        await images.put(imgName.hashCode, imgName);
+      final img = (await data.data?.stream.toList())?.expand((e) => e).toList();
+      if (img != null) {
+        await imageSave.addEventTask(() async {
+          try {
+            final f = File(imgPath);
+            f.createSync(recursive: true);
+            final o = f.openSync(mode: FileMode.write);
+            await o.writeFrom(img);
+            await o.close();
+            await releaseUI;
+          } catch (e) {
+            Log.e(e);
+          }
+        });
       }
+
+      success = _isVaild(data.headers);
     } catch (e) {
       _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
       assert(Log.w('$imgName,$url !!!'));
+    }
+
+    if (success) {
+      _errorLoading.remove(imgName);
+      await imageUpdate.put(
+          imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+      await images.put(imgName.hashCode, imgName);
     }
 
     final exists = await File(imgPath).exists();
