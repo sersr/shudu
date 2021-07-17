@@ -24,7 +24,8 @@ class ShudanItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height ?? 112,
+      constraints:
+          BoxConstraints(maxHeight: height ?? 112, minHeight: height ?? 112),
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 72),
@@ -32,8 +33,6 @@ class ShudanItem extends StatelessWidget {
           LayoutId(
             id: ImageLayout.image,
             child: Container(
-              // width: 72,
-              // height: height ?? 112,
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: ImageResolve(img: img),
             ),

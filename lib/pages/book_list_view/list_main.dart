@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../utils/binding/widget_binding.dart';
 import '../../utils/utils.dart';
-import '../../widgets/async_text.dart';
+import '../../widgets/text_builder.dart';
 import 'book_history.dart';
 import 'cacheManager.dart';
 import 'chat_room.dart';
@@ -152,7 +152,7 @@ class ListMainPage extends StatelessWidget {
                     body: Center(
                       child: btn1(
                           onTap: () {
-                            AsyncText.clear();
+                            pictureCache?.clear();
                             NopWidgetsFlutterBinding.instance?.clear();
                           },
                           child: Text('清除')),
@@ -160,80 +160,6 @@ class ListMainPage extends StatelessWidget {
                   ));
                 }));
               }),
-        ],
-      ),
-    );
-  }
-}
-
-class TranslationView extends StatefulWidget {
-  @override
-  _TranslationViewState createState() => _TranslationViewState();
-}
-
-class _TranslationViewState extends State<TranslationView>
-    with TickerProviderStateMixin {
-  late AnimationController animation;
-  late AnimationController secondaryAnimation;
-  late Animation<Offset> s;
-  late Animation<Offset> m;
-  @override
-  void initState() {
-    super.initState();
-    animation = AnimationController(
-        vsync: this, value: 0.0, duration: Duration(milliseconds: 400));
-    secondaryAnimation = AnimationController(
-        vsync: this, value: 0.0, duration: Duration(milliseconds: 400));
-    s = CurvedAnimation(
-            parent: secondaryAnimation,
-            curve: Curves.linearToEaseOut,
-            reverseCurve: Curves.easeInToLinear)
-        .drive(Tween<Offset>(begin: Offset.zero, end: Offset(-1.0 / 3, 0.0)));
-    m = CurvedAnimation(
-            parent: animation,
-            curve: Curves.linearToEaseOut,
-            reverseCurve: Curves.easeInToLinear)
-        .drive(Tween<Offset>(begin: Offset(1.0, 0.0), end: Offset.zero));
-    animation.forward();
-    animation.forward();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: SlideTransition(
-                position: s,
-                transformHitTests: false,
-                child: SlideTransition(
-                  position: m,
-                  child: Container(color: Colors.blue, height: 300, width: 400),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (animation.status == AnimationStatus.completed) {
-                      animation.reverse();
-                      secondaryAnimation.reverse();
-                    } else {
-                      animation.forward();
-                      secondaryAnimation.forward();
-                    }
-                  },
-                  child: Text('click'),
-                ),
-              ))
         ],
       ),
     );

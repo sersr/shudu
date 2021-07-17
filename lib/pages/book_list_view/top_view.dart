@@ -29,7 +29,7 @@ class BookListItem extends StatelessWidget {
     final topRightScore = '${item.score}分';
     final center = '$cname | $author';
     return Container(
-      height: 112,
+      constraints: const BoxConstraints(maxHeight: 112, minHeight: 112),
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 72),

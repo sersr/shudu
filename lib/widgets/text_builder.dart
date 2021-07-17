@@ -1,14 +1,57 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
 
 import '../provider/provider.dart';
-import '../utils/binding/widget_binding.dart';
 import '../utils/utils.dart';
-import 'async_text.dart';
+
 import 'draw_picture.dart';
+import 'list_key.dart';
+import 'picture_info.dart';
+
+class PictureCache {
+  void clear() {
+    _textListners.values.forEach((element) {
+      element.dispose();
+    });
+    _textListners.clear();
+  }
+
+  final _tlooper = EventLooper();
+  final _textListners = <ListKey, PictureListener>{};
+  PictureListener? getListener(ListKey key) {
+    final text = _textListners[key];
+    return text;
+  }
+
+  PictureListener putIfAbsent(
+      List keys, Future<Size> Function(Canvas canvas) callback) {
+    final key = ListKey(keys);
+
+    final _text = getListener(key);
+    if (_text != null) return _text;
+    final listener = _textListners[key] = PictureListener();
+
+    _tlooper.addEventTask(() async {
+      final recoder = ui.PictureRecorder();
+      final canvas = Canvas(recoder);
+
+      await releaseUI;
+      final size = await callback(canvas);
+
+      final picture = PictureInfo.picture(recoder.endRecording(), size);
+      // await releaseUI;
+      if (!listener.close && _textListners.containsKey(key)) {
+        listener.setPicture(picture.clone());
+      }
+      picture.dispose();
+    });
+    return listener;
+  }
+}
 
 class TextBuilder extends StatelessWidget {
   const TextBuilder({
@@ -119,7 +162,7 @@ class _TextBuilderState extends State<_TextBuilder> {
       2
     ];
     final height = widget.constraints.maxHeight;
-    final _all = AsyncText.putIfAbsent(keys, (canvas) async {
+    final _all = pictureCache!.putIfAbsent(keys, (canvas) async {
       tpr.layout(maxWidth: width);
       await releaseUI;
 

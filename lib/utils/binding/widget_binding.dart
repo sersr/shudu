@@ -10,8 +10,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../widgets/async_text.dart';
-import '../../widgets/draw_picture.dart';
+import '../../widgets/list_key.dart';
+import '../../widgets/picture_info.dart';
+import '../../widgets/text_builder.dart';
 import '../tools/event_callback_looper.dart';
 import '../utils.dart';
 import 'binding.dart';
@@ -30,12 +31,22 @@ class NopWidgetsFlutterBinding extends BindingBase
   void initInstances() {
     super.initInstances();
     _instance = this;
+    _pictureCache = createPictureCache();
+  }
+
+  PictureCache? _pictureCache;
+
+  PictureCache? get pictureCache => _pictureCache;
+
+  PictureCache createPictureCache() {
+    return PictureCache();
   }
 
   @override
   void handleMemoryPressure() {
     super.handleMemoryPressure();
     clear();
+    _pictureCache?.clear();
   }
 
   static NopWidgetsFlutterBinding? get instance => _instance;
@@ -45,73 +56,6 @@ class NopWidgetsFlutterBinding extends BindingBase
     if (WidgetsBinding.instance == null) NopWidgetsFlutterBinding();
     return WidgetsBinding.instance!;
   }
-
-  // images cache loading queue
-  // final imageLooper = EventLooper();
-  // final imagesTasks = <Object, Future>{};
-
-  // Future<void> preCacheResizeImage(ImageProvider provider) {
-  //   final resize = getResize(provider);
-  //   return preCacheImage(resize);
-  // }
-
-  // ResizeImage getResize(ImageProvider key) {
-  //   return ResizeImage(key, width: 160);
-  // }
-
-  // /// [FileImage] 缓存
-  // Future<void> preCacheImage(ImageProvider provider) {
-  //   return provider.obtainKey(ImageConfiguration.empty).then((_key) {
-  //     final contain = imageCache?.containsKey(_key) ?? false;
-
-  //     if (!contain) {
-  //       return imagesTasks.putIfAbsent(
-  //         _key,
-  //         () => imageLooper.addEventTask(
-  //           () async {
-  //             await releaseUI;
-  //             if (imageCache?.containsKey(_key) ?? false) return;
-  //             await _preImage(provider);
-  //             await imageLooper.scheduler.endOfFrame;
-  //           },
-  //         ),
-  //       )..whenComplete(() => imagesTasks.remove(_key));
-  //     } else {
-  //       return SynchronousFuture(null);
-  //     }
-  //   });
-  //   // }
-  // }
-
-  // ImageStream resolve(ImageProvider provider) {
-  //   return provider.resolve(ImageConfiguration.empty);
-  // }
-
-  // Future<void> _preImage(ImageProvider provider) {
-  //   final completer = Completer<void>();
-  //   final stream = resolve(provider);
-  //   ImageStreamListener? listener;
-
-  //   listener = ImageStreamListener(
-  //     (ImageInfo? image, bool sync) {
-  //       if (!completer.isCompleted) {
-  //         completer.complete();
-  //       }
-  //       imageLooper.scheduler.addPostFrameCallback((_) {
-  //         stream.removeListener(listener!);
-  //       });
-  //     },
-  //     onError: (Object exception, StackTrace? stackTrace) {
-  //       if (!completer.isCompleted) {
-  //         completer.complete();
-  //       }
-  //       stream.removeListener(listener!);
-  //     },
-  //   );
-
-  //   stream.addListener(listener);
-  //   return completer.future;
-  // }
 
   Future<ui.Image> _decode(Uint8List bytes,
       {int? cacheWidth, int? cacheHeight}) async {
@@ -123,18 +67,21 @@ class NopWidgetsFlutterBinding extends BindingBase
 
   static final _pictures = <ListKey, PictureListener>{};
   static final _imgLooper = EventLooper();
-  // static final _imageTask = <ListKey, Future>{};
+  static final _imgLoading = EventLooper();
+
   PictureListener? getImage(ListKey key) {
     final listener = _pictures[key];
     return listener;
   }
 
   final _paint = Paint();
-
-  PictureListener preCache(File f,
-      {required double cacheWidth,
-      required double cacheHeight,
-      BoxFit fit = BoxFit.fitHeight}) {
+  PictureListener preCacheBuilder(
+    File f, {
+    required double cacheWidth,
+    required double cacheHeight,
+    required Future<Size> Function(Canvas canvas) callback,
+    BoxFit fit = BoxFit.fitHeight,
+  }) {
     final key = ListKey([f.path, cacheWidth, cacheHeight, fit]);
     final _img = getImage(key);
 
@@ -145,16 +92,49 @@ class NopWidgetsFlutterBinding extends BindingBase
       print('clear....${_pictures.length}');
     }
     final listener = _pictures[key] = PictureListener();
-    final w = ui.window;
 
     _imgLooper.addEventTask(() async {
       PictureInfo? picture;
-      ui.Image? image;
 
       var error = false;
 
       try {
+        final recoder = ui.PictureRecorder();
+        final canvas = Canvas(recoder);
+        await releaseUI;
+        final dst = await callback(canvas);
+        picture = PictureInfo.picture(recoder.endRecording(), dst);
+      } catch (e) {
+        error = true;
+      } finally {
+        _imgLoading.addEventTask(
+          () => _imgLoading.scheduler.endOfFrame.then((_) async {
+            if (!listener.close && _pictures.containsKey(key)) {
+              listener.setPicture(picture?.clone(), error);
+            }
+            picture?.dispose();
+            await releaseUI;
+          }),
+        );
+      }
+    });
+    return listener;
+  }
+
+  PictureListener preCache(File f,
+      {required double cacheWidth,
+      required double cacheHeight,
+      BoxFit fit = BoxFit.fitHeight}) {
+    return preCacheBuilder(f,
+        cacheWidth: cacheWidth,
+        cacheHeight: cacheHeight,
+        fit: fit, callback: (canvas) async {
+      final w = ui.window;
+      ui.Image? image;
+
+      try {
         final bytes = await f.readAsBytes();
+        await releaseUI;
 
         if (fit == BoxFit.fitHeight) {
           image = await _decode(bytes,
@@ -164,41 +144,31 @@ class NopWidgetsFlutterBinding extends BindingBase
               cacheWidth: (cacheWidth * w.devicePixelRatio).toInt());
         }
 
-        await releaseUI;
-
-        final recoder = ui.PictureRecorder();
-        final canvas = Canvas(recoder);
-
-        final imageWidth = image.width.toDouble();
         final imageHeight = image.height.toDouble();
+        final imageWidth = image.width.toDouble();
 
         var height = cacheHeight.toDouble();
         var width = cacheWidth.toDouble();
+
+        await releaseUI;
 
         final constraints = BoxConstraints(maxHeight: height, maxWidth: width);
 
         final dst = constraints.constrainSizeAndAttemptToPreserveAspectRatio(
             Size(imageWidth, imageHeight));
-        Log.w(
-            'Width: $width, $height | $cacheWidth, $cacheHeight | $imageWidth, $imageHeight');
 
         final dstRect = Offset.zero & dst;
+
         final imageRect = Rect.fromLTWH(0.0, 0.0, imageWidth, imageHeight);
+        canvas.drawImageRect(image, imageRect, dstRect, _paint);
 
-        canvas.drawImageNine(image, imageRect, dstRect, _paint);
-
-        picture = PictureInfo(PictureMec(recoder.endRecording(), dst));
+        return dst;
       } catch (e) {
-        error = true;
+        rethrow;
       } finally {
-        if (!listener._dispose && _pictures.containsKey(key)) {
-          listener.setPicture(picture?.clone(), error);
-        }
         image?.dispose();
-        picture?.dispose();
       }
     });
-    return listener;
   }
 
   void clear() {
@@ -207,92 +177,5 @@ class NopWidgetsFlutterBinding extends BindingBase
   }
 }
 
-// typedef ImageListenerCallback = void Function(ui.Image? image, bool error);
-
-// class ImageFileListener {
-//   ImageFileListener();
-//   ui.Image? _image;
-//   bool _error = false;
-
-//   void setImage(ui.Image? img, [bool error = false]) {
-//     final list = List.of(_list);
-//     _list.clear();
-//     _error = error;
-
-//     list.forEach((element) => element(img?.clone(), error));
-//     if (_dispose) {
-//       img?.dispose();
-//       return;
-//     } else {
-//       _image = img;
-//     }
-//   }
-
-//   final _list = <ImageListenerCallback>[];
-//   void addListener(ImageListenerCallback callback) {
-//     if (_image == null && !_error) {
-//       _list.add(callback);
-//       return;
-//     }
-//     callback(_image?.clone(), _error);
-//   }
-
-//   void removeListener(ImageListenerCallback callback) {
-//     _list.remove(callback);
-//   }
-
-//   bool get hasListener => _list.isNotEmpty;
-
-//   bool _dispose = false;
-//   void dispose() {
-//     if (_dispose) return;
-//     _dispose = true;
-//     _image?.dispose();
-//   }
-// }
-
-typedef PictureListenerCallback = void Function(PictureInfo? image, bool error);
-
-class PictureListener {
-  PictureListener();
-  PictureInfo? _image;
-  bool _error = false;
-
-  void setPicture(PictureInfo? img, [bool error = false]) {
-    final list = List.of(_list);
-    _list.clear();
-    _error = error;
-
-    list.forEach((element) => element(img?.clone(), error));
-    if (_dispose) {
-      img?.dispose();
-      return;
-    } else {
-      _image = img;
-    }
-  }
-
-  final _list = <PictureListenerCallback>[];
-  void addListener(PictureListenerCallback callback) {
-    if (_image == null && !_error) {
-      _list.add(callback);
-      return;
-    }
-    callback(_image?.clone(), _error);
-  }
-
-  void removeListener(PictureListenerCallback callback) {
-    _list.remove(callback);
-  }
-
-  bool get hasListener => _list.isNotEmpty;
-
-  bool get close => _dispose;
-
-  bool _dispose = false;
-  void dispose() {
-    if (_dispose) return;
-    _dispose = true;
-    _image?.dispose();
-  }
-}
+PictureCache? get pictureCache =>
+    NopWidgetsFlutterBinding.instance?._pictureCache;

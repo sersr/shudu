@@ -164,6 +164,7 @@ class _WrapWidgetState extends State<WrapWidget>
 
           final bookList = list[index];
           return ListItemBuilder(
+            height: 112,
             onTap: () {
               final route = MaterialPageRoute(builder: (_) {
                 return ShudanDetailPage(

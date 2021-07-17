@@ -29,7 +29,7 @@ class BookItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 98,
+      constraints: const BoxConstraints(maxHeight: 98, minHeight: 98),
       width: MediaQuery.of(context).size.width,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: CustomMultiChildLayout(
@@ -76,6 +76,7 @@ class UpdateIcon extends SingleChildRenderObjectWidget {
   }) : super(key: key, child: child);
   final bool isNew;
   final bool isTop;
+
   @override
   UpdateIconRenderObject createRenderObject(BuildContext context) {
     return UpdateIconRenderObject(isNew: isNew, isTop: isTop);
@@ -100,8 +101,10 @@ class UpdateIconRenderObject extends RenderBox
     resolveNew();
     resolveTop();
   }
+
   bool _isNew;
   bool get isNew => _isNew;
+
   set isNew(bool v) {
     if (_isNew == v) return;
     _isNew = v;

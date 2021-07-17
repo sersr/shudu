@@ -8,3 +8,4 @@ export 'tools/tools.dart';
 export 'tools/string.dart';
 export './debug/debug.dart';
 
+export 'binding/widget_binding.dart';

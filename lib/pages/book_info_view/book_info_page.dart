@@ -11,7 +11,6 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
-import '../../widgets/async_text.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../book_content_view/book_content_page.dart';
@@ -252,8 +251,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AsyncText(
-                      text: info.desc!,
+                    Text(
+                      '${info.desc}',
                       style: ts.body3,
                       maxLines: hide ? 2 : null,
                     ),
@@ -299,7 +298,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               context.read<BookIndexNotifier>().loadIndexs(bookid, _cid);
               showIndexs.value = !showIndexs.value;
             },
-            radius: 0,
             bgColor: Color.fromARGB(255, 250, 250, 250),
             splashColor: Colors.grey[300],
             padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
@@ -360,6 +358,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     if (info.sameUserBooks != null)
       for (var l in info.sameUserBooks!)
         yield ListItemBuilder(
+            height: 108,
             child: _BookInfoSameItemWidget(l: l, author: info.author),
             onTap: () =>
                 l.id == null ? null : BookInfoPage.push(context, l.id!));
@@ -462,7 +461,6 @@ class _BookInfoSameItemWidget extends StatelessWidget {
   final String? author;
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       height: 108,
