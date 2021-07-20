@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../utils.dart';
+
 typedef FutureOrVoidCallback = FutureOr<void> Function();
 
 typedef WaitCallback = Future<void> Function(
@@ -30,23 +32,24 @@ class EventLooper {
   }
 
   final int parallels;
-  final now = Stopwatch()..start();
+  // final now = Stopwatch()..start();
 
-  int get stopwatch => now.elapsedMicroseconds;
+  // int get stopwatch => now.elapsedMicroseconds;
 
   SchedulerBinding get scheduler => SchedulerBinding.instance!;
 
-  final _taskLists = <_TaskKey, _TaskEntry>{};
+  final _taskPool = <_TaskKey, _TaskEntry>{};
 
   Future<T> _addEventTask<T>(EventCallback<T> callback,
-      {bool onlyLastOne = false}) {
-    var _task = _TaskEntry<T>(callback, this, onlyLastOne: onlyLastOne);
+      {bool onlyLastOne = false, Object? newKey}) {
+    var _task = _TaskEntry<T>(callback, this,
+        onlyLastOne: onlyLastOne, objectKey: newKey);
     final key = _task.key;
 
-    if (!_taskLists.containsKey(key)) {
-      _taskLists[key] = _task;
+    if (!_taskPool.containsKey(key)) {
+      _taskPool[key] = _task;
     } else {
-      _task = _taskLists[key]! as _TaskEntry<T>;
+      _task = _taskPool[key]! as _TaskEntry<T>;
     }
 
     run();
@@ -56,13 +59,13 @@ class EventLooper {
   /// 安排任务
   ///
   /// 队列模式
-  Future<T> addEventTask<T>(EventCallback<T> callback) =>
-      _addEventTask<T>(callback);
+  Future<T> addEventTask<T>(EventCallback<T> callback, {Object? key}) =>
+      _addEventTask<T>(callback, newKey: key);
 
   /// [onlyLastOne] 模式
   /// 由于此模式下，可能会丢弃任务，因此无返回值
-  Future<void> addOneEventTask(EventCallback<void> callback) =>
-      _addEventTask<void>(callback, onlyLastOne: true);
+  Future<void> addOneEventTask(EventCallback<void> callback, {Object? key}) =>
+      _addEventTask<void>(callback, onlyLastOne: true, newKey: key);
 
   Future<void>? _runner;
   Future<void>? get runner => _runner;
@@ -73,53 +76,50 @@ class EventLooper {
 
   @protected
   Future<void> looper() async {
-    final _f = <_TaskKey, Future>{};
+    final parallelTasks = <_TaskKey, Future>{};
     // 由于之前操作都在 `同步` 中执行
     // 在下一次事件循环时处理任务
     await releaseUI;
 
-    while (_taskLists.isNotEmpty) {
-      final tasks = List.of(_taskLists.values);
+    while (_taskPool.isNotEmpty) {
+      final tasks = List.of(_taskPool.values);
       final last = tasks.last;
 
-      for (final _t in tasks) {
-        if (!_t.onlyLastOne || _t == last) {
+      for (final task in tasks) {
+        if (!task.onlyLastOne || task == last) {
           if (parallels > 1) {
-            _f.putIfAbsent(_t.key, () {
-              // 转移管理权
-              _taskLists.remove(_t.key);
-              // 已完成的任务会自动移除
-              return eventRun(_t)..whenComplete(() => _f.remove(_t.key));
+            // 转移管理权
+            // 已完成的任务会自动移除
+            parallelTasks.putIfAbsent(task.key, () {
+              _taskPool.remove(task.key);
+              return eventRun(task)
+                ..whenComplete(() => parallelTasks.remove(task.key));
             });
 
-            // 达到 parallels 数        ||   最后一个
-            if (_f.length >= parallels || _t == last) {
-              // 未达到 parallels 数并且是最后一个，
-              // 还有任务待刷新，加入队列
-
-              if (_t == last &&
-                  _f.length < parallels &&
-                  _taskLists.isNotEmpty) {
-                break;
+            // 达到 parallels 数                   ||   最后一个
+            if (parallelTasks.length >= parallels || task == last) {
+              // 任务池中没有任务，等待 parallelTasks 任务
+              while (_taskPool.isEmpty || parallelTasks.length >= parallels) {
+                if (parallelTasks.isEmpty) break;
+                final activeTasks = List.of(parallelTasks.values);
+                await Future.any(activeTasks);
               }
 
-              await Future.wait(_f.values);
-              _f.clear();
               await releaseUI;
 
-              // 完成一次 ‘并行’ 任务，刷新当前任务
+              // 所有任务都完成或刷新任务
               break;
             }
           } else {
-            await eventRun(_t);
+            await eventRun(task);
             await releaseUI;
           }
         } else {
-          _t.completed();
+          task.completed();
         }
       }
     }
-    assert(_f.isEmpty);
+    assert(parallelTasks.isEmpty);
   }
 
   static const _zoneWait = 'eventWait';
@@ -175,13 +175,15 @@ class EventLooper {
 }
 
 class _TaskEntry<T> {
-  _TaskEntry(this.callback, this._looper, {this.onlyLastOne = false});
+  _TaskEntry(this.callback, this._looper,
+      {this.onlyLastOne = false, this.objectKey});
 
   final EventLooper _looper;
   final EventCallback<T> callback;
   Object? ident;
+  final Object? objectKey;
   final bool onlyLastOne;
-  late final key = _TaskKey<T>(_looper, callback, onlyLastOne);
+  late final key = _TaskKey<T>(_looper, callback, onlyLastOne, objectKey);
 
   final _completer = Completer<T>();
   var async = true;
@@ -192,29 +194,35 @@ class _TaskEntry<T> {
     completed(result);
   }
 
+  bool _completed = false;
   void completed([T? result]) {
+    assert(!_completed);
+    assert(_completed = true);
+
+    assert(!onlyLastOne || result == null);
     _completer.complete(result);
-    _looper._taskLists.remove(key);
+    _looper._taskPool.remove(key);
   }
 }
 
 class _TaskKey<T> {
-  _TaskKey(this._looper, this.callback, this.onlyLastOne);
+  _TaskKey(this._looper, this.callback, this.onlyLastOne, this.key);
   final EventLooper _looper;
   final EventCallback callback;
   final bool onlyLastOne;
-
+  final Object? key;
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is _TaskKey<T> &&
             callback == other.callback &&
             _looper == other._looper &&
-            onlyLastOne == other.onlyLastOne;
+            onlyLastOne == other.onlyLastOne &&
+            key == other.key;
   }
 
   @override
-  int get hashCode => hashValues(callback, _looper, onlyLastOne, T);
+  int get hashCode => hashValues(callback, _looper, onlyLastOne, T, key);
 }
 
 enum EventStatus {

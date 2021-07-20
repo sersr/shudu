@@ -6,7 +6,7 @@ import 'package:provider/src/provider.dart';
 import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
 import '../../utils/utils.dart'
-    show Log, loadingIndicator, release, reloadBotton;
+    show EventLooper, Log, loadingIndicator, release, reloadBotton;
 import '../../utils/widget/page_animation.dart' show PageAnimationMixin;
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
@@ -71,31 +71,45 @@ class TopListView extends StatefulWidget {
 }
 
 class _TopListViewState extends State<TopListView> with PageAnimationMixin {
-  final _topNotifier = TopNotifier();
+  var _topNotifier = TopNotifier();
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  TabController? controller;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
     _topNotifier.repository = repository;
+    controller?.removeListener(onUpdate);
+    controller = DefaultTabController.of(context);
+    controller?.addListener(onUpdate);
+    if (controller?.index == 0) {
+      onUpdate();
+    }
+  }
+
+  void onUpdate() {
+    if (!_topNotifier.initialized)
+      _topNotifier.getNextData(widget.ctg, widget.date);
   }
 
   @override
   void didUpdateWidget(covariant TopListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _topNotifier.reset();
-    complete();
+    if (oldWidget.ctg != widget.ctg || oldWidget.date != widget.date) {
+      _topNotifier = _topNotifier.copy();
+      onUpdate();
+    }
   }
 
   @override
-  void complete() {
-    final _f = () {
-      _topNotifier.getNextData(widget.ctg, widget.date);
-    };
-    if (widget.date != 'week') {
-      Future.delayed(const Duration(milliseconds: 300), _f);
-    } else
-      _f();
+  void dispose() {
+    controller?.removeListener(onUpdate);
+    super.dispose();
   }
 
   @override
@@ -113,6 +127,15 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
           }
 
           return ListViewBuilder(
+            finishLayout: (first, last) {
+              final state = _topNotifier.state;
+
+              if (last == _data.length) {
+                if (state == LoadingStatus.success && _topNotifier._hasNext) {
+                  _topNotifier.getNextData(widget.ctg, widget.date);
+                }
+              }
+            },
             itemBuilder: (context, index) {
               if (index == _data.length) {
                 final state = _topNotifier.state;
@@ -126,8 +149,6 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
                     state == LoadingStatus.failed) {
                   child = reloadBotton(
                       () => _topNotifier.getNextData(widget.ctg, widget.date));
-                } else if (state != LoadingStatus.loading) {
-                  _topNotifier.getNextData(widget.ctg, widget.date);
                 }
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -153,22 +174,27 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
 class TopNotifier extends ChangeNotifier {
   Repository? repository;
 
+  TopNotifier copy() {
+    return TopNotifier()..repository = repository;
+  }
+
   List<BookTopList>? _data;
   List<BookTopList> get data => _data ?? const <BookTopList>[];
   String? _ctg, _date;
   int _index = 0;
   bool _hasNext = true;
   bool get initialized => _data != null;
-  LoadingStatus state = LoadingStatus.failed;
-  Future? _task;
-  Future<void> getNextData(String ctg, String date) async {
-    if (_task != null) return;
-    _task ??= _getNextData(ctg, date)..whenComplete(() => _task = null);
+  LoadingStatus state = LoadingStatus.initial;
+
+  final _event = EventLooper();
+
+  Future<void> getNextData(String ctg, String date) {
+    return _event.addOneEventTask(() => _getNextData(ctg, date));
   }
 
   Future<void> _getNextData(String ctg, String date) async {
     if (!correct(ctg, date)) {
-      reset();
+      _reset();
       _ctg = ctg;
       _date = date;
     }
@@ -180,14 +206,15 @@ class TopNotifier extends ChangeNotifier {
     state = LoadingStatus.loading;
     notifyListeners();
     _index++;
-    await getData(ctg, date, _index);
+    final _oldIndex = _index;
+    final success = await getData(ctg, date, _index);
 
-    if (state == LoadingStatus.failed) {
-      _index--;
+    if (_index == _oldIndex) {
+      if (!success) _index--;
+      // TODO: 使用页面动画监听替代
+      await release(const Duration(milliseconds: 500));
+      notifyListeners();
     }
-    // TODO: 使用页面动画监听替代
-    await release(const Duration(milliseconds: 300));
-    notifyListeners();
   }
 
   @override
@@ -195,29 +222,43 @@ class TopNotifier extends ChangeNotifier {
     scheduleMicrotask(super.notifyListeners);
   }
 
-  Future<void> getData(String ctg, String date, int index) async {
+  Future<bool> getData(String ctg, String date, int index) async {
     final _da =
         await repository!.bookEvent.customEvent.getTopLists(ctg, date, index);
-    if (_da != null) {
-      if (_da.bookList != null) {
-        _hasNext = _da.hasNext ?? true;
-        _data ??= <BookTopList>[];
-        _data!.addAll(_da.bookList!);
-        state = LoadingStatus.success;
+    // 状态已改变，无效
+    if (correct(ctg, date) && _index == index) {
+      if (_da != null) {
+        if (_da.bookList != null) {
+          _hasNext = _da.hasNext ?? true;
+          _data ??= <BookTopList>[];
+          _data!.addAll(_da.bookList!);
+          state = LoadingStatus.success;
+          return true;
+        } else {
+          state = LoadingStatus.failed;
+        }
       } else {
-        state = LoadingStatus.failed;
+        Log.e('failed');
+        state = LoadingStatus.error;
       }
-    } else {
-      Log.e('failed');
-      state = LoadingStatus.error;
     }
+    return false;
   }
 
-  void reset() {
+  // 添加到异步队列
+  // void reset(String ctg, String date) {
+  //   _event.addEventTask(() {
+  //     _reset();
+  //     return _getNextData(ctg, date);
+  //   });
+  // }
+
+  // 同步
+  void _reset() {
     _ctg = _date = null;
     _index = 0;
     _hasNext = true;
-    state = LoadingStatus.failed;
+    state = LoadingStatus.initial;
     _data = null;
   }
 

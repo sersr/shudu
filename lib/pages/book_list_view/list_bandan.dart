@@ -87,8 +87,10 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
               itemCount: _titles.length,
             )),
         Expanded(
-            child: TopListView(
-                ctg: _urlKeys[_currentIndex], date: _urlDates[widget.index]))
+            child: RepaintBoundary(
+          child: TopListView(
+              ctg: _urlKeys[_currentIndex], date: _urlDates[widget.index]),
+        ))
       ],
     );
   }

@@ -32,7 +32,7 @@ class ShudanItem extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Container(
+            child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: ImageResolve(img: img),
             ),
@@ -43,10 +43,13 @@ class ShudanItem extends StatelessWidget {
               padding: const EdgeInsets.only(left: 14.0),
               child: RepaintBoundary(
                 child: TextBuilder(
-                    top: title,
-                    center: desc,
-                    bottom: '总共$total本书',
-                    height: height ?? 112),
+                  top: title,
+                  center: desc,
+                  bottom: '总共$total本书',
+                  height: height ?? 112,
+                  centerLines: 2,
+                  bottomLines: 1,
+                ),
               ),
             ),
           ),

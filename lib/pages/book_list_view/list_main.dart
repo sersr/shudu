@@ -152,7 +152,6 @@ class ListMainPage extends StatelessWidget {
                     body: Center(
                       child: btn1(
                           onTap: () {
-                            pictureCache?.clear();
                             NopWidgetsFlutterBinding.instance?.clear();
                           },
                           child: Text('清除')),

@@ -631,11 +631,12 @@ class MySearchPage extends SearchDelegate<void> {
   ThemeData appBarTheme(BuildContext context) {
     final theme = Theme.of(context);
     return theme.copyWith(
-        primaryColor: Colors.white,
-        primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
+        // primaryColor: Colors.white,
+      // primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
         primaryColorBrightness: Brightness.light,
         primaryTextTheme: theme.textTheme,
-        colorScheme: theme.colorScheme.copyWith(primary: Colors.white));
+        // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
+    );
   }
 
   @override

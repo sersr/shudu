@@ -1,13 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
 
-import '../../provider/provider.dart';
 import '../../data/data.dart';
 import '../../event/event.dart';
+import '../../provider/provider.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
 import '../embed/images.dart';
+import '../embed/list_builder.dart';
 import 'list_shudan.dart';
 import 'top_view.dart';
 
@@ -165,6 +168,7 @@ class _CategoriesState extends State<Categories> {
                 (index) => CategListView(
                   ctg: widget.index,
                   date: _urlKeys[index],
+                  index: index,
                 ),
               ),
             ),
@@ -189,9 +193,11 @@ class CategListView extends StatefulWidget {
     Key? key,
     required this.ctg,
     required this.date,
+    required this.index,
   }) : super(key: key);
   final int ctg;
   final String date;
+  final int index;
   @override
   _CategListViewState createState() => _CategListViewState();
 }
@@ -199,100 +205,88 @@ class CategListView extends StatefulWidget {
 class _CategListViewState extends State<CategListView>
     with PageAnimationMixin, AutomaticKeepAliveClientMixin {
   final _categNotifier = TopNotifier();
+  TabController? controller;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
     _categNotifier.repository = repository;
+
+    controller?.removeListener(onUpdate);
+    controller = DefaultTabController.of(context);
+    controller?.addListener(onUpdate);
+
+    if (controller?.index == 0) {
+      onUpdate();
+    }
+  }
+
+  void onUpdate() {
+    if (widget.index == controller?.index && !_categNotifier.initialized)
+      _categNotifier.getNextData(widget.ctg, widget.date);
   }
 
   @override
   void didUpdateWidget(covariant CategListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _categNotifier.reset();
-    complete();
+    if (oldWidget.ctg != widget.ctg || oldWidget.date != widget.date) {
+      _categNotifier.reset();
+      onUpdate();
+    }
   }
 
   @override
-  void complete() {
-    final _f = () {
-      _categNotifier.getNextData(widget.ctg, widget.date);
-    };
-    if (widget.ctg != 0)
-      Future.delayed(const Duration(milliseconds: 300), _f);
-    else
-      _f();
+  void dispose() {
+    controller?.removeListener(onUpdate);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final size = MediaQuery.of(context).size;
-    return NotificationListener(
-      onNotification: (no) {
-        if (no is OverscrollIndicatorNotification) {
-          if (!no.leading) _categNotifier.getNextData(widget.ctg, widget.date);
-        } else if (no is UserScrollNotification) {
-          final mcs = no.metrics;
-          if (mcs.pixels >= mcs.maxScrollExtent - size.height / 10 &&
-              _categNotifier._task == null) {
-            _categNotifier.getNextData(widget.ctg, widget.date);
-          }
-        }
-        return false;
-      },
+    return RepaintBoundary(
       child: AnimatedBuilder(
           animation: _categNotifier,
           builder: (context, _) {
             final _data = _categNotifier.data;
-            if (!_categNotifier._failed && _categNotifier._index == 0)
-              return Center(child: CircularProgressIndicator());
-            else if (_categNotifier._failed) {
-              return Center(
-                child: btn1(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                  bgColor: Colors.blue,
-                  splashColor: Colors.blue.shade200,
-                  radius: 40,
-                  child: Text(
-                    '重新加载',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                  onTap: () {
-                    _categNotifier.getNextData(widget.ctg, widget.date);
-                  },
-                ),
-              );
+            if (!_categNotifier.initialized) {
+              if (!_categNotifier.failed)
+                return loadingIndicator();
+              else
+                return reloadBotton(
+                    () => _categNotifier.getNextData(widget.ctg, widget.date));
             }
 
-            return ListView.builder(
-                itemBuilder: (context, index) {
-                  if (index == _data.length) {
-                    if (!_categNotifier._hasNext)
-                      return Container(
-                          height: 50, child: Center(child: Text('到底了~')));
-                    return Container(height: 50, child: loadingIndicator());
+            return ListViewBuilder(
+              itemCount: _data.length + 1,
+              finishLayout: (first, last) {
+                final length = _data.length;
+                if (length == last) {
+                  if (!_categNotifier.loading && _categNotifier._hasNext) {
+                    _categNotifier.getNextData(widget.ctg, widget.date);
                   }
-                  final _item = _data[index];
-                  return btn1(
-                      onTap: () {
-                        if (_item.id != null)
-                          BookInfoPage.push(context, _item.id!);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                            border: Border(
-                                bottom: BorderSide(
-                                    color: Colors.grey.shade300, width: 1))),
-                        child: BookListItem(item: _item),
-                      ));
-                },
-                itemCount: _data.length + 1);
+                }
+              },
+              itemBuilder: (context, index) {
+                if (index == _data.length) {
+                  if (!_categNotifier._hasNext)
+                    return Container(
+                        height: 50, child: Center(child: Text('到底了~')));
+                  return Container(height: 50, child: loadingIndicator());
+                }
+                final _item = _data[index];
+                return ListItemBuilder(
+                  onTap: () => _item.id != null
+                      ? BookInfoPage.push(context, _item.id!)
+                      : null,
+                  child: BookListItem(item: _item),
+                );
+              },
+            );
           }),
     );
+    // );
   }
 
   @override
@@ -310,9 +304,12 @@ class TopNotifier extends ChangeNotifier {
   bool _failed = false;
 
   Future? _task;
+  bool get loading => _task != null;
+  bool get failed => _failed;
+  bool get initialized => _index != 0;
+
   Future<void> getNextData(int ctg, String date) async {
     if (_task != null) return;
-
     await _task;
     _task ??= _getNextData(ctg, date)..whenComplete(() => _task = null);
   }
@@ -341,15 +338,22 @@ class TopNotifier extends ChangeNotifier {
     final _da = await repository!.bookEvent.customEvent
             .getCategLists(ctg, date, index) ??
         const BookTopData();
-    _hasNext = _da.hasNext ?? true;
-    if (_da.bookList != null) {
-      _data.addAll(_da.bookList!);
-    } else {
-      Log.e('failed');
-      _index--;
-      _failed = true;
+    if (isCurrentItem(ctg, date) && _index == index) {
+      _hasNext = _da.hasNext ?? true;
+      if (_da.bookList != null) {
+        _data.addAll(_da.bookList!);
+      } else {
+        Log.e('failed');
+        _index--;
+        _failed = true;
+      }
+      await release(const Duration(milliseconds: 500));
     }
-    notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    scheduleMicrotask(super.notifyListeners);
   }
 
   void reset() {

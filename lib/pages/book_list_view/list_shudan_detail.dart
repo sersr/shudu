@@ -39,50 +39,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
   Iterable<Widget> _getChildren(
       BookListDetailData data, TextStyleConfig ts) sync* {
     // header
-    yield Container(
-      height: 120,
-      color: const Color.fromARGB(255, 250, 250, 250),
-      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 12.0),
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 80),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: Container(
-              // width: 80,
-              // height: 120,
-              child: ImageResolve(img: data.cover),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: RepaintBoundary(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child:
-                          Text('${data.title}', maxLines: 2, style: ts.title2),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child: Text('共${widget.total}本书', style: ts.body2),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child: Text('${data.updateTime}', style: ts.body3),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    yield TitleWidget(data: data, total: widget.total);
     yield const SizedBox(height: 6);
     // intro
     yield buildIntro(ts, data.description);
@@ -184,6 +141,71 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
       ),
     );
   }
+}
+
+class TitleWidget extends StatefulWidget {
+  const TitleWidget({
+    Key? key,
+    required this.data,
+    this.total,
+  }) : super(key: key);
+
+  final BookListDetailData data;
+  final int? total;
+  @override
+  State<TitleWidget> createState() => _TitleWidgetState();
+}
+
+class _TitleWidgetState extends State<TitleWidget>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final ts = context.read<TextStyleConfig>();
+    final data = widget.data;
+    return Container(
+      height: 120,
+      color: const Color.fromARGB(255, 250, 250, 250),
+      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 12.0),
+      child: CustomMultiChildLayout(
+        delegate: ImageLayout(width: 80),
+        children: [
+          LayoutId(
+            id: ImageLayout.image,
+            child: Container(
+              child: ImageResolve(img: data.cover),
+            ),
+          ),
+          LayoutId(
+            id: ImageLayout.text,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 14.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Text('${data.title}', maxLines: 2, style: ts.title2),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Text('共${widget.total}本书', style: ts.body2),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Text('${data.updateTime}', style: ts.body3),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class ShudanListDetailItemWidget extends StatelessWidget {

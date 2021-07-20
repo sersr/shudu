@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -8,50 +10,11 @@ import 'package:provider/src/provider.dart';
 import '../provider/provider.dart';
 import '../utils/utils.dart';
 
+import 'async_text.dart';
 import 'draw_picture.dart';
 import 'list_key.dart';
 import 'picture_info.dart';
-
-class PictureCache {
-  void clear() {
-    _textListners.values.forEach((element) {
-      element.dispose();
-    });
-    _textListners.clear();
-  }
-
-  final _tlooper = EventLooper();
-  final _textListners = <ListKey, PictureListener>{};
-  PictureListener? getListener(ListKey key) {
-    final text = _textListners[key];
-    return text;
-  }
-
-  PictureListener putIfAbsent(
-      List keys, Future<Size> Function(Canvas canvas) callback) {
-    final key = ListKey(keys);
-
-    final _text = getListener(key);
-    if (_text != null) return _text;
-    final listener = _textListners[key] = PictureListener();
-
-    _tlooper.addEventTask(() async {
-      final recoder = ui.PictureRecorder();
-      final canvas = Canvas(recoder);
-
-      await releaseUI;
-      final size = await callback(canvas);
-
-      final picture = PictureInfo.picture(recoder.endRecording(), size);
-      // await releaseUI;
-      if (!listener.close && _textListners.containsKey(key)) {
-        listener.setPicture(picture.clone());
-      }
-      picture.dispose();
-    });
-    return listener;
-  }
-}
+import 'text_stream.dart';
 
 class TextBuilder extends StatelessWidget {
   const TextBuilder({
@@ -60,6 +23,8 @@ class TextBuilder extends StatelessWidget {
     this.top,
     this.center,
     this.bottom,
+    this.centerLines = 1,
+    this.bottomLines = 2,
     this.height = 112,
   }) : super(key: key);
 
@@ -68,7 +33,8 @@ class TextBuilder extends StatelessWidget {
   final String? center;
   final String? bottom;
   final double height;
-
+  final int centerLines;
+  final int bottomLines;
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -78,6 +44,8 @@ class TextBuilder extends StatelessWidget {
         center: center,
         bottom: bottom,
         height: height,
+        centerLines: centerLines,
+        bottomLines: bottomLines,
         constraints: constraints,
       );
     });
@@ -91,6 +59,8 @@ class _TextBuilder extends StatefulWidget {
     this.top,
     this.center,
     this.bottom,
+    this.centerLines = 1,
+    this.bottomLines = 2,
     required this.constraints,
     this.height = 112,
   }) : super(key: key);
@@ -101,6 +71,8 @@ class _TextBuilder extends StatefulWidget {
   final String? bottom;
   final double height;
   final BoxConstraints constraints;
+  final int centerLines;
+  final int bottomLines;
   @override
   State<_TextBuilder> createState() => _TextBuilderState();
 }
@@ -112,7 +84,7 @@ class _TextBuilderState extends State<_TextBuilder> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     ts = context.read<TextStyleConfig>();
-    _sub();
+    _subText();
   }
 
   @override
@@ -122,185 +94,315 @@ class _TextBuilderState extends State<_TextBuilder> {
         o.topRightScore != widget.topRightScore ||
         o.center != widget.center ||
         o.bottom != widget.bottom ||
-        o.constraints != widget.constraints) _sub();
+        o.constraints != widget.constraints) _subText();
   }
 
-  TextPainter? tp;
-  TextPainter? tc;
-  TextPainter? tb;
-  void _sub() {
-    final tpr = TextPainter(
-        text: TextSpan(
-          text: widget.topRightScore,
-          style: ts.body2.copyWith(color: Colors.yellow.shade700),
-        ),
-        maxLines: 1,
-        textDirection: TextDirection.ltr);
-    final tp = TextPainter(
-        text: TextSpan(text: widget.top, style: ts.title3),
-        maxLines: 1,
-        textDirection: TextDirection.ltr);
-    final tc = TextPainter(
-        text: TextSpan(text: widget.center, style: ts.body2),
-        maxLines: 1,
-        textDirection: TextDirection.ltr);
-    final tb = TextPainter(
-        text: TextSpan(text: widget.bottom, style: ts.body3),
-        maxLines: 2,
-        textDirection: TextDirection.ltr);
+  List<TextInfo>? textInfos;
+
+  void _subText() {
     final width = widget.constraints.maxWidth;
+    final top = widget.top;
+    final topRight = widget.topRightScore;
+    final center = widget.center;
+    final bottom = widget.bottom;
+    final centerLines = widget.centerLines;
+    final bottomLines = widget.bottomLines;
 
     final keys = [
       width,
-      widget.topRightScore,
-      widget.top,
-      widget.center,
-      widget.bottom,
+      topRight,
+      top,
+      center,
+      bottom,
       1,
       1,
-      1,
-      2
+      centerLines,
+      bottomLines
     ];
-    final height = widget.constraints.maxHeight;
-    final _all = pictureCache!.putIfAbsent(keys, (canvas) async {
-      tpr.layout(maxWidth: width);
-      await releaseUI;
 
-      tp.layout(maxWidth: width - tpr.width);
-      await releaseUI;
+    final all = textCache!.putIfAbsent(keys, (find, addRef) async {
+      final tpr = TextPainter(
+          text: TextSpan(
+            text: widget.topRightScore,
+            style: ts.body2.copyWith(color: Colors.yellow.shade700),
+          ),
+          maxLines: 1,
+          textDirection: TextDirection.ltr);
+      final tp = TextPainter(
+          text: TextSpan(text: widget.top, style: ts.title3),
+          maxLines: 1,
+          textDirection: TextDirection.ltr);
+      final tc = TextPainter(
+          text: TextSpan(text: widget.center, style: ts.body2),
+          maxLines: widget.centerLines,
+          textDirection: TextDirection.ltr);
+      final tb = TextPainter(
+          text: TextSpan(text: widget.bottom, style: ts.body3),
+          maxLines: widget.bottomLines,
+          textDirection: TextDirection.ltr);
 
-      tc.layout(maxWidth: width);
-      await releaseUI;
+      final topRightKey = [width, topRight, 1];
+      await addRef(topRightKey, () async {
+        await releaseUI;
+        tpr.layout(maxWidth: width);
+        await releaseUI;
+        return tpr;
+      });
 
-      tb.layout(maxWidth: width);
-      await releaseUI;
+      final _tpr = find(topRightKey);
+      assert(_tpr != null);
+      final _tpWidth = _tpr?.painter.width ?? width;
+      _tpr?.dispose();
 
-      final topHeight = math.max(tpr.height, tp.height);
-      final allHeight = topHeight + tc.height + tb.height;
-      final avg = (height - allHeight) / 4;
-      var _h = avg;
+      final topWidth = width - _tpWidth;
+      final key = [topWidth, top, 1];
+      await addRef(key, () async {
+        await releaseUI;
+        tp.layout(maxWidth: topWidth);
+        await releaseUI;
+        return tp;
+      });
 
-      tpr.paint(canvas, Offset(width - tpr.width, _h));
-      await releaseUI;
+      final centerKey = [width, center, centerLines];
+      await addRef(centerKey, () async {
+        await releaseUI;
+        tc.layout(maxWidth: width);
+        await releaseUI;
+        return tc;
+      });
 
-      tp.paint(canvas, Offset(0.0, _h));
-      _h += avg + topHeight;
-      await releaseUI;
-
-      tc.paint(canvas, Offset(0.0, _h));
-      _h += avg + tc.height;
-      await releaseUI;
-
-      tb.paint(canvas, Offset(0.0, _h));
-      return Size(width, _h);
+      final bottomKey = [width, bottom, bottomLines];
+      await addRef(bottomKey, () async {
+        await releaseUI;
+        tb.layout(maxWidth: width);
+        await releaseUI;
+        return tb;
+      });
     });
 
-    if (all != _all) {
-      all?.removeListener(liListener);
-      _all.addListener(liListener);
-      all = _all;
+    if (all != _textStream) {
+      _textStream?.removeListener(onTextListener);
+      all.addListener(onTextListener);
+      _textStream = all;
     }
   }
 
-  PictureListener? all;
-  PictureInfo? allPictureInfo;
+  TextStream? _textStream;
 
-  void liListener(PictureInfo? pic, bool error) {
+  void onTextListener(List<TextInfo>? infos, bool error) {
     setState(() {
-      allPictureInfo?.dispose();
-      allPictureInfo = pic;
+      textInfos?.forEach((info) => info.dispose());
+      textInfos = infos;
     });
   }
+
+  // TextPainter? tp;
+  // TextPainter? tc;
+  // TextPainter? tb;
+  // void _sub() {
+  //   final tpr = TextPainter(
+  //       text: TextSpan(
+  //         text: widget.topRightScore,
+  //         style: ts.body2.copyWith(color: Colors.yellow.shade700),
+  //       ),
+  //       maxLines: 1,
+  //       textDirection: TextDirection.ltr);
+  //   final tp = TextPainter(
+  //       text: TextSpan(text: widget.top, style: ts.title3),
+  //       maxLines: 1,
+  //       textDirection: TextDirection.ltr);
+  //   final tc = TextPainter(
+  //       text: TextSpan(text: widget.center, style: ts.body2),
+  //       maxLines: widget.centerLines,
+  //       textDirection: TextDirection.ltr);
+  //   final tb = TextPainter(
+  //       text: TextSpan(text: widget.bottom, style: ts.body3),
+  //       maxLines: widget.bottomLines,
+  //       textDirection: TextDirection.ltr);
+  //   final width = widget.constraints.maxWidth;
+
+  //   final keys = [
+  //     width,
+  //     widget.topRightScore,
+  //     widget.top,
+  //     widget.center,
+  //     widget.bottom,
+  //     1,
+  //     1,
+  //     widget.centerLines,
+  //     widget.bottomLines,
+  //   ];
+  //   final height = widget.constraints.maxHeight;
+  //   final _all = pictureCache!.putIfAbsent(keys, (canvas) async {
+  //     tpr.layout(maxWidth: width);
+  //     await releaseUI;
+
+  //     tp.layout(maxWidth: width - tpr.width);
+  //     await releaseUI;
+
+  //     tc.layout(maxWidth: width);
+  //     await releaseUI;
+
+  //     tb.layout(maxWidth: width);
+
+  //     final topHeight = math.max(tpr.height, tp.height);
+  //     final allHeight = topHeight + tc.height + tb.height;
+  //     final avg = (height - allHeight) / 4;
+  //     var _h = avg;
+
+  //     tpr.paint(canvas, Offset(width - tpr.width, _h));
+
+  //     tp.paint(canvas, Offset(0.0, _h));
+  //     _h += avg + topHeight;
+
+  //     tc.paint(canvas, Offset(0.0, _h));
+  //     _h += avg + tc.height;
+
+  //     tb.paint(canvas, Offset(0.0, _h));
+  //     return Size(width, _h);
+  //   });
+
+  //   if (all != _all) {
+  //     all?.removeListener(PictureListener(onListener));
+  //     _all.addListener(PictureListener(onListener));
+  //     all = _all;
+  //   }
+  // }
+
+  // PictureStream? all;
+  // PictureInfo? allPictureInfo;
+
+  // void onListener(PictureInfo? pic, bool error, bool sync) {
+  //   assert(mounted);
+  //   setState(() {
+  //     allPictureInfo?.dispose();
+  //     allPictureInfo = pic;
+  //   });
+  // }
+
+  // bool onDefLoad() =>
+  //     mounted && Scrollable.recommendDeferredLoadingForContext(context);
 
   @override
   void dispose() {
     super.dispose();
-    all?.removeListener(liListener);
-    allPictureInfo?.dispose();
-    allPictureInfo = null;
+    textInfos?.forEach((info) => info.dispose());
+    _textStream?.removeListener(onTextListener);
+
+    // all?.removeListener(PictureListener(onListener));
+    // allPictureInfo?.dispose();
+    // allPictureInfo = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return PictureWidget(info: allPictureInfo);
+    // return PictureWidget(info: allPictureInfo);
 
-    // final ts = context.read<TextStyleConfig>();
+    return RepaintBoundary(
+      child:
+          //  LayoutBuilder(
+          // builder: (context, constraints) {
+          // final width = constraints.maxWidth;
+          // final tpr = TextPainter(
+          //     text: TextSpan(
+          //       text: widget.topRightScore,
+          //       style: ts.body2.copyWith(color: Colors.yellow.shade700),
+          //     ),
+          //     maxLines: 1,
+          //     textDirection: TextDirection.ltr)
+          //   ..layout(maxWidth: width);
+          // final tp = TextPainter(
+          //     text: TextSpan(text: widget.top, style: ts.title3),
+          //     maxLines: 1,
+          //     textDirection: TextDirection.ltr)
+          //   ..layout(maxWidth: width);
+          // final tc = TextPainter(
+          //     text: TextSpan(text: widget.center, style: ts.body2),
+          //     maxLines: 1,
+          //     textDirection: TextDirection.ltr)
+          //   ..layout(maxWidth: width);
+          // final tb = TextPainter(
+          //     text: TextSpan(text: widget.bottom, style: ts.body3),
+          //     maxLines: 2,
+          //     textDirection: TextDirection.ltr)
+          //   ..layout(maxWidth: width);
 
-    // return RepaintBoundary(
-    //   child: LayoutBuilder(
-    //     builder: (context, constraints) {
-    //       final tpr = TextPainter(
-    //           text: TextSpan(
-    //             text: widget.topRightScore,
-    //             style: ts.body2.copyWith(color: Colors.yellow.shade700),
-    //           ),
-    //           maxLines: 1,
-    //           textDirection: TextDirection.ltr);
-    //       final tp = TextPainter(
-    //           text: TextSpan(text: widget.top, style: ts.title3),
-    //           maxLines: 1,
-    //           textDirection: TextDirection.ltr);
-    //       final tc = TextPainter(
-    //           text: TextSpan(text: widget.center, style: ts.body2),
-    //           maxLines: 1,
-    //           textDirection: TextDirection.ltr);
-    //       final tb = TextPainter(
-    //           text: TextSpan(text: widget.bottom, style: ts.body3),
-    //           maxLines: 2,
-    //           textDirection: TextDirection.ltr);
+          // List<TextPainter>? tasks;
+          // Future<List<TextPainter>> _t;
+          // final topRightSync = AsyncText.syncGet(width, tpr);
 
-    //       List<TextPainter>? tasks;
-    //       Future<List<TextPainter>> _t;
-    //       final width = constraints.maxWidth;
-    //       final topRightSync = AsyncText.syncGet(width, tpr);
+          // if (topRightSync != null) {
+          //   final l = <TextPainter>[];
+          //   final topSync = AsyncText.syncGet(width - topRightSync.width, tp);
+          //   if (topSync != null) l.add(topSync);
+          //   l.add(topRightSync);
+          //   final textlist =
+          //       AsyncText.syncGets(width, [tc, tb]).whereType<TextPainter>();
+          //   l.addAll(textlist);
+          //   if (l.length == 4) tasks = l;
+          // }
+          // if (tasks?.length == 4) {
+          //   _t = SynchronousFuture(tasks!);
+          // } else {
+          //   assert(tasks == null);
+          //   final topRight = AsyncText.asyncLayout(width, tpr);
+          //   _t = Future.wait([
+          //     topRight.then(
+          //         (value) => AsyncText.asyncLayout(width - value.width, tp)),
+          //     topRight,
+          //     AsyncText.asyncLayout(width, tc),
+          //     AsyncText.asyncLayout(width, tb),
+          //   ]);
+          // }
+          // return FutureBuilder<List<TextPainter>>(
+          //     future: _t,
+          //     // initialData: tasks,
+          //     builder: (context, snap) {
+          //       // Log.w('.${tasks?.length}.. ${snap.hasData}');
+          //       if (snap.hasData) {
+          //         final data = snap.data!;
+          //         return _items(data);
+          //       }
 
-    //       if (topRightSync != null) {
-    //         final l = <TextPainter>[];
-    //         final topSync = AsyncText.syncGet(width - topRightSync.width, tp);
-    //         if (topSync != null) l.add(topSync);
-    //         l.add(topRightSync);
-    //         final textlist =
-    //             AsyncText.syncGets(width, [tc, tb]).whereType<TextPainter>();
-    //         l.addAll(textlist);
-    //         if (l.length == 4) tasks = l;
-    //       }
-    //       if (tasks?.length == 4) {
-    //         _t = SynchronousFuture(tasks!);
-    //       } else {
-    //         assert(tasks == null);
-    //         final topRight = AsyncText.asyncLayout(width, tpr);
-    //         _t = Future.wait([
-    //           topRight.then(
-    //               (value) => AsyncText.asyncLayout(width - value.width, tp)),
-    //           topRight,
-    //           AsyncText.asyncLayout(width, tc),
-    //           AsyncText.asyncLayout(width, tb),
-    //         ]);
-    //       }
-    //       return FutureBuilder<List<TextPainter>>(
-    //           future: _t,
-    //           // initialData: tasks,
-    //           builder: (context, snap) {
-    //             // Log.w('.${tasks?.length}.. ${snap.hasData}');
-    //             if (snap.hasData) {
-    //               final data = snap.data!;
-    //               return _items(data);
-    //             }
-    //             return ItemWidget(height: widget.height);
-    //           });
-    //     },
-    //   ),
-    // );
+          _items(textInfos?.map((e) => e.painter)
+              //   ItemWidget(
+              // height: widget.height,
+              // topRight: widget.topRightScore == null
+              //     ? const SizedBox()
+              //     : Text('${widget.topRightScore}',
+              //         style: ts.body2.copyWith(color: Colors.yellow.shade700),
+              //         maxLines: 1,
+              //         textDirection: TextDirection.ltr),
+              // top: Text('${widget.top}',
+              //     style: ts.title3, maxLines: 1, textDirection: TextDirection.ltr),
+              // center: Text('${widget.center}',
+              //     style: ts.body2,
+              //     maxLines: widget.centerLines,
+              //     textDirection: TextDirection.ltr),
+              // bottom: Text('${widget.bottom}',
+              //     style: ts.body3,
+              //     maxLines: widget.bottomLines,
+              //     textDirection: TextDirection.ltr),
+              // );
+              // });
+              // },
+              ),
+    );
   }
 
-  // Widget _items(Iterable<TextPainter> data) {
-  //   return ItemWidget(
-  //       height: widget.height,
-  //       top: AsyncText.async(data.elementAt(0)),
-  //       topRight: AsyncText.async(data.elementAt(1)),
-  //       center: AsyncText.async(data.elementAt(2)),
-  //       bottom: AsyncText.async(data.elementAt(3)));
-  // }
+  Widget _items(Iterable<TextPainter>? data) {
+    final length = data?.length;
+    if (data != null && length! >= 4) {
+      return ItemWidget(
+          height: widget.height,
+          topRight: AsyncText.async(data.elementAt(0)),
+          top: AsyncText.async(data.elementAt(1)),
+          center: AsyncText.async(data.elementAt(2)),
+          bottom: AsyncText.async(data.elementAt(3)));
+    } else {
+      return const SizedBox();
+    }
+  }
 }
 
 class ItemWidget extends StatelessWidget {

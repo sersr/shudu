@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:bangs/bangs.dart';
 import 'package:battery/battery.dart';
@@ -99,12 +100,22 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     final _waits = <Future>{};
 
     late Directory appDir;
+    Directory? appDirExt;
+
     List<Directory>? cacheDirs;
 
     if (Platform.isAndroid) {
+      appDirExt = Directory('/storage/emulated/0/shudu');
       _waits
         // ..add(FlutterDisplayMode.setHighRefreshRate())
-        ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs));
+        ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
+        ..add(Permission.manageExternalStorage.status.then((status) {
+          if (status.isDenied) {
+            return Permission.manageExternalStorage.request().then((status) {
+              if (status.isDenied) appDirExt = null;
+            });
+          }
+        }));
     }
 
     _waits
@@ -114,8 +125,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
       ..add(getViewInsets);
 
     await Future.wait(_waits);
-
-    final appPath = appDir.path;
+    final appPath = appDirExt?.path ?? appDir.path;
     final cachePath = cacheDirs?.isNotEmpty == true
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
@@ -135,7 +145,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
   bool get init => _isolate != null;
   Future? closeTask;
-  
+
   Future<void> close() {
     return closeTask ??= Hive.close().then((_) {
       _isolate?.kill(priority: Isolate.immediate);

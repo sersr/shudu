@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+
 // import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:shudu/utils/utils.dart';
 
 import '../../event/event.dart';
 import '../../utils/binding/widget_binding.dart';
@@ -45,7 +47,7 @@ class _ImageResolveState extends State<ImageResolve> {
     else
       child = _futureBuilder(getPath(_img));
 
-    return RepaintBoundary(child: child);
+    return RepaintBoundary(child: Center(child: child));
   }
 
   Future<String?> getPath(String img) {
@@ -109,14 +111,16 @@ class _ImageResolveState extends State<ImageResolve> {
   }
 
   Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
-    if (widget.builder != null) child = widget.builder!(child);
-    if (widget.shadow) child = ImageShadow(child: child);
-    if (sync) return child;
-    // return child;
-    return AnimatedOpacity(
-        opacity: hasImage ? 1 : 0,
-        duration: const Duration(milliseconds: 300),
-        child: child);
+    if (hasImage) {
+      if (widget.builder != null) child = widget.builder!(child);
+      if (widget.shadow) child = ImageShadow(child: child);
+      if (sync) return child;
+    }
+    return child;
+    // return AnimatedOpacity(
+    //     opacity: hasImage ? 1 : 0,
+    //     duration: const Duration(milliseconds: 300),
+    //     child: child);
   }
 }
 
@@ -162,7 +166,7 @@ class ImageState extends State<_Image> {
   }
 
   PictureInfo? pictureInfo;
-  PictureListener? listener;
+  PictureStream? listener;
 
   void _sub() {
     final _ofile = widget.f;
@@ -171,15 +175,22 @@ class ImageState extends State<_Image> {
     final height = widget.height;
     final _listener =
         nop.preCache(_ofile, cacheWidth: width, cacheHeight: height);
+
     if (listener != _listener) {
-      listener?.removeListener(onListener);
+      listener?.removeListener(PictureListener(onListener, load: onDefLoad));
+      // Log.w('removeListener  ${listener.hashCode}');
+
+      _listener.addListener(PictureListener(onListener, load: onDefLoad));
       listener = _listener;
-      _listener.addListener(onListener);
+      // Log.w('addListener  ${listener.hashCode}');
     }
   }
 
   var _error = false;
-  void onListener(PictureInfo? img, bool error) {
+  void onListener(PictureInfo? img, bool error, bool sync) {
+    assert(mounted);
+
+    _notifier.value = !_notifier.value;
     setState(() {
       pictureInfo?.dispose();
       pictureInfo = img;
@@ -187,17 +198,31 @@ class ImageState extends State<_Image> {
     });
   }
 
+  final _notifier = ValueNotifier(false);
+
+  bool onDefLoad() =>
+      mounted && Scrollable.recommendDeferredLoadingForContext(context);
+
   @override
   void dispose() {
-    super.dispose();
-    listener?.removeListener(onListener);
+    listener?.removeListener(PictureListener(onListener, load: onDefLoad));
+    // Log.w('dispose  ${listener.hashCode}');
+    listener = null;
+
     pictureInfo?.dispose();
     pictureInfo = null;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final image = PictureWidget(info: pictureInfo);
+    // final imageRaw = RawImage(image: );
+    // AnimatedBuilder(
+    //     animation: _notifier,
+    //     builder: (context, _) {
+    //       return PictureWidget(info: pictureInfo);
+    //     });
     if (_error) {
       if (widget.errorBuilder != null) {
         return widget.errorBuilder!(context);

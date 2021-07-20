@@ -83,21 +83,21 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   void nextPage() {
     if (_lastActivityIsIdle) {
       if (axis == Axis.horizontal) {
-        if (ContentBounds.hasRight(getBounds())) {
+        if (ContentBoundary.hasRight(getBounds())) {
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
       } else {
-        if (getBounds() & ContentBounds.addRight != 0) {
+        if (getBounds() & ContentBoundary.addRight != 0) {
           var _n = page;
 
           if (maxExtent!.isFinite) {
             _maxExtent = double.infinity;
           }
 
-          if (ContentBounds.hasRight(getBounds())) {
+          if (ContentBoundary.hasRight(getBounds())) {
             _n += 1;
           } else {
             _n = (page + 0.5).roundToDouble();
@@ -112,7 +112,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void prePage() {
-    if (_activity is IdleActivity && ContentBounds.hasLeft(getBounds())) {
+    if (_activity is IdleActivity && ContentBoundary.hasLeft(getBounds())) {
       if (minExtent!.isFinite) {
         _minExtent = double.negativeInfinity;
       }
@@ -350,7 +350,7 @@ class ContentPreNextElement extends RenderObjectElement {
     owner!.buildScope(this, () {
       try {
         childElement.removeWhere((key, value) {
-          final clear = key < leadingGarbage - 1 || key > trailingGarbage + 1;
+          final clear = key < leadingGarbage || key > trailingGarbage;
           if (clear) {
             final el = updateChild(value, null, null);
             assert(el == null);
@@ -498,11 +498,11 @@ class ContentPreNextRenderObject extends RenderBox {
 
     if (canPaint) {
       /// 通知
-      final leftRight = nopController.getBounds();
-      final hasLeft = ContentBounds.hasLeft(leftRight);
-      final hasRight = ContentBounds.hasRight(leftRight);
-
       _element!._build(nopController.page.round(), changeState: true);
+
+      final contentBoundary = nopController.getBounds();
+      final hasLeft = ContentBoundary.hasLeft(contentBoundary);
+      final hasRight = ContentBoundary.hasRight(contentBoundary);
 
       nopController.applyConentDimension(
         minExtent: hasLeft
@@ -524,7 +524,7 @@ class ContentPreNextRenderObject extends RenderBox {
                 .clamp(nopController.minExtent!, nopController.maxExtent!),
             pixels);
       }
-      collectGarbage(firstIndex!, lastIndex!);
+      collectGarbage(firstIndex! - 1, lastIndex! + 1);
     }
   }
 
@@ -545,31 +545,32 @@ class ContentPreNextRenderObject extends RenderBox {
     return childParentData.layoutOffset;
   }
 
-  /// 渲染节点
+  /// 渲染边界
   @override
   bool get isRepaintBoundary => true;
 
   final _clipRectLayer = LayerHandle<ClipRectLayer>();
   @override
   void paint(PaintingContext context, Offset offset) {
-    _clipRectLayer.layer = context.pushClipRect(
-        needsCompositing, offset, Offset.zero & size, defaultPaint,
-        oldLayer: _clipRectLayer.layer);
+    if (canPaint)
+      _clipRectLayer.layer = context.pushClipRect(
+          needsCompositing, offset, Offset.zero & size, defaultPaint,
+          oldLayer: _clipRectLayer.layer);
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
-    if (canPaint)
-      for (var i = firstIndex!; i <= lastIndex!; i++) {
-        assert(childlist.containsKey(i));
-        final child = childlist[i]!;
-        context.paintChild(child, offset + childScrollOffset(child)!);
-      }
+    context.setWillChangeHint();
+    for (var i = firstIndex!; i <= lastIndex!; i++) {
+      assert(childlist.containsKey(i));
+      final child = childlist[i]!;
+      context.paintChild(child, offset + childScrollOffset(child)!);
+    }
   }
 
   @override
   void dispose() {
-    super.dispose();
     _clipRectLayer.layer = null;
+    super.dispose();
   }
 
   int getMinChildIndexForScrollOffset(double scrollOffset, double itemExtent) {

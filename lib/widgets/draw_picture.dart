@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../utils/utils.dart';
@@ -57,15 +56,15 @@ class PictureRenderBox extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    Log.w('....not');
-
     if (_info != null) {
+      context.setWillChangeHint();
+
       final canvas = context.canvas;
-      canvas.save();
-      canvas.translate(offset.dx, offset.dy);
+      // canvas.save();
+      // canvas.translate(offset.dx, offset.dy);
       _info!.drawPicture(canvas);
 
-      canvas.restore();
+      // canvas.restore();
     }
   }
 

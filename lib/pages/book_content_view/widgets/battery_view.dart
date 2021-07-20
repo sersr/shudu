@@ -53,11 +53,11 @@ class BatteryViewObject extends RenderBox {
   bool get isRepaintBoundary => true;
   
   @override
-  void paint(PaintingContext context, Offset offset) {
+  void paint(PaintingContext context, Offset offset) { 
     final canvas = context.canvas;
 
-    canvas.save();
-    canvas.translate(offset.dx, offset.dy);
+    // canvas.save();
+    // canvas.translate(offset.dx, offset.dy);
 
     path
       ..reset()
@@ -99,7 +99,7 @@ class BatteryViewObject extends RenderBox {
     }
     
     canvas.drawRRect(rrect2, Paint()..color = _color);
-    canvas.restore();
+    // canvas.restore();
     // canvas.drawRect(offset & size, Paint()..color = color);
   }
 }

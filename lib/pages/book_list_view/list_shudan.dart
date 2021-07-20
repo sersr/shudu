@@ -141,51 +141,66 @@ class _WrapWidgetState extends State<WrapWidget>
   }
 
   Widget buildListView(List<BookList> list) {
-    return ListViewBuilder(
-        primary: false,
-        itemCount: list.length + 1,
-        cacheExtent: 100,
-        itemBuilder: (context, index) {
-          if (index == list.length) {
+    return Scrollbar(
+      interactive: true,
+      controller: scrollController,
+      child: ListViewBuilder(
+          scrollController: scrollController,
+          itemCount: list.length + 1,
+          cacheExtent: 100,
+          finishLayout: (first, last) {
             final state = shudanProvider.state;
-            var child = loadingIndicator();
 
-            if (state == LoadingStatus.error || state == LoadingStatus.failed) {
-              child = reloadBotton(() => shudanProvider.loadNext(index));
-            } else if (state != LoadingStatus.loading) {
-              shudanProvider.loadNext(index);
+            if (last == list.length) {
+              if (state == LoadingStatus.success) {
+                shudanProvider.loadNext(last);
+              }
+            }
+          },
+          itemBuilder: (context, index) {
+            if (index == list.length) {
+              final state = shudanProvider.state;
+              Widget? child;
+
+              if (state == LoadingStatus.error ||
+                  state == LoadingStatus.failed) {
+                child = reloadBotton(() => shudanProvider.loadNext(index));
+              }
+
+              child ??= loadingIndicator();
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Container(height: 40, child: child),
+              );
             }
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: child,
+            final bookList = list[index];
+            return ListItemBuilder(
+              height: 112,
+              onTap: () {
+                final route = MaterialPageRoute(builder: (_) {
+                  return ShudanDetailPage(
+                      total: bookList.bookCount, index: bookList.listId);
+                });
+                Navigator.of(context).push(route);
+              },
+              child: ShudanItem(
+                desc: bookList.description,
+                name: bookList.title,
+                total: bookList.bookCount,
+                img: bookList.cover,
+                title: bookList.title,
+              ),
             );
-          }
-
-          final bookList = list[index];
-          return ListItemBuilder(
-            height: 112,
-            onTap: () {
-              final route = MaterialPageRoute(builder: (_) {
-                return ShudanDetailPage(
-                    total: bookList.bookCount, index: bookList.listId);
-              });
-              Navigator.of(context).push(route);
-            },
-            child: ShudanItem(
-              desc: bookList.description,
-              name: bookList.title,
-              total: bookList.bookCount,
-              img: bookList.cover,
-              title: bookList.title,
-            ),
-          );
-        });
+          }),
+    );
   }
 
   @override
   void dispose() {
     controller.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -196,12 +211,11 @@ class _WrapWidgetState extends State<WrapWidget>
 class ShudanCategProvider extends ChangeNotifier {
   ShudanCategProvider(this.index, this.key);
   Repository? repository;
-  final c = ['new', 'hot', 'collect'];
+
   List<BookList>? list;
 
   var _listCounts = 0;
-  // List<BookList> operator [](int index) => _lists[index];
-
+  bool get initialized => list != null;
   int index;
   String key;
 
@@ -216,7 +230,8 @@ class ShudanCategProvider extends ChangeNotifier {
 
   bool get onWork => _loop.runner == null;
 
-  void load() => _loop.addOneEventTask(_load);
+  /// 同一个对象在队列中只能有一个，[_load] 是一个函数对象
+  void load() => _loop.addEventTask(_load);
 
   LoadingStatus state = LoadingStatus.success;
 
@@ -280,7 +295,8 @@ class ShudanCategProvider extends ChangeNotifier {
       }
     }
 
-    if (_list == null) await release(const Duration(milliseconds: 400));
+    // if (_list == null)
+    await release(const Duration(milliseconds: 400));
     list ??= const [];
 
     notifyListeners();
@@ -288,6 +304,7 @@ class ShudanCategProvider extends ChangeNotifier {
 }
 
 enum LoadingStatus {
+  initial,
   loading,
   success,
   failed,

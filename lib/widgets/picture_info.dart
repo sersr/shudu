@@ -1,11 +1,17 @@
+import 'dart:async';
 import 'dart:ui' as ui;
+import 'package:meta/meta.dart';
+import '../utils/utils.dart';
+
+// import '../utils/utils.dart';
 
 class PictureInfo {
   PictureInfo.picture(ui.Picture pic, ui.Size size)
-      : _picture = PictureMec._(pic, size);
-
+      : _picture = PictureRef._(pic, size) {
+    _picture.add(this);
+  }
   PictureInfo(this._picture);
-  final PictureMec _picture;
+  final PictureRef _picture;
 
   void drawPicture(ui.Canvas canvas) {
     assert(!_picture._dispose);
@@ -27,13 +33,15 @@ class PictureInfo {
     return _picture == info._picture;
   }
 
+  bool get close => _picture._dispose;
+
   void dispose() {
     _picture.dispose(this);
   }
 }
 
-class PictureMec {
-  PictureMec._(this.picture, this.size);
+class PictureRef {
+  PictureRef._(this.picture, this.size);
   final ui.Picture picture;
   final ui.Size size;
   final Set<PictureInfo> _list = <PictureInfo>{};
@@ -54,19 +62,55 @@ class PictureMec {
   }
 }
 
-typedef PictureListenerCallback = void Function(PictureInfo? image, bool error);
+typedef PictureListenerCallback = void Function(
+    PictureInfo? image, bool error, bool sync);
 
-class PictureListener {
-  PictureListener();
+class PictureStream {
+  PictureStream({this.onRemove});
   PictureInfo? _image;
   bool _error = false;
 
-  void setPicture(PictureInfo? img, [bool error = false]) {
+  final void Function(PictureStream stream)? onRemove;
+
+  /// 理论上监听者数量不会太多
+  bool get defLoad => _list.any((element) {
+        final def = element.load;
+        return def != null && def();
+      });
+
+  bool _done = false;
+
+  bool get done => _done;
+  bool get success => _done && _image != null && !_error;
+
+  void setPicture(PictureInfo? img, [bool error = false, bool sync = false]) {
+    assert(!_done);
+    _done = true;
     final list = List.of(_list);
-    _list.clear();
+    // _list.clear();
     _error = error;
 
-    list.forEach((element) => element(img?.clone(), error));
+    list.forEach((listener) {
+      // final onDefLoad = listener.load;
+      final callback = listener.onDone;
+      // final loading = NopWidgetsFlutterBinding.imgDefLoading;
+
+      // void _inner() {
+      //   loading.scheduler.endOfFrame.then((_) async {
+      //     final contains = _list.contains(listener);
+      //     if (contains && onDefLoad != null && onDefLoad()) {
+      //       await releaseUI;
+      //       loading.addEventTask(_inner);
+      //       return;
+      //     }
+      //     // if (contains)
+      //   });
+      // }
+      callback(img?.clone(), error, sync);
+
+      // loading.addEventTask(_inner);
+    });
+
     if (_dispose) {
       img?.dispose();
       return;
@@ -75,27 +119,66 @@ class PictureListener {
     }
   }
 
-  final _list = <PictureListenerCallback>[];
-  void addListener(PictureListenerCallback callback) {
-    if (_image == null && !_error) {
-      _list.add(callback);
-      return;
-    }
-    callback(_image?.clone(), _error);
+  final _list = <PictureListener>[];
+
+  void addListener(PictureListener callback) {
+    assert(!_dispose);
+    // assert(Log.e('add: $hashCode'));
+    _list.add(callback);
+
+    if (!_done) return;
+
+    callback.onDone(_image?.clone(), _error, true);
   }
 
-  void removeListener(PictureListenerCallback callback) {
+  void removeListener(PictureListener callback) {
     _list.remove(callback);
+    // assert(Log.e('remove: $hashCode'));
+
+    if (!hasListener && !_dispose && onRemove != null) {
+      // assert(Log.w('_will dispose..  $hashCode'));
+      scheduleMicrotask(() {
+        // assert(Log.w('start... $hashCode'));
+        if (!hasListener && !_dispose) {
+          // assert(Log.w('end.... $hashCode'));
+          onRemove!(this);
+          removeCall = true;
+        }
+      });
+    }
   }
 
+  @visibleForTesting
+  bool removeCall = false;
+  
   bool get hasListener => _list.isNotEmpty;
 
-  bool get close => _dispose;
+  bool get close => _image?.close == true;
+  bool get active => _image?.close != false;
 
   bool _dispose = false;
+
   void dispose() {
     if (_dispose) return;
+
     _dispose = true;
     _image?.dispose();
   }
+}
+
+class PictureListener {
+  PictureListener(this.onDone, {this.load});
+  final DeffLoad? load;
+  final PictureListenerCallback onDone;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is PictureListener &&
+            load == other.load &&
+            onDone == other.onDone;
+  }
+
+  @override
+  int get hashCode => ui.hashValues(load, onDone);
 }

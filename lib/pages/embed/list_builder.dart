@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shudu/pages/book_content_view/widgets/page_view.dart';
-import 'package:shudu/pages/book_content_view/widgets/page_view_controller.dart';
-import 'package:shudu/provider/provider.dart';
+
 import '../../utils/utils.dart';
+import '../../widgets/list_key.dart';
 
 class ListItemBuilder extends StatelessWidget {
   const ListItemBuilder({
@@ -51,6 +50,8 @@ class ListViewBuilder extends StatefulWidget {
     this.primary,
     this.cacheExtent,
     this.padding = EdgeInsets.zero,
+    this.scrollController,
+    this.finishLayout,
   }) : super(key: key);
 
   final int itemCount;
@@ -59,7 +60,8 @@ class ListViewBuilder extends StatefulWidget {
   final bool? primary;
   final double? cacheExtent;
   final EdgeInsets padding;
-
+  final ScrollController? scrollController;
+  final FinishLayout? finishLayout;
   @override
   State<ListViewBuilder> createState() => _ListViewBuilderState();
 }
@@ -90,26 +92,54 @@ class _ListViewBuilderState extends State<ListViewBuilder>
 
   @override
   Widget build(BuildContext context) {
+    final delegate = MyDelegate(widget.itemBuilder,
+        childCount: widget.itemCount, finishLayout: widget.finishLayout);
     return ColoredBox(
       color: const Color.fromRGBO(242, 242, 242, 1),
-      // child: NopPageView(
-      //   offsetPosition: offsetPosition,
-      //   builder: (index, {bool changeState = false}) {
-      //     if (changeState) {
-      //       Log.w(currentIndex);
-      //       currentIndex = index;
-      //       return null;
-      //     }
-      //     return widget.itemBuilder(context, index);
-      //   },
-      // ),
-      child: ListView.builder(
+      child: RepaintBoundary(
+        child: ListView.custom(
+          physics: ScrollConfiguration.of(context)
+              .getScrollPhysics(context)
+              .applyTo(const MyScrollPhysics()),
           primary: widget.primary,
-          itemExtent: widget.itemExtent,
-          itemCount: widget.itemCount,
           cacheExtent: widget.cacheExtent,
-          padding: widget.padding,
-          itemBuilder: widget.itemBuilder),
+          controller: widget.scrollController,
+          childrenDelegate: delegate,
+          itemExtent: widget.itemExtent,
+        ),
+      ),
     );
+  }
+}
+
+typedef FinishLayout = void Function(int firstIndex, int lstIndex);
+
+class MyDelegate extends SliverChildBuilderDelegate {
+  MyDelegate(NullableIndexedWidgetBuilder builder,
+      {this.key, this.finishLayout, int? childCount})
+      : super(builder, childCount: childCount);
+
+  final ListKey? key;
+  final FinishLayout? finishLayout;
+  @override
+  void didFinishLayout(int firstIndex, int lastIndex) {
+    finishLayout?.call(firstIndex, lastIndex);
+  }
+}
+
+class MyScrollPhysics extends ScrollPhysics {
+  const MyScrollPhysics({ScrollPhysics? parent}) : super(parent: parent);
+  @override
+  bool recommendDeferredLoading(
+      double velocity, ScrollMetrics metrics, BuildContext context) {
+    // final maxPhysicalPixels =
+    //     WidgetsBinding.instance!.window.physicalSize.longestSide;
+    return velocity.abs() > 10;
+    // return false;
+  }
+
+  @override
+  MyScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return MyScrollPhysics(parent: buildParent(ancestor));
   }
 }

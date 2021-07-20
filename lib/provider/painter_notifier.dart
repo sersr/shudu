@@ -193,6 +193,7 @@ class ContentNotifier extends ChangeNotifier {
   late TextStyle style;
   late TextStyle secstyle;
   final showCname = ValueNotifier(false);
+  final mic = Duration.microsecondsPerMillisecond * 200.0;
 
   void _notify() {
     notifyState(
@@ -757,7 +758,7 @@ extension Layout on ContentNotifier {
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
-      dpaint(canvas,
+      await dpaint(canvas,
           painters: pages[r],
           extraHeight: extraHeight,
           isHorizontal: isHorizontal,
@@ -788,7 +789,7 @@ extension Layout on ContentNotifier {
   }
 
 // 返回 一组数据：整体绘制区域，每一行的坐标，矩形面积，每一行的文本内容，
-  void dpaint(Canvas canvas,
+  Future<void> dpaint(Canvas canvas,
       {required List<TextPainter> painters,
       required double extraHeight,
       required double fontSize,
@@ -802,7 +803,7 @@ extension Layout on ContentNotifier {
       required Size size,
       required double windowTopPadding,
       required bool showrect,
-      required double topExtraHeight}) {
+      required double topExtraHeight}) async {
     final _size = size;
     final _windowTopPadding = isHorizontal ? windowTopPadding : 0.0;
 
@@ -824,6 +825,7 @@ extension Layout on ContentNotifier {
         h += contentPadding;
       }
     }
+    await wait;
 
     if (isHorizontal) h += contentPadding;
 
@@ -833,15 +835,18 @@ extension Layout on ContentNotifier {
     for (var _tep in painters) {
       h += _e;
       _tep.paint(canvas, Offset(0.0, h));
+      await wait;
       h += _end;
     }
     if (showrect) {
       canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h - xh),
           Paint()..color = Colors.black.withAlpha(100));
+      await wait;
     }
     if (isHorizontal) {
       bottomRight.paint(canvas,
           Offset(right, _size.height - bottomRight.height - contentBotttomPad));
+      await wait;
     }
     canvas.restore();
   }
@@ -1077,10 +1082,10 @@ extension ContentGetter on ContentNotifier {
       final hasRight = hasNext();
       final hasLeft = hasPre();
 
-      if (hasRight) _r |= ContentBounds.addRight;
-      if (hasLeft) _r |= ContentBounds.addLeft;
+      if (hasRight) _r |= ContentBoundary.addRight;
+      if (hasLeft) _r |= ContentBoundary.addLeft;
     } else {
-      return ContentBounds.notLeftAndRight;
+      return ContentBoundary.notLeftAndRight;
     }
 
     _delayedLoad();
@@ -1359,10 +1364,9 @@ extension AutoR on ContentNotifier {
     final _e = timeStamp - lastStamp!;
     lastStamp = timeStamp;
 
-    var millisecond =
-        math.max(1, _e.inMicroseconds / Duration.microsecondsPerMillisecond);
+    final alpha = (_e.inMicroseconds / mic);
 
-    controller!.setPixels(_start + autoValue.value / millisecond);
+    controller!.setPixels(_start + autoValue.value * alpha);
   }
 }
 
@@ -1403,7 +1407,7 @@ class ContentMetrics {
   final ui.Picture picture;
 }
 
-class ContentBounds {
+class ContentBoundary {
   static int addLeft = 1;
   static const int addRight = 2;
   static const int notLeftAndRight = 3;

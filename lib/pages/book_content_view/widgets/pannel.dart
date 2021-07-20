@@ -921,12 +921,12 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                     builder: (context, child) {
                                       return Slider(
                                         value:
-                                            bloc.autoValue.value.clamp(1, 12),
+                                            bloc.autoValue.value.clamp(1, 10),
                                         onChanged: (double value) {
                                           bloc.autoValue.value = value;
                                         },
                                         min: 1,
-                                        max: 12,
+                                        max: 10,
                                       );
                                     },
                                   ),
@@ -989,15 +989,15 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     );
   }
 
-  Widget? indexs;
   @override
   Widget build(BuildContext context) {
     Widget child = AnimatedBuilder(
       animation: widget.showSettings,
       builder: (context, child) {
-        switch (widget.showSettings.value) {
-          case SettingView.indexs:
-            return indexs ??= IndexsWidget(
+        return IndexedStack(
+          index: widget.showSettings.value.index,
+          children: [
+            IndexsWidget(
               onTap: (context, id, cid) {
                 final index = context.read<BookIndexNotifier>();
                 // 先完成动画再调用
@@ -1006,12 +1006,28 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                   bloc.newBookOrCid(id, cid, 1, inBook: true);
                 });
               },
-            );
-          case SettingView.setting:
-            return settings();
-          default:
-            return const SizedBox();
-        }
+            ),
+            settings(),
+            const SizedBox(),
+          ],
+        );
+        // switch (widget.showSettings.value) {
+        //   case SettingView.indexs:
+        //     return indexs ??= IndexsWidget(
+        //       onTap: (context, id, cid) {
+        //         final index = context.read<BookIndexNotifier>();
+        //         // 先完成动画再调用
+        //         widget.close(() {
+        //           index.loadIndexs(id, cid);
+        //           bloc.newBookOrCid(id, cid, 1, inBook: true);
+        //         });
+        //       },
+        //     );
+        //   case SettingView.setting:
+        //     return settings();
+        //   default:
+        //     return const SizedBox();
+        // }
       },
     );
     return SliderTheme(

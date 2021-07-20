@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/book_cache_notifier.dart';
@@ -59,6 +60,15 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
     if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
+    // final f = Directory('/storage/emulated/0');
+    getExternalStorageDirectories().then((value) => Log.w(value));
+    getApplicationDocumentsDirectory().then((value) => Log.w(value));
+    // f.exists().then((value) async {
+    //   if (value) {
+    //     final list = await f.list().toList();
+    //     Log.w(list);
+    //   }
+    // });
   }
 
   @override
