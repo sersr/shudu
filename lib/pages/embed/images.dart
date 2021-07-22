@@ -6,10 +6,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:shudu/utils/utils.dart';
 
 import '../../event/event.dart';
 import '../../utils/binding/widget_binding.dart';
+import '../../utils/utils.dart';
 import '../../utils/widget/image_shadow.dart';
 import '../../widgets/draw_picture.dart';
 import '../../widgets/picture_info.dart';
