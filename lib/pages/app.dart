@@ -16,20 +16,20 @@ class ShuduApp extends StatelessWidget {
       return MaterialApp(
         // color: Colors.white,
         title: 'shudu',
-        theme: ThemeData(
+        theme: ThemeData.light().copyWith(
           colorScheme: ColorScheme.light(
-              primary: Colors.grey.shade900,
-              primaryVariant: Colors.grey.shade800,
-              secondary: const Color(0xFFC1C1C1),
-              onPrimary: Colors.grey.shade700,
-              onSurface: Colors.grey.shade100,
-              secondaryVariant: Colors.grey.shade400),
+              // primary: Colors.grey.shade100,
+            // primaryVariant: Colors.grey.shade200,
+            secondary: Colors.grey,
+            // onPrimary: Colors.grey.shade700,
+            // onSurface: Colors.blue,
+            // secondaryVariant: Colors.grey.shade400
+          ),
           // primarySwatch: Colors.grey,
-          visualDensity: VisualDensity.standard,
           platform: list[0] ?? defaultTargetPlatform,
-          brightness: Brightness.light,
-          primaryColorBrightness: Brightness.light,
-          primaryColor: Colors.grey.shade900,
+          // brightness: Brightness.light,
+          // primaryColorBrightness: Brightness.light,
+          // primaryColor: Colors.grey.shade900,
           // fontFamily: 'NotoSansSC',
           pageTransitionsTheme: const PageTransitionsTheme(builders: {
             TargetPlatform.iOS: SlidePageTransition(),

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
 
 import '../provider/provider.dart';
@@ -37,18 +38,45 @@ class TextBuilder extends StatelessWidget {
   final int bottomLines;
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return _TextBuilder(
-        top: top,
-        topRightScore: topRightScore,
-        center: center,
-        bottom: bottom,
-        height: height,
-        centerLines: centerLines,
-        bottomLines: bottomLines,
-        constraints: constraints,
-      );
-    });
+    final ts = context.read<TextStyleConfig>();
+
+    final child = ItemWidget(
+        topRight: topRightScore != null
+            ? Text('$topRightScore',
+                style: ts.body2.copyWith(color: Colors.yellow.shade700),
+                maxLines: 1,
+                textDirection: TextDirection.ltr)
+            : null,
+        top: Text('$top',
+            style: ts.title3, maxLines: 1, textDirection: TextDirection.ltr),
+        center: Text('$center',
+            style: ts.body2,
+            maxLines: centerLines,
+            textDirection: TextDirection.ltr),
+        bottom: Text('$bottom',
+            style: ts.body3,
+            maxLines: bottomLines,
+            textDirection: TextDirection.ltr));
+
+    return Selector<OptionsNotifier, bool>(
+        selector: (_, opt) => opt.options.useTextCache ?? false,
+        builder: (context, useTextCache, child) {
+          if (useTextCache)
+            return LayoutBuilder(builder: (context, constraints) {
+              return _TextBuilder(
+                top: top,
+                topRightScore: topRightScore,
+                center: center,
+                bottom: bottom,
+                height: height,
+                centerLines: centerLines,
+                bottomLines: bottomLines,
+                constraints: constraints,
+              );
+            });
+          return child!;
+        },
+        child: child);
   }
 }
 
@@ -120,7 +148,7 @@ class _TextBuilderState extends State<_TextBuilder> {
       bottomLines
     ];
 
-    final all = textCache!.putIfAbsent(keys, (find, addRef) async {
+    final all = textCache!.putIfAbsent(keys, (find, putIfAbsent) async {
       final tpr = TextPainter(
           text: TextSpan(
             text: widget.topRightScore,
@@ -142,37 +170,31 @@ class _TextBuilderState extends State<_TextBuilder> {
           textDirection: TextDirection.ltr);
 
       final topRightKey = [width, topRight, 1];
-      await addRef(topRightKey, () async {
+      final _tpr = await putIfAbsent(topRightKey, () async {
         await releaseUI;
         tpr.layout(maxWidth: width);
-        await releaseUI;
         return tpr;
       });
 
-      final _tpr = find(topRightKey);
-      assert(_tpr != null);
-      final _tpWidth = _tpr?.painter.width ?? width;
-      _tpr?.dispose();
+      final _tpWidth = _tpr.painter.width;
 
       final topWidth = width - _tpWidth;
-      final key = [topWidth, top, 1];
-      await addRef(key, () async {
+      final topKey = [topWidth, top, 1];
+      await putIfAbsent(topKey, () async {
         await releaseUI;
         tp.layout(maxWidth: topWidth);
-        await releaseUI;
         return tp;
       });
 
       final centerKey = [width, center, centerLines];
-      await addRef(centerKey, () async {
+      await putIfAbsent(centerKey, () async {
         await releaseUI;
         tc.layout(maxWidth: width);
-        await releaseUI;
         return tc;
       });
 
       final bottomKey = [width, bottom, bottomLines];
-      await addRef(bottomKey, () async {
+      await putIfAbsent(bottomKey, () async {
         await releaseUI;
         tb.layout(maxWidth: width);
         await releaseUI;
@@ -297,97 +319,7 @@ class _TextBuilderState extends State<_TextBuilder> {
   @override
   Widget build(BuildContext context) {
     // return PictureWidget(info: allPictureInfo);
-
-    return RepaintBoundary(
-      child:
-          //  LayoutBuilder(
-          // builder: (context, constraints) {
-          // final width = constraints.maxWidth;
-          // final tpr = TextPainter(
-          //     text: TextSpan(
-          //       text: widget.topRightScore,
-          //       style: ts.body2.copyWith(color: Colors.yellow.shade700),
-          //     ),
-          //     maxLines: 1,
-          //     textDirection: TextDirection.ltr)
-          //   ..layout(maxWidth: width);
-          // final tp = TextPainter(
-          //     text: TextSpan(text: widget.top, style: ts.title3),
-          //     maxLines: 1,
-          //     textDirection: TextDirection.ltr)
-          //   ..layout(maxWidth: width);
-          // final tc = TextPainter(
-          //     text: TextSpan(text: widget.center, style: ts.body2),
-          //     maxLines: 1,
-          //     textDirection: TextDirection.ltr)
-          //   ..layout(maxWidth: width);
-          // final tb = TextPainter(
-          //     text: TextSpan(text: widget.bottom, style: ts.body3),
-          //     maxLines: 2,
-          //     textDirection: TextDirection.ltr)
-          //   ..layout(maxWidth: width);
-
-          // List<TextPainter>? tasks;
-          // Future<List<TextPainter>> _t;
-          // final topRightSync = AsyncText.syncGet(width, tpr);
-
-          // if (topRightSync != null) {
-          //   final l = <TextPainter>[];
-          //   final topSync = AsyncText.syncGet(width - topRightSync.width, tp);
-          //   if (topSync != null) l.add(topSync);
-          //   l.add(topRightSync);
-          //   final textlist =
-          //       AsyncText.syncGets(width, [tc, tb]).whereType<TextPainter>();
-          //   l.addAll(textlist);
-          //   if (l.length == 4) tasks = l;
-          // }
-          // if (tasks?.length == 4) {
-          //   _t = SynchronousFuture(tasks!);
-          // } else {
-          //   assert(tasks == null);
-          //   final topRight = AsyncText.asyncLayout(width, tpr);
-          //   _t = Future.wait([
-          //     topRight.then(
-          //         (value) => AsyncText.asyncLayout(width - value.width, tp)),
-          //     topRight,
-          //     AsyncText.asyncLayout(width, tc),
-          //     AsyncText.asyncLayout(width, tb),
-          //   ]);
-          // }
-          // return FutureBuilder<List<TextPainter>>(
-          //     future: _t,
-          //     // initialData: tasks,
-          //     builder: (context, snap) {
-          //       // Log.w('.${tasks?.length}.. ${snap.hasData}');
-          //       if (snap.hasData) {
-          //         final data = snap.data!;
-          //         return _items(data);
-          //       }
-
-          _items(textInfos?.map((e) => e.painter)
-              //   ItemWidget(
-              // height: widget.height,
-              // topRight: widget.topRightScore == null
-              //     ? const SizedBox()
-              //     : Text('${widget.topRightScore}',
-              //         style: ts.body2.copyWith(color: Colors.yellow.shade700),
-              //         maxLines: 1,
-              //         textDirection: TextDirection.ltr),
-              // top: Text('${widget.top}',
-              //     style: ts.title3, maxLines: 1, textDirection: TextDirection.ltr),
-              // center: Text('${widget.center}',
-              //     style: ts.body2,
-              //     maxLines: widget.centerLines,
-              //     textDirection: TextDirection.ltr),
-              // bottom: Text('${widget.bottom}',
-              //     style: ts.body3,
-              //     maxLines: widget.bottomLines,
-              //     textDirection: TextDirection.ltr),
-              // );
-              // });
-              // },
-              ),
-    );
+    return _items(textInfos?.map((e) => e.painter));
   }
 
   Widget _items(Iterable<TextPainter>? data) {

@@ -32,16 +32,18 @@ class ShudanItem extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(img: img),
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: ImageResolve(img: img),
+              ),
             ),
           ),
           LayoutId(
             id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: RepaintBoundary(
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
                   top: title,
                   center: desc,

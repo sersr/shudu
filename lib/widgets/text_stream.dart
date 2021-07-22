@@ -36,51 +36,54 @@ class TextCache {
   final _textDisposesCaches = <ListKey, TextStream>{};
 
   TextStream? getListener(ListKey key) {
-    var listener = _textDisposesCaches.remove(key);
-    if (listener != null) {
-      assert(!_textDisposes.containsKey(key));
-      assert(!_textListeners.containsKey(key));
-      _textListeners[key] = listener;
-    }
+    var listener = _textListeners[key];
+
     if (listener == null) {
       listener ??= _textDisposes.remove(key);
 
       if (listener != null) {
-        assert(!_textListeners.containsKey(key));
+        assert(!_textDisposesCaches.containsKey(key));
         _textListeners[key] = listener;
       }
     }
+    if (listener == null) {
+      listener = _textDisposesCaches.remove(key);
 
-    listener ??= _textListeners[key];
+      if (listener != null) _textListeners[key] = listener;
+    }
 
     assert(!_textDisposes.containsKey(key));
+    assert(!_textDisposesCaches.containsKey(key));
 
     return listener;
   }
 
   TextInfo? getTextRef(ListKey key) {
-    var textRef = _textRefDisposeCaches.remove(key);
-    if (textRef != null) {
-      assert(!_textDisposes.containsKey(key));
-      assert(!_textRef.containsKey(key));
-      _textRef[key] = textRef;
-    }
+    var textRef = _textRef[key];
     if (textRef == null) {
       textRef = _textRefDispose.remove(key);
       if (textRef != null) {
-        assert(!_textRef.containsKey(key));
-
+        assert(!_textDisposesCaches.containsKey(key));
         _textRef[key] = textRef;
       }
     }
-    textRef ??= _textRef[key];
+    if (textRef == null) {
+      textRef = _textRefDisposeCaches.remove(key);
+      if (textRef != null) _textRef[key] = textRef;
+    }
+
+    assert(!_textDisposes.containsKey(key));
+    assert(!_textDisposesCaches.containsKey(key));
+
     if (textRef != null) {
       return TextInfo.text(textRef);
     }
   }
 
-  TextStream putIfAbsent(List keys,
-      Future<void> Function(FindTextInfo find, AddTextRef addRef) callback) {
+  TextStream putIfAbsent(
+      List keys,
+      Future<void> Function(FindTextInfo find, PutIfAbsentText putIfAbsent)
+          callback) {
     final key = ListKey(keys);
 
     final _text = getListener(key);
@@ -92,19 +95,28 @@ class TextCache {
       if (_textListeners.containsKey(key)) {
         final _stream = _textListeners.remove(key);
         assert(_stream == stream);
-
-        final disposeLength = _textDisposes.length;
-
-        /// 缓存超过100，移到二级缓存，由二级缓存释放
-        if (disposeLength >= 50) {
-          if (_textDisposesCaches.length > 240) {
-            clearDispose(_textDisposesCaches);
+        if (stream.success) {
+          if (_textDisposesCaches.length > 350) {
+            final keyFirst = _textDisposesCaches.keys.first;
+            _textDisposesCaches.remove(keyFirst)?.dispose();
           }
-          _textDisposesCaches.addAll(_textDisposes);
-          _textDisposes.clear();
-        }
 
-        _textDisposes[key] = stream;
+          final disposeLength = _textDisposes.length;
+
+          /// 缓存超过100，移到二级缓存，由二级缓存释放
+          if (disposeLength >= 30) {
+            final keyFirst = _textDisposes.keys.first;
+
+            final firstValue = _textDisposes.remove(keyFirst);
+            if (firstValue != null) {
+              _textDisposesCaches[keyFirst] = firstValue;
+            }
+          }
+
+          _textDisposes[key] = stream;
+        } else {
+          stream.dispose();
+        }
       } else {
         stream.dispose();
       }
@@ -120,50 +132,64 @@ class TextCache {
       /// [_textRef] 等缓存中的数据在异步中是不安全的
       TextInfo? innerGetTextRef(List keys) {
         final key = ListKey(keys);
-        var info = _list[key];
+        var info = _list[key]?.clone();
         info ??= getTextRef(key);
         return info;
       }
 
-      Future<void> add(List keys, TextPainterBuilder builder) async {
+      /// 返回的 [TextInfo] 不能调用 dispose
+      Future<TextInfo> putIfAbsent(
+          List keys, TextPainterBuilder builder) async {
         final key = ListKey(keys);
         final _textInfo = innerGetTextRef(keys);
 
         if (_textInfo != null) {
-          _list[key] = _textInfo;
+          return _list[key] = _textInfo;
         } else {
           final _text = _textRef[key] = TextRef(await builder(), (ref) {
             if (_textRef.containsKey(key)) {
               final text = _textRef.remove(key);
               assert(text == ref, '$text, $ref');
 
-              if (_textRefDispose.length >= 50) {
-                if (_textRefDisposeCaches.length > 100) {
-                  _textRefDisposeCaches.clear();
+              if (_textRefDisposeCaches.length > 100) {
+                final keyFirst = _textRefDisposeCaches.keys.first;
+                _textRefDisposeCaches.remove(keyFirst);
+              }
+              if (_textRefDispose.length >= 20) {
+                final keyFirst = _textRefDispose.keys.first;
+
+                final firstValue = _textRefDispose.remove(keyFirst);
+                if (firstValue != null) {
+                  _textRefDisposeCaches[keyFirst] = firstValue;
                 }
-                _textRefDisposeCaches.addAll(_textRefDispose);
-                _textRefDispose.clear();
               }
               _textRefDispose[key] = ref;
             }
           });
-          _list[key] = TextInfo.text(_text);
+          return _list[key] = TextInfo.text(_text);
         }
       }
 
       await releaseUI;
-      await callback(innerGetTextRef, add);
-      await releaseUI;
-      stream.setTextInfo(_list.values.toList());
+      var error = false;
+      try {
+        await callback(innerGetTextRef, putIfAbsent);
+      } catch (e) {
+        error = true;
+      } finally {
+        await releaseUI;
+        stream.setTextInfo(_list.values.toList(), error);
+        await releaseUI;
+      }
     });
 
     return stream;
   }
 }
 
-typedef AddTextInfo = void Function(TextInfo textInfo);
 typedef FindTextInfo = TextInfo? Function(List keys);
-typedef AddTextRef = Future<void> Function(List keys, TextPainterBuilder text);
+typedef PutIfAbsentText = Future<TextInfo> Function(
+    List keys, TextPainterBuilder text);
 
 typedef TextPainterBuilder = Future<TextPainter> Function();
 
@@ -177,7 +203,10 @@ class TextStream {
 
   bool _done = false;
   bool _error = false;
-  void setTextInfo(List<TextInfo>? textInfos, [bool error = false]) {
+
+  bool get success => _textInfos != null && !_error && _done;
+
+  void setTextInfo(List<TextInfo>? textInfos, bool error) {
     assert(!_done);
 
     _done = true;
@@ -190,7 +219,9 @@ class TextStream {
     if (_dispose) {
       textInfos?.forEach((info) => info.dispose());
     } else {
+      assert(!_schedule);
       _textInfos = textInfos;
+      if (list.isEmpty) onRemove(this);
     }
   }
 
@@ -209,14 +240,18 @@ class TextStream {
   void removeListener(ListenerFunction listener) {
     _lists.remove(listener);
 
-    if (_lists.isEmpty && !_dispose) {
+    if (_lists.isEmpty && !_dispose && _done) {
+      if (_schedule) return;
       // 启动微任务
       scheduleMicrotask(() {
-        if (_lists.isEmpty) onRemove(this);
+        _schedule = false;
+        if (_lists.isEmpty && !_dispose) onRemove(this);
       });
+      _schedule = true;
     }
   }
 
+  bool _schedule = false;
   bool _dispose = false;
   void dispose() {
     if (_dispose) return;

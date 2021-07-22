@@ -39,7 +39,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('分类'),
+          title: Text('分类', style: ts.bigTitle1),
           centerTitle: true,
           backgroundColor: Colors.white,
           elevation: 1.0,
@@ -259,6 +259,7 @@ class _CategListViewState extends State<CategListView>
             }
 
             return ListViewBuilder(
+              cacheExtent: 100,
               itemCount: _data.length + 1,
               finishLayout: (first, last) {
                 final length = _data.length;

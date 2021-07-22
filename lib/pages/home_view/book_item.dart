@@ -37,28 +37,31 @@ class BookItem extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Container(
-              // constraints: const BoxConstraints.tightFor(width: 68, height: 98),
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(
-                img: img,
-                builder: (child) {
-                  return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
-                },
+            child: RepaintBoundary(
+              child: Container(
+                // constraints: const BoxConstraints.tightFor(width: 68, height: 98),
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: ImageResolve(
+                  img: img,
+                  builder: (child) {
+                    return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
+                  },
+                ),
               ),
             ),
           ),
           LayoutId(
             id: ImageLayout.text,
-            child: Padding(
+            child: RepaintBoundary(
+              child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
-                child: RepaintBoundary(
-                  child: TextBuilder(
+                child: TextBuilder(
                       height: 98,
                       top: bookName,
                       center: '最新：$bookUdateItem',
                       bottom: bookUpdateTime),
-                )),
+              ),
+            ),
           ),
           // ),
         ],

@@ -14,6 +14,7 @@ class Resampler {
     Offset position,
     Offset delta,
     Duration timeStamp,
+    int buttons,
   ) {
     return PointerHoverEvent(
       timeStamp: timeStamp,
@@ -45,6 +46,7 @@ class Resampler {
     Offset delta,
     int pointerIdentifier,
     Duration timeStamp,
+    int buttons,
   ) {
     return PointerMoveEvent(
       timeStamp: timeStamp,
@@ -53,7 +55,7 @@ class Resampler {
       device: event.device,
       position: position,
       delta: delta,
-      buttons: event.buttons,
+      buttons: buttons,
       obscured: event.obscured,
       pressure: event.pressure,
       pressureMin: event.pressureMin,
@@ -79,10 +81,12 @@ class Resampler {
     int pointerIdentifier,
     Duration timeStamp,
     bool isDown,
+    int buttons,
   ) {
     return isDown
-        ? _toMoveEvent(event, position, delta, pointerIdentifier, timeStamp)
-        : _toHoverEvent(event, position, delta, timeStamp);
+        ? _toMoveEvent(
+            event, position, delta, pointerIdentifier, timeStamp, buttons)
+        : _toHoverEvent(event, position, delta, timeStamp, buttons);
   }
 
   PointerEvent? firstEvent;
@@ -112,6 +116,7 @@ class Resampler {
   bool _isTracked = false;
   bool _isDown = false;
   int _pointerIdentifier = 0;
+  int _hasButtons = 0;
 
   void resample(Duration vsyncTime, Duration nextTimeStamp,
       HandleEventCallback callback) {
@@ -155,9 +160,11 @@ class Resampler {
 
       final wasTracked = _isTracked;
       final wasDown = _isDown;
+      final hadButtons = _hasButtons;
 
       _isTracked = event is! PointerRemovedEvent;
       _isDown = event.down;
+      _hasButtons = event.buttons;
 
       final pointerIdentifier = event.pointer;
       _pointerIdentifier = pointerIdentifier;
@@ -169,8 +176,8 @@ class Resampler {
       if (event is! PointerMoveEvent && event is! PointerHoverEvent) {
         if (position != _position) {
           final delta = position - _position;
-          callback(_toMoveOrHoverEvent(
-              event, position, delta, _pointerIdentifier, sampleTime, wasDown));
+          callback(_toMoveOrHoverEvent(event, position, delta,
+              _pointerIdentifier, sampleTime, wasDown, hadButtons));
           _position = position;
         }
         callback(event.copyWith(
@@ -186,8 +193,8 @@ class Resampler {
     if (position != _position && _isTracked) {
       final delta = position - _position;
 
-      callback(_toMoveOrHoverEvent(
-          _last, position, delta, _pointerIdentifier, sampleTime, _isDown));
+      callback(_toMoveOrHoverEvent(_first, position, delta, _pointerIdentifier,
+          sampleTime, _isDown, _hasButtons));
       _position = position;
     }
   }

@@ -28,7 +28,6 @@ class _BookHistoryState extends State<BookHistory> {
         appBar: AppBar(
           centerTitle: true,
           title: Text('浏览历史'),
-          backgroundColor: Colors.white,
           elevation: 1.0,
         ),
         body: AnimatedBuilder(
@@ -41,6 +40,7 @@ class _BookHistoryState extends State<BookHistory> {
                 return reloadBotton(notifier.load);
               }
               return ListViewBuilder(
+                cacheExtent: 100,
                 itemCount: data.length,
                 padding: const EdgeInsets.only(bottom: 12.0),
                 itemBuilder: (context, index) {

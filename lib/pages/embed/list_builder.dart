@@ -41,7 +41,7 @@ class ListItemBuilder extends StatelessWidget {
   }
 }
 
-class ListViewBuilder extends StatefulWidget {
+class ListViewBuilder extends StatelessWidget {
   const ListViewBuilder({
     Key? key,
     required this.itemCount,
@@ -62,50 +62,24 @@ class ListViewBuilder extends StatefulWidget {
   final EdgeInsets padding;
   final ScrollController? scrollController;
   final FinishLayout? finishLayout;
-  @override
-  State<ListViewBuilder> createState() => _ListViewBuilderState();
-}
-
-class _ListViewBuilderState extends State<ListViewBuilder>
-    with TickerProviderStateMixin {
-  // late NopPageViewController offsetPosition;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   offsetPosition = NopPageViewController(
-  //     vsync: this,
-  //     scrollingNotify: (_) {},
-  //     getBounds: isBoundary,
-  //   );
-  // }
-
-  // int isBoundary() {
-  //   var _r = 0;
-  //   if (currentIndex > 0) _r |= ContentBounds.addLeft;
-  //   if (currentIndex < widget.itemCount - 1) _r |= ContentBounds.addRight;
-
-  //   return _r;
-  // }
-
-  // int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final delegate = MyDelegate(widget.itemBuilder,
-        childCount: widget.itemCount, finishLayout: widget.finishLayout);
+    ScrollConfiguration;
+    final delegate = MyDelegate(itemBuilder,
+        childCount: itemCount, finishLayout: finishLayout);
     return ColoredBox(
       color: const Color.fromRGBO(242, 242, 242, 1),
       child: RepaintBoundary(
         child: ListView.custom(
-          physics: ScrollConfiguration.of(context)
-              .getScrollPhysics(context)
-              .applyTo(const MyScrollPhysics()),
-          primary: widget.primary,
-          cacheExtent: widget.cacheExtent,
-          controller: widget.scrollController,
+          physics:
+              const MyScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          primary: primary,
+          padding: padding,
+          cacheExtent: cacheExtent,
+          controller: scrollController,
           childrenDelegate: delegate,
-          itemExtent: widget.itemExtent,
+          itemExtent: itemExtent,
         ),
       ),
     );
@@ -132,10 +106,7 @@ class MyScrollPhysics extends ScrollPhysics {
   @override
   bool recommendDeferredLoading(
       double velocity, ScrollMetrics metrics, BuildContext context) {
-    // final maxPhysicalPixels =
-    //     WidgetsBinding.instance!.window.physicalSize.longestSide;
-    return velocity.abs() > 10;
-    // return false;
+    return velocity.abs() > 200;
   }
 
   @override

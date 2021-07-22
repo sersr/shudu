@@ -15,17 +15,25 @@ class ConfigOptions {
       this.platform,
       this.resample,
       this.resampleOffset,
+      this.useImageCache,
+      this.useTextCache,
       this.showPerformanceOverlay});
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
   bool? resample;
   int? resampleOffset;
   bool? showPerformanceOverlay;
+
+  bool? useImageCache;
+  bool? useTextCache;
+
   ConfigOptions coveredWith(ConfigOptions o) {
     return o
       ..pageBuilder ??= pageBuilder
       ..platform ??= platform
       ..resample ??= resample
+      ..useImageCache ??= useImageCache
+      ..useTextCache ??= useTextCache
       ..showPerformanceOverlay ??= showPerformanceOverlay
       ..resampleOffset ??= resampleOffset;
   }
@@ -38,6 +46,8 @@ class ConfigOptions {
             other.pageBuilder == pageBuilder &&
             other.resample == resample &&
             other.resampleOffset == resampleOffset &&
+            other.useImageCache == useImageCache &&
+            other.useTextCache == useTextCache &&
             other.showPerformanceOverlay == showPerformanceOverlay;
   }
 
@@ -90,11 +100,12 @@ class OptionsNotifier extends ChangeNotifier {
   final routeObserver = RouteObserver<PageRoute>();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
+  final _event = EventLooper();
 
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    saveOptions();
+    _event.addOneEventTask(() => saveOptions());
     notifyListeners();
   }
 
@@ -105,6 +116,8 @@ class OptionsNotifier extends ChangeNotifier {
   static const _pageBuilder = 'pageBuilder';
   static const _resample = 'resample';
   static const _resampleOffset = 'resampleOffset';
+  static const _useImageCache = 'useImageCache';
+  static const _useTextCache = 'useTextCache';
 
   Box? box;
   // 简洁
@@ -139,10 +152,16 @@ class OptionsNotifier extends ChangeNotifier {
       await _box.put(_version, _versionId);
     }
 
-    final platform = _box.get(_platform, defaultValue: defaultTargetPlatform);
-    final pageBuilder = _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
-    bool resample = _box.get(_resample, defaultValue: true);
-    final resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
+    final TargetPlatform platform =
+        _box.get(_platform, defaultValue: defaultTargetPlatform);
+
+    final PageBuilder pageBuilder =
+        _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
+
+    final bool resample = _box.get(_resample, defaultValue: true);
+    final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
+    final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
+    final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
 
     GestureBinding.instance!
       ..resamplingEnabled = resample
@@ -154,6 +173,8 @@ class OptionsNotifier extends ChangeNotifier {
         platform: platform,
         pageBuilder: pageBuilder,
         resample: resample,
+        useImageCache: useImageCache,
+        useTextCache: useTextCache,
         resampleOffset: resampleOffset);
   }
 
@@ -186,25 +207,38 @@ class OptionsNotifier extends ChangeNotifier {
 
   Future<void> saveOptions() async {
     assert(box != null);
-    if (options.platform != null && _box.get(_platform) != options.platform!)
-      await _box.put(_platform, options.platform!);
+    final _f = <Future>[];
 
-    if (options.pageBuilder != null &&
-        _box.get(_pageBuilder) != options.pageBuilder!) {
-      await _box.put(_pageBuilder, options.pageBuilder!);
-    }
-    if (options.resample != null && _box.get(_resample) != options.resample!) {
-      GestureBinding.instance!.resamplingEnabled = options.resample!;
-      await _box.put(_resample, options.resample!);
+    final platform = options.platform;
+    if (platform != null && _box.get(_platform) != platform)
+      _f.add(_box.put(_platform, platform));
+
+    final pageBuilder = options.pageBuilder;
+    if (pageBuilder != null && _box.get(_pageBuilder) != pageBuilder)
+      _f.add(_box.put(_pageBuilder, pageBuilder));
+
+    final useImageCache = options.useImageCache;
+    if (useImageCache != null && _box.get(_useImageCache) != useImageCache)
+      _f.add(_box.put(_useImageCache, useImageCache));
+
+    final useTextCache = options.useTextCache;
+    if (useTextCache != null && _box.get(_useTextCache) != useTextCache)
+      _f.add(_box.put(_useTextCache, useTextCache));
+
+    final resample = options.resample;
+    if (resample != null && _box.get(_resample) != resample) {
+      GestureBinding.instance!.resamplingEnabled = resample;
+      _f.add(_box.put(_resample, resample));
     }
 
-    if (options.resampleOffset != null &&
-        _box.get(_resampleOffset) != options.resampleOffset!) {
+    final resampleOffset = options.resampleOffset;
+    if (resampleOffset != null && _box.get(_resampleOffset) != resampleOffset) {
       GestureBinding.instance!.samplingOffset =
-          Duration(milliseconds: options.resampleOffset!);
-      await _box.put(_resampleOffset, options.resampleOffset!);
+          Duration(milliseconds: resampleOffset);
+      _f.add(_box.put(_resampleOffset, resampleOffset));
     }
 
+    await Future.wait(_f);
     assert(Log.i('$options'));
   }
 }

@@ -137,7 +137,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final child = Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: Text('shudu'),
         elevation: 1 / ui.window.devicePixelRatio,
         centerTitle: true,
@@ -298,34 +297,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    btn1(
-                        onTap: () {
-                          SystemChrome.setEnabledSystemUIMode(
-                              SystemUiMode.immersive);
-                        },
-                        child: Text('immersive')),
-                    btn1(
-                        onTap: () {
-                          SystemChrome.setEnabledSystemUIMode(
-                              SystemUiMode.edgeToEdge);
-                        },
-                        child: Text('edgeToEdge')),
-                    btn1(
-                        onTap: () {
-                          SystemChrome.setEnabledSystemUIMode(
-                              SystemUiMode.immersiveSticky);
-                        },
-                        child: Text('immersiveSticky')),
-                    btn1(
-                        onTap: () {
-                          SystemChrome.setEnabledSystemUIMode(
-                              SystemUiMode.leanBack);
-                        },
-                        child: Text('leanBack')),
-                  ],
-                ),
+
                 // Divider(height: 1),
                 // Center(
                 //   child: Padding(
@@ -491,7 +463,47 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     },
                   ),
                 ),
-                SizedBox(height: 100)
+                Divider(height: 1),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text('设置选项'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Center(child: Text('useTextCache:')),
+                      Selector<OptionsNotifier, bool>(
+                          selector: (_, opt) =>
+                              opt.options.useTextCache ?? false,
+                          builder: (context, useTextCache, _) {
+                            return Switch(
+                              value: useTextCache,
+                              onChanged: (v) {
+                                opts.options = ConfigOptions(useTextCache: v);
+                              },
+                            );
+                          }),
+                      Center(child: Text('useImageCache:')),
+                      Selector<OptionsNotifier, bool>(
+                          selector: (_, opt) =>
+                              opt.options.useImageCache ?? false,
+                          builder: (context, useImageCache, _) {
+                            return Switch(
+                              value: useImageCache,
+                              onChanged: (v) {
+                                opts.options = ConfigOptions(useImageCache: v);
+                              },
+                            );
+                          })
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -585,6 +597,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
             return Scrollbar(
               child: ListViewBuilder(
+                cacheExtent: 100,
                 itemCount: children.length,
                 itemBuilder: (_, index) {
                   final item = children[index];
@@ -631,11 +644,11 @@ class MySearchPage extends SearchDelegate<void> {
   ThemeData appBarTheme(BuildContext context) {
     final theme = Theme.of(context);
     return theme.copyWith(
-        // primaryColor: Colors.white,
+      // primaryColor: Colors.white,
       // primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
-        primaryColorBrightness: Brightness.light,
-        primaryTextTheme: theme.textTheme,
-        // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
+      primaryColorBrightness: Brightness.light,
+      primaryTextTheme: theme.textTheme,
+      // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
     );
   }
 

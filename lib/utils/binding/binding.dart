@@ -8,17 +8,13 @@ import 'package:flutter/scheduler.dart';
 
 import 'resample.dart';
 
-// import './resampler.dart' as re;
-
 typedef _HandleSampleTimeChangedCallback = void Function();
 
 class _Resampler {
   _Resampler(this._handlePointerEvent, this._handleSampleTimeChanged);
 
   // Resamplers used to filter incoming pointer events.
-  final Map<int, PointerEventResampler> _resamplers =
-      <int, PointerEventResampler>{};
-  final Map<int, Resampler> _myresampler = <int, Resampler>{};
+  final Map<int, Resampler> _resamplers = <int, Resampler>{};
   // Flag to track if a frame callback has been scheduled.
   bool _frameCallbackScheduled = false;
 
@@ -51,15 +47,7 @@ class _Resampler {
       // Save last event time for debugPrint of resampling margin.
       _lastEventTime = event.timeStamp;
 
-      // final resampler = _resamplers.putIfAbsent(
-      //   event.device,
-      //   () => PointerEventResampler(),
-      // );
-      // resampler.addEvent(event);
-      final _my = _myresampler.putIfAbsent(
-        event.device,
-        () => Resampler(),
-      );
+      final _my = _resamplers.putIfAbsent(event.device, () => Resampler());
 
       _my.addEvent(event);
     } else {
@@ -87,26 +75,23 @@ class _Resampler {
     // to the current sample time.
     final nextSampleTime = _lastFrameTime + samplingOffset;
 
-    for (final resampler in _myresampler.values) {
+    for (final resampler in _resamplers.values) {
       resampler.resample(sampleTime, nextSampleTime, _handlePointerEvent);
     }
 
     // Remove inactive resamplers.
-    _myresampler.removeWhere((int key, Resampler resampler) {
+    _resamplers.removeWhere((int key, Resampler resampler) {
       return !resampler.hasPendingEvents && !resampler.isDown;
     });
-    final isNotEmpty = _myresampler.isNotEmpty;
-    // Save last sample time for debugPrint of resampling margin.
+    final isNotEmpty = _resamplers.isNotEmpty;
+
     _lastSampleTime = sampleTime;
 
-    // Schedule a frame callback if another call to `sample` is needed.
     if (!_frameCallbackScheduled && isNotEmpty) {
       _frameCallbackScheduled = true;
       scheduler?.scheduleFrameCallback((_) {
         _frameCallbackScheduled = false;
-        // We use `currentSystemFrameTimeStamp` here as it's critical that
-        // sample time is in the same clock as the event time stamps, and
-        // never adjusted or scaled like `currentFrameTimeStamp`.
+
         _llf = _lastFrameTime;
         _lastFrameTime = _frameTime;
         _frameTime = scheduler.currentSystemFrameTimeStamp;
@@ -124,21 +109,14 @@ class _Resampler {
 
   // Stop all resampling and dispatched any queued events.
   void stop() {
-    for (final resampler in _resamplers.values) {
-      resampler.stop(_handlePointerEvent);
-    }
-    for (final my in _myresampler.values) {
+    for (final my in _resamplers.values) {
       my.stop(_handlePointerEvent);
     }
-    _myresampler.clear();
     _resamplers.clear();
     _frameTime = Duration.zero;
   }
 }
 
-final scheduler = SchedulerBinding.instance;
-
-// version: stable 2.0.6
 mixin NopGestureBinding on GestureBinding {
   final Map<int, HitTestResult> _hitTests = <int, HitTestResult>{};
 
@@ -168,16 +146,6 @@ mixin NopGestureBinding on GestureBinding {
     _resampler.stop();
     _handlePointerEventImmediately(event);
   }
-
-  // SamplingClock get _samplingClock {
-  //   var value = SamplingClock();
-  //   assert(() {
-  //     final debugValue = debugSamplingClock;
-  //     if (debugValue != null) value = debugValue;
-  //     return true;
-  //   }());
-  //   return value;
-  // }
 
   void _handlePointerEventImmediately(PointerEvent event) {
     HitTestResult? hitTestResult;

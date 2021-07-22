@@ -36,20 +36,24 @@ class BookListItem extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(img: img),
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: ImageResolve(img: img),
+              ),
             ),
           ),
           LayoutId(
             id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: TextBuilder(
-                  topRightScore: topRightScore,
-                  top: name,
-                  center: center,
-                  bottom: desc),
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14.0),
+                child: TextBuilder(
+                    topRightScore: topRightScore,
+                    top: name,
+                    center: center,
+                    bottom: desc),
+              ),
             ),
           )
         ],
@@ -127,6 +131,7 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
           }
 
           return ListViewBuilder(
+            cacheExtent: 100,
             finishLayout: (first, last) {
               final state = _topNotifier.state;
 

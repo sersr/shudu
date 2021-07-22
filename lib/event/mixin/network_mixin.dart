@@ -107,18 +107,21 @@ mixin NetworkMixin implements CustomEvent {
   final _e2f = RegExp('/|%2F');
 }
 
-final imageSave = EventLooper(parallels: 4);
+final imageSave = EventLooper();
+final imageNet = EventLooper(parallels: 10);
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
   String get imageLocalPath => join(cachePath, 'shudu', 'images');
 
+  String get fileLock => join(appPath, 'file.lock');
+
   Future<void> _init() async {
     dio = dioCreater();
     Hive.init(join(appPath, 'hive'));
-
     final d = Directory(imageLocalPath);
 
+    await File(fileLock).create(recursive: true);
     imageUpdate = await Hive.openBox<int>('imageUpdate');
     final exists = await d.exists();
 
@@ -496,46 +499,51 @@ extension _NetworkImpl on NetworkMixin {
 
     var success = false;
 
-    await imageSave.addEventTask(() async {
-      await releaseUI;
+    await releaseUI;
+    List<Uint8List>? imgData;
+    // await imageNet.addEventTask(() async {
+    await releaseUI;
 
-      try {
-        final data = await dio.get<ResponseBody>(url,
-            options: Options(responseType: ResponseType.stream));
+    try {
+      final data = await dio.get<ResponseBody>(url,
+          options: Options(responseType: ResponseType.stream));
 
-        final imgData = (await data.data?.stream.toList());
-        success = imgData != null && _isVaild(data.headers);
+      imgData = (await data.data?.stream.toList());
+      success = imgData != null && _isVaild(data.headers);
+    } catch (e) {
+      success = false;
+      _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
+      assert(Log.w('$imgName,$url !!!'));
+    }
+    // });
 
-        if (imgData != null) {
-          final f = File(imgPath);
-          await f.create(recursive: true);
-          final o = await f.open(mode: FileMode.write);
+    final data = imgData;
+    if (data != null && success) {
+      // await imageSave.addEventTask(() async {
+      final f = File(imgPath);
+      await f.create(recursive: true);
+      final o = await f.open(mode: FileMode.write);
 
-          for (final d in imgData) {
-            await releaseUI;
+        for (final d in data) {
+        await releaseUI;
 
-            final length = d.length;
-            await releaseUI;
-
-            // print('data: $length');
-            for (var i = 0; i < length;) {
-              final start = i;
-              i += 50;
-              final end = math.min(i, length);
-              await o.writeFrom(d, start, end);
-              await releaseUI;
-            }
-          }
-
-          await o.close();
-          // await releaseUI;
-        }
-      } catch (e) {
-        success = false;
-        _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
-        assert(Log.w('$imgName,$url !!!'));
+          final length = d.length;
+        await releaseUI;
+        await o.writeFrom(d);
+        // print('data: $length');
+        // for (var i = 0; i < length;) {
+        //   final start = i;
+        //     i += 400;
+        //   final end = math.min(i, length);
+        //   await o.writeFrom(d, start, end);
+        //   await releaseUI;
+        // }
       }
-    });
+
+        await o.close();
+      // await releaseUI;
+      // });
+    }
 
     if (success) {
       _errorLoading.remove(imgName);

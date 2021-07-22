@@ -991,25 +991,26 @@ class _BookSettingsViewState extends State<BookSettingsView> {
 
   @override
   Widget build(BuildContext context) {
+    var children2 = [
+      IndexsWidget(
+        onTap: (context, id, cid) {
+          final index = context.read<BookIndexNotifier>();
+          // 先完成动画再调用
+          widget.close(() {
+            index.loadIndexs(id, cid);
+            bloc.newBookOrCid(id, cid, 1, inBook: true);
+          });
+        },
+      ),
+      settings(),
+      const SizedBox(),
+    ];
     Widget child = AnimatedBuilder(
       animation: widget.showSettings,
       builder: (context, child) {
         return IndexedStack(
           index: widget.showSettings.value.index,
-          children: [
-            IndexsWidget(
-              onTap: (context, id, cid) {
-                final index = context.read<BookIndexNotifier>();
-                // 先完成动画再调用
-                widget.close(() {
-                  index.loadIndexs(id, cid);
-                  bloc.newBookOrCid(id, cid, 1, inBook: true);
-                });
-              },
-            ),
-            settings(),
-            const SizedBox(),
-          ],
+          children: children2,
         );
         // switch (widget.showSettings.value) {
         //   case SettingView.indexs:

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/database.dart';
 import '../../event/event.dart';
+import '../../provider/text_styles.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
@@ -42,11 +43,13 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
+    final ts = context.read<TextStyleConfig>();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text('缓存管理'),
         backgroundColor: Colors.white,
+        titleTextStyle: ts.bigTitle1,
         elevation: 1.0,
       ),
       body: AnimatedBuilder(
@@ -56,6 +59,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
           if (data.isEmpty) return const SizedBox();
 
           return ListViewBuilder(
+            cacheExtent: 100,
             itemExtent: 60,
             padding: const EdgeInsets.only(bottom: 12.0),
             itemBuilder: (_, index) => cacheItemBuilder(index),

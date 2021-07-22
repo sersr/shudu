@@ -69,7 +69,6 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white,
         elevation: 1,
         title: Text('书单详情'),
       ),
@@ -86,6 +85,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
           final children = _getChildren(data, ts);
           return ListViewBuilder(
             padding: const EdgeInsets.only(bottom: 12.0),
+            cacheExtent: 100,
             itemBuilder: (context, index) {
               return children.elementAt(index);
             },
@@ -172,30 +172,33 @@ class _TitleWidgetState extends State<TitleWidget>
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Container(
+            child: RepaintBoundary(
               child: ImageResolve(img: data.cover),
             ),
           ),
           LayoutId(
             id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('${data.title}', maxLines: 2, style: ts.title2),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('共${widget.total}本书', style: ts.body2),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text('${data.updateTime}', style: ts.body3),
-                  ),
-                ],
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child:
+                          Text('${data.title}', maxLines: 2, style: ts.title2),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child: Text('共${widget.total}本书', style: ts.body2),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      child: Text('${data.updateTime}', style: ts.body3),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

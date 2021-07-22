@@ -83,7 +83,7 @@ class PictureStream {
   bool get done => _done;
   bool get success => _done && _image != null && !_error;
 
-  void setPicture(PictureInfo? img, [bool error = false, bool sync = false]) {
+  void setPicture(PictureInfo? img, bool error) {
     assert(!_done);
     _done = true;
     final list = List.of(_list);
@@ -91,31 +91,18 @@ class PictureStream {
     _error = error;
 
     list.forEach((listener) {
-      // final onDefLoad = listener.load;
       final callback = listener.onDone;
-      // final loading = NopWidgetsFlutterBinding.imgDefLoading;
 
-      // void _inner() {
-      //   loading.scheduler.endOfFrame.then((_) async {
-      //     final contains = _list.contains(listener);
-      //     if (contains && onDefLoad != null && onDefLoad()) {
-      //       await releaseUI;
-      //       loading.addEventTask(_inner);
-      //       return;
-      //     }
-      //     // if (contains)
-      //   });
-      // }
-      callback(img?.clone(), error, sync);
-
-      // loading.addEventTask(_inner);
+      callback(img?.clone(), error, false);
     });
 
     if (_dispose) {
       img?.dispose();
       return;
     } else {
+      assert(!schedule);
       _image = img;
+      if (list.isEmpty && onRemove != null) onRemove!(this);
     }
   }
 
@@ -135,22 +122,24 @@ class PictureStream {
     _list.remove(callback);
     // assert(Log.e('remove: $hashCode'));
 
-    if (!hasListener && !_dispose && onRemove != null) {
+    if (!hasListener && !_dispose && onRemove != null && _done) {
+      if (schedule) return;
       // assert(Log.w('_will dispose..  $hashCode'));
       scheduleMicrotask(() {
+        schedule = false;
         // assert(Log.w('start... $hashCode'));
         if (!hasListener && !_dispose) {
           // assert(Log.w('end.... $hashCode'));
           onRemove!(this);
-          removeCall = true;
         }
       });
+      schedule = true;
     }
   }
 
   @visibleForTesting
-  bool removeCall = false;
-  
+  bool schedule = false;
+
   bool get hasListener => _list.isNotEmpty;
 
   bool get close => _image?.close == true;

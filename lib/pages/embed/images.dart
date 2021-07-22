@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-// import 'dart:ui' as ui;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import '../../provider/provider.dart';
 
 import '../../event/event.dart';
 import '../../utils/binding/widget_binding.dart';
@@ -61,7 +62,7 @@ class _ImageResolveState extends State<ImageResolve> {
   }
 
   Widget _futureBuilder(FutureOr<String?> _future, {isFirst = true}) {
-    // final ratio = ui.window.devicePixelRatio;
+    final ratio = ui.window.devicePixelRatio;
     return LayoutBuilder(builder: (context, constraints) {
       return FutureBuilder(
         future: Future.value(_future),
@@ -70,28 +71,35 @@ class _ImageResolveState extends State<ImageResolve> {
             if (snap.data!.isEmpty) {
               return _errorBuilder(isFirst);
             } else {
-              // return Image.file(
-              //   File(snap.data!),
-              //   // cacheHeight: (constraints.maxHeight * ratio).toInt(),
-              //   cacheWidth: (constraints.maxWidth * ratio).toInt(),
-              //   fit: BoxFit.fitHeight,
-              //   frameBuilder: (context, child, count, sync) {
-              //     return _imageBuilder(child, sync, count != null);
-              //   },
-              //   errorBuilder:
-              //       (context, Object exception, StackTrace? stackTrace) {
-              //     return _errorBuilder(isFirst);
-              //   },
-              // );
-              return _Image(
-                f: File(snap.data!),
-                height: constraints.maxHeight,
-                width: constraints.maxWidth,
-                boxFit: widget.boxFit,
-                builder: (child, hasImage) =>
-                    _imageBuilder(child, false, hasImage),
-                errorBuilder: (_) => _errorBuilder(isFirst),
-              );
+              return Selector<OptionsNotifier, bool>(
+                  selector: (_, opt) => opt.options.useImageCache ?? false,
+                  builder: (context, useImageCache, child) {
+                    if (!useImageCache) {
+                      return Image.file(
+                        File(snap.data!),
+                        // cacheHeight: (constraints.maxHeight * ratio).toInt(),
+                        cacheWidth: (constraints.maxWidth * ratio).toInt(),
+                        fit: BoxFit.fitHeight,
+                        frameBuilder: (context, child, count, sync) {
+                          return _imageBuilder(child, sync, count != null);
+                        },
+                        errorBuilder: (context, Object exception,
+                            StackTrace? stackTrace) {
+                          return _errorBuilder(isFirst);
+                        },
+                      );
+                    }
+                    return child!;
+                  },
+                  child: _Image(
+                    f: File(snap.data!),
+                    height: constraints.maxHeight,
+                    width: constraints.maxWidth,
+                    boxFit: widget.boxFit,
+                    builder: (child, hasImage) =>
+                        _imageBuilder(child, false, hasImage),
+                    errorBuilder: (_) => _errorBuilder(isFirst),
+                  ));
             }
           }
           return const SizedBox();

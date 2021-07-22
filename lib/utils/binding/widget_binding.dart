@@ -13,7 +13,6 @@ import '../../widgets/text_stream.dart';
 
 import '../../widgets/list_key.dart';
 import '../../widgets/picture_info.dart';
-import '../../widgets/text_builder.dart';
 import '../tools/event_callback_looper.dart';
 import '../utils.dart';
 import 'binding.dart';
@@ -70,10 +69,40 @@ class NopWidgetsFlutterBinding extends BindingBase
 
   Future<ui.Image> _decode(Uint8List bytes,
       {int? cacheWidth, int? cacheHeight}) async {
-    final codec = await PaintingBinding.instance!.instantiateImageCodec(bytes,
+    await releaseUI;
+    final codec = await imageCodec(bytes,
         cacheHeight: cacheHeight, cacheWidth: cacheWidth);
     final frameInfo = await codec.getNextFrame();
+    await releaseUI;
+
     return frameInfo.image;
+  }
+
+  Future<ui.Codec> imageCodec(
+    Uint8List list, {
+    int? cacheWidth,
+    int? cacheHeight,
+    bool allowUpscaling = false,
+  }) async {
+    final buffer = await ui.ImmutableBuffer.fromUint8List(list);
+    await releaseUI;
+
+    final descriptor = await ui.ImageDescriptor.encoded(buffer);
+    await releaseUI;
+
+    if (!allowUpscaling) {
+      if (cacheWidth != null && cacheWidth > descriptor.width) {
+        cacheWidth = descriptor.width;
+      }
+      if (cacheHeight != null && cacheHeight > descriptor.height) {
+        cacheHeight = descriptor.height;
+      }
+    }
+    buffer.dispose();
+    return descriptor.instantiateCodec(
+      targetWidth: cacheWidth,
+      targetHeight: cacheHeight,
+    );
   }
 
   static final _pictures = <ListKey, PictureStream>{};
@@ -84,22 +113,21 @@ class NopWidgetsFlutterBinding extends BindingBase
 
   static EventLooper get imgDefLoading => _imgLooper;
   PictureStream? getImage(ListKey key) {
-    var listener = _pictureDisposesCaches.remove(key);
-    if (listener != null) {
-      assert(!_pictureDisposes.containsKey(key));
-      assert(!_pictures.containsKey(key));
-      _pictures[key] = listener;
-    }
+    var listener = _pictures[key];
     if (listener == null) {
-      listener ??= _pictureDisposes.remove(key);
+      listener = _pictureDisposes.remove(key);
 
       if (listener != null) {
-        assert(!_pictures.containsKey(key));
+        assert(!_pictureDisposesCaches.containsKey(key));
         _pictures[key] = listener;
       }
     }
-
-    listener ??= _pictures[key];
+    if (listener == null) {
+      listener = _pictureDisposesCaches.remove(key);
+      if (listener != null) _pictures[key] = listener;
+    }
+    assert(!_pictureDisposes.containsKey(key));
+    assert(!_pictureDisposesCaches.containsKey(key));
 
     return listener;
   }
@@ -111,7 +139,7 @@ class NopWidgetsFlutterBinding extends BindingBase
   }
 
   final _paint = Paint();
-  
+
   PictureStream preCacheBuilder(
     List keys, {
     required Future<Size> Function(Canvas canvas) callback,
@@ -133,12 +161,23 @@ class NopWidgetsFlutterBinding extends BindingBase
         if (stream.success) {
           final disposeLength = _pictureDisposes.length;
 
-          if (disposeLength >= 240) {
-            if (_pictureDisposesCaches.length > 600) {
-              clearDispose(_pictureDisposesCaches);
+          if (_pictureDisposesCaches.length > 670) {
+            final keyFirst = _pictureDisposesCaches.keys.first;
+            _pictureDisposesCaches.remove(keyFirst)?.dispose();
+          }
+          if (disposeLength >= 100) {
+            // if (_pictureDisposesCaches.length > 400) {
+            //   for (var i = 0; i <= 10; i++) {
+            //     final keyFirst = _pictureDisposesCaches.keys.first;
+            //     _pictureDisposesCaches.remove(keyFirst)?.dispose();
+            //   }
+            // }
+            final keyFirst = _pictureDisposes.keys.first;
+
+            final firstValue = _pictureDisposes.remove(keyFirst);
+            if (firstValue != null) {
+              _pictureDisposesCaches[keyFirst] = firstValue;
             }
-            _pictureDisposesCaches.addAll(_pictureDisposes);
-            _pictureDisposes.clear();
           }
 
           _pictureDisposes[key] = stream;
@@ -163,7 +202,7 @@ class NopWidgetsFlutterBinding extends BindingBase
       // 如果判断成功，onRemove 应该已经成功执行
       if (!stream.hasListener) {
         // ignore: invalid_use_of_visible_for_testing_member
-        assert(stream.removeCall);
+        assert(stream.schedule);
 
         if (_pictures.containsKey(key)) {
           Log.w('containsKey');
@@ -184,6 +223,7 @@ class NopWidgetsFlutterBinding extends BindingBase
       if (stream.defLoad) {
         //                              key: 标明这是一个新任务
         _imgLooper.addEventTask(_inner, key: Object());
+        // _imgLooper.addEventTask(() => _inner());
         return;
       }
       PictureInfo? picture;
@@ -199,9 +239,10 @@ class NopWidgetsFlutterBinding extends BindingBase
       } catch (e) {
         error = true;
       } finally {
-        stream.setPicture(picture?.clone(), error);
-        picture?.dispose();
         await releaseUI;
+        stream.setPicture(picture?.clone(), error);
+        await _imgLooper.scheduler.endOfFrame;
+        picture?.dispose();
       }
     }
 
@@ -221,7 +262,21 @@ class NopWidgetsFlutterBinding extends BindingBase
 
       try {
         await releaseUI;
+        // final read = await f.open();
+        // // await read.lock();
+        // final end = await read.length();
+        // final buffer = <int>[];
+        // final each = end ~/ 5;
+        // while (true) {
+        //   final b = await read.read(each);
+        //   if (b.isEmpty) break;
+        //   buffer.addAll(b);
+        //   await releaseUI;
+        // }
+        // await read.close();
+        // final bytes = Uint8List.fromList(buffer);
         final bytes = await f.readAsBytes();
+        await releaseUI;
 
         if (fit == BoxFit.fitHeight) {
           image = await _decode(bytes,
@@ -250,6 +305,7 @@ class NopWidgetsFlutterBinding extends BindingBase
 
         return dst;
       } catch (e) {
+        Log.e('e: $e');
         rethrow;
       } finally {
         image?.dispose();

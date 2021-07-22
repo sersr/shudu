@@ -57,7 +57,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         appBar: AppBar(
           centerTitle: true,
           title: Text('书籍详情'),
-          backgroundColor: Colors.white,
           elevation: 1.0,
         ),
         body: AnimatedBuilder(
@@ -83,6 +82,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                   children: [
                     Expanded(
                       child: ListViewBuilder(
+                        cacheExtent: 100,
                         itemBuilder: (context, index) {
                           return children[index];
                         },
@@ -391,11 +391,11 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               ),
               LayoutId(
                 id: ImageLayout.text,
-                child: Container(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: DefaultTextStyle(
-                    style: ts.body2,
-                    child: RepaintBoundary(
+                child: RepaintBoundary(
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: DefaultTextStyle(
+                      style: ts.body2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -469,16 +469,18 @@ class _BookInfoSameItemWidget extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(img: l.img),
+            child: RepaintBoundary(
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: ImageResolve(img: l.img),
+              ),
             ),
           ),
           LayoutId(
             id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: RepaintBoundary(
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
                   height: 108,
                   top: '${l.name}',

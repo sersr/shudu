@@ -10,6 +10,8 @@
 .svn/
 /shudu
 /hive
+filelock.lock
+*.sksl.*
 
 
 # IntelliJ related

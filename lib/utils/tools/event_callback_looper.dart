@@ -84,6 +84,7 @@ class EventLooper {
     while (_taskPool.isNotEmpty) {
       final tasks = List.of(_taskPool.values);
       final last = tasks.last;
+      await releaseUI;
 
       for (final task in tasks) {
         if (!task.onlyLastOne || task == last) {
@@ -103,6 +104,7 @@ class EventLooper {
                 if (parallelTasks.isEmpty) break;
                 final activeTasks = List.of(parallelTasks.values);
                 await Future.any(activeTasks);
+                await releaseUI;
               }
 
               await releaseUI;
