@@ -17,22 +17,27 @@ import 'widgets/pan_slide.dart';
 enum SettingView { indexs, setting, none }
 
 class BookContentPage extends StatefulWidget {
-  const BookContentPage({Key? key}) : super(key: key);
+  const BookContentPage(
+      {Key? key, required this.bookId, required this.cid, required this.page})
+      : super(key: key);
+  final int bookId;
+  final int cid;
+  final int page;
 
   static Future? _wait;
   static Future push(
       BuildContext context, int newBookid, int cid, int page) async {
     if (_wait != null) return;
-
     final bloc = context.read<ContentNotifier>();
-    _wait = bloc.newBookOrCid(newBookid, cid, page);
+    _wait = bloc.setNewBookOrCid(newBookid, cid, page);
+    // _wait = bloc.newBookOrCid(newBookid, cid, page);
 
-    await _wait;
     await EventLooper.instance.scheduler.endOfFrame;
-
+    await _wait;
     _wait = null;
+
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookContentPage();
+      return BookContentPage(bookId: newBookid, cid: cid, page: page);
     }));
   }
 
@@ -48,6 +53,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   void initState() {
     super.initState();
     addListener(showUiOverlay);
+
     WidgetsBinding.instance!.addObserver(this);
   }
 
@@ -65,18 +71,14 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   }
 
   @override
-  void didChangeMetrics() {
-    setState(() {});
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
   void showUiOverlay() {
-    uiOverlay();
+    uiOverlay()
+        .then((_) => bloc.newBookOrCid(widget.bookId, widget.cid, widget.page));
     removeListener(showUiOverlay);
   }
 
@@ -86,88 +88,85 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     //
     bloc.metricsChange(MediaQuery.of(context));
 
-    Widget child = Consumer<ContentNotifier>(
-      builder: (context, bloc, _) {
-        return Material(
-          color: bloc.config.value.bgcolor!,
-          child: MediaQuery(
-            data: MediaQuery.of(context)
-                .removePadding()
-                .copyWith(size: bloc.size),
-            child: OverflowBox(
-              maxHeight: bloc.size.height,
-              maxWidth: bloc.size.width,
-              // minHeight: bloc.size.height,
-              // minWidth: bloc.size.width,
-              alignment: Alignment.topLeft,
+    Widget child = Selector<ContentNotifier, Color?>(
+      selector: (_, ntf) => ntf.config.value.bgcolor,
+      builder: (context, bgcolor, child) {
+        return Material(color: bgcolor, child: child);
+      },
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            Positioned.fill(
+                child: RepaintBoundary(
+                    // child: ContentPageView())),
+                    child: Consumer<ContentNotifier>(
+                        builder: (_, __, child) {
+                          Log.w(bloc.size);
+                          return ContentPageView();
+                        },
+                        child: ContentPageView()))),
+            Positioned.fill(
               child: RepaintBoundary(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                        child: RepaintBoundary(child: ContentPageView())),
-                    Positioned.fill(
-                      child: RepaintBoundary(
-                        child: AnimatedBuilder(
-                          animation: bloc.listenable,
-                          builder: (context, _) {
-                            if (bloc.error.value.error) {
-                              errorTimer?.cancel();
-                              errorTimer =
-                                  Timer(const Duration(seconds: 2), () {
-                                bloc.notifyState(error: NotifyMessage.hide);
-                              });
+                child: AnimatedBuilder(
+                  animation: bloc.listenable,
+                  builder: (context, _) {
+                    if (bloc.error.value.error) {
+                      errorTimer?.cancel();
+                      errorTimer = Timer(const Duration(seconds: 2), () {
+                        bloc.notifyState(error: NotifyMessage.hide);
+                      });
 
-                              return GestureDetector(
-                                onTap: () =>
-                                    bloc.notifyState(error: NotifyMessage.hide),
-                                child: Center(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(6.0),
-                                      color: Colors.grey.shade100,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0, vertical: 6.0),
-                                    child: Text(
-                                      bloc.error.value.msg,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade700,
-                                          fontSize: 13.0),
-                                      overflow: TextOverflow.fade,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else if (bloc.loading.value) {
-                              return IgnorePointer(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: bloc.loading,
-                                    builder: (context, child) {
-                                      if (bloc.loading.value) return child!;
-
-                                      return const SizedBox();
-                                    },
-                                    child: loadingIndicator(),
-                                  ),
-                                ),
-                              );
-                            }
-                            return const SizedBox();
-                          },
+                      return GestureDetector(
+                        onTap: () =>
+                            bloc.notifyState(error: NotifyMessage.hide),
+                        child: Center(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6.0),
+                              color: Colors.grey.shade100,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0, vertical: 6.0),
+                            child: Text(
+                              bloc.error.value.msg,
+                              style: TextStyle(
+                                  color: Colors.grey.shade700, fontSize: 13.0),
+                              overflow: TextOverflow.fade,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Positioned.fill(child: RepaintBoundary(child: overlay)),
-                  ],
+                      );
+                    } else if (bloc.loading.value) {
+                      return IgnorePointer(
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
+                            animation: bloc.loading,
+                            builder: (context, child) {
+                              if (bloc.loading.value) return child!;
+
+                              return const SizedBox();
+                            },
+                            child: loadingIndicator(),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox();
+                  },
                 ),
               ),
             ),
-          ),
-        );
-      },
+            Positioned.fill(child: RepaintBoundary(child: overlay)),
+          ],
+        ),
+      ),
     );
-    return WillPopScope(onWillPop: onWillPop, child: child);
+
+    return WillPopScope(
+        onWillPop: onWillPop,
+        child: MediaQuery(
+            data: MediaQuery.of(context).removePadding(),
+            child: RepaintBoundary(child: child)));
   }
 
   Future<bool> onWillPop() async {
@@ -184,13 +183,13 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await bloc.enter;
 
     bloc.notifyState(notEmptyOrIgnore: true, loading: false);
+    await uiOverlay(hide: false);
     await _f;
 
     await blocCache.load();
 
     await bloc.waitTasks;
     await EventLooper.instance.runner;
-    await uiOverlay(hide: false);
     uiStyle();
 
     // 横屏处理

@@ -101,7 +101,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
   Future<ReceivePort?> initBase() async {
     if (init) return null;
-    Bangs.bangs.setNavigationChangeCallback(_changeCallback);
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     final _waits = <Future>{};
 
@@ -111,6 +110,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     List<Directory>? cacheDirs;
 
     if (Platform.isAndroid) {
+      Bangs.bangs.setNavigationChangeCallback(_changeCallback);
       appDirExt = Directory('/storage/emulated/0/shudu');
       _waits
         ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))

@@ -24,7 +24,6 @@ class _IndexsWidgetState extends State<IndexsWidget> {
   void dispose() {
     controller?.dispose();
     super.dispose();
-    print('dispose indexs.');
     indexBloc.removeRegisterKey(lKey);
   }
 

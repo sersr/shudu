@@ -88,9 +88,8 @@ class ContentNotifier extends ChangeNotifier {
 
   final config = ValueNotifier<ContentViewConfig>(ContentViewConfig());
   // 同步----
-  Future? _metricsF;
-  Future? _newF;
-  Future? get enter => _newF;
+  final _newBookEvent = EventLooper();
+  Future? get enter => _newBookEvent.runner;
   Future? _loadF;
   Future? _configF;
   Future? _autoF;
@@ -189,6 +188,8 @@ class ContentNotifier extends ChangeNotifier {
   final showCname = ValueNotifier(false);
   final mic = Duration.microsecondsPerMillisecond * 200.0;
   final eventLooper = EventLooper();
+  final _metricsLooper = EventLooper();
+
   void _notify() {
     notifyState(
         //                        notEmpty        ||  ignore
@@ -856,7 +857,7 @@ extension Event on ContentNotifier {
     showrect = !showrect;
     await reset(clearCache: true);
 
-    await _newF;
+    await enter;
 
     await _loadFirst();
     _notify();
@@ -864,15 +865,11 @@ extension Event on ContentNotifier {
 
   Future<void> newBookOrCid(int newBookid, int cid, int page,
       {bool inBook = false}) async {
-    await enter;
-    _newF ??= _newBookOrCid(newBookid, cid, page, inBook)
-      ..whenComplete(() {
-        Log.w('complete');
-        return _newF = null;
-      });
+    _newBookEvent
+        .addOneEventTask(() => _newBookOrCid(newBookid, cid, page, inBook));
   }
 
-  Future<bool> _setNewBookOrCid(int newBookid, int cid, int page) async {
+  Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
     if (!inBook) resetController();
 
     if (tData.cid != cid || bookid != newBookid) {
@@ -897,21 +894,21 @@ extension Event on ContentNotifier {
       int newBookid, int cid, int page, bool inBook) async {
     if (cid == -1) return;
 
-    autoRun.stopTicked();
+    autoRun.stopSave();
 
     orientation(config.value.portrait!);
 
-    await _setNewBookOrCid(newBookid, cid, page);
+    await setNewBookOrCid(newBookid, cid, page);
 
     if (tData.contentIsEmpty) {
       notifyState(notEmptyOrIgnore: true);
 
       _getCurrentIds();
 
+      inbook();
       final _t = Timer(
           const Duration(milliseconds: 300), () => notifyState(loading: true));
 
-      inbook();
       await _loadFirst();
 
       _t.cancel();
@@ -919,36 +916,36 @@ extension Event on ContentNotifier {
       resetController();
     }
 
-    // indexBloc.loadIndexs(bookid, tData.cid);
-
     inbook();
 
-    await _metricsF;
+    await _metricsLooper.runner;
 
     _notify();
-
+    scheduleMicrotask(autoRun.stopAutoRun);
     uiStyle(dark: false);
   }
 
   Future<void> metricsChange(MediaQueryData data) async {
-    if (_metricsF != null) await _metricsF;
+    // 有足够的时间等待后续任务
     if (size.isEmpty) size = data.size;
-    _metricsF ??= _metricsChange(data)..whenComplete(() => _metricsF = null);
+    _metricsLooper
+      ..addOneEventTask(() => release(const Duration(milliseconds: 100)))
+      ..addOneEventTask(() => _metricsChange(data));
   }
 
   Future<void> _metricsChange(MediaQueryData data) async {
     // 实时
-    final changed = await _modifiedSize(data);
+    final changed = _modifiedSize(data);
     if (changed) {
-      _notify();
       notifyState(notEmptyOrIgnore: true);
       if (inBook && tData.cid != null && bookid != null) {
-        autoRun.stopTicked();
+        autoRun.stopSave();
 
         await reset(clearCache: true);
 
         await _loadFirst();
         _notify();
+        scheduleMicrotask(autoRun.stopAutoRun);
       }
     }
   }
@@ -956,7 +953,7 @@ extension Event on ContentNotifier {
   Future<void> reload() async {
     notifyState(loading: true, notEmptyOrIgnore: true);
 
-    await _newF;
+    await enter;
 
     await _loadFirst();
 
@@ -976,7 +973,7 @@ extension Event on ContentNotifier {
   Future<void> _willGoPreOrNext({bool isPid = false}) async {
     if (tData.contentIsEmpty) return;
 
-    autoRun.stopTicked();
+    autoRun.stopSave();
     final timer = Timer(const Duration(milliseconds: 100), () {
       notifyState(loading: true);
     });
@@ -998,9 +995,10 @@ extension Event on ContentNotifier {
     }
     timer.cancel();
     notifyState(loading: false);
+    scheduleMicrotask(autoRun.stopAutoRun);
   }
 
-  Future<bool> _modifiedSize(MediaQueryData data) async {
+  bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
 
@@ -1014,32 +1012,6 @@ extension Event on ContentNotifier {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        final _bottomHeight = repository.bottomHeight.toDouble();
-        late Offset nav;
-        if (config.value.portrait == true) {
-          nav = Offset(0, _bottomHeight);
-        } else {
-          nav = Offset(_bottomHeight, 0);
-        }
-
-        final view = await repository.getViewInsets;
-        final _phySize = view.size;
-
-        final _oSize = size;
-        size = _phySize;
-        Log.w('inner: size :$size, $paddingRect');
-        // _rawSize = _size;
-        // Log.w('_hasNav  $_hasNav , $size, $_rawSize, $nav out.');
-
-        // _onTouch();
-
-        if (_phySize == _size + nav || _phySize == _size) {
-          if (_phySize == _oSize) return false;
-        } else {
-          if (_size == _phySize && _size == size) return false;
-        }
-
-        return true;
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
@@ -1062,13 +1034,6 @@ extension Event on ContentNotifier {
     }
     if (size != _size) {
       size = _size;
-
-      // paddingRect = EdgeInsets.only(
-      //   left: safePadding.left + 16,
-      //   top: safePadding.top,
-      //   right: safePadding.right + 16,
-      //   bottom: safePadding.bottom,
-      // );
       return true;
     } else {
       return false;
@@ -1192,7 +1157,7 @@ extension Configs on ContentNotifier {
       }
 
       if (flush) {
-        autoRun.stopTicked();
+        autoRun.stopSave();
 
         await reset(clearCache: true);
 
@@ -1202,8 +1167,9 @@ extension Configs on ContentNotifier {
             currentPage == tData.content.length ||
             currentPage == 1) resetController();
       }
-      await _metricsF?.whenComplete(resetController);
+      await _metricsLooper.runner?.whenComplete(resetController);
       _notify();
+      scheduleMicrotask(autoRun.stopAutoRun);
     });
   }
 

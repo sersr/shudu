@@ -67,149 +67,153 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
           title: Text('书籍详情'),
           elevation: 1.0,
         ),
-        body: AnimatedBuilder(
-          animation: info,
-          builder: (context, child) {
-            final infoData = info.get(widget.id);
-            if (infoData == null) {
-              return loadingIndicator();
-            } else if (infoData.data == null || infoData.data?.id == null) {
-              return reloadBotton(() => info.reload(widget.id));
-            }
+        body: SafeArea(
+          child: AnimatedBuilder(
+            animation: info,
+            builder: (context, child) {
+              final infoData = info.get(widget.id);
+              if (infoData == null) {
+                return loadingIndicator();
+              } else if (infoData.data == null || infoData.data?.id == null) {
+                return reloadBotton(() => info.reload(widget.id));
+              }
 
-            var children = <Widget>[];
-            final infos = infoData.data!;
+              var children = <Widget>[];
+              final infos = infoData.data!;
 
-            children.add(header(infos.author, infos.bookStatus, infos.name,
-                infos.bookVote, infos.cName, infos.desc, infos.img, ts));
+              children.add(header(infos.author, infos.bookStatus, infos.name,
+                  infos.bookVote, infos.cName, infos.desc, infos.img, ts));
 
-            children.addAll(desc(infos, ts));
-            return Stack(
-              children: [
-                Column(
-                  children: [
-                    Expanded(
-                      child: ListViewBuilder(
-                        cacheExtent: 100,
-                        itemBuilder: (context, index) {
-                          return children[index];
-                        },
-                        itemCount: children.length,
+              children.addAll(desc(infos, ts));
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: ListViewBuilder(
+                          cacheExtent: 100,
+                          itemBuilder: (context, index) {
+                            return children[index];
+                          },
+                          itemCount: children.length,
+                        ),
                       ),
-                    ),
-                    Material(
-                      color: Colors.blue.shade300,
-                      child: AnimatedBuilder(
-                        animation: cache,
-                        builder: (context, _) {
-                          final bookid = infos.id!;
+                      Material(
+                        color: Colors.blue.shade300,
+                        child: AnimatedBuilder(
+                          animation: cache,
+                          builder: (context, _) {
+                            final bookid = infos.id!;
 
-                          var show = false;
+                            var show = false;
 
-                          int? cid;
-                          int? currentPage;
+                            int? cid;
+                            int? currentPage;
 
-                          final list = cache.sortChildren;
+                            final list = cache.sortChildren;
 
-                          for (var l in list) {
-                            if (l.bookId == bookid) {
-                              if (l.isShow ?? false) {
-                                show = true;
-                                cid = l.chapterId;
-                                currentPage = l.page;
+                            for (var l in list) {
+                              if (l.bookId == bookid) {
+                                if (l.isShow ?? false) {
+                                  show = true;
+                                  cid = l.chapterId;
+                                  currentPage = l.page;
+                                }
+                                break;
                               }
-                              break;
                             }
-                          }
 
-                          return Container(
-                            padding: EdgeInsets.only(
-                                bottom: bottom > 0.0 &&
-                                        defaultTargetPlatform ==
-                                            TargetPlatform.iOS
-                                    ? 10.0
-                                    : 0.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Expanded(
-                                  child: btn1(
-                                    child: Container(
-                                      height: 56,
-                                      child: Center(
-                                        child: Text('${show ? '阅读' : '试读'}'),
-                                      ),
-                                    ),
-                                    onTap: () async {
-                                      final _list = await cache.getList;
-                                      int? _cid, _page;
-                                      for (final bookCache in _list) {
-                                        if (bookCache.bookId == bookid) {
-                                          _cid = bookCache.chapterId;
-                                          _page = bookCache.page;
-                                          break;
-                                        }
-                                      }
-                                      _cid ??= cid ?? infos.firstChapterId!;
-                                      _page ??= currentPage ?? 1;
-                                      BookContentPage.push(
-                                          context, bookid, _cid, _page);
-                                    },
-                                    background: false,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: btn1(
-                                    background: false,
-                                    onTap: () =>
-                                        cache.updateShow(bookid, !show),
-                                    child: Container(
+                            return Container(
+                              padding: EdgeInsets.only(
+                                  bottom: bottom > 0.0 &&
+                                          defaultTargetPlatform ==
+                                              TargetPlatform.iOS
+                                      ? 10.0
+                                      : 0.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Expanded(
+                                    child: btn1(
+                                      child: Container(
                                         height: 56,
                                         child: Center(
-                                            child: Text(
-                                                '${show ? '移除' : '添加到'}书架'))),
+                                          child: Text('${show ? '阅读' : '试读'}'),
+                                        ),
+                                      ),
+                                      onTap: () async {
+                                        final _list = await cache.getList;
+                                        int? _cid, _page;
+                                        for (final bookCache in _list) {
+                                          if (bookCache.bookId == bookid) {
+                                            _cid = bookCache.chapterId;
+                                            _page = bookCache.page;
+                                            break;
+                                          }
+                                        }
+                                        _cid ??= cid ?? infos.firstChapterId!;
+                                        _page ??= currentPage ?? 1;
+                                        BookContentPage.push(
+                                            context, bookid, _cid, _page);
+                                      },
+                                      background: false,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                // Widget层动画
-                // TODO: 优化动画
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([showIndexs, showSecondary]),
-                    builder: (_, child) {
-                      final show = showIndexs.value;
-                      if (show) showSecondary.value = true;
-                      return AnimatedOpacity(
-                          opacity: show ? 1 : 0,
-                          onEnd: () {
-                            if (!show) showSecondary.value = false;
+                                  Expanded(
+                                    child: btn1(
+                                      background: false,
+                                      onTap: () =>
+                                          cache.updateShow(bookid, !show),
+                                      child: Container(
+                                          height: 56,
+                                          child: Center(
+                                              child: Text(
+                                                  '${show ? '移除' : '添加到'}书架'))),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
                           },
-                          duration: const Duration(milliseconds: 300),
-                          child: showSecondary.value
-                              ? background(
-                                  child: IndexsWidget(
-                                    onTap: (_, id, cid) {
-                                      BookContentPage.push(context, id, cid, 1);
-                                      showIndexs.value = false;
-                                    },
-                                  ),
-                                  // child: Container(),
-                                )
-                              : const SizedBox());
-                    },
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              ],
-            );
-          },
+                  // Widget层动画
+                  // TODO: 优化动画
+                  Positioned.fill(
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([showIndexs, showSecondary]),
+                      builder: (_, child) {
+                        final show = showIndexs.value;
+                        if (show) showSecondary.value = true;
+                        return AnimatedOpacity(
+                            opacity: show ? 1 : 0,
+                            onEnd: () {
+                              if (!show) showSecondary.value = false;
+                            },
+                            duration: const Duration(milliseconds: 300),
+                            child: showSecondary.value
+                                ? background(
+                                    child: IndexsWidget(
+                                      onTap: (_, id, cid) {
+                                        BookContentPage.push(
+                                            context, id, cid, 1);
+                                        showIndexs.value = false;
+                                      },
+                                    ),
+                                    // child: Container(),
+                                  )
+                                : const SizedBox());
+                      },
+                    ),
+                  )
+                ],
+              );
+            },
+          ),
         ));
     return child;
   }

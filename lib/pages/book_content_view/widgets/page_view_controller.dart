@@ -57,6 +57,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     return pixels / viewPortDimension!;
   }
 
+  void needLayout() {
+    notifyListeners();
+  }
+
   double? _viewPortDimension;
   double? get viewPortDimension => _viewPortDimension;
 

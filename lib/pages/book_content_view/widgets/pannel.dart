@@ -590,9 +590,11 @@ class TopPannel extends StatefulWidget {
 }
 
 class _TopPannelState extends State<TopPannel> {
+  late ContentNotifier contentNtf;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    contentNtf = context.read<ContentNotifier>();
   }
 
   @override
@@ -600,75 +602,80 @@ class _TopPannelState extends State<TopPannel> {
     return RepaintBoundary(
       child: Material(
         color: Colors.grey.shade900,
-        child: Consumer<ContentNotifier>(
-          builder: (context, bloc, child) {
+        child: AnimatedBuilder(
+          animation: contentNtf.safePaddingNotifier,
+          builder: (context, child) {
             return Padding(
               padding: EdgeInsets.only(
-                top: bloc.safePadding.top + 6.0,
+                top: contentNtf.safePadding.top + 6.0,
                 bottom: 6.0,
-                left: bloc.safePadding.left,
-                right: 4 + bloc.safePadding.right,
+                left: 4 + contentNtf.safePadding.left,
+                right: 4 + contentNtf.safePadding.right,
               ),
-              child: Row(
-                children: [
-                  _topButton(
-                    onTap: Navigator.of(context).maybePop,
-                    child: Icon(Icons.arrow_back_ios, color: Colors.white),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      child: Row(
-                        children: [
-                          _topButton(
-                            onTap: () {
-                              bloc.showCname.value = false;
-                              bloc.controller?.goIdle();
-                              var cid = bloc.tData.cid!;
-                              var page = bloc.currentPage;
-                              var bookid = bloc.bookid!;
-
-                              bloc
-                                ..dump()
-                                ..out();
-                              uiStyle();
-                              final cache = context.read<BookCacheNotifier>();
-                              BookInfoPage.push(context, bookid)
-                                  .then((_) async {
-                                final list = await cache.getList;
-                                for (final bookCache in list) {
-                                  if (bookCache.bookId == bookid) {
-                                    cid = bookCache.chapterId ?? cid;
-                                    page = bookCache.page ?? page;
-                                    break;
-                                  }
-                                }
-
-                                bloc.newBookOrCid(bookid, cid, page);
-                              });
-                            },
-                            text: '详情页',
-                          ),
-                          _topButton(
-                              text: '性能图层',
+              child: RepaintBoundary(
+                child: Row(
+                  children: [
+                    _topButton(
+                      onTap: Navigator.of(context).maybePop,
+                      child: Icon(Icons.arrow_back_ios, color: Colors.white),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
+                        child: Row(
+                          children: [
+                            _topButton(
                               onTap: () {
-                                final opt = context.read<OptionsNotifier>();
-                                opt.options = ConfigOptions(
-                                  showPerformanceOverlay:
-                                      opt.options.showPerformanceOverlay != null
-                                          ? !opt.options.showPerformanceOverlay!
-                                          : true,
-                                );
-                              }),
-                          _topButton(
-                              text: '重新下载', onTap: () => bloc.updateCurrent()),
-                          _topButton(text: '阴影', onTap: () => bloc.showdow()),
-                        ],
+                                contentNtf.showCname.value = false;
+                                contentNtf.controller?.goIdle();
+                                var cid = contentNtf.tData.cid!;
+                                var page = contentNtf.currentPage;
+                                var bookid = contentNtf.bookid!;
+              
+                                contentNtf
+                                  ..dump()
+                                  ..out();
+                                uiStyle();
+                                final cache = context.read<BookCacheNotifier>();
+                                BookInfoPage.push(context, bookid)
+                                    .then((_) async {
+                                  final list = await cache.getList;
+                                  for (final bookCache in list) {
+                                    if (bookCache.bookId == bookid) {
+                                      cid = bookCache.chapterId ?? cid;
+                                      page = bookCache.page ?? page;
+                                      break;
+                                    }
+                                  }
+              
+                                  contentNtf.newBookOrCid(bookid, cid, page);
+                                });
+                              },
+                              text: '详情页',
+                            ),
+                            _topButton(
+                                text: '性能图层',
+                                onTap: () {
+                                  final opt = context.read<OptionsNotifier>();
+                                  opt.options = ConfigOptions(
+                                    showPerformanceOverlay:
+                                        opt.options.showPerformanceOverlay != null
+                                            ? !opt.options.showPerformanceOverlay!
+                                            : true,
+                                  );
+                                }),
+                            _topButton(
+                                text: '重新下载',
+                                onTap: () => contentNtf.updateCurrent()),
+                            _topButton(
+                                text: '阴影', onTap: () => contentNtf.showdow()),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -696,8 +703,11 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   final ValueNotifier<double> ftBrightness = ValueNotifier(1.0);
   final ValueNotifier<double> fontvalue = ValueNotifier(10.0);
   final ValueNotifier<double> fontHvalue = ValueNotifier(1.0);
-  late ValueNotifier<HSVColor> bgColor;
-  late ValueNotifier<HSVColor> ftColor;
+  late ValueNotifier<HSVColor> bgColor =
+      ValueNotifier(HSVColor.fromColor(Colors.transparent));
+  late ValueNotifier<HSVColor> ftColor =
+      ValueNotifier(HSVColor.fromColor(Colors.transparent));
+
   late ContentNotifier bloc;
   Widget? _setting;
 
@@ -710,14 +720,18 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
+    update();
+  }
+
+  void update() {
     final color = bloc.config.value.bgcolor!;
     final fcolor = bloc.config.value.fontColor!;
     fontvalue.value = bloc.config.value.fontSize!;
     fontHvalue.value = bloc.config.value.lineTweenHeight!;
     final hsv = HSVColor.fromColor(color);
     final hsvf = HSVColor.fromColor(fcolor);
-    bgColor = ValueNotifier(hsv);
-    ftColor = ValueNotifier(hsvf);
+    bgColor.value = hsv;
+    ftColor.value = hsvf;
     bgBrightness.value = hsv.value;
     ftBrightness.value = hsvf.value;
   }
@@ -731,7 +745,237 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   }
 
   Widget settings() {
-    return _setting ??= Column(
+    if (_setting != null) return _setting!;
+    var fontSlider = Row(
+      children: [
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: fontvalue,
+              builder: (context, child) {
+                return Slider(
+                  value: fontvalue.value < 10.0 ? 10.0 : fontvalue.value,
+                  onChanged: (double value) {
+                    fontvalue.value = value;
+                  },
+                  min: 10.0,
+                  max: 40.0,
+                );
+              },
+            ),
+          ),
+        ),
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: fontHvalue,
+              builder: (context, child) {
+                return Slider(
+                  value: fontHvalue.value,
+                  onChanged: (double value) {
+                    fontHvalue.value = value;
+                  },
+                  min: 1,
+                  max: 3.0,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+    var colorSelector = Row(
+      children: [
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: bgBrightness,
+              builder: (context, child) {
+                return Slider(
+                  value: bgBrightness.value,
+                  onChanged: (double value) {
+                    bgColor.value = bgColor.value.withValue(value);
+                    bgBrightness.value = value;
+                  },
+                  min: 0.0,
+                  max: 1.0,
+                );
+              },
+            ),
+          ),
+        ),
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: ftBrightness,
+              builder: (context, child) {
+                return Slider(
+                  value: ftBrightness.value,
+                  onChanged: (double value) {
+                    ftColor.value = ftColor.value.withValue(value);
+                    ftBrightness.value = value;
+                  },
+                  min: 0.0,
+                  max: 1.0,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+    var onChangeChild = Row(
+      children: [
+        Expanded(
+          child: Center(
+            child: SelectColor(
+              onChangeUpdate: onChangev,
+              onChangeDown: onChangev,
+              onChangeEnd: onChangev,
+              value: bgBrightness,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: SelectColor(
+              onChangeUpdate: onChange,
+              onChangeDown: onChange,
+              onChangeEnd: onChange,
+              value: ftBrightness,
+            ),
+          ),
+        ),
+      ],
+    );
+    var fontSize = Row(
+      children: [
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+                animation: fontvalue,
+                builder: (context, child) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Text(
+                      '字体大小: ${fontvalue.value.toInt()}',
+                      softWrap: false,
+                    ),
+                  );
+                }),
+          ),
+        ),
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+                animation: fontHvalue,
+                builder: (context, child) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Text(
+                      '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
+                      softWrap: false,
+                    ),
+                  );
+                }),
+          ),
+        ),
+      ],
+    );
+    var autoValue = Row(
+      children: [
+        Expanded(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: bloc.autoValue,
+              builder: (context, child) {
+                return Slider(
+                  value: bloc.autoValue.value.clamp(1, 10),
+                  onChanged: (double value) {
+                    bloc.autoValue.value = value;
+                  },
+                  min: 1,
+                  max: 10,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+    var bottom = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Container(
+          width: 120,
+          padding: const EdgeInsets.only(bottom: 8.0, top: 5.0),
+          child: btn1(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            radius: 40,
+            onTap: update,
+            child: Center(
+                child: Text(
+              '重置',
+              style: TextStyle(color: Colors.white),
+            )),
+            bgColor: Colors.blueGrey.shade800,
+            splashColor: Colors.blueAccent.shade100,
+          ),
+        ),
+        Container(
+          width: 120,
+          padding: const EdgeInsets.only(bottom: 8.0, top: 5.0),
+          child: btn1(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            radius: 40,
+            onTap: () {
+              bloc.setPrefs(bloc.config.value.copyWith(
+                bgcolor: bgColor.value.toColor(),
+                fontSize: fontvalue.value.floorToDouble(),
+                lineTweenHeight: fontHvalue.value,
+                fontColor: ftColor.value.toColor(),
+              ));
+            },
+            child: Center(
+                child: Text(
+              '保存设置',
+              style: TextStyle(color: Colors.white),
+            )),
+            bgColor: Colors.blueGrey.shade800,
+            splashColor: Colors.blueAccent.shade100,
+          ),
+        ),
+      ],
+    );
+    var padding2 = Padding(
+      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: bgColor,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                color: bgColor.value.toColor(),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: AnimatedBuilder(
+                    animation: ftColor,
+                    builder: (context, child) {
+                      return Text('字体颜色',
+                          style: TextStyle(color: ftColor.value.toColor()));
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    return _setting = Column(
       children: [
         Expanded(
           child: Padding(
@@ -740,63 +984,11 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-                    child: RepaintBoundary(
-                      child: AnimatedBuilder(
-                        animation: bgColor,
-                        builder: (context, child) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(9),
-                              color: bgColor.value.toColor(),
-                            ),
-                            child: Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12.0),
-                                child: AnimatedBuilder(
-                                  animation: ftColor,
-                                  builder: (context, child) {
-                                    return Text('字体颜色',
-                                        style: TextStyle(
-                                            color: ftColor.value.toColor()));
-                                  },
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+                  padding2,
                   RepaintBoundary(
                     child: Container(
                       height: 150,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Center(
-                              child: SelectColor(
-                                onChangeUpdate: onChangev,
-                                onChangeDown: onChangev,
-                                onChangeEnd: onChangev,
-                                value: bgBrightness,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: SelectColor(
-                                onChangeUpdate: onChange,
-                                onChangeDown: onChange,
-                                onChangeEnd: onChange,
-                                value: ftBrightness,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: onChangeChild,
                     ),
                   ),
                   RepaintBoundary(
@@ -804,48 +996,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Column(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: bgBrightness,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        value: bgBrightness.value,
-                                        onChanged: (double value) {
-                                          bgColor.value =
-                                              bgColor.value.withValue(value);
-                                          bgBrightness.value = value;
-                                        },
-                                        min: 0.0,
-                                        max: 1.0,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: ftBrightness,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        value: ftBrightness.value,
-                                        onChanged: (double value) {
-                                          ftColor.value =
-                                              ftColor.value.withValue(value);
-                                          ftBrightness.value = value;
-                                        },
-                                        min: 0.0,
-                                        max: 1.0,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          colorSelector,
                         ],
                       ),
                     ),
@@ -856,82 +1007,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       padding: const EdgeInsets.only(top: 12.0),
                       child: Column(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                      animation: fontvalue,
-                                      builder: (context, child) {
-                                        return Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12.0),
-                                          child: Text(
-                                            '字体大小: ${fontvalue.value.toInt()}',
-                                            softWrap: false,
-                                          ),
-                                        );
-                                      }),
-                                ),
-                              ),
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                      animation: fontHvalue,
-                                      builder: (context, child) {
-                                        return Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12.0),
-                                          child: Text(
-                                            '行间距: ${fontHvalue.value.toStringAsFixed(2)}',
-                                            softWrap: false,
-                                          ),
-                                        );
-                                      }),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: fontvalue,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        value: fontvalue.value < 10.0
-                                            ? 10.0
-                                            : fontvalue.value,
-                                        onChanged: (double value) {
-                                          fontvalue.value = value;
-                                        },
-                                        min: 10.0,
-                                        max: 40.0,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: fontHvalue,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        value: fontHvalue.value,
-                                        onChanged: (double value) {
-                                          fontHvalue.value = value;
-                                        },
-                                        min: 1,
-                                        max: 3.0,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          fontSize,
+                          fontSlider,
                           SizedBox(height: 5),
                           RepaintBoundary(
                             child: AnimatedBuilder(
@@ -942,45 +1019,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                               },
                             ),
                           ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: bloc.autoValue,
-                                    builder: (context, child) {
-                                      return Slider(
-                                        value:
-                                            bloc.autoValue.value.clamp(1, 10),
-                                        onChanged: (double value) {
-                                          bloc.autoValue.value = value;
-                                        },
-                                        min: 1,
-                                        max: 10,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              // Expanded(
-                              //   child: RepaintBoundary(
-                              //     child: AnimatedBuilder(
-                              //       animation: fontHvalue,
-                              //       builder: (context, child) {
-                              //         return Slider(
-                              //           value: fontHvalue.value,
-                              //           onChanged: (double value) {
-                              //             fontHvalue.value = value;
-                              //           },
-                              //           min: 1,
-                              //           max: 3.0,
-                              //         );
-                              //       },
-                              //     ),
-                              //   ),
-                              // ),
-                            ],
-                          ),
+                          autoValue,
                         ],
                       ),
                     ),
@@ -990,31 +1029,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
             ),
           ),
         ),
-        RepaintBoundary(
-          child: Container(
-            width: 120,
-            padding: const EdgeInsets.only(bottom: 8.0, top: 5.0),
-            child: btn1(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              radius: 40,
-              onTap: () {
-                bloc.setPrefs(bloc.config.value.copyWith(
-                  bgcolor: bgColor.value.toColor(),
-                  fontSize: fontvalue.value.floorToDouble(),
-                  lineTweenHeight: fontHvalue.value,
-                  fontColor: ftColor.value.toColor(),
-                ));
-              },
-              child: Center(
-                  child: Text(
-                '保存设置',
-                style: TextStyle(color: Colors.white),
-              )),
-              bgColor: Colors.blueGrey.shade800,
-              splashColor: Colors.blueAccent.shade100,
-            ),
-          ),
-        )
+        RepaintBoundary(child: bottom)
       ],
     );
   }
@@ -1042,24 +1057,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       builder: (context, child) {
         return IndexedStack(
             index: widget.showSettings.value.index, children: children!);
-        // return children2[widget.showSettings.value.index];
-        // switch (widget.showSettings.value) {
-        //   case SettingView.indexs:
-        //     return indexs ??= IndexsWidget(
-        //       onTap: (context, id, cid) {
-        //         final index = context.read<BookIndexNotifier>();
-        //         // 先完成动画再调用
-        //         widget.close(() {
-        //           index.loadIndexs(id, cid);
-        //           bloc.newBookOrCid(id, cid, 1, inBook: true);
-        //         });
-        //       },
-        //     );
-        //   case SettingView.setting:
-        //     return settings();
-        //   default:
-        //     return const SizedBox();
-        // }
       },
     );
     return SliderTheme(

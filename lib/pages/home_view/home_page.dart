@@ -47,9 +47,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     opts = context.read<OptionsNotifier>();
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
-    final data = MediaQuery.of(context);
-    Log.e(data);
-    
+
     final rep = cache.repository;
     _future ??= rep.initState.then((_) {
       return Future.wait([

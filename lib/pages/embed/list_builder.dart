@@ -67,6 +67,9 @@ class ListViewBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = MediaQuery.of(context).padding;
+    final _padding =
+        p.bottom == 0.0 ? padding : padding.copyWith(bottom: p.bottom);
     final delegate = MyDelegate(itemBuilder,
         childCount: itemCount, finishLayout: finishLayout);
     return ColoredBox(
@@ -76,7 +79,7 @@ class ListViewBuilder extends StatelessWidget {
           physics:
               const MyScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           primary: primary,
-          padding: padding,
+          padding: _padding,
           cacheExtent: cacheExtent,
           controller: scrollController,
           childrenDelegate: delegate,

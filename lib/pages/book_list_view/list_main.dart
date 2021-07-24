@@ -91,26 +91,22 @@ class ListMainPage extends StatelessWidget {
               }),
             ),
           ]),
-          const SizedBox(width: 5),
+          const SizedBox(height: 5),
           _builder('清除', () {
             Navigator.of(context).push(MaterialPageRoute(builder: (context) {
               return RepaintBoundary(
                   child: Scaffold(
-                appBar: AppBar(
-                  title: Text('清除'),
-                ),
-                body: Center(
-                  child: btn1(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 10),
-                      onTap: () {
-                        imageCache?.clear();
-                        imageCacheLoop?.clear();
-                        textCache?.clear();
-                      },
-                      child: Text('清除')),
-                ),
-              ));
+                      appBar: AppBar(
+                        title: Text('清除'),
+                      ),
+                      body: _builder(
+                        '清除',
+                        () {
+                          imageCache?.clear();
+                          imageCacheLoop?.clear();
+                          textCache?.clear();
+                        },
+                      )));
             }));
           }),
         ],
