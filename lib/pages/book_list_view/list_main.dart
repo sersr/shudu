@@ -10,6 +10,16 @@ import 'list_category.dart';
 import 'list_shudan.dart';
 
 class ListMainPage extends StatelessWidget {
+  Widget _builder(String text, VoidCallback onTap) {
+    return btn1(
+      radius: 10.0,
+      bgColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Center(child: Text(text)),
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -21,38 +31,21 @@ class ListMainPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: btn1(
-                    radius: 10.0,
-                    bgColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: Center(
-                      child: Text('书单'),
-                    ),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) {
-                        return ListShudanPage();
-                      }));
-                    }),
+                child: _builder('书单', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return ListShudanPage();
+                  }));
+                }),
               ),
               const SizedBox(width: 5),
               Expanded(
-                child: btn1(
-                    radius: 10.0,
-                    bgColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                    child: Center(
-                      child: Text('分类'),
-                    ),
-                    // bgColor: Color.fromRGBO(222, 222, 222, 1),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(child: ListCatetoryPage());
-                      }));
-                    }),
+                child: _builder('分类', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: ListCatetoryPage());
+                  }));
+                }),
               ),
             ],
           ),
@@ -60,106 +53,66 @@ class ListMainPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: btn1(
-                    radius: 10.0,
-                    bgColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                    child: Center(
-                      child: Text('榜单'),
-                    ),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(child: ListBangdanPage());
-                      }));
-                    }),
+                child: _builder('榜单', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: ListBangdanPage());
+                  }));
+                }),
               ),
               const SizedBox(width: 5),
               Expanded(
-                child: btn1(
-                    radius: 10.0,
-                    bgColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                    child: Center(
-                      child: Text('IM'),
-                    ),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) {
-                        return RepaintBoundary(child: ChatRoom());
-                      }));
-                    }),
+                child: _builder('IM', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: ChatRoom());
+                  }));
+                }),
               ),
             ],
           ),
           const SizedBox(height: 5),
           Row(children: [
             Expanded(
-              child: btn1(
-                  radius: 10.0,
-                  bgColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                  child: Center(
-                    child: Text('缓存管理'),
-                  ),
-                  onTap: () {
-                    Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (context) {
-                      return RepaintBoundary(child: CacheManager());
-                    }));
-                  }),
+              child: _builder('缓存管理', () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return RepaintBoundary(child: CacheManager());
+                }));
+              }),
             ),
             const SizedBox(width: 5),
             Expanded(
-              child: btn1(
-                  radius: 10.0,
-                  bgColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                  child: Center(
-                    child: Text('浏览历史'),
-                  ),
-                  onTap: () {
-                    Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (context) {
-                      return RepaintBoundary(child: BookHistory());
-                    }));
-                  }),
+              child: _builder('浏览历史', () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return RepaintBoundary(child: BookHistory());
+                }));
+              }),
             ),
           ]),
           const SizedBox(width: 5),
-          btn1(
-              radius: 10.0,
-              bgColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-              child: Center(
-                child: Text('清除'),
-              ),
-              onTap: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return RepaintBoundary(
-                      child: Scaffold(
-                    appBar: AppBar(
-                      title: Text('清除'),
-                    ),
-                    body: Center(
-                      child: btn1(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 10),
-                          onTap: () {
-                            imageCache?.clear();
-                            imageCacheLoop?.clear();
-                            textCache?.clear();
-                          },
-                          child: Text('清除')),
-                    ),
-                  ));
-                }));
-              }),
+          _builder('清除', () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+              return RepaintBoundary(
+                  child: Scaffold(
+                appBar: AppBar(
+                  title: Text('清除'),
+                ),
+                body: Center(
+                  child: btn1(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 10),
+                      onTap: () {
+                        imageCache?.clear();
+                        imageCacheLoop?.clear();
+                        textCache?.clear();
+                      },
+                      child: Text('清除')),
+                ),
+              ));
+            }));
+          }),
         ],
       ),
     );

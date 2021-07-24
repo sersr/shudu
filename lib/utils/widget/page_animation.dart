@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
   Animation? animation;
 
+  final _callbacks = <VoidCallback>[];
+
   bool get isCompleted => animation == null || animation!.isCompleted;
-  void complete() {}
+
   bool _done = false;
   @override
   void didChangeDependencies() {
@@ -19,10 +21,22 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
     Timer.run(() => isCompleted ? _run() : null);
   }
 
+  void addListener(VoidCallback callback) {
+    _callbacks.add(callback);
+  }
+
+  void removeListener(VoidCallback callback) {
+    _callbacks.remove(callback);
+  }
+
   void _run() {
     if (_done) return;
     _done = true;
-    if (mounted) complete();
+    if (_callbacks.isEmpty) return;
+    if (mounted) {
+      final callbacks = List.of(_callbacks);
+      callbacks.forEach((callback) => callback());
+    }
   }
 
   @override

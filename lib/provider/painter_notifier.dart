@@ -105,7 +105,6 @@ class ContentNotifier extends ChangeNotifier {
   bool showrect = false;
 
   Size size = Size.zero;
-  Size _rawSize = Size.zero;
 
   final safePaddingNotifier = ValueNotifier<bool>(false);
 
@@ -121,12 +120,9 @@ class ContentNotifier extends ChangeNotifier {
 
   var paddingRect = EdgeInsets.zero;
 
-  final safeBottomNotifier = ValueNotifier<double>(6.0);
+  // final safeBottomNotifier = ValueNotifier<double>(6.0);
 
-  double get safeBottom => safeBottomNotifier.value;
-  set safeBottom(double v) {
-    safeBottomNotifier.value = v;
-  }
+  ValueNotifier<double> get safeBottom => repository.safeBottom;
 
   TextStyle _getStyle(ContentViewConfig config) {
     return TextStyle(
@@ -201,38 +197,42 @@ class ContentNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _visible = false;
-  void visible(bool _v) async {
-    if (_visible == _v) return;
-    _visible = _v;
-    Log.w('_modifiedSize: $_visible');
-    _onTouch();
-  }
+//   bool _visible = false;
+//   void visible(bool _v) async {
+//     if (_visible == _v) return;
+//     _visible = _v;
+//     Log.w('_modifiedSize: $_visible');
+//     // _onTouch();
+//   }
 
-  bool _hasNav = false;
+//   bool _hasNav = false;
+//   bool _init = false;
 
-  void _onTouch() {
-    final v = !_visible;
-    Log.i(v);
+//   void _onTouch() {
+//     if (_init) return;
+//     _init = true;
 
-    final _bottomHeight = repository.bottomHeight.toDouble();
-    late Offset nav;
-    if (config.value.portrait == true) {
-      nav = Offset(0, _bottomHeight);
-    } else {
-      nav = Offset(_bottomHeight, 0);
-    }
-    // 只支持常规的显示模式，即占用了UI显示面积
-    if (v) {
-      _hasNav = size == _rawSize + nav;
-    }
-    Log.i('_hasNav  $_hasNav');
-    if (_hasNav) {
-      safeBottom = _bottomHeight + 6.0;
-    } else {
-      safeBottom = 6.0;
-    }
-  }
+//     // final v = !_visible;
+//     // Log.i(v);
+
+//     final _bottomHeight = repository.bottomHeight.toDouble();
+//     late Offset nav;
+//     if (config.value.portrait == true) {
+//       nav = Offset(0, _bottomHeight);
+//     } else {
+//       nav = Offset(_bottomHeight, 0);
+//     }
+//     // 只支持常规的显示模式，即占用了UI显示面积
+//     // if (v) {
+//     _hasNav = size == _rawSize + nav;
+//     // }
+//     Log.i('_hasNav  $_hasNav , $size, $_rawSize, $nav');
+//     if (_hasNav) {
+//       safeBottom = _bottomHeight + 6.0;
+//     } else {
+//       safeBottom = 6.0;
+//     }
+//   }
 }
 
 extension ContentStatus on ContentNotifier {
@@ -249,7 +249,7 @@ extension ContentStatus on ContentNotifier {
   void resetController() {
     controller?.goIdle();
     _innerIndex = 0;
-    controller?.setPixelsWithoutNtf(0.0);
+    controller?.correct(0.0);
   }
 }
 
@@ -872,7 +872,7 @@ extension Event on ContentNotifier {
       });
   }
 
-  Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
+  Future<bool> _setNewBookOrCid(int newBookid, int cid, int page) async {
     if (!inBook) resetController();
 
     if (tData.cid != cid || bookid != newBookid) {
@@ -901,7 +901,7 @@ extension Event on ContentNotifier {
 
     orientation(config.value.portrait!);
 
-    await setNewBookOrCid(newBookid, cid, page);
+    await _setNewBookOrCid(newBookid, cid, page);
 
     if (tData.contentIsEmpty) {
       notifyState(notEmptyOrIgnore: true);
@@ -1009,7 +1009,7 @@ extension Event on ContentNotifier {
       left: safePadding.left + 16,
       top: safePadding.top,
       right: safePadding.right + 16,
-      bottom: safePadding.bottom,
+      // bottom: safePadding.bottom,
     );
 
     switch (defaultTargetPlatform) {
@@ -1027,9 +1027,11 @@ extension Event on ContentNotifier {
 
         final _oSize = size;
         size = _phySize;
-        _rawSize = _size;
+        Log.w('inner: size :$size, $paddingRect');
+        // _rawSize = _size;
+        // Log.w('_hasNav  $_hasNav , $size, $_rawSize, $nav out.');
 
-        _onTouch();
+        // _onTouch();
 
         if (_phySize == _size + nav || _phySize == _size) {
           if (_phySize == _oSize) return false;

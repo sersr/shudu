@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
@@ -39,6 +40,9 @@ class RepositoryImplTest extends Repository with SendEventMixin {
 
   @override
   bool get systemOverlaysAreVisible => throw UnimplementedError();
+
+  @override
+  ValueNotifier<double> get safeBottom => ValueNotifier(0);
 }
 
 class Client {

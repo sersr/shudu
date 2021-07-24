@@ -45,9 +45,8 @@ class ContentPageViewState extends State<ContentPageView>
     indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid);
     controller = PanSlideController.showPan(
       this,
-      onhide: onhideEnd,
-      onshow: onshowEnd,
-      onanimating: onanimating,
+      onhideEnd: onhide,
+      onshowEnd: onshow,
       builder: (contxt, _controller) {
         return RepaintBoundary(
           child: PannelSlide(
@@ -98,19 +97,31 @@ class ContentPageViewState extends State<ContentPageView>
 
   final lKey = Object();
 
-  void onshowEnd() {
+  Future<void> onshow() async {
     indexBloc.addRegisterKey(lKey);
 
-    if (bloc.config.value.portrait! && bloc.inBook) uiOverlay(hide: false);
+    if (bloc.config.value.portrait! && bloc.inBook)
+      return uiOverlay(hide: false);
   }
 
-  void onhideEnd() {
+  Future<void> onhide() async {
     indexBloc.removeRegisterKey(lKey);
 
-    if (bloc.config.value.portrait! && bloc.inBook) uiOverlay();
+    if (bloc.config.value.portrait! && bloc.inBook) return uiOverlay();
   }
 
-  void onanimating() {}
+  Future? _f;
+  void tigger() {
+    if (_f != null) return;
+    _f = _tigger()..whenComplete(() => _f = null);
+  }
+
+  Future<void> _tigger() async {
+    getController().trigger(immediate: false);
+    await release(const Duration(milliseconds: 300));
+  }
+
+  final triggerEventLooper = EventLooper();
 
   @override
   void didUpdateWidget(covariant ContentPageView oldWidget) {
@@ -235,7 +246,7 @@ class ContentPageViewState extends State<ContentPageView>
       return straight(child);
   }
 
-  bool trigger(Size size, Offset g) {
+  bool onTap(Size size, Offset g) {
     final halfH = size.height / 2;
     final halfW = size.width / 2;
     final sixH = size.height / 5;
@@ -248,6 +259,7 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+        Log.w('size : $size');
     final child = AnimatedBuilder(
       animation: bloc.notEmptyOrIgnore,
       builder: (context, child) {
@@ -257,8 +269,8 @@ class ContentPageViewState extends State<ContentPageView>
                   if (offsetPosition.page == 0 ||
                       offsetPosition.page % offsetPosition.page.toInt() == 0 ||
                       !offsetPosition.isScrolling) {
-                    if (trigger(size, d.globalPosition)) {
-                      getController().trigger(immediate: false);
+                    if (onTap(size, d.globalPosition)) {
+                      tigger();
                     } else {
                       offsetPosition.nextPage();
                     }
@@ -576,7 +588,7 @@ class _SlideRenderObject extends RenderBox {
     }
 
     final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
-
+        Log.w('bottom: ${size.height}');
     if (_footer != null) {
       _footer!.layout(_constraints);
       final parentdata = _footer!.parentData as BoxParentData;
@@ -606,6 +618,7 @@ class _SlideRenderObject extends RenderBox {
     }
 
     if (_footer != null) {
+      Log.w(offset);
       context.paintChild(_footer!, childOffset(_footer!) + offset);
     }
   }

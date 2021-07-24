@@ -7,7 +7,7 @@ import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
 import '../../utils/utils.dart'
     show EventLooper, Log, loadingIndicator, release, reloadBotton;
-import '../../utils/widget/page_animation.dart' show PageAnimationMixin;
+
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../book_info_view/book_info_page.dart' show BookInfoPage;
@@ -74,7 +74,7 @@ class TopListView extends StatefulWidget {
   _TopListViewState createState() => _TopListViewState();
 }
 
-class _TopListViewState extends State<TopListView> with PageAnimationMixin {
+class _TopListViewState extends State<TopListView> {
   var _topNotifier = TopNotifier();
 
   @override

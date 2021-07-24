@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'package:bangs/bangs.dart';
 import 'package:battery/battery.dart';
@@ -10,11 +9,11 @@ import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../utils/utils.dart';
 import '../base/book_event.dart';
@@ -90,12 +89,19 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _changesListeners.remove(callback);
   }
 
+  bool isShowing = false;
+  double height = 0;
+
+  final _safeBottom = ValueNotifier(0.0);
+  @override
+  ValueNotifier<double> get safeBottom => _safeBottom;
+
   Isolate? _isolate;
   Isolate? get isolate => _isolate;
 
   Future<ReceivePort?> initBase() async {
     if (init) return null;
-
+    Bangs.bangs.setNavigationChangeCallback(_changeCallback);
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     final _waits = <Future>{};
 
@@ -107,7 +113,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     if (Platform.isAndroid) {
       appDirExt = Directory('/storage/emulated/0/shudu');
       _waits
-        // ..add(FlutterDisplayMode.setHighRefreshRate())
         ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
         ..add(Permission.manageExternalStorage.status.then((status) {
           if (status.isDenied) {
@@ -132,8 +137,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
     hiveInit(join(appPath, 'shudu', 'hive'));
 
-    // print('${cachePaths?.map((e) => e.path).join(',')}');
-    // print((await appDir.list().toList()).join('\n'));
     final rcPort = ReceivePort();
 
     /// Isolate event
@@ -141,6 +144,17 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
         .then((value) => _isolate = value);
 
     return rcPort;
+  }
+
+  void _changeCallback(bool isShow, int navHeight) {
+    isShowing = isShow;
+    height = navHeight / window.devicePixelRatio;
+
+    if (isShowing) {
+      safeBottom.value = height;
+    } else {
+      safeBottom.value = 0;
+    }
   }
 
   bool get init => _isolate != null;

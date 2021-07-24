@@ -23,6 +23,13 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
     with PageAnimationMixin {
   final _category = CategoryListNotifier();
   late TextStyleConfig ts;
+
+  @override
+  void initState() {
+    super.initState();
+    addListener(complete);
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -32,8 +39,10 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
     _category.repository = repository;
   }
 
-  @override
-  void complete() => _category.getCategories();
+  void complete() {
+    _category.getCategories();
+    removeListener(complete);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +212,7 @@ class CategListView extends StatefulWidget {
 }
 
 class _CategListViewState extends State<CategListView>
-    with PageAnimationMixin, AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin {
   final _categNotifier = TopNotifier();
   TabController? controller;
 

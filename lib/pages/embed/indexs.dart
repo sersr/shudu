@@ -24,7 +24,7 @@ class _IndexsWidgetState extends State<IndexsWidget> {
   void dispose() {
     controller?.dispose();
     super.dispose();
-
+    print('dispose indexs.');
     indexBloc.removeRegisterKey(lKey);
   }
 
@@ -89,11 +89,11 @@ class _IndexsWidgetState extends State<IndexsWidget> {
 
                       offset = math.max(0.0, math.min(offset, max - height));
                       if (controller != null) {
-                        if (controller!.hasClients && data.animation) {
+                        if (controller!.hasClients) {
                           controller?.animateTo(offset,
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut);
-                          } else {
+                        } else {
                           controller!.dispose();
                           controller =
                               ScrollController(initialScrollOffset: offset);
@@ -102,7 +102,6 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                         controller =
                             ScrollController(initialScrollOffset: offset);
                       }
-                      data.animation = false;
 
                       return Scrollbar(
                         controller: controller,

@@ -11,8 +11,7 @@ Future<void> uiOverlay({bool hide = true}) async {
   if (hide)
     return SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   else
-    return SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: SystemUiOverlay.values);
+    return SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }
 
 void uiStyle({bool dark = true}) {

@@ -5,11 +5,11 @@ import 'utils/binding/widget_binding.dart';
 import 'utils/utils.dart';
 import 'utils/widget/shader_warmup.dart';
 
-void main() {
+void main() async {
   PaintingBinding.shaderWarmUp = const MyShaderWarmUp();
   // WidgetsFlutterBinding.ensureInitialized();
   NopWidgetsFlutterBinding.ensureInitialized();
-  uiOverlay(hide: false);
+  await uiOverlay(hide: false);
   uiStyle();
   // debugProfilePaintsEnabled = true;
   // debugProfileBuildsEnabled = true;

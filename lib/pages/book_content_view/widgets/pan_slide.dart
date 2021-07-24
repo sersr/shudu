@@ -1,11 +1,12 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import '../../../utils/widget/page_animation.dart';
+
 import '../../../utils/utils.dart';
 
 abstract class PanSlideState<T extends StatefulWidget> extends State<T>
-    with TickerProviderStateMixin, PageAnimationMixin {
+    with TickerProviderStateMixin {
   late GlobalKey<PanOverlayState> _key;
   PanOverlayState? get _overlay => _key.currentState;
 
@@ -122,6 +123,7 @@ class PanOverlayState extends State<PanOverlay> {
 }
 
 typedef StatusCallback = void Function(AnimationStatus status);
+typedef FutureOrVoidCallback = Future<void> Function();
 
 class PanSlideController {
   PanSlideController({
@@ -130,19 +132,22 @@ class PanSlideController {
     this.groups = 'default',
     this.connect = false,
     Duration duration = const Duration(milliseconds: 280),
-    this.onhide,
-    this.onshow,
+    this.onhideEnd,
+    this.onshowEnd,
     this.onanimating,
+    this.onshow,
+    this.onhide,
   })  : _pan = state,
         _controller = AnimationController(vsync: state, duration: duration) {
     _controller.addStatusListener(statusListen);
     _entry = Builder(builder: (context) => builder(context, this));
   }
 
-  VoidCallback? onhide;
-  VoidCallback? onshow;
+  VoidCallback? onhideEnd;
+  VoidCallback? onshowEnd;
   VoidCallback? onanimating;
-
+  FutureOrVoidCallback? onhide;
+  FutureOrVoidCallback? onshow;
   late Widget _entry;
 
   bool get mounted => _pan.isMounted(_entry);
@@ -158,9 +163,11 @@ class PanSlideController {
   PanSlideController? next;
 
   static PanSlideController showPan(State state,
-      {VoidCallback? onhide,
-      VoidCallback? onshow,
+      {VoidCallback? onhideEnd,
+      VoidCallback? onshowEnd,
       VoidCallback? onanimating,
+      FutureOrVoidCallback? onhide,
+      FutureOrVoidCallback? onshow,
       required Widget Function(BuildContext, PanSlideController) builder}) {
     final _state = state is PanSlideState
         ? state
@@ -169,9 +176,11 @@ class PanSlideController {
     return PanSlideController(
         state: _state!,
         builder: builder,
-        onanimating: onanimating,
         onhide: onhide,
-        onshow: onshow);
+        onshow: onshow,
+        onanimating: onanimating,
+        onhideEnd: onhideEnd,
+        onshowEnd: onshowEnd);
   }
 
   void statusListen(AnimationStatus status) {
@@ -182,14 +191,16 @@ class PanSlideController {
       if (destory) {
         _destory();
       } else {
-        onhide?.call();
+        onhideEnd?.call();
       }
     } else if (status == AnimationStatus.completed) {
-      onshow?.call();
+      onshowEnd?.call();
     } else {
       onanimating?.call();
     }
   }
+
+  bool _done = true;
 
   bool get isShowing =>
       controller.status == AnimationStatus.completed ||
@@ -211,7 +222,14 @@ class PanSlideController {
     }
   }
 
-  void hide({bool destory = false}) {
+  void hide({bool destory = false}) async {
+    // if (!_done) return;
+    // final _onhide = onhide;
+    // if (_onhide != null) {
+    //   _done = false;
+    //   await _onhide();
+    //   _done = true;
+    // }
     _hide();
     _removeAfter(destory);
     // assert(Log.i('reverse #$hashCode'));
@@ -240,16 +258,22 @@ class PanSlideController {
     if (!mounted) _pan._insert(this);
   }
 
-  void show() {
+  void show() async {
     if (isShowing || _hideCallback != null || destory) return;
     init();
-    onanimating?.call();
+
+    // final _onshow = onshow;
+    // if (_onshow != null) {
+    //   _done = false;
+    //   await _onshow();
+    //   _done = true;
+    // }
     controller.forward();
     // assert(Log.i('forward #$hashCode'));
   }
 
   void trigger({bool immediate = true}) {
-    if (isAnimating && !immediate || destory) return;
+    if (isAnimating && !immediate || destory || !_done) return;
     if (isShowing) {
       hide();
     } else {
@@ -275,7 +299,7 @@ class PanSlideController {
   void _stop() {
     if (_state != closeState) {
       _state = closeState;
-      onhide?.call();
+      onhideEnd?.call();
       controller.dispose();
     }
   }

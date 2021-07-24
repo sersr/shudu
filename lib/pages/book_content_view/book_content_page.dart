@@ -10,33 +10,29 @@ import 'package:provider/provider.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/painter_notifier.dart';
 import '../../utils/utils.dart';
+import '../../utils/widget/page_animation.dart';
 import 'widgets/page_view.dart';
 import 'widgets/pan_slide.dart';
 
 enum SettingView { indexs, setting, none }
 
 class BookContentPage extends StatefulWidget {
-  const BookContentPage(
-      {Key? key, required this.bookid, required this.cid, required this.page})
-      : super(key: key);
-  final int bookid;
-  final int cid;
-  final int page;
+  const BookContentPage({Key? key}) : super(key: key);
 
   static Future? _wait;
   static Future push(
       BuildContext context, int newBookid, int cid, int page) async {
     if (_wait != null) return;
 
-    _wait =
-        context.read<ContentNotifier>().setNewBookOrCid(newBookid, cid, page);
+    final bloc = context.read<ContentNotifier>();
+    _wait = bloc.newBookOrCid(newBookid, cid, page);
 
     await _wait;
     await EventLooper.instance.scheduler.endOfFrame;
 
     _wait = null;
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookContentPage(bookid: newBookid, cid: cid, page: page);
+      return BookContentPage();
     }));
   }
 
@@ -45,12 +41,13 @@ class BookContentPage extends StatefulWidget {
 }
 
 class BookContentPageState extends PanSlideState<BookContentPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   @override
   void initState() {
     super.initState();
+    addListener(showUiOverlay);
     WidgetsBinding.instance!.addObserver(this);
   }
 
@@ -61,17 +58,10 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     blocCache = context.read<BookCacheNotifier>();
     if (Platform.isAndroid) {
       FlutterDisplayMode.active.then(print);
-      // final f = Directory('/storage/emulated/0');
 
       getExternalStorageDirectories().then((value) => Log.w(value));
       getApplicationDocumentsDirectory().then((value) => Log.w(value));
     }
-    // f.exists().then((value) async {
-    //   if (value) {
-    //     final list = await f.list().toList();
-    //     Log.w(list);
-    //   }
-    // });
   }
 
   @override
@@ -85,14 +75,9 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.dispose();
   }
 
-  bool _first = true;
-  @override
-  void complete() {
-    if (_first) {
-      _first = false;
-      uiOverlay().whenComplete(
-          () => bloc.newBookOrCid(widget.bookid, widget.cid, widget.page));
-    }
+  void showUiOverlay() {
+    uiOverlay();
+    removeListener(showUiOverlay);
   }
 
   Timer? errorTimer;
@@ -112,8 +97,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
             child: OverflowBox(
               maxHeight: bloc.size.height,
               maxWidth: bloc.size.width,
-              minHeight: bloc.size.height,
-              minWidth: bloc.size.width,
+              // minHeight: bloc.size.height,
+              // minWidth: bloc.size.width,
               alignment: Alignment.topLeft,
               child: RepaintBoundary(
                 child: Stack(
@@ -188,8 +173,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   Future<bool> onWillPop() async {
     bloc.showCname.value = false;
 
-    if (!isCompleted) return false;
-
     if (showEntries.length > 1) {
       hideLast();
       return false;
@@ -207,7 +190,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
     await bloc.waitTasks;
     await EventLooper.instance.runner;
-    uiOverlay(hide: false);
+    await uiOverlay(hide: false);
     uiStyle();
 
     // 横屏处理

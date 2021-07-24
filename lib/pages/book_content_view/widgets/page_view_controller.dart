@@ -32,6 +32,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   double get pixels => _pixels;
 
+  bool get clamp => _pixels < _minExtent || _pixels > maxExtent;
+
   void beginActivity(Activity activity) {
     if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
       _lastvelocity = _activity!.velocity;
@@ -84,7 +86,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     if (_lastActivityIsIdle) {
       if (axis == Axis.horizontal) {
         if (ContentBoundary.hasRight(getBounds())) {
-          if (maxExtent!.isFinite) {
+          if (maxExtent.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
@@ -93,7 +95,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
         if (getBounds() & ContentBoundary.addRight != 0) {
           var _n = page;
 
-          if (maxExtent!.isFinite) {
+          if (maxExtent.isFinite) {
             _maxExtent = double.infinity;
           }
 
@@ -113,7 +115,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   void prePage() {
     if (_activity is IdleActivity && ContentBoundary.hasLeft(getBounds())) {
-      if (minExtent!.isFinite) {
+      if (minExtent.isFinite) {
         _minExtent = double.negativeInfinity;
       }
       setPixels(viewPortDimension! * (page - 0.6).round());
@@ -135,7 +137,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   void setPixels(double v) {
     if (v == _pixels) return;
 
-    v = v.clamp(minExtent!, maxExtent!);
+    v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
   }
@@ -171,7 +173,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       to = page.round();
     }
 
-    final end = (to * viewPortDimension!).clamp(minExtent!, maxExtent!);
+    final end = (to * viewPortDimension!).clamp(minExtent, maxExtent);
 
     beginActivity(BallisticActivity(
       delegate: this,
@@ -190,22 +192,23 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
-        end: () => velocity >= 0.0 ? maxExtent! : minExtent!,
+        end: () => velocity >= 0.0 ? maxExtent : minExtent,
         simulation: getSimulation(velocity),
         swipeDown: velocity >= 0,
       ));
     }
   }
 
-  void setPixelsWithoutNtf(double v) {
-    _pixels = v;
+  void correct(double v) {
+    if (_pixels == v) return;
+    _pixels = v.clamp(minExtent, maxExtent);
   }
 
-  double? _minExtent;
-  double? _maxExtent;
+  double _minExtent;
+  double _maxExtent;
 
-  double? get minExtent => _minExtent;
-  double? get maxExtent => _maxExtent;
+  double get minExtent => _minExtent;
+  double get maxExtent => _maxExtent;
 
   void applyConentDimension(
       {required double minExtent, required double maxExtent}) {
@@ -462,19 +465,7 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   Axis axis = Axis.horizontal;
-
-  @override
-  void performLayout() {
-    double extent;
-    axis = nopController.axis;
-    if (axis == Axis.horizontal) {
-      extent = size.width;
-    } else {
-      extent = size.height;
-    }
-    nopController.applyViewPortDimension(extent);
-
-    final pixels = nopController.pixels;
+  void _layout(double pixels, double extent) {
     firstIndex = lastIndex = null;
     final _firstIndex = getMinChildIndexForScrollOffset(pixels, extent);
     final _lastIndex = getMaxChildIndexForScrollOffset(pixels + extent, extent);
@@ -495,9 +486,7 @@ class ContentPreNextRenderObject extends RenderBox {
         break;
       }
     }
-
     if (canPaint) {
-      /// 通知
       _element!._build(nopController.page.round(), changeState: true);
 
       final contentBoundary = nopController.getBounds();
@@ -512,6 +501,41 @@ class ContentPreNextRenderObject extends RenderBox {
             ? double.infinity
             : indexToLayoutOffset(extent, lastIndex!),
       );
+    }
+  }
+
+  // 布局之后，属性会改变，确保 `pixels` 还在 范围区间
+  bool correct() {
+    final rawPixels = _nopController.pixels;
+    _nopController.correct(rawPixels);
+
+    final pixels = _nopController.pixels;
+
+    return rawPixels == pixels;
+  }
+
+  @override
+  void performLayout() {
+    double extent;
+    axis = nopController.axis;
+    if (axis == Axis.horizontal) {
+      extent = size.width;
+    } else {
+      extent = size.height;
+    }
+    nopController.applyViewPortDimension(extent);
+
+    _layout(nopController.pixels, extent);
+
+    if (canPaint) {
+      // 一次校验
+      if (!correct()) {
+        _layout(_nopController.pixels, extent);
+        if (!canPaint) return;
+      }
+
+      final pixels = _nopController.pixels;
+
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         final child = childlist[i]!;
         assert(childlist.containsKey(i));
@@ -521,7 +545,7 @@ class ContentPreNextRenderObject extends RenderBox {
 
         data.layoutOffset = computeAbsolutePaintOffset(
             indexToLayoutOffset(extent, i)
-                .clamp(nopController.minExtent!, nopController.maxExtent!),
+                .clamp(nopController.minExtent, nopController.maxExtent),
             pixels);
       }
       collectGarbage(firstIndex! - 1, lastIndex! + 1);

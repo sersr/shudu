@@ -48,7 +48,15 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   @override
-  void complete() => info.getData(widget.id);
+  void initState() {
+    super.initState();
+    addListener(complete);
+  }
+
+  void complete() {
+    info.getData(widget.id);
+    removeListener(complete);
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -48,6 +48,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
     final data = MediaQuery.of(context);
+    Log.e(data);
+    
     final rep = cache.repository;
     _future ??= rep.initState.then((_) {
       return Future.wait([
@@ -55,10 +57,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         search.init(),
         painterBloc.initConfigs(),
         cache.load(),
-        painterBloc.metricsChange(data),
-      ])
-        ..whenComplete(
-            () => rep.addSystemOverlaysListener(painterBloc.visible));
+      ]);
+      // ..whenComplete(
+      //     () => rep.addSystemOverlaysListener(painterBloc.visible));
     });
   }
 
@@ -71,22 +72,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       // scheduleMicrotask(opts.changeRate);
     }
   }
-
-  // Timer? timer;
-  // @override
-  // void didChangeMetrics() {
-  //   // 桌面窗口大小改变
-  //   // final w = ui.window;
-  //   // assert(Log.i(
-  //   //     'data: systemGestureInsets${w.systemGestureInsets}\ndata: viewPadding ${w.viewPadding} \ndata: padding'
-  //   //     ' ${w.padding} \ndata: viewInsets ${w.viewInsets} \ndata: physicalGeometry ${w.physicalGeometry}'));
-  //   // timer?.cancel();
-  //   // timer = Timer(const Duration(milliseconds: 100), () {
-  //   //   if (mounted) {
-  //   //     painterBloc.metricsChange();
-  //   //   }
-  //   // });
-  // }
 
   @override
   void dispose() {

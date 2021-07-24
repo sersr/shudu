@@ -20,7 +20,6 @@ class BookIndexsData {
     return _vols;
   }
 
-  bool animation = true;
   int? _index;
   int? _volIndex;
   int? _currentIndex;

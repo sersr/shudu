@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../database/database.dart';
 import '../../event/event.dart';
 import '../../utils/utils.dart';
-import '../../utils/widget/page_animation.dart';
+
 import '../book_info_view/book_info_page.dart';
 import '../embed/list_builder.dart';
 
@@ -15,7 +15,7 @@ class CacheManager extends StatefulWidget {
   _CacheManagerState createState() => _CacheManagerState();
 }
 
-class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
+class _CacheManagerState extends State<CacheManager> {
   final _cacheNotifier = _CacheNotifier();
 
   @override

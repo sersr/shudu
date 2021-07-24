@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 // ignore: unused_import
 import '../repository/book_repository.dart' show BookRepository;
@@ -10,7 +13,6 @@ import 'book_event.dart';
 abstract class Repository {
   Repository();
 
-  // void addInitCallback(Future<void> Function() callback);
   Future<void> get initState;
   void dispose();
 
@@ -24,7 +26,7 @@ abstract class Repository {
 
     return _instance!;
   }
-
+ ValueNotifier<double> get safeBottom;
   @visibleForTesting
   static void repositoryTest(Repository repository) {
     _instance ??= repository;
