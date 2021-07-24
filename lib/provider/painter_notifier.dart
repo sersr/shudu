@@ -120,14 +120,12 @@ class ContentNotifier extends ChangeNotifier {
   }
 
   var paddingRect = EdgeInsets.zero;
-  var _safeBottom = 6.0;
-  final safeBottomNotifier = ValueNotifier<bool>(false);
 
-  double get safeBottom => _safeBottom;
+  final safeBottomNotifier = ValueNotifier<double>(6.0);
+
+  double get safeBottom => safeBottomNotifier.value;
   set safeBottom(double v) {
-    if (_safeBottom == v) return;
-    _safeBottom = v;
-    safeBottomNotifier.value = !safeBottomNotifier.value;
+    safeBottomNotifier.value = v;
   }
 
   TextStyle _getStyle(ContentViewConfig config) {
@@ -194,7 +192,7 @@ class ContentNotifier extends ChangeNotifier {
   late TextStyle secstyle;
   final showCname = ValueNotifier(false);
   final mic = Duration.microsecondsPerMillisecond * 200.0;
-
+  final eventLooper = EventLooper();
   void _notify() {
     notifyState(
         //                        notEmpty        ||  ignore
@@ -813,7 +811,8 @@ extension Layout on ContentNotifier {
     if (isHorizontal) {
       h += contentTopPad;
       titlePainter.paint(canvas, Offset(0.0, h));
-      h += titlePainter.height;
+      // h += titlePainter.height;
+      h += contentFooterSize;
     }
     if (index == 0) {
       if (!isHorizontal) {
@@ -845,7 +844,7 @@ extension Layout on ContentNotifier {
     }
     if (isHorizontal) {
       bottomRight.paint(canvas,
-          Offset(right, _size.height - bottomRight.height - contentBotttomPad));
+          Offset(right, _size.height - contentFooterSize - contentBotttomPad));
       await wait;
     }
     canvas.restore();
@@ -1062,12 +1061,12 @@ extension Event on ContentNotifier {
     if (size != _size) {
       size = _size;
 
-      paddingRect = EdgeInsets.only(
-        left: safePadding.left + 16,
-        top: safePadding.top,
-        right: safePadding.right + 16,
-        bottom: safePadding.bottom,
-      );
+      // paddingRect = EdgeInsets.only(
+      //   left: safePadding.left + 16,
+      //   top: safePadding.top,
+      //   right: safePadding.right + 16,
+      //   bottom: safePadding.bottom,
+      // );
       return true;
     } else {
       return false;
@@ -1163,45 +1162,47 @@ extension ContentGetter on ContentNotifier {
 
 extension Configs on ContentNotifier {
   Future<void> setPrefs(ContentViewConfig _config) async {
-    var flush = false;
-    final _fontSize = _config.fontSize!;
-    final _height = _config.lineTweenHeight!;
-    final _fontColor = _config.fontColor!;
-    final _fontFamily = _config.fontFamily!;
-    final _axis = _config.axis!;
-    final _portrait = _config.portrait!;
+    return eventLooper.addOneEventTask(() async {
+      var flush = false;
+      final _fontSize = _config.fontSize!;
+      final _height = _config.lineTweenHeight!;
+      final _fontColor = _config.fontColor!;
+      final _fontFamily = _config.fontFamily!;
+      final _axis = _config.axis!;
+      final _portrait = _config.portrait!;
 
-    if (_fontSize != config.value.fontSize ||
-        _fontFamily != config.value.fontFamily ||
-        _fontColor != config.value.fontColor ||
-        _height != config.value.lineTweenHeight ||
-        _axis != config.value.axis) {
-      flush = true;
-    }
-    final portrait = config.value.portrait;
-    var resetToZero = _axis != config.value.axis;
+      if (_fontSize != config.value.fontSize ||
+          _fontFamily != config.value.fontFamily ||
+          _fontColor != config.value.fontColor ||
+          _height != config.value.lineTweenHeight ||
+          _axis != config.value.axis) {
+        flush = true;
+      }
+      final portrait = config.value.portrait;
+      var resetToZero = _axis != config.value.axis;
 
-    config.value = _config;
+      config.value = _config;
 
-    if (_portrait != portrait) {
-      await orientation(_portrait);
-      resetToZero = true;
-      flush = true;
-    }
+      if (_portrait != portrait) {
+        await orientation(_portrait);
+        resetToZero = true;
+        flush = true;
+      }
 
-    if (flush) {
-      autoRun.stopTicked();
+      if (flush) {
+        autoRun.stopTicked();
 
-      await reset(clearCache: true);
+        await reset(clearCache: true);
 
-      await _loadFirst();
+        await _loadFirst();
 
-      if (resetToZero ||
-          currentPage == tData.content.length ||
-          currentPage == 1) resetController();
-    }
-    await _metricsF?.whenComplete(resetController);
-    _notify();
+        if (resetToZero ||
+            currentPage == tData.content.length ||
+            currentPage == 1) resetController();
+      }
+      await _metricsF?.whenComplete(resetController);
+      _notify();
+    });
   }
 
   Future<void> initConfigs() async {

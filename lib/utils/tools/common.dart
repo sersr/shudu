@@ -123,6 +123,17 @@ final Animatable<Offset> _kBottomUpTween = Tween<Offset>(
   end: Offset.zero,
 );
 
+/// 关于 [CupertinoPageTransitionsBuilder]
+/// 中 [CurvedAnimation] 内存泄漏问题
+/// 由于 [CurvedAnimation] 生命周期依赖于 [parent]
+/// 如果 [parent] 不及时释放，要自己手动 [dispose]
+///
+/// 在 [CupertinoPageTransitionsBuilder] 中
+/// 每一次动画都重新生成 [CurvedAnimation] 新对象
+/// 当页面 [AnimationController] 没有释放就会一直保持引用
+///
+/// 问题描述：一般情况下首页不会被释放，通过 [AnimationController].addListener
+/// 注册的监听，就会一直存在，导致内存泄漏
 class SlidePageTransition extends PageTransitionsBuilder {
   const SlidePageTransition();
 
@@ -150,6 +161,7 @@ class SlidePageTransition extends PageTransitionsBuilder {
       Animation<double> animation,
       Animation<double> secondaryAnimation,
       Widget child) {
+    /// 每一个页面过渡动画会调用一次
     final reverseOutter = animation.status == AnimationStatus.reverse;
     final reverseInner = secondaryAnimation.status == AnimationStatus.reverse;
     final linearTransition =
@@ -181,69 +193,6 @@ class SlidePageTransition extends PageTransitionsBuilder {
         ),
       );
     }
-    // final scaleFirst = reverseOutter
-    //     ? intervalCurveReverse.animate(animation).drive(firstPosition)
-    //     : intervalCurve.animate(animation).drive(firstPosition);
-
-    // final scaleSecondary = reverseInner
-    //     ? intervalCurveReverse.animate(secondaryAnimation).drive(secondaryPosition)
-    //     : intervalCurve.animate(secondaryAnimation).drive(secondaryPosition);
-
-    // final _primaryPositionAnimation = reverseOutter
-    //     ? _easeTolinear.animate(animation).drive(_kRightMiddleTween)
-    //     : _linearTofast.animate(animation).drive(_kRightMiddleTween);
-    // final _secondaryPositionAnimation = reverseInner
-    //     ? _easeTolinear.animate(secondaryAnimation).drive(_kMiddleLeftTween)
-    //     : _linearTofast.animate(secondaryAnimation).drive(_kMiddleLeftTween);
-
-    // final linearTransition = CupertinoRouteTransitionMixin.isPopGestureInProgress(route);
-    // if (route.fullscreenDialog) {
-    //   final _positionAnimation = reverseOutter
-    //       ? _linearTofastflipped.animate(animation).drive(_kBottomUpTween)
-    //       : _linearTofast.animate(animation).drive(_kBottomUpTween);
-    //   final _secondaryPositionAnimation = reverseInner
-    //       ? _linearTofast.animate(secondaryAnimation).drive(_kMiddleLeftTween)
-    //       : _easeTolinear.animate(secondaryAnimation).drive(_kMiddleLeftTween);
-
-    //   return SlideTransition(
-    //     position: _secondaryPositionAnimation,
-    //     transformHitTests: false,
-    //     child: SlideTransition(
-    //       position: _positionAnimation,
-    //       child: child,
-    //     ),
-    //   );
-    // } else {
-    //   return SlideTransition(
-    //     position: _secondaryPositionAnimation,
-    //     child: SlideTransition(
-    //       position: _primaryPositionAnimation,
-    //       child: child,
-    //     ),
-    //   );
-    // }
-
-    //  final _primaryShadowAnimation =
-
-    // final isLineTransition = CupertinoRouteTransitionMixin.isPopGestureInProgress(route);
-    // return CupertinoPageTransition(
-    //   primaryRouteAnimation: animation,
-    //   secondaryRouteAnimation: secondaryAnimation,
-    //   linearTransition: false,
-    //   child: child,
-    // );
-    // return RepaintBoundary(
-    //   child: SlideTransition(
-    //     position: scaleFirst,
-    //     child: Container(
-    //       // color: Colors.white,
-    //       child: SlideTransition(
-    //         position: scaleSecondary,
-    //         child: child,
-    //       ),
-    //     ),
-    //   ),
-    // );
   }
 
   static bool _isPopGestureEnabled<T>(PageRoute<T> route) {

@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../utils/tools/event_callback_looper.dart';
-import '../utils/utils.dart';
 import 'picture_info.dart';
 
 class AsyncText extends LeafRenderObjectWidget {

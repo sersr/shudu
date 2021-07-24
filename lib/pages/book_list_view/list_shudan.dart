@@ -10,7 +10,6 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../../data/book_list.dart';
 import '../../event/event.dart';
 import '../../provider/text_styles.dart';
-import '../../utils/binding/widget_binding.dart';
 import '../../utils/utils.dart';
 import '../embed/list_builder.dart';
 import 'list_shudan_detail.dart';
@@ -40,9 +39,6 @@ class _ListShudanPageState extends State<ListShudanPage>
   void dispose() {
     super.dispose();
     controller.dispose();
-
-    imageCache?.clear();
-    NopWidgetsFlutterBinding.instance?.clear();
   }
 
   final c = const ['new', 'hot', 'collect'];
@@ -176,7 +172,7 @@ class _WrapWidgetState extends State<WrapWidget>
             }
 
             final bookList = list[index];
-            return ListItemBuilder(
+            return ListItem(
               height: 112,
               onTap: () {
                 final route = MaterialPageRoute(builder: (_) {

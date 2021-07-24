@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../utils.dart';
+import '../../utils.dart';
 
 typedef FutureOrVoidCallback = FutureOr<void> Function();
 
@@ -21,20 +21,19 @@ typedef EventCallback<T> = FutureOr<T> Function();
 /// 异步的本质：将回调函数注册到下一次事件队列中，在本次循环后调用
 /// [await]: 由系统注册  (async/future_impl.dart#_thenAwait)
 ///
-/// 在同一次事件循环中执行上一次的异步任务，如果上一次的异步任务过多有可能导致本次循环
+/// 在同一次事件循环中执行上一次的异步任务，
+/// 如果上一次的异步任务过多且每个任务都占有一定的耗时有可能导致本次循环
 /// 占用过多的 cpu 资源，导致渲染无法及时，造成卡顿。
 class EventLooper {
   static EventLooper? _instance;
-  EventLooper({this.parallels = 1});
+  EventLooper({this.channels = 1});
+
   static EventLooper get instance {
     _instance ??= EventLooper();
     return _instance!;
   }
 
-  final int parallels;
-  // final now = Stopwatch()..start();
-
-  // int get stopwatch => now.elapsedMicroseconds;
+  final int channels;
 
   SchedulerBinding get scheduler => SchedulerBinding.instance!;
 
@@ -63,9 +62,13 @@ class EventLooper {
       _addEventTask<T>(callback, newKey: key);
 
   /// [onlyLastOne] 模式
-  /// 由于此模式下，可能会丢弃任务，因此无返回值
-  Future<void> addOneEventTask(EventCallback<void> callback, {Object? key}) =>
-      _addEventTask<void>(callback, onlyLastOne: true, newKey: key);
+  ///
+  /// 直接调用最后一个任务
+  ///
+  /// 不确保只调用最后一个任务，因为任务有可能已经进行中
+  /// 由于此模式下，可能会丢弃任务，因此返回值可能为空
+  Future<T?> addOneEventTask<T>(EventCallback<T> callback, {Object? key}) =>
+      _addEventTask<T?>(callback, onlyLastOne: true, newKey: key);
 
   Future<void>? _runner;
   Future<void>? get runner => _runner;
@@ -77,50 +80,61 @@ class EventLooper {
   @protected
   Future<void> looper() async {
     final parallelTasks = <_TaskKey, Future>{};
-    // 由于之前操作都在 `同步` 中执行
-    // 在下一次事件循环时处理任务
-    await releaseUI;
 
     while (_taskPool.isNotEmpty) {
-      final tasks = List.of(_taskPool.values);
-      final last = tasks.last;
       await releaseUI;
 
-      for (final task in tasks) {
-        if (!task.onlyLastOne || task == last) {
-          if (parallels > 1) {
-            // 转移管理权
-            // 已完成的任务会自动移除
-            parallelTasks.putIfAbsent(task.key, () {
-              _taskPool.remove(task.key);
-              return eventRun(task)
-                ..whenComplete(() => parallelTasks.remove(task.key));
-            });
+      assert(() {
+        final keyFirst = _taskPool.keys.first;
+        final task = _taskPool.values.first;
+        return keyFirst == task.key;
+      }());
 
-            // 达到 parallels 数                   ||   最后一个
-            if (parallelTasks.length >= parallels || task == last) {
-              // 任务池中没有任务，等待 parallelTasks 任务
-              while (_taskPool.isEmpty || parallelTasks.length >= parallels) {
-                if (parallelTasks.isEmpty) break;
-                final activeTasks = List.of(parallelTasks.values);
-                await Future.any(activeTasks);
-                await releaseUI;
-              }
+      final task = _taskPool.values.first;
+      final _task = _taskPool.remove(task.key);
 
+      if (_task != task) {
+        if (kReleaseMode)
+          print('error: _task != task');
+        else
+          Log.e('error: _task != task');
+      }
+
+      // 最后一个
+      final isEmpty = _taskPool.isEmpty;
+
+      if (!task.onlyLastOne || isEmpty) {
+        if (channels > 1) {
+          // 转移管理权
+          // 已完成的任务会自动移除
+          parallelTasks.putIfAbsent(task.key, () {
+            _taskPool.remove(task.key);
+            return eventRun(task)
+              ..whenComplete(() => parallelTasks.remove(task.key));
+          });
+
+          // 达到 parallels 数                   ||   最后一个
+          if (parallelTasks.length >= channels || isEmpty) {
+            // 异步循环，状态都要更新
+            while (_taskPool.isEmpty || parallelTasks.length >= channels) {
+              if (parallelTasks.isEmpty) break;
+              final activeTasks = List.of(parallelTasks.values);
+              await Future.any(activeTasks);
               await releaseUI;
-
-              // 所有任务都完成或刷新任务
-              break;
             }
-          } else {
-            await eventRun(task);
+
             await releaseUI;
           }
         } else {
-          task.completed();
+          await eventRun(task);
+          await releaseUI;
         }
+      } else {
+        task.completed();
+        await releaseUI;
       }
     }
+
     assert(parallelTasks.isEmpty);
   }
 
@@ -201,10 +215,18 @@ class _TaskEntry<T> {
     assert(!_completed);
     assert(_completed = true);
 
-    assert(!onlyLastOne || result == null);
-    _completer.complete(result);
-    _looper._taskPool.remove(key);
+    assert(!_looper._taskPool.containsKey(key));
+
+    if (loop) {
+      _looper._taskPool[key] = this;
+      assert(!(_completed = false));
+      loop = false;
+    } else {
+      _completer.complete(result);
+    }
   }
+
+  bool loop = false;
 }
 
 class _TaskKey<T> {

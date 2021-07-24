@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../utils/binding/widget_binding.dart';
 import '../../utils/utils.dart';
-import '../../widgets/text_builder.dart';
 import 'book_history.dart';
 import 'cacheManager.dart';
 import 'chat_room.dart';
@@ -25,10 +24,10 @@ class ListMainPage extends StatelessWidget {
                 child: btn1(
                     radius: 10.0,
                     bgColor: Colors.white,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                      child: Center(child: Text('书单')),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: Center(
+                      child: Text('书单'),
                     ),
                     onTap: () {
                       Navigator.of(context)
@@ -42,12 +41,10 @@ class ListMainPage extends StatelessWidget {
                 child: btn1(
                     radius: 10.0,
                     bgColor: Colors.white,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 10),
-                      child: Center(
-                        child: Text('分类'),
-                      ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                    child: Center(
+                      child: Text('分类'),
                     ),
                     // bgColor: Color.fromRGBO(222, 222, 222, 1),
                     onTap: () {
@@ -66,10 +63,10 @@ class ListMainPage extends StatelessWidget {
                 child: btn1(
                     radius: 10.0,
                     bgColor: Colors.white,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 10),
-                      child: Center(child: Text('榜单')),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                    child: Center(
+                      child: Text('榜单'),
                     ),
                     onTap: () {
                       Navigator.of(context)
@@ -83,10 +80,10 @@ class ListMainPage extends StatelessWidget {
                 child: btn1(
                     radius: 10.0,
                     bgColor: Colors.white,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 10),
-                      child: Center(child: Text('IM')),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                    child: Center(
+                      child: Text('IM'),
                     ),
                     onTap: () {
                       Navigator.of(context)
@@ -103,10 +100,10 @@ class ListMainPage extends StatelessWidget {
               child: btn1(
                   radius: 10.0,
                   bgColor: Colors.white,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                    child: Center(child: Text('缓存管理')),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                  child: Center(
+                    child: Text('缓存管理'),
                   ),
                   onTap: () {
                     Navigator.of(context)
@@ -120,10 +117,10 @@ class ListMainPage extends StatelessWidget {
               child: btn1(
                   radius: 10.0,
                   bgColor: Colors.white,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                    child: Center(child: Text('浏览历史')),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                  child: Center(
+                    child: Text('浏览历史'),
                   ),
                   onTap: () {
                     Navigator.of(context)
@@ -133,13 +130,13 @@ class ListMainPage extends StatelessWidget {
                   }),
             ),
           ]),
+          const SizedBox(width: 5),
           btn1(
               radius: 10.0,
               bgColor: Colors.white,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                child: Center(child: Text('清除')),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+              child: Center(
+                child: Text('清除'),
               ),
               onTap: () {
                 Navigator.of(context)
@@ -151,8 +148,12 @@ class ListMainPage extends StatelessWidget {
                     ),
                     body: Center(
                       child: btn1(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 10),
                           onTap: () {
-                            NopWidgetsFlutterBinding.instance?.clear();
+                            imageCache?.clear();
+                            imageCacheLoop?.clear();
+                            textCache?.clear();
                           },
                           child: Text('清除')),
                     ),

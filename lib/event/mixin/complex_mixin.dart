@@ -49,7 +49,7 @@ mixin ComplexMixin
       final name = data.name;
       final img =
           data.img ?? '${PinyinHelper.getPinyinE('$name', separator: '')}.jpg';
-      Log.e(img);
+
       final _book = book;
 
       if (_book == null) {

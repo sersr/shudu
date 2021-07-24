@@ -127,6 +127,15 @@ class _TextBuilderState extends State<_TextBuilder> {
 
   List<TextInfo>? textInfos;
 
+  TextPainter _painter(String? text,
+      {required TextStyle style, int maxLines = 1}) {
+    return TextPainter(
+        text: TextSpan(text: text, style: style),
+        maxLines: maxLines,
+        ellipsis: '...',
+        textDirection: TextDirection.ltr);
+  }
+
   void _subText() {
     final width = widget.constraints.maxWidth;
     final top = widget.top;
@@ -149,25 +158,16 @@ class _TextBuilderState extends State<_TextBuilder> {
     ];
 
     final all = textCache!.putIfAbsent(keys, (find, putIfAbsent) async {
-      final tpr = TextPainter(
-          text: TextSpan(
-            text: widget.topRightScore,
-            style: ts.body2.copyWith(color: Colors.yellow.shade700),
-          ),
-          maxLines: 1,
-          textDirection: TextDirection.ltr);
-      final tp = TextPainter(
-          text: TextSpan(text: widget.top, style: ts.title3),
-          maxLines: 1,
-          textDirection: TextDirection.ltr);
-      final tc = TextPainter(
-          text: TextSpan(text: widget.center, style: ts.body2),
-          maxLines: widget.centerLines,
-          textDirection: TextDirection.ltr);
-      final tb = TextPainter(
-          text: TextSpan(text: widget.bottom, style: ts.body3),
-          maxLines: widget.bottomLines,
-          textDirection: TextDirection.ltr);
+      final tpr = _painter(widget.topRightScore,
+          style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1);
+
+      final tp = _painter(widget.top, style: ts.title3, maxLines: 1);
+
+      final tc = _painter(widget.center,
+          style: ts.body2, maxLines: widget.centerLines);
+
+      final tb = _painter(widget.bottom,
+          style: ts.body3, maxLines: widget.bottomLines);
 
       final topRightKey = [width, topRight, 1];
       final _tpr = await putIfAbsent(topRightKey, () async {
@@ -218,119 +218,27 @@ class _TextBuilderState extends State<_TextBuilder> {
     });
   }
 
-  // TextPainter? tp;
-  // TextPainter? tc;
-  // TextPainter? tb;
-  // void _sub() {
-  //   final tpr = TextPainter(
-  //       text: TextSpan(
-  //         text: widget.topRightScore,
-  //         style: ts.body2.copyWith(color: Colors.yellow.shade700),
-  //       ),
-  //       maxLines: 1,
-  //       textDirection: TextDirection.ltr);
-  //   final tp = TextPainter(
-  //       text: TextSpan(text: widget.top, style: ts.title3),
-  //       maxLines: 1,
-  //       textDirection: TextDirection.ltr);
-  //   final tc = TextPainter(
-  //       text: TextSpan(text: widget.center, style: ts.body2),
-  //       maxLines: widget.centerLines,
-  //       textDirection: TextDirection.ltr);
-  //   final tb = TextPainter(
-  //       text: TextSpan(text: widget.bottom, style: ts.body3),
-  //       maxLines: widget.bottomLines,
-  //       textDirection: TextDirection.ltr);
-  //   final width = widget.constraints.maxWidth;
-
-  //   final keys = [
-  //     width,
-  //     widget.topRightScore,
-  //     widget.top,
-  //     widget.center,
-  //     widget.bottom,
-  //     1,
-  //     1,
-  //     widget.centerLines,
-  //     widget.bottomLines,
-  //   ];
-  //   final height = widget.constraints.maxHeight;
-  //   final _all = pictureCache!.putIfAbsent(keys, (canvas) async {
-  //     tpr.layout(maxWidth: width);
-  //     await releaseUI;
-
-  //     tp.layout(maxWidth: width - tpr.width);
-  //     await releaseUI;
-
-  //     tc.layout(maxWidth: width);
-  //     await releaseUI;
-
-  //     tb.layout(maxWidth: width);
-
-  //     final topHeight = math.max(tpr.height, tp.height);
-  //     final allHeight = topHeight + tc.height + tb.height;
-  //     final avg = (height - allHeight) / 4;
-  //     var _h = avg;
-
-  //     tpr.paint(canvas, Offset(width - tpr.width, _h));
-
-  //     tp.paint(canvas, Offset(0.0, _h));
-  //     _h += avg + topHeight;
-
-  //     tc.paint(canvas, Offset(0.0, _h));
-  //     _h += avg + tc.height;
-
-  //     tb.paint(canvas, Offset(0.0, _h));
-  //     return Size(width, _h);
-  //   });
-
-  //   if (all != _all) {
-  //     all?.removeListener(PictureListener(onListener));
-  //     _all.addListener(PictureListener(onListener));
-  //     all = _all;
-  //   }
-  // }
-
-  // PictureStream? all;
-  // PictureInfo? allPictureInfo;
-
-  // void onListener(PictureInfo? pic, bool error, bool sync) {
-  //   assert(mounted);
-  //   setState(() {
-  //     allPictureInfo?.dispose();
-  //     allPictureInfo = pic;
-  //   });
-  // }
-
-  // bool onDefLoad() =>
-  //     mounted && Scrollable.recommendDeferredLoadingForContext(context);
-
   @override
   void dispose() {
     super.dispose();
     textInfos?.forEach((info) => info.dispose());
     _textStream?.removeListener(onTextListener);
-
-    // all?.removeListener(PictureListener(onListener));
-    // allPictureInfo?.dispose();
-    // allPictureInfo = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    // return PictureWidget(info: allPictureInfo);
-    return _items(textInfos?.map((e) => e.painter));
+    return _items(textInfos);
   }
 
-  Widget _items(Iterable<TextPainter>? data) {
+  Widget _items(Iterable<TextInfo>? data) {
     final length = data?.length;
     if (data != null && length! >= 4) {
       return ItemWidget(
           height: widget.height,
-          topRight: AsyncText.async(data.elementAt(0)),
-          top: AsyncText.async(data.elementAt(1)),
-          center: AsyncText.async(data.elementAt(2)),
-          bottom: AsyncText.async(data.elementAt(3)));
+          topRight: AsyncText.async(data.elementAt(0).painter),
+          top: AsyncText.async(data.elementAt(1).painter),
+          center: AsyncText.async(data.elementAt(2).painter),
+          bottom: AsyncText.async(data.elementAt(3).painter));
     } else {
       return const SizedBox();
     }
@@ -381,8 +289,8 @@ class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
     final constraints = BoxConstraints.loose(size);
 
     var topRight = Size.zero;
-
-    if (hasChild(_topRight)) topRight = layoutChild(_topRight, constraints);
+    final hasRight = hasChild(_topRight);
+    if (hasRight) topRight = layoutChild(_topRight, constraints);
     if (hasChild(_top) && hasChild(_center) && hasChild(_bottom)) {
       final top = layoutChild(
           _top,
@@ -400,7 +308,7 @@ class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
       cHeight = d + 2.5;
 
       positionChild(_top, Offset(0, cHeight));
-      if (hasChild(_topRight))
+      if (hasRight)
         positionChild(_topRight, Offset(size.width - topRight.width, cHeight));
       cHeight += _topHeight + d;
       positionChild(_center, Offset(0, cHeight));

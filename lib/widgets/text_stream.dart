@@ -7,18 +7,18 @@ import 'list_key.dart';
 
 class TextCache {
   void clear() {
-    clearDispose(_textDisposesCaches);
     clearDispose(_textDisposes);
     clearDispose(_textListeners);
-    clearDisposeRef(_textRefDisposeCaches);
+
     clearDisposeRef(_textRefDispose);
     clearDisposeRef(_textRef);
   }
 
   void clearDispose(Map<ListKey, TextStream> map) {
-    print('dispose: ${map.length}');
-    map.values.forEach((stream) => stream.dispose());
+    print('text dispose: ${map.length}');
+    final _map = List.of(map.values);
     map.clear();
+    _map.forEach((stream) => stream.dispose());
   }
 
   void clearDisposeRef(Map<ListKey, TextRef> map) {
@@ -28,32 +28,23 @@ class TextCache {
 
   final _textRef = <ListKey, TextRef>{};
   final _textRefDispose = <ListKey, TextRef>{};
-  final _textRefDisposeCaches = <ListKey, TextRef>{};
 
   final _textLooper = EventLooper();
   final _textListeners = <ListKey, TextStream>{};
   final _textDisposes = <ListKey, TextStream>{};
-  final _textDisposesCaches = <ListKey, TextStream>{};
 
   TextStream? getListener(ListKey key) {
     var listener = _textListeners[key];
 
     if (listener == null) {
-      listener ??= _textDisposes.remove(key);
+      listener = _textDisposes.remove(key);
 
       if (listener != null) {
-        assert(!_textDisposesCaches.containsKey(key));
         _textListeners[key] = listener;
       }
     }
-    if (listener == null) {
-      listener = _textDisposesCaches.remove(key);
-
-      if (listener != null) _textListeners[key] = listener;
-    }
 
     assert(!_textDisposes.containsKey(key));
-    assert(!_textDisposesCaches.containsKey(key));
 
     return listener;
   }
@@ -63,17 +54,11 @@ class TextCache {
     if (textRef == null) {
       textRef = _textRefDispose.remove(key);
       if (textRef != null) {
-        assert(!_textDisposesCaches.containsKey(key));
         _textRef[key] = textRef;
       }
     }
-    if (textRef == null) {
-      textRef = _textRefDisposeCaches.remove(key);
-      if (textRef != null) _textRef[key] = textRef;
-    }
 
     assert(!_textDisposes.containsKey(key));
-    assert(!_textDisposesCaches.containsKey(key));
 
     if (textRef != null) {
       return TextInfo.text(textRef);
@@ -96,21 +81,9 @@ class TextCache {
         final _stream = _textListeners.remove(key);
         assert(_stream == stream);
         if (stream.success) {
-          if (_textDisposesCaches.length > 350) {
-            final keyFirst = _textDisposesCaches.keys.first;
-            _textDisposesCaches.remove(keyFirst)?.dispose();
-          }
-
-          final disposeLength = _textDisposes.length;
-
-          /// 缓存超过100，移到二级缓存，由二级缓存释放
-          if (disposeLength >= 30) {
+          if (_textDisposes.length > 150) {
             final keyFirst = _textDisposes.keys.first;
-
-            final firstValue = _textDisposes.remove(keyFirst);
-            if (firstValue != null) {
-              _textDisposesCaches[keyFirst] = firstValue;
-            }
+            _textDisposes.remove(keyFirst)?.dispose();
           }
 
           _textDisposes[key] = stream;
@@ -141,33 +114,24 @@ class TextCache {
       Future<TextInfo> putIfAbsent(
           List keys, TextPainterBuilder builder) async {
         final key = ListKey(keys);
-        final _textInfo = innerGetTextRef(keys);
+        var _textInfo = innerGetTextRef(keys);
 
-        if (_textInfo != null) {
-          return _list[key] = _textInfo;
-        } else {
+        if (_textInfo == null) {
           final _text = _textRef[key] = TextRef(await builder(), (ref) {
             if (_textRef.containsKey(key)) {
               final text = _textRef.remove(key);
               assert(text == ref, '$text, $ref');
 
-              if (_textRefDisposeCaches.length > 100) {
-                final keyFirst = _textRefDisposeCaches.keys.first;
-                _textRefDisposeCaches.remove(keyFirst);
-              }
-              if (_textRefDispose.length >= 20) {
+              if (_textRefDispose.length > 40) {
                 final keyFirst = _textRefDispose.keys.first;
-
-                final firstValue = _textRefDispose.remove(keyFirst);
-                if (firstValue != null) {
-                  _textRefDisposeCaches[keyFirst] = firstValue;
-                }
+                _textRefDispose.remove(keyFirst);
               }
               _textRefDispose[key] = ref;
             }
           });
-          return _list[key] = TextInfo.text(_text);
+          _textInfo = TextInfo.text(_text);
         }
+        return _list[key] = _textInfo;
       }
 
       await releaseUI;
@@ -177,8 +141,9 @@ class TextCache {
       } catch (e) {
         error = true;
       } finally {
+        final infos = _list.values;
         await releaseUI;
-        stream.setTextInfo(_list.values.toList(), error);
+        stream.setTextInfo(infos, error);
         await releaseUI;
       }
     });
@@ -206,7 +171,7 @@ class TextStream {
 
   bool get success => _textInfos != null && !_error && _done;
 
-  void setTextInfo(List<TextInfo>? textInfos, bool error) {
+  void setTextInfo(Iterable<TextInfo>? textInfos, bool error) {
     assert(!_done);
 
     _done = true;
@@ -220,7 +185,7 @@ class TextStream {
       textInfos?.forEach((info) => info.dispose());
     } else {
       assert(!_schedule);
-      _textInfos = textInfos;
+      _textInfos = textInfos?.toList();
       if (list.isEmpty) onRemove(this);
     }
   }
@@ -233,7 +198,7 @@ class TextStream {
     listener(_map(_textInfos), _error);
   }
 
-  List<TextInfo>? _map(List<TextInfo>? infos) {
+  List<TextInfo>? _map(Iterable<TextInfo>? infos) {
     return infos?.map((e) => e.clone()).toList();
   }
 

@@ -18,7 +18,7 @@ class ShuduApp extends StatelessWidget {
         title: 'shudu',
         theme: ThemeData.light().copyWith(
           colorScheme: ColorScheme.light(
-              // primary: Colors.grey.shade100,
+            // primary: Colors.grey.shade100,
             // primaryVariant: Colors.grey.shade200,
             secondary: Colors.grey,
             // onPrimary: Colors.grey.shade700,
@@ -30,7 +30,8 @@ class ShuduApp extends StatelessWidget {
           // brightness: Brightness.light,
           // primaryColorBrightness: Brightness.light,
           // primaryColor: Colors.grey.shade900,
-          // fontFamily: 'NotoSansSC',
+          // fontFamily: 'NotoSansSC',]
+
           pageTransitionsTheme: const PageTransitionsTheme(builders: {
             TargetPlatform.iOS: SlidePageTransition(),
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()

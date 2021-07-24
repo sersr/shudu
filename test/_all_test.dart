@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:shudu/utils/tools/event_callback_looper.dart';
+import 'package:shudu/utils/tools/event_looper/event_callback_looper.dart';
 
 void main() async {
   test('future', () {

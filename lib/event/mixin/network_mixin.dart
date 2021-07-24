@@ -108,7 +108,7 @@ mixin NetworkMixin implements CustomEvent {
 }
 
 final imageSave = EventLooper();
-final imageNet = EventLooper(parallels: 10);
+final imageNet = EventLooper(channels: 4);
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
@@ -501,7 +501,7 @@ extension _NetworkImpl on NetworkMixin {
 
     await releaseUI;
     List<Uint8List>? imgData;
-    // await imageNet.addEventTask(() async {
+    await imageNet.addEventTask(() async {
     await releaseUI;
 
     try {
@@ -515,11 +515,11 @@ extension _NetworkImpl on NetworkMixin {
       _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
       assert(Log.w('$imgName,$url !!!'));
     }
-    // });
+    });
 
     final data = imgData;
     if (data != null && success) {
-      // await imageSave.addEventTask(() async {
+      await imageSave.addEventTask(() async {
       final f = File(imgPath);
       await f.create(recursive: true);
       final o = await f.open(mode: FileMode.write);
@@ -529,20 +529,20 @@ extension _NetworkImpl on NetworkMixin {
 
           final length = d.length;
         await releaseUI;
-        await o.writeFrom(d);
+        // await o.writeFrom(d);
         // print('data: $length');
-        // for (var i = 0; i < length;) {
-        //   final start = i;
-        //     i += 400;
-        //   final end = math.min(i, length);
-        //   await o.writeFrom(d, start, end);
-        //   await releaseUI;
-        // }
+        for (var i = 0; i < length;) {
+            final start = i;
+            i += 400;
+            final end = math.min(i, length);
+            await o.writeFrom(d, start, end);
+            await releaseUI;
+          }
       }
 
         await o.close();
       // await releaseUI;
-      // });
+      });
     }
 
     if (success) {

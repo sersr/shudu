@@ -3,28 +3,30 @@ import 'dart:ui' as ui;
 import 'package:meta/meta.dart';
 import '../utils/utils.dart';
 
-// import '../utils/utils.dart';
-
+/// 本来目的是存储 [ui.Picture]
 class PictureInfo {
-  PictureInfo.picture(ui.Picture pic, ui.Size size)
-      : _picture = PictureRef._(pic, size) {
+  PictureInfo.picture(ui.Image pic) : _picture = PictureRef._(pic) {
     _picture.add(this);
   }
-  PictureInfo(this._picture);
+  PictureInfo._(this._picture);
   final PictureRef _picture;
 
-  void drawPicture(ui.Canvas canvas) {
+  void drawPicture(ui.Canvas canvas, ui.Rect src, ui.Rect dst, ui.Paint paint) {
     assert(!_picture._dispose);
-    canvas.drawPicture(_picture.picture);
+    // canvas.drawPicture(_picture.picture);
+    canvas.drawImageRect(_picture.picture, src, dst, paint);
   }
 
   ui.Size get size {
     assert(!_picture._dispose);
-    return _picture.size;
+    final pic = _picture.picture;
+
+    return ui.Size(pic.width.toDouble(), pic.height.toDouble());
   }
 
   PictureInfo clone() {
-    final _clone = PictureInfo(_picture);
+    assert(!_picture._dispose);
+    final _clone = PictureInfo._(_picture);
     _picture.add(_clone);
     return _clone;
   }
@@ -41,21 +43,21 @@ class PictureInfo {
 }
 
 class PictureRef {
-  PictureRef._(this.picture, this.size);
-  final ui.Picture picture;
-  final ui.Size size;
-  final Set<PictureInfo> _list = <PictureInfo>{};
+  PictureRef._(this.picture);
+  final ui.Image picture;
+
+  final Set<PictureInfo> _handles = <PictureInfo>{};
 
   void add(PictureInfo info) {
     assert(!_dispose);
-    _list.add(info);
+    _handles.add(info);
   }
 
   bool _dispose = false;
   void dispose(PictureInfo info) {
     assert(!_dispose);
-    _list.remove(info);
-    if (_list.isEmpty) {
+    _handles.remove(info);
+    if (_handles.isEmpty) {
       _dispose = true;
       picture.dispose();
     }
@@ -122,7 +124,7 @@ class PictureStream {
     _list.remove(callback);
     // assert(Log.e('remove: $hashCode'));
 
-    if (!hasListener && !_dispose && onRemove != null && _done) {
+    if (!hasListener && !_dispose && onRemove != null) {
       if (schedule) return;
       // assert(Log.w('_will dispose..  $hashCode'));
       scheduleMicrotask(() {
@@ -142,8 +144,8 @@ class PictureStream {
 
   bool get hasListener => _list.isNotEmpty;
 
-  bool get close => _image?.close == true;
-  bool get active => _image?.close != false;
+  bool get close => _dispose;
+  // bool get active => _image?.close != false;
 
   bool _dispose = false;
 

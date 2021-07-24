@@ -56,7 +56,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
 
     if (data.bookList != null)
       for (var l in data.bookList!)
-        yield ListItemBuilder(
+        yield ListItem(
           height: 108,
           onTap: () => BookInfoPage.push(context, l.bookId!),
           child: ShudanListDetailItemWidget(l: l),

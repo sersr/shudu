@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../utils/utils.dart';
-import '../../widgets/list_key.dart';
 
-class ListItemBuilder extends StatelessWidget {
-  const ListItemBuilder({
+class ListItem extends StatelessWidget {
+  ListItem({
     Key? key,
     required this.child,
     this.onLongPress,
     this.onTap,
     this.background = true,
     this.height,
+    this.color = const Color.fromRGBO(242, 242, 242, 1),
+    this.bgColor = const Color.fromRGBO(250, 250, 250, 1),
+    this.splashColor = const Color.fromRGBO(225, 225, 225, 1),
   }) : super(key: key);
 
   final Widget child;
@@ -18,9 +20,9 @@ class ListItemBuilder extends StatelessWidget {
   final VoidCallback? onLongPress;
   final bool background;
   final double? height;
-
-  final bgColor = const Color.fromRGBO(250, 250, 250, 1);
-  final spalColor = const Color.fromRGBO(225, 225, 225, 1);
+  final Color color;
+  final Color bgColor;
+  final Color splashColor;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class ListItemBuilder extends StatelessWidget {
           onLongPress: onLongPress,
           radius: 6.0,
           bgColor: bgColor,
-          splashColor: spalColor,
+          splashColor: splashColor,
           child: child),
     );
   }
@@ -65,7 +67,6 @@ class ListViewBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ScrollConfiguration;
     final delegate = MyDelegate(itemBuilder,
         childCount: itemCount, finishLayout: finishLayout);
     return ColoredBox(
@@ -90,10 +91,9 @@ typedef FinishLayout = void Function(int firstIndex, int lstIndex);
 
 class MyDelegate extends SliverChildBuilderDelegate {
   MyDelegate(NullableIndexedWidgetBuilder builder,
-      {this.key, this.finishLayout, int? childCount})
+      {this.finishLayout, int? childCount})
       : super(builder, childCount: childCount);
 
-  final ListKey? key;
   final FinishLayout? finishLayout;
   @override
   void didFinishLayout(int firstIndex, int lastIndex) {
@@ -106,7 +106,7 @@ class MyScrollPhysics extends ScrollPhysics {
   @override
   bool recommendDeferredLoading(
       double velocity, ScrollMetrics metrics, BuildContext context) {
-    return velocity.abs() > 200;
+    return velocity.abs() > 300;
   }
 
   @override

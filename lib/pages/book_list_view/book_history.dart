@@ -45,7 +45,7 @@ class _BookHistoryState extends State<BookHistory> {
                 padding: const EdgeInsets.only(bottom: 12.0),
                 itemBuilder: (context, index) {
                   final item = data[index];
-                  return ListItemBuilder(
+                  return ListItem(
                       onTap: () {
                         if (item.bookId != null)
                           BookInfoPage.push(context, item.bookId!);

@@ -357,7 +357,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
     if (info.sameUserBooks != null)
       for (var l in info.sameUserBooks!)
-        yield ListItemBuilder(
+        yield ListItem(
             height: 108,
             child: _BookInfoSameItemWidget(l: l, author: info.author),
             onTap: () =>

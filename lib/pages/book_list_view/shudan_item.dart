@@ -5,7 +5,7 @@ import '../../widgets/text_builder.dart';
 import '../embed/images.dart';
 
 class ShudanItem extends StatelessWidget {
-  const ShudanItem(
+  ShudanItem(
       {Key? key,
       this.img,
       this.name,
@@ -32,11 +32,9 @@ class ShudanItem extends StatelessWidget {
         children: [
           LayoutId(
             id: ImageLayout.image,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: ImageResolve(img: img),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: ImageResolve(img: img),
             ),
           ),
           LayoutId(

@@ -39,9 +39,9 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('分类', style: ts.bigTitle1),
+          title: Text('分类'),
           centerTitle: true,
-          backgroundColor: Colors.white,
+          // backgroundColor: Colors.white,
           elevation: 1.0,
         ),
         body: Center(
@@ -277,7 +277,7 @@ class _CategListViewState extends State<CategListView>
                   return Container(height: 50, child: loadingIndicator());
                 }
                 final _item = _data[index];
-                return ListItemBuilder(
+                return ListItem(
                   onTap: () => _item.id != null
                       ? BookInfoPage.push(context, _item.id!)
                       : null,

@@ -59,10 +59,13 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
-    if (Platform.isAndroid) FlutterDisplayMode.active.then(print);
-    // final f = Directory('/storage/emulated/0');
-    getExternalStorageDirectories().then((value) => Log.w(value));
-    getApplicationDocumentsDirectory().then((value) => Log.w(value));
+    if (Platform.isAndroid) {
+      FlutterDisplayMode.active.then(print);
+      // final f = Directory('/storage/emulated/0');
+
+      getExternalStorageDirectories().then((value) => Log.w(value));
+      getApplicationDocumentsDirectory().then((value) => Log.w(value));
+    }
     // f.exists().then((value) async {
     //   if (value) {
     //     final list = await f.list().toList();

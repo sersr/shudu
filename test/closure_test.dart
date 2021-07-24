@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/utils/utils.dart';
@@ -20,6 +20,15 @@ void main() async {
     flock(f, '2');
     await release(const Duration(seconds: 5));
   });
+
+  test('futurOr', () async {
+    await call(null);
+  });
+}
+
+FutureOr<String> call(FutureOr<String?> str) {
+  print('...');
+  return 'hell';
 }
 
 void flock(File f, String label) async {

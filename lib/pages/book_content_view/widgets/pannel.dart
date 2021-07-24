@@ -326,11 +326,6 @@ class _BottomEndState extends State<BottomEnd> {
   Size bsize = const Size(0.0, 10);
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
@@ -365,48 +360,80 @@ class _BottomEndState extends State<BottomEnd> {
                   left: 24.0 + bloc.safePadding.left,
                   right: 24.0 + bloc.safePadding.right,
                   bottom: 0);
-              return AnimatedBuilder(
-                animation: colors,
-                builder: (context, child) {
-                  if (state.hide.value) return const SizedBox();
-                  return RepaintBoundary(
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _controller.hideOnCallback,
-                            child: Container(
-                              color: colors.value ?? Colors.transparent,
-                              padding: padding,
-                              child:
-                                  GestureDetector(onTap: () {}, child: child),
-                            ),
-                          ),
+              // if (state.hide.value) return const SizedBox();
+
+              final bottom = 30 + bsize.height;
+              return RepaintBoundary(
+                child: CustomMultiChildLayout(
+                  delegate: ModalPart(bottom),
+                  children: [
+                    LayoutId(
+                      id: 'body',
+                      child: RepaintBoundary(
+                        child: AnimatedBuilder(
+                          animation: state.hide,
+                          builder: (context, _) {
+                            return IgnorePointer(
+                              ignoring: state.hide.value,
+                              child: GestureDetector(
+                                onTap: _controller.hideOnCallback,
+                                child: RepaintBoundary(
+                                  child: AnimatedBuilder(
+                                    animation: colors,
+                                    builder: (context, child) {
+                                      return ColoredBox(
+                                        color:
+                                            colors.value ?? Colors.transparent,
+                                        child: GestureDetector(
+                                            onTap: () {}, child: child),
+                                      );
+                                    },
+                                    child: RepaintBoundary(
+                                      child: SlideTransition(
+                                        position: position,
+                                        child: FadeTransition(
+                                          opacity: curve,
+                                          child: Padding(
+                                            padding: padding,
+                                            child: Material(
+                                              borderRadius:
+                                                  BorderRadius.circular(6.0),
+                                              color: Colors.grey.shade300,
+                                              clipBehavior: Clip.hardEdge,
+                                              child: BookSettingsView(
+                                                showSettings: showSettings,
+                                                close:
+                                                    _controller.hideOnCallback,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        IgnorePointer(
-                          child: Container(
-                            color: colors.value ?? Colors.transparent,
-                            height: 22 + bsize.height,
-                          ),
-                        )
-                      ],
-                    ),
-                  );
-                },
-                child: SlideTransition(
-                  position: position,
-                  child: FadeTransition(
-                    opacity: curve,
-                    child: Material(
-                      borderRadius: BorderRadius.circular(6.0),
-                      color: Colors.grey.shade300,
-                      clipBehavior: Clip.hardEdge,
-                      child: BookSettingsView(
-                        showSettings: showSettings,
-                        close: _controller.hideOnCallback,
                       ),
                     ),
-                  ),
+                    LayoutId(
+                      id: 'bottom',
+                      child: IgnorePointer(
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
+                              animation: colors,
+                              builder: (context, _) {
+                                return Container(
+                                  color: colors.value ?? Colors.transparent,
+                                  height: bottom,
+                                );
+                              }),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
               );
             },
@@ -435,7 +462,7 @@ class _BottomEndState extends State<BottomEnd> {
           builder: (context, _) {
             final bottom = size.height >= size.width ? bloc.safeBottom : 0.0;
             return Padding(
-              padding: EdgeInsets.only(top: 4.0, bottom: 8.0 + bottom),
+              padding: EdgeInsets.only(top: 6.0, bottom: 8.0 + bottom),
               child: Row(
                 children: [
                   Expanded(
@@ -676,6 +703,12 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   late ValueNotifier<HSVColor> ftColor;
   late ContentNotifier bloc;
   Widget? _setting;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -989,9 +1022,11 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     );
   }
 
+  List<Widget>? children;
+
   @override
   Widget build(BuildContext context) {
-    var children2 = [
+    children ??= [
       IndexsWidget(
         onTap: (context, id, cid) {
           final index = context.read<BookIndexNotifier>();
@@ -1009,9 +1044,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       animation: widget.showSettings,
       builder: (context, child) {
         return IndexedStack(
-          index: widget.showSettings.value.index,
-          children: children2,
-        );
+            index: widget.showSettings.value.index, children: children!);
+        // return children2[widget.showSettings.value.index];
         // switch (widget.showSettings.value) {
         //   case SettingView.indexs:
         //     return indexs ??= IndexsWidget(
@@ -1051,8 +1085,7 @@ typedef ChildBuilder = Widget Function(
 
 class PannelSlide extends StatefulWidget {
   const PannelSlide(
-      {this.milliseconds,
-      this.middleChild,
+      {this.middleChild,
       this.botChild,
       this.topChild,
       this.leftChild,
@@ -1066,7 +1099,6 @@ class PannelSlide extends StatefulWidget {
             leftChild != null ||
             rightChild != null ||
             middleChild != null);
-  final int? milliseconds;
   final bool modal;
   final double ignoreBottomHeight;
   final PanSlideController controller;
@@ -1223,5 +1255,32 @@ class _PannelSlideState extends State<PannelSlide> {
       children.add(Positioned.fill(child: RepaintBoundary(child: milldle)));
     }
     return Stack(children: children);
+  }
+}
+
+class ModalPart extends MultiChildLayoutDelegate {
+  ModalPart(this.bottom);
+  final double bottom;
+
+  @override
+  void performLayout(Size size) {
+    final _body = 'body';
+    final _bottom = 'bottom';
+    final height = size.height;
+    final width = size.width;
+
+    final constraints =
+        BoxConstraints.tightFor(width: width, height: height - bottom);
+    layoutChild(_body, constraints);
+    positionChild(_body, Offset.zero);
+    final bottomConstraints =
+        BoxConstraints.tightFor(width: width, height: bottom);
+    layoutChild(_bottom, bottomConstraints);
+    positionChild(_bottom, Offset(0, height - bottom));
+  }
+
+  @override
+  bool shouldRelayout(covariant ModalPart oldDelegate) {
+    return bottom != oldDelegate.bottom;
   }
 }

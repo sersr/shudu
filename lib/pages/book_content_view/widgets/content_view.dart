@@ -6,6 +6,7 @@ import '../../../provider/painter_notifier.dart';
 import '../../../utils/utils.dart';
 
 /// TODO: 分行渲染
+/// 一个 [Picture] 绘制大多内容了
 class ContentView extends SingleChildRenderObjectWidget {
   ContentView({
     Key? key,

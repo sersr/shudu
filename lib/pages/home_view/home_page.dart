@@ -601,7 +601,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 itemCount: children.length,
                 itemBuilder: (_, index) {
                   final item = children[index];
-                  return ListItemBuilder(
+                  return ListItem(
                     onTap: () {
                       BookContentPage.push(
                           context, item.bookId!, item.chapterId!, item.page!);

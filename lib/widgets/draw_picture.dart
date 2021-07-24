@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../utils/utils.dart';
 import 'picture_info.dart';
 
 class PictureWidget extends LeafRenderObjectWidget {
@@ -57,12 +56,18 @@ class PictureRenderBox extends RenderBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_info != null) {
-      context.setWillChangeHint();
+      // context.setWillChangeHint();
 
       final canvas = context.canvas;
       // canvas.save();
       // canvas.translate(offset.dx, offset.dy);
-      _info!.drawPicture(canvas);
+      final src = Offset.zero & _info!.size;
+      final paint = Paint()..isAntiAlias = true;
+
+      paint.color = Color.fromRGBO(0, 0, 0, 1);
+      paint.filterQuality = FilterQuality.low;
+      // paint.invertColors = invertColors;
+      _info!.drawPicture(canvas, src, offset & size, paint);
 
       // canvas.restore();
     }

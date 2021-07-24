@@ -162,7 +162,7 @@ class _TopListViewState extends State<TopListView> with PageAnimationMixin {
               }
 
               final _item = _data[index];
-              return ListItemBuilder(
+              return ListItem(
                   onTap: () {
                     if (_item.id != null) BookInfoPage.push(context, _item.id!);
                   },

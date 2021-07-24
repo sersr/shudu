@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../../database/database.dart';
 import '../../event/event.dart';
-import '../../provider/text_styles.dart';
 import '../../utils/utils.dart';
 import '../../utils/widget/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
@@ -43,13 +42,13 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
+    // final ts = context.read<TextStyleConfig>();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text('缓存管理'),
-        backgroundColor: Colors.white,
-        titleTextStyle: ts.bigTitle1,
+        // backgroundColor: Colors.white,
+        // titleTextStyle: ts.bigTitle1,
         elevation: 1.0,
       ),
       body: AnimatedBuilder(
@@ -89,7 +88,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             ? 0.0
             : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
 
-        return ListItemBuilder(
+        return ListItem(
           onTap: () {
             _cacheNotifier.exit = true;
             BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(
