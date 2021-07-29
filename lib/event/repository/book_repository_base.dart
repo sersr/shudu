@@ -14,8 +14,8 @@ import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:useful_tools/common.dart';
 
-import '../../utils/utils.dart';
 import '../base/book_event.dart';
 import '../base/repository.dart';
 import '../base/type_adapter.dart';
@@ -125,7 +125,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
     _waits
       ..add(getApplicationDocumentsDirectory().then((dir) => appDir = dir))
-      ..add(orientation(true))
+      ..add(setOrientation(true))
       ..add(getBatteryLevel)
       ..add(getViewInsets);
 

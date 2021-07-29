@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'pages/app.dart';
-import 'utils/binding/widget_binding.dart';
-import 'utils/utils.dart';
-import 'utils/widget/shader_warmup.dart';
-
+import 'package:useful_tools/useful_tools.dart';
 void main() async {
-  PaintingBinding.shaderWarmUp = const MyShaderWarmUp();
+  // PaintingBinding.shaderWarmUp = const MyShaderWarmUp();
   // WidgetsFlutterBinding.ensureInitialized();
   NopWidgetsFlutterBinding.ensureInitialized();
   await uiOverlay(hide: false);

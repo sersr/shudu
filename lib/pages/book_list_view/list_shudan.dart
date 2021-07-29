@@ -5,52 +5,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/book_list.dart';
 import '../../event/event.dart';
 import '../../provider/text_styles.dart';
-import '../../utils/utils.dart';
-import '../embed/list_builder.dart';
 import 'list_shudan_detail.dart';
 import 'shudan_item.dart';
 
-class ListShudanPage extends StatefulWidget {
-  @override
-  _ListShudanPageState createState() => _ListShudanPageState();
-}
-
-class _ListShudanPageState extends State<ListShudanPage>
-    with SingleTickerProviderStateMixin {
-  late TabController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = TabController(initialIndex: 0, length: 3, vsync: this);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    controller.dispose();
-  }
-
+class ListShudanPage extends StatelessWidget {
+  ListShudanPage({Key? key}) : super(key: key);
   final c = const ['new', 'hot', 'collect'];
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Scaffold(
-        body: BarLayout(
+    return Scaffold(
+      body: DefaultTabController(
+        length: 3,
+        child: BarLayout(
           title: Text('书单'),
           bottom: TabBar(
-            controller: controller,
+            // controller: controller,
             labelColor: TextStyleConfig.blackColor7,
             unselectedLabelColor: TextStyleConfig.blackColor2,
             indicatorColor: Colors.pink.shade200,
@@ -70,7 +45,7 @@ class _ListShudanPageState extends State<ListShudanPage>
             ],
           ),
           body: TabBarView(
-            controller: controller,
+            // controller: controller,
             children: List.generate(
                 3, (index) => WrapWidget(index: index, urlKey: c[index])),
           ),
@@ -96,16 +71,16 @@ class WrapWidget extends StatefulWidget {
 
 class _WrapWidgetState extends State<WrapWidget>
     with AutomaticKeepAliveClientMixin {
-  late RefreshController controller;
   late ScrollController scrollController;
 
   late ShudanCategProvider shudanProvider;
+  TabController? tabController;
 
   @override
   void initState() {
     super.initState();
     scrollController = ScrollController();
-    controller = RefreshController();
+
     shudanProvider = ShudanCategProvider(widget.index, widget.urlKey);
   }
 
@@ -113,7 +88,17 @@ class _WrapWidgetState extends State<WrapWidget>
   void didChangeDependencies() {
     super.didChangeDependencies();
     shudanProvider.repository = context.read<Repository>();
-    shudanProvider.load();
+    // shudanProvider.load();
+    tabController?.removeListener(onUpdate);
+    tabController = DefaultTabController.of(context);
+    tabController?.addListener(onUpdate);
+    onUpdate();
+  }
+
+  void onUpdate() {
+    if (tabController?.index == widget.index) {
+      if (!shudanProvider.initialized) shudanProvider.load();
+    }
   }
 
   @override
@@ -147,7 +132,7 @@ class _WrapWidgetState extends State<WrapWidget>
           finishLayout: (first, last) {
             final state = shudanProvider.state;
 
-            if (last == list.length) {
+            if (last >= list.length - 3) {
               if (state == LoadingStatus.success) {
                 shudanProvider.loadNext(last);
               }
@@ -165,9 +150,10 @@ class _WrapWidgetState extends State<WrapWidget>
 
               child ??= loadingIndicator();
 
-              return Padding(
+              return Container(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Container(height: 40, child: child),
+                height: 40,
+                child: child,
               );
             }
 
@@ -195,7 +181,7 @@ class _WrapWidgetState extends State<WrapWidget>
 
   @override
   void dispose() {
-    controller.dispose();
+    tabController?.removeListener(onUpdate);
     scrollController.dispose();
     super.dispose();
   }
@@ -222,7 +208,7 @@ class ShudanCategProvider extends ChangeNotifier {
     }
   }
 
-  final _loop = EventLooper();
+  final _loop = EventQueue();
 
   bool get onWork => _loop.runner == null;
 
@@ -325,27 +311,30 @@ class BarLayout extends StatelessWidget {
       color: Color.fromARGB(255, 240, 240, 240),
       child: SafeArea(
         child: Column(children: [
-          CustomMultiChildLayout(
-              delegate: MultLayout(mSize: Size(size.width, 90)),
-              children: [
-                LayoutId(
-                    id: 'back',
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16.0),
-                      child: InkWell(
-                          borderRadius: BorderRadius.circular(40),
-                          onTap: () => Navigator.maybePop(context),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.arrow_back, size: 24),
-                          )),
-                    )),
-                LayoutId(
-                    id: 'title',
-                    child: DefaultTextStyle(style: ts.bigTitle1, child: title)),
-                LayoutId(id: 'bottom', child: bottom)
-              ]),
-          Expanded(child: body)
+          RepaintBoundary(
+            child: CustomMultiChildLayout(
+                delegate: MultLayout(mSize: Size(size.width, 90)),
+                children: [
+                  LayoutId(
+                      id: 'back',
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16.0),
+                        child: InkWell(
+                            borderRadius: BorderRadius.circular(40),
+                            onTap: () => Navigator.maybePop(context),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(Icons.arrow_back, size: 24),
+                            )),
+                      )),
+                  LayoutId(
+                      id: 'title',
+                      child:
+                          DefaultTextStyle(style: ts.bigTitle1, child: title)),
+                  LayoutId(id: 'bottom', child: bottom)
+                ]),
+          ),
+          Expanded(child: RepaintBoundary(child: body))
         ]),
       ),
     );

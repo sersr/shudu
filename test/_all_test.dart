@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:shudu/utils/tools/event_looper/event_callback_looper.dart';
+import 'package:useful_tools/event_queue.dart';
 
 void main() async {
   test('future', () {
@@ -61,7 +61,9 @@ void main() async {
     _c.onCancel = () {
       print('cancel');
     };
-    _c..add('hello')..add('world');
+    _c
+      ..add('hello')
+      ..add('world');
     _l1.cancel();
     _c..add('111');
     _l2.cancel();
@@ -359,7 +361,7 @@ void main() async {
 
   test('eventLooper', () async {
     ///
-    final loop = EventLooper();
+    final loop = EventQueue();
     for (var i = 0; i < 10; i++) {
       loop.addEventTask(() => print('.....$i'));
     }

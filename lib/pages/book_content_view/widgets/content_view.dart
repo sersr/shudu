@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:useful_tools/common.dart';
 
 import '../../../provider/constansts.dart';
 import '../../../provider/painter_notifier.dart';
-import '../../../utils/utils.dart';
 
 /// TODO: 分行渲染
 /// 一个 [Picture] 绘制大多内容了
@@ -58,8 +58,7 @@ class RenderContentView extends RenderBox
       final time = DateTime.now();
       bottomLeft
         ..text = TextSpan(
-            text: '${time.hour.timePadLeft}:${time.minute.timePadLeft}',
-            style: contentMetrics.secstyle)
+            text: time.hourAndMinuteFormat, style: contentMetrics.secstyle)
         ..layout(maxWidth: size.width);
 
       child!.layout(BoxConstraints.loose(size));

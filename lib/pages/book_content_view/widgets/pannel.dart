@@ -4,15 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
-import 'pan_slide.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
-import '../../../utils/utils.dart';
+import '../../../widgets/indexs.dart';
 import '../../book_info_view/book_info_page.dart';
-import '../../embed/indexs.dart';
 import '../book_content_page.dart';
 import 'color_picker.dart';
 import 'page_view_controller.dart';
+import 'pan_slide.dart';
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
@@ -538,15 +538,16 @@ class _BottomEndState extends State<BottomEnd> {
               onTap: () {
                 getController().hide();
                 bloc.autoRun.stopTicked();
-                final portrait = !bloc.config.value.portrait!;
+                final portrait = !bloc.config.value.orientation!;
                 uiOverlay(hide: !portrait);
-                bloc.setPrefs(bloc.config.value.copyWith(portrait: portrait));
+                bloc.setPrefs(
+                    bloc.config.value.copyWith(orientation: portrait));
               },
               child: AnimatedBuilder(
                 animation: bloc.config,
                 builder: (context, _) {
                   return Text(
-                    '切换${bloc.config.value.portrait! ? '横屏' : '竖屏'}',
+                    '切换${bloc.config.value.orientation! ? '横屏' : '竖屏'}',
                     style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
                   );
                 },

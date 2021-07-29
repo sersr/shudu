@@ -10,19 +10,18 @@ class ImageLayout extends MultiChildLayoutDelegate {
   @override
   void performLayout(Size size) {
     final _width = math.min(size.width, width);
+    
     final constraints =
         BoxConstraints.tightFor(width: _width, height: size.height);
 
     layoutChild(image, constraints);
     positionChild(image, Offset.zero);
 
-    if (_width < size.width) {
-      final _textConstaints = BoxConstraints.tightFor(
-          width: size.width - _width, height: size.height);
+    final _textConstaints = BoxConstraints.tightFor(
+        width: size.width - _width, height: size.height);
 
-      layoutChild(text, _textConstaints);
-      positionChild(text, Offset(_width, 0));
-    }
+    layoutChild(text, _textConstaints);
+    positionChild(text, Offset(_width, 0));
   }
 
   @override

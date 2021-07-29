@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-
-import '../../../utils/utils.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 abstract class PanSlideState<T extends StatefulWidget> extends State<T>
     with TickerProviderStateMixin {
@@ -200,8 +199,6 @@ class PanSlideController {
     }
   }
 
-  bool _done = true;
-
   bool get isShowing =>
       controller.status == AnimationStatus.completed ||
       controller.status == AnimationStatus.forward;
@@ -223,16 +220,8 @@ class PanSlideController {
   }
 
   void hide({bool destory = false}) async {
-    // if (!_done) return;
-    // final _onhide = onhide;
-    // if (_onhide != null) {
-    //   _done = false;
-    //   await _onhide();
-    //   _done = true;
-    // }
     _hide();
     _removeAfter(destory);
-    // assert(Log.i('reverse #$hashCode'));
   }
 
   void _hide() {
@@ -261,19 +250,11 @@ class PanSlideController {
   void show() async {
     if (isShowing || _hideCallback != null || destory) return;
     init();
-
-    // final _onshow = onshow;
-    // if (_onshow != null) {
-    //   _done = false;
-    //   await _onshow();
-    //   _done = true;
-    // }
     controller.forward();
-    // assert(Log.i('forward #$hashCode'));
   }
 
   void trigger({bool immediate = true}) {
-    if (isAnimating && !immediate || destory || !_done) return;
+    if (isAnimating && !immediate || destory) return;
     if (isShowing) {
       hide();
     } else {

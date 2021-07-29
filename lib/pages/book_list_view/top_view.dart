@@ -2,17 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
-import '../../utils/utils.dart'
-    show EventLooper, Log, loadingIndicator, release, reloadBotton;
-
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../book_info_view/book_info_page.dart' show BookInfoPage;
-import '../embed/images.dart' show ImageResolve;
-import '../embed/list_builder.dart';
+import '../../widgets/images.dart' show ImageResolve;
 import 'list_shudan.dart';
 
 class BookListItem extends StatelessWidget {
@@ -65,11 +62,13 @@ class BookListItem extends StatelessWidget {
 class TopListView extends StatefulWidget {
   const TopListView({
     Key? key,
+    required this.index,
     required this.ctg,
     required this.date,
   }) : super(key: key);
   final String ctg;
   final String date;
+  final int index;
   @override
   _TopListViewState createState() => _TopListViewState();
 }
@@ -91,14 +90,14 @@ class _TopListViewState extends State<TopListView> {
     controller?.removeListener(onUpdate);
     controller = DefaultTabController.of(context);
     controller?.addListener(onUpdate);
-    if (controller?.index == 0) {
       onUpdate();
-    }
   }
 
   void onUpdate() {
-    if (!_topNotifier.initialized)
-      _topNotifier.getNextData(widget.ctg, widget.date);
+    if (controller?.index == widget.index) {
+      if (!_topNotifier.initialized)
+        _topNotifier.getNextData(widget.ctg, widget.date);
+    }
   }
 
   @override
@@ -191,7 +190,7 @@ class TopNotifier extends ChangeNotifier {
   bool get initialized => _data != null;
   LoadingStatus state = LoadingStatus.initial;
 
-  final _event = EventLooper();
+  final _event = EventQueue();
 
   Future<void> getNextData(String ctg, String date) {
     return _event.addOneEventTask(() => _getNextData(ctg, date));

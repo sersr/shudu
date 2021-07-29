@@ -1,8 +1,6 @@
-import 'dart:ui';
 
 import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 
 // ignore: unused_import
 import '../repository/book_repository.dart' show BookRepository;

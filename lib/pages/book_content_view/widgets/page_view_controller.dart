@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../provider/painter_notifier.dart';
-import '../../../utils/utils.dart';
+import '../../../widgets/activity.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 
@@ -32,7 +32,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   double get pixels => _pixels;
 
-  bool get clamp => _pixels < _minExtent || _pixels > maxExtent;
 
   void beginActivity(Activity activity) {
     if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
@@ -57,8 +56,17 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     return pixels / viewPortDimension!;
   }
 
+  bool _reset = false;
   void needLayout() {
+    _reset = true;
     notifyListeners();
+  }
+
+  void resetDone(VoidCallback? reset) {
+    if (_reset && reset != null) {
+      reset();
+      _reset = false;
+    }
   }
 
   double? _viewPortDimension;
@@ -87,7 +95,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void nextPage() {
-    if (_lastActivityIsIdle) {
+    if (_lastActivityIsIdle && axis == Axis.horizontal) {
       if (axis == Axis.horizontal) {
         if (ContentBoundary.hasRight(getBounds())) {
           if (maxExtent.isFinite) {
@@ -95,23 +103,23 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
-      } else {
-        if (getBounds() & ContentBoundary.addRight != 0) {
-          var _n = page;
+      // } else {
+        //   if (getBounds() & ContentBoundary.addRight != 0) {
+        //     var _n = page;
 
-          if (maxExtent.isFinite) {
-            _maxExtent = double.infinity;
-          }
+      //     if (maxExtent.isFinite) {
+        //       _maxExtent = double.infinity;
+        //     }
 
-          if (ContentBoundary.hasRight(getBounds())) {
-            _n += 1;
-          } else {
-            _n = (page + 0.5).roundToDouble();
-          }
-          setPixels(viewPortDimension! * _n);
-        } else {
-          setPixels(viewPortDimension! * (page + 0.5).round());
-        }
+      //     if (ContentBoundary.hasRight(getBounds())) {
+        //       _n += 1;
+        //     } else {
+        //       _n = (page + 0.5).roundToDouble();
+        //     }
+        //     setPixels(viewPortDimension! * _n);
+        //   } else {
+        //     setPixels(viewPortDimension! * (page + 0.5).round());
+        //   }
       }
       goIdle();
     }
@@ -529,15 +537,15 @@ class ContentPreNextRenderObject extends RenderBox {
     }
     nopController.applyViewPortDimension(extent);
 
+    nopController.resetDone(_element?.removeAll);
+
     _layout(nopController.pixels, extent);
+    // 一次校验
+    if (!correct()) {
+      _layout(_nopController.pixels, extent);
+    }
 
     if (canPaint) {
-      // 一次校验
-      if (!correct()) {
-        _layout(_nopController.pixels, extent);
-        if (!canPaint) return;
-      }
-
       final pixels = _nopController.pixels;
 
       for (var i = firstIndex!; i <= lastIndex!; i++) {

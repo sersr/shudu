@@ -3,11 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
-import '../../data/data.dart';
-import '../../provider/provider.dart';
-import '../../utils/utils.dart';
-import '../../utils/widget/botton.dart';
+import '../data/data.dart';
+import '../provider/provider.dart';
 
 class IndexsWidget extends StatefulWidget {
   const IndexsWidget({Key? key, required this.onTap}) : super(key: key);
@@ -88,15 +87,15 @@ class _IndexsWidgetState extends State<IndexsWidget> {
 
                       offset = math.max(0.0, math.min(offset, max - height));
                       if (controller != null) {
-                        if (controller!.hasClients) {
-                          controller?.animateTo(offset,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut);
-                        } else {
-                          controller!.dispose();
-                          controller =
-                              ScrollController(initialScrollOffset: offset);
-                        }
+                        // if (controller!.hasClients) {
+                        //   controller?.animateTo(offset,
+                        //       duration: const Duration(milliseconds: 300),
+                        //       curve: Curves.easeInOut);
+                        // } else {
+                        controller!.dispose();
+                        controller =
+                            ScrollController(initialScrollOffset: offset);
+                        // }
                       } else {
                         controller =
                             ScrollController(initialScrollOffset: offset);

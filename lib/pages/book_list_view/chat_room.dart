@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-import '../im/server.dart';
+import '../../utils/im/server.dart';
+
 
 class ChatRoom extends StatefulWidget {
   @override

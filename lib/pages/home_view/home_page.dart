@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/nop_database.dart';
 import '../../provider/book_cache_notifier.dart';
@@ -13,11 +14,9 @@ import '../../provider/options_notifier.dart';
 import '../../provider/painter_notifier.dart';
 import '../../provider/provider.dart';
 import '../../provider/search_notifier.dart';
-import '../../utils/utils.dart';
 import '../book_content_view/book_content_page.dart';
 import '../book_info_view/book_info_page.dart';
 import '../book_list_view/list_main.dart';
-import '../embed/list_builder.dart';
 import 'book_item.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -47,17 +46,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     opts = context.read<OptionsNotifier>();
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
-
+    final data = MediaQuery.of(context);
     final rep = cache.repository;
     _future ??= rep.initState.then((_) {
+      painterBloc.metricsChange(data);
       return Future.wait([
         opts.init(),
         search.init(),
         painterBloc.initConfigs(),
         cache.load(),
       ]);
-      // ..whenComplete(
-      //     () => rep.addSystemOverlaysListener(painterBloc.visible));
     });
   }
 

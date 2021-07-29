@@ -29,6 +29,7 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
     _callbacks.remove(callback);
   }
 
+
   void _run() {
     if (_done) return;
     _done = true;

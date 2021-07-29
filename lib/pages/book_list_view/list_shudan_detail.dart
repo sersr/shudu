@@ -1,16 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/book_list_detail.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
-import '../../utils/utils.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../book_info_view/book_info_page.dart';
-import '../embed/images.dart';
-import '../embed/list_builder.dart';
+import '../../widgets/images.dart';
+
 
 class ShudanDetailPage extends StatefulWidget {
   const ShudanDetailPage({Key? key, this.total, this.index}) : super(key: key);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:useful_tools/useful_tools.dart';
 
-import '../../utils/binding/widget_binding.dart';
-import '../../utils/utils.dart';
 import 'book_history.dart';
 import 'cacheManager.dart';
 import 'chat_room.dart';
@@ -99,13 +98,32 @@ class ListMainPage extends StatelessWidget {
                       appBar: AppBar(
                         title: Text('清除'),
                       ),
-                      body: _builder(
-                        '清除',
-                        () {
-                          imageCache?.clear();
-                          imageCacheLoop?.clear();
-                          textCache?.clear();
-                        },
+                      body: Container(
+                        color: Colors.grey.shade100,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _builder(
+                                  '清除',
+                                  () {
+                                    imageCache?.clear();
+                                    imageCacheLoop?.clear();
+                                    textCache?.clear();
+                                  },
+                                ),
+                                _builder(
+                                  'count: !done',
+                                  () {
+                                    imageCacheLoop?.picturePrint();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       )));
             }));
           }),

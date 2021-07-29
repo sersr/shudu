@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
+import '../../widgets/page_animation.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
-import '../../utils/utils.dart';
-import '../../utils/widget/page_animation.dart';
+
+import '../../widgets/images.dart';
 import '../book_info_view/book_info_page.dart';
-import '../embed/images.dart';
-import '../embed/list_builder.dart';
 import 'list_shudan.dart';
 import 'top_view.dart';
 
@@ -226,9 +226,7 @@ class _CategListViewState extends State<CategListView>
     controller = DefaultTabController.of(context);
     controller?.addListener(onUpdate);
 
-    if (controller?.index == 0) {
-      onUpdate();
-    }
+    onUpdate();
   }
 
   void onUpdate() {

@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/painter_notifier.dart';
-import '../../utils/utils.dart';
-import '../../utils/widget/page_animation.dart';
+import '../../widgets/page_animation.dart';
 import 'widgets/page_view.dart';
 import 'widgets/pan_slide.dart';
 
@@ -29,10 +29,9 @@ class BookContentPage extends StatefulWidget {
       BuildContext context, int newBookid, int cid, int page) async {
     if (_wait != null) return;
     final bloc = context.read<ContentNotifier>();
-    _wait = bloc.setNewBookOrCid(newBookid, cid, page);
-    // _wait = bloc.newBookOrCid(newBookid, cid, page);
+    bloc.touchBook(newBookid, cid, page);
 
-    await EventLooper.instance.scheduler.endOfFrame;
+    await EventQueue.scheduler.endOfFrame;
     await _wait;
     _wait = null;
 
@@ -49,6 +48,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
+  late ChangeNotifierSelector<ContentViewConfig, Color?> notifyColor;
   @override
   void initState() {
     super.initState();
@@ -62,6 +62,9 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
+    notifyColor = ChangeNotifierSelector<ContentViewConfig, Color?>(
+        parent: bloc.config, shouldNotify: (config) => config.bgcolor);
+
     if (Platform.isAndroid) {
       FlutterDisplayMode.active.then(print);
 
@@ -88,23 +91,24 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     //
     bloc.metricsChange(MediaQuery.of(context));
 
-    Widget child = Selector<ContentNotifier, Color?>(
-      selector: (_, ntf) => ntf.config.value.bgcolor,
-      builder: (context, bgcolor, child) {
-        return Material(color: bgcolor, child: child);
+    Widget child = AnimatedBuilder(
+      animation: notifyColor,
+      builder: (context, child) {
+        return Material(color: notifyColor.value, child: child);
       },
       child: RepaintBoundary(
         child: Stack(
           children: [
             Positioned.fill(
-                child: RepaintBoundary(
-                    // child: ContentPageView())),
-                    child: Consumer<ContentNotifier>(
-                        builder: (_, __, child) {
-                          Log.w(bloc.size);
-                          return ContentPageView();
-                        },
-                        child: ContentPageView()))),
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: bloc,
+                  builder: (_, __) {
+                    return ContentPageView();
+                  },
+                ),
+              ),
+            ),
             Positioned.fill(
               child: RepaintBoundary(
                 child: AnimatedBuilder(
@@ -163,10 +167,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     );
 
     return WillPopScope(
-        onWillPop: onWillPop,
-        child: MediaQuery(
-            data: MediaQuery.of(context).removePadding(),
-            child: RepaintBoundary(child: child)));
+        onWillPop: onWillPop, child: RepaintBoundary(child: child));
   }
 
   Future<bool> onWillPop() async {
@@ -178,26 +179,19 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     }
 
     bloc.out();
-    final _f = bloc.dump();
-
-    await bloc.enter;
-
     bloc.notifyState(notEmptyOrIgnore: true, loading: false);
     await uiOverlay(hide: false);
-    await _f;
+    await bloc.dump();
 
     await blocCache.load();
 
-    await bloc.waitTasks;
-    await EventLooper.instance.runner;
+    await bloc.taskRunner;
     uiStyle();
 
-    // 横屏处理
-    if (!bloc.config.value.portrait!) orientation(true);
-
-    await EventLooper.instance.scheduler.endOfFrame;
-
     bloc.out();
+    // 横屏处理
+    if (!bloc.config.value.orientation!) setOrientation(true);
+
     return true;
   }
 }

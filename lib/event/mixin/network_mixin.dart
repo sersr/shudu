@@ -2,16 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
+import 'package:useful_tools/common.dart';
+import 'package:useful_tools/event_queue.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
-import '../../utils/utils.dart';
 import '../base/book_event.dart';
 import '../base/constants.dart';
 import '../base/type_adapter.dart';
@@ -107,21 +107,18 @@ mixin NetworkMixin implements CustomEvent {
   final _e2f = RegExp('/|%2F');
 }
 
-final imageSave = EventLooper();
-final imageNet = EventLooper(channels: 4);
+final iOLoop = EventQueue.iOQueue;
+final imageNet = EventQueue(channels: 4);
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
   String get imageLocalPath => join(cachePath, 'shudu', 'images');
-
-  String get fileLock => join(appPath, 'file.lock');
 
   Future<void> _init() async {
     dio = dioCreater();
     Hive.init(join(appPath, 'hive'));
     final d = Directory(imageLocalPath);
 
-    await File(fileLock).create(recursive: true);
     imageUpdate = await Hive.openBox<int>('imageUpdate');
     final exists = await d.exists();
 
@@ -502,46 +499,46 @@ extension _NetworkImpl on NetworkMixin {
     await releaseUI;
     List<Uint8List>? imgData;
     await imageNet.addEventTask(() async {
-    await releaseUI;
+      await releaseUI;
 
-    try {
-      final data = await dio.get<ResponseBody>(url,
-          options: Options(responseType: ResponseType.stream));
+      try {
+        final data = await dio.get<ResponseBody>(url,
+            options: Options(responseType: ResponseType.stream));
 
-      imgData = (await data.data?.stream.toList());
-      success = imgData != null && _isVaild(data.headers);
-    } catch (e) {
-      success = false;
-      _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
-      assert(Log.w('$imgName,$url !!!'));
-    }
+        imgData = (await data.data?.stream.toList());
+        success = imgData != null && _isVaild(data.headers);
+      } catch (e) {
+        success = false;
+        _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
+        assert(Log.w('$imgName,$url !!!'));
+      }
     });
 
     final data = imgData;
     if (data != null && success) {
-      await imageSave.addEventTask(() async {
-      final f = File(imgPath);
-      await f.create(recursive: true);
-      final o = await f.open(mode: FileMode.write);
+      await iOLoop.addEventTask(() async {
+        final f = File(imgPath);
+        await f.create(recursive: true);
+        final o = await f.open(mode: FileMode.writeOnly);
 
         for (final d in data) {
-        await releaseUI;
+          await releaseUI;
 
-          final length = d.length;
-        await releaseUI;
-        // await o.writeFrom(d);
-        // print('data: $length');
-        for (var i = 0; i < length;) {
-            final start = i;
-            i += 400;
-            final end = math.min(i, length);
-            await o.writeFrom(d, start, end);
-            await releaseUI;
-          }
-      }
+          // final length = d.length;
+          // await releaseUI;
+          await o.writeFrom(d);
+          // print('data: $length');
+          // for (var i = 0; i < length;) {
+          //     final start = i;
+          //     i += 400;
+          //     final end = math.min(i, length);
+          //     await o.writeFrom(d, start, end);
+          //     await releaseUI;
+          //   }
+        }
 
         await o.close();
-      // await releaseUI;
+        // await releaseUI;
       });
     }
 

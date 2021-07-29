@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/provider.dart';
-import '../../utils/utils.dart';
+import '../../widgets/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
-import '../embed/list_builder.dart';
 
 class BookHistory extends StatefulWidget {
   const BookHistory({Key? key}) : super(key: key);
@@ -13,13 +13,25 @@ class BookHistory extends StatefulWidget {
   _BookHistoryState createState() => _BookHistoryState();
 }
 
-class _BookHistoryState extends State<BookHistory> {
+class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
   late BookCacheNotifier notifier;
+  final show = ValueNotifier(false);
+  late Listenable _listenable;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     notifier = context.read<BookCacheNotifier>();
+    if (!show.value) {
+      _listenable = show;
+      addListener(complete);
+    }
+  }
+
+  void complete() {
+    show.value = true;
+    _listenable = notifier;
+    removeListener(complete);
   }
 
   @override
@@ -31,10 +43,10 @@ class _BookHistoryState extends State<BookHistory> {
           elevation: 1.0,
         ),
         body: AnimatedBuilder(
-            animation: notifier,
+            animation: _listenable,
             builder: (context, _) {
               final data = notifier.sortChildren;
-              if (!notifier.initialized)
+              if (!notifier.initialized || !show.value)
                 return loadingIndicator(radius: 30);
               else if (data.isEmpty) {
                 return reloadBotton(notifier.load);

@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/common.dart';
 
-import '../provider/provider.dart';
 import '../event/event.dart';
-import '../utils/utils.dart';
+import '../provider/provider.dart';
 import 'home_view/home_page.dart';
 
 class ShuduApp extends StatelessWidget {

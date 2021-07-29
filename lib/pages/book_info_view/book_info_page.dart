@@ -5,18 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/book_info.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
-import '../../utils/utils.dart';
-import '../../utils/widget/page_animation.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/images.dart';
+import '../../widgets/indexs.dart';
+import '../../widgets/page_animation.dart';
 import '../../widgets/text_builder.dart';
 import '../book_content_view/book_content_page.dart';
-import '../embed/images.dart';
-import '../embed/indexs.dart';
-import '../embed/list_builder.dart';
 
 class BookInfoPage extends StatefulWidget {
   const BookInfoPage({Key? key, required this.id}) : super(key: key);
@@ -25,9 +24,11 @@ class BookInfoPage extends StatefulWidget {
   _BookInfoPageState createState() => _BookInfoPageState();
 
   static Future push(BuildContext context, int bookid) async {
-    return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookInfoPage(id: bookid);
-    }));
+    return Navigator.of(context).push(MaterialPageRoute(
+        maintainState: false, // 存在许多个[BookInfoPage]页面的可能，所以不应常驻内存
+        builder: (context) {
+          return BookInfoPage(id: bookid);
+        }));
   }
 }
 

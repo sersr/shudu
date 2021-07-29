@@ -8,11 +8,11 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hive/hive.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content_view/widgets/page_view_controller.dart';
-import '../utils/utils.dart';
 import 'constansts.dart';
 
 enum Status { ignore, error, done }
@@ -29,10 +29,10 @@ class TextData {
         _hasContent = hasContent;
   List<ContentMetrics> get content => _content;
   final List<ContentMetrics> _content;
-  int? cid;
-  int? pid;
-  int? nid;
-  String? cname;
+  final int? cid;
+  final int? pid;
+  final int? nid;
+  final String? cname;
   final bool? _hasContent;
   bool get hasContent => _hasContent ?? false;
   bool get isEmpty =>
@@ -44,10 +44,6 @@ class TextData {
       _hasContent == null;
 
   bool get isNotEmpty => !isEmpty;
-  void clear() {
-    content.clear();
-    pid = nid = cname = null;
-  }
 
   bool get contentIsNotEmpty => isNotEmpty;
   bool get contentIsEmpty => isEmpty;
@@ -88,8 +84,11 @@ class ContentNotifier extends ChangeNotifier {
 
   final config = ValueNotifier<ContentViewConfig>(ContentViewConfig());
   // 同步----
-  final _newBookEvent = EventLooper();
-  Future? get enter => _newBookEvent.runner;
+  /// [touchBook] 和 [newBookOrCid] 同一队列
+  /// 为了确保状态的稳定性，两个任务是互斥的
+  /// 两个任务之间是`sync`关系
+  // final _newBookEvent = EventQueue();
+  Future? get enter => firstEvent.runner;
   Future? _loadF;
   Future? _configF;
   Future? _autoF;
@@ -164,7 +163,10 @@ class ContentNotifier extends ChangeNotifier {
     _tData = data;
   }
 
-  final _eventLooper = EventLooper.instance;
+  final firstEvent = EventQueue();
+
+  final _taskEvent = EventQueue();
+  Future? get taskRunner => _taskEvent.runner;
 
   ///-------------------------
 
@@ -187,58 +189,28 @@ class ContentNotifier extends ChangeNotifier {
   late TextStyle secstyle;
   final showCname = ValueNotifier(false);
   final mic = Duration.microsecondsPerMillisecond * 200.0;
-  final eventLooper = EventLooper();
-  final _metricsLooper = EventLooper();
 
-  void _notify() {
+  void _notifyCustom() {
     notifyState(
         //                        notEmpty        ||  ignore
         notEmptyOrIgnore: tData.contentIsNotEmpty || !inBook,
         loading: false);
-    notifyListeners();
   }
 
-//   bool _visible = false;
-//   void visible(bool _v) async {
-//     if (_visible == _v) return;
-//     _visible = _v;
-//     Log.w('_modifiedSize: $_visible');
-//     // _onTouch();
-//   }
+  void _notify() {
+    _notifyCustom();
+    // controller?.needLayout();
 
-//   bool _hasNav = false;
-//   bool _init = false;
-
-//   void _onTouch() {
-//     if (_init) return;
-//     _init = true;
-
-//     // final v = !_visible;
-//     // Log.i(v);
-
-//     final _bottomHeight = repository.bottomHeight.toDouble();
-//     late Offset nav;
-//     if (config.value.portrait == true) {
-//       nav = Offset(0, _bottomHeight);
-//     } else {
-//       nav = Offset(_bottomHeight, 0);
-//     }
-//     // 只支持常规的显示模式，即占用了UI显示面积
-//     // if (v) {
-//     _hasNav = size == _rawSize + nav;
-//     // }
-//     Log.i('_hasNav  $_hasNav , $size, $_rawSize, $nav');
-//     if (_hasNav) {
-//       safeBottom = _bottomHeight + 6.0;
-//     } else {
-//       safeBottom = 6.0;
-//     }
-//   }
+    notifyListeners();
+  }
 }
 
 extension ContentStatus on ContentNotifier {
   void out() {
-    _inBookView = false;
+    firstEvent.addEventTask(() {
+      _inBookView = false;
+      _notifyCustom();
+    });
   }
 
   bool get inBook => _inBookView;
@@ -268,9 +240,8 @@ extension DataLoading on ContentNotifier {
 
       _caches.clear();
     }
+    _tData = TextData(cid: cid ?? tData.cid);
     _getCurrentIds();
-
-    _tData = TextData()..cid = cid ?? tData.cid;
   }
 
   Future<void> dump() async {
@@ -330,16 +301,16 @@ extension DataLoading on ContentNotifier {
   }
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    if (_ignoreTask(contentid, update: update)) return;
+    EventQueue.currentTask?.value = contentid;
+    if (_ignoreTask(update: update)) return;
 
     final lines =
         await repository.bookEvent.getContent(_bookid, contentid, update);
 
     if (lines != null && lines.contentIsNotEmpty) {
-      _eventLooper.currentTask?.ident = contentid;
       final pages = await _asyncLayout(lines.pages, lines.cname!);
 
-      if (pages.isEmpty || _ignoreTask(contentid, update: update)) return;
+      if (pages.isEmpty || _ignoreTask(update: update)) return;
       final _cnpid = TextData(
         content: pages,
         nid: lines.nid,
@@ -395,10 +366,14 @@ extension Tasks on ContentNotifier {
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
       final _ntask =
-          _eventLooper.addEventTask(() => loadData(contentid, _bookid));
+          _taskEvent.addEventTask(() => loadData(contentid, _bookid));
 
-      _futures.addTask(contentid, _ntask, solve: _ignoreTask);
+      _futures.addTask(contentid, _ntask, solveTask: _onRemove);
     }
+  }
+
+  void _onRemove(Future task) {
+    _disposeFutures.remove(task);
   }
 
   void _loadWithId(int? id) => _loadTasks(bookid!, id);
@@ -521,7 +496,9 @@ extension Tasks on ContentNotifier {
 extension Layout on ContentNotifier {
   // ---------------------------------------
 
-  bool _ignoreTask(int contentid, {bool update = false}) {
+  bool _ignoreTask({bool update = false}) {
+    final contentid = EventQueue.currentTask?.value;
+    assert(contentid is int);
     if (_disposeFutures.remove(_futures[contentid])) return true;
 
     if (!inBook) return true;
@@ -575,24 +552,6 @@ extension Layout on ContentNotifier {
     return _ids.whereType<int>();
   }
 
-  // void _waitFor() async {
-  //   final ident = _eventLooper.currentTask?.ident;
-  //   if (tData.contentIsEmpty ||
-  //       _willGoF != null ||
-  //       !inBook ||
-  //       autoRun.value ||
-  //       ident != null &&
-  //           (_contains(ident, tData.nid) || _contains(ident, tData.pid))) {
-  //     if (loading.value) notifyState(loading: false);
-  //     _eventLooper.async = false;
-  //   }
-  // }
-
-  // bool _contains(Object? ident, int? id) {
-  //   return ident == id && !_caches.containsKey(id);
-  // }
-
-  // Future<void> get wait => _eventLooper.wait(_waitFor);
   Future<void> get wait => releaseUI;
 
   Future<List<ContentMetrics>> _asyncLayout(
@@ -855,23 +814,34 @@ extension Layout on ContentNotifier {
 extension Event on ContentNotifier {
   Future<void> showdow() async {
     showrect = !showrect;
-    await reset(clearCache: true);
-
-    await enter;
-
-    await _loadFirst();
-    _notify();
+    if (inBook && tData.cid != null && bookid != null) {
+      addLoadEvent();
+      return firstEvent.runner;
+    }
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page,
-      {bool inBook = false}) async {
-    _newBookEvent
-        .addOneEventTask(() => _newBookOrCid(newBookid, cid, page, inBook));
-  }
-
-  Future<bool> setNewBookOrCid(int newBookid, int cid, int page) async {
+  void touchBook(int newBookid, int cid, int page) async {
     if (!inBook) resetController();
+    inbook();
+    scheduleMicrotask(() {
+      setOrientation(config.value.orientation!);
+    });
 
+    if (tData.cid != cid || bookid != newBookid) {
+      assert(Log.i('new: $newBookid $cid'));
+      //不被忽略
+      firstEvent.addEventTask(() {
+        footer.value = '';
+        header.value = '';
+        notifyState(notEmptyOrIgnore: true, loading: false);
+        currentPage = -1;
+        bookid = -1;
+        _tData = TextData();
+      });
+    }
+  }
+
+  Future<bool> _setNewBookOrCid(int newBookid, int cid, int page) async {
     if (tData.cid != cid || bookid != newBookid) {
       assert(Log.i('new: $newBookid $cid'));
       footer.value = '';
@@ -879,85 +849,57 @@ extension Event on ContentNotifier {
       notifyState(notEmptyOrIgnore: true, loading: false);
 
       final diff = bookid != newBookid;
-
-      await reset(clearCache: diff, cid: cid);
+      _tData = TextData(cid: cid);
       currentPage = page;
       bookid = newBookid;
-
-      await dump();
-      return true;
+      return diff;
     }
     return false;
   }
 
-  Future<void> _newBookOrCid(
-      int newBookid, int cid, int page, bool inBook) async {
+  Future<void> newBookOrCid(int newBookid, int cid, int page,
+      {bool inBook = false}) async {
     if (cid == -1) return;
 
-    autoRun.stopSave();
-
-    orientation(config.value.portrait!);
-
-    await setNewBookOrCid(newBookid, cid, page);
-
-    if (tData.contentIsEmpty) {
-      notifyState(notEmptyOrIgnore: true);
-
-      _getCurrentIds();
-
-      inbook();
-      final _t = Timer(
-          const Duration(milliseconds: 300), () => notifyState(loading: true));
-
-      await _loadFirst();
-
-      _t.cancel();
-
-      resetController();
-    }
+    setOrientation(config.value.orientation!);
 
     inbook();
 
-    await _metricsLooper.runner;
+    final _reset = await _setNewBookOrCid(newBookid, cid, page);
+    if (tData.contentIsEmpty || _reset) {
+      final _t = Timer(
+          const Duration(milliseconds: 300), () => notifyState(loading: true));
+      addLoadEvent(resetDone: () {
+        notifyState(notEmptyOrIgnore: true);
+        resetController();
+      });
+      await firstEvent.runner;
 
-    _notify();
-    scheduleMicrotask(autoRun.stopAutoRun);
+      _t.cancel();
+    }
     uiStyle(dark: false);
   }
 
-  Future<void> metricsChange(MediaQueryData data) async {
-    // 有足够的时间等待后续任务
-    if (size.isEmpty) size = data.size;
-    _metricsLooper
-      ..addOneEventTask(() => release(const Duration(milliseconds: 100)))
-      ..addOneEventTask(() => _metricsChange(data));
-  }
-
-  Future<void> _metricsChange(MediaQueryData data) async {
-    // 实时
-    final changed = _modifiedSize(data);
-    if (changed) {
-      notifyState(notEmptyOrIgnore: true);
-      if (inBook && tData.cid != null && bookid != null) {
-        autoRun.stopSave();
-
-        await reset(clearCache: true);
-
-        await _loadFirst();
-        _notify();
-        scheduleMicrotask(autoRun.stopAutoRun);
+  void metricsChange(MediaQueryData data) {
+    if (inBook || size.isEmpty) {
+      if (size.isEmpty) size = data.size;
+      final changed = _modifiedSize(data);
+      if (changed) {
+        if (tData.cid != null && bookid != null) {
+          addLoadEvent(callback: () {
+            resetController();
+            _notify();
+            notifyState(notEmptyOrIgnore: true);
+          });
+        }
       }
     }
   }
 
   Future<void> reload() async {
     notifyState(loading: true, notEmptyOrIgnore: true);
-
-    await enter;
-
-    await _loadFirst();
-
-    _notify();
+    addLoadEvent(zero: false);
+    return firstEvent.runner;
   }
 
   Future goNext() {
@@ -1010,28 +952,28 @@ extension Event on ContentNotifier {
       // bottom: safePadding.bottom,
     );
 
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        break;
+    // switch (defaultTargetPlatform) {
+    //   case TargetPlatform.android:
+    //   case TargetPlatform.fuchsia:
+    //   case TargetPlatform.linux:
+    //   case TargetPlatform.macOS:
+    //   case TargetPlatform.windows:
+    //     break;
 
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.iOS:
-        if ((_p.top == 0.0 && safePadding.top != _p.top) ||
-            size.height < _size.height ||
-            size.width != _size.width) {
-          size = _size;
-          safePadding = _p;
-          paddingRect = safePadding.copyWith(
-              bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
+    //   case TargetPlatform.iOS:
+    //     if ((_p.top == 0.0 && safePadding.top != _p.top) ||
+    //         size.height < _size.height ||
+    //         size.width != _size.width) {
+    //       size = _size;
+    //       safePadding = _p;
+    //       paddingRect = safePadding.copyWith(
+    //           bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
 
-          return true;
-        } else {
-          return false;
-        }
-    }
+    //       return true;
+    //     } else {
+    //       return false;
+    //     }
+    // }
     if (size != _size) {
       size = _size;
       return true;
@@ -1070,7 +1012,8 @@ extension ContentGetter on ContentNotifier {
   // 首先确定当前章节首页位置
   // 再根据当前页面实际位置判断位于哪一个章节，和此章节的哪一页
   ContentMetrics? getContentMes(int page, {bool changeState = false}) {
-    if (changeState && page == _innerIndex) return null;
+    if (changeState && page == _innerIndex || firstEvent.runner != null)
+      return null;
     var currentContentFirstIndex = _innerIndex - currentPage + 1;
     var text = tData;
     ContentMetrics? child;
@@ -1129,47 +1072,57 @@ extension ContentGetter on ContentNotifier {
 
 extension Configs on ContentNotifier {
   Future<void> setPrefs(ContentViewConfig _config) async {
-    return eventLooper.addOneEventTask(() async {
-      var flush = false;
-      final _fontSize = _config.fontSize!;
-      final _height = _config.lineTweenHeight!;
-      final _fontColor = _config.fontColor!;
-      final _fontFamily = _config.fontFamily!;
-      final _axis = _config.axis!;
-      final _portrait = _config.portrait!;
+    // return eventLooper.addOneEventTask(() async {
+    var flush = false;
+    final _fontSize = _config.fontSize!;
+    final _height = _config.lineTweenHeight!;
+    final _fontColor = _config.fontColor!;
+    final _fontFamily = _config.fontFamily!;
+    final _axis = _config.axis!;
+    final _orientation = _config.orientation!;
 
-      if (_fontSize != config.value.fontSize ||
-          _fontFamily != config.value.fontFamily ||
-          _fontColor != config.value.fontColor ||
-          _height != config.value.lineTweenHeight ||
-          _axis != config.value.axis) {
-        flush = true;
+    if (_fontSize != config.value.fontSize ||
+        _fontFamily != config.value.fontFamily ||
+        _fontColor != config.value.fontColor ||
+        _height != config.value.lineTweenHeight ||
+        _axis != config.value.axis) {
+      flush = true;
+    }
+    final orientation = config.value.orientation;
+    var align = _axis != config.value.axis;
+
+    flush |= align;
+    if (_orientation != orientation) {
+      await setOrientation(_orientation);
+    }
+
+    config.value = _config;
+    if (flush) {
+      addLoadEvent();
+      await firstEvent.runner;
+      if (currentPage == tData.content.length || currentPage == 1) {
+        resetController();
       }
-      final portrait = config.value.portrait;
-      var resetToZero = _axis != config.value.axis;
+    }
 
-      config.value = _config;
+    // });
+  }
 
-      if (_portrait != portrait) {
-        await orientation(_portrait);
-        resetToZero = true;
-        flush = true;
-      }
+  void addLoadEvent(
+      {bool zero = true,
+      void Function()? callback,
+      void Function()? resetDone}) {
+    firstEvent.addOneEventTask(() async {
+      // await enter;
+      autoRun.stopSave();
 
-      if (flush) {
-        autoRun.stopSave();
-
-        await reset(clearCache: true);
-
-        await _loadFirst();
-
-        if (resetToZero ||
-            currentPage == tData.content.length ||
-            currentPage == 1) resetController();
-      }
-      await _metricsLooper.runner?.whenComplete(resetController);
+      callback?.call();
+      if (zero) await reset(clearCache: true);
+      resetDone?.call();
+      await _loadFirst();
       _notify();
       scheduleMicrotask(autoRun.stopAutoRun);
+      controller?.needLayout();
     });
   }
 
@@ -1181,7 +1134,7 @@ extension Configs on ContentNotifier {
     final _fontSize = box.get('fontSize', defaultValue: 18.0);
     final _height = box.get('lineTweenHeight', defaultValue: 1.6);
     final _fontFamily = box.get('fontFamily', defaultValue: '');
-    final _p = box.get('patternList', defaultValue: <String, String>{});
+
     final _portrait = box.get('portrait', defaultValue: true);
     final _autoValue = box.get('autoValue', defaultValue: 6.0);
 
@@ -1205,9 +1158,8 @@ extension Configs on ContentNotifier {
     config.value.bgcolor = _bgcolor;
     config.value.fontFamily = _fontFamily;
     config.value.fontColor = _fontColor;
-    config.value.patternList = _p;
     config.value.axis = axis;
-    config.value.portrait = _portrait;
+    config.value.orientation = _portrait;
 
     autoValue.value = _autoValue;
 
@@ -1241,7 +1193,6 @@ extension Configs on ContentNotifier {
       final _fontSize = await box.get('fontSize');
       final _height = await box.get('lineTweenHeight');
       final _fontFamily = await box.get('fontFamily');
-      final _p = await box.get('patternList');
       final _portrait = await box.get('portrait');
       final _autoValue = await box.get('autoValue');
 
@@ -1250,10 +1201,9 @@ extension Configs on ContentNotifier {
       if (_fontColor != _config.fontColor)
         await box.put('fontColor', _config.fontColor);
       if (axis != _config.axis) await box.put('axis', _config.axis);
-      if (_p != _config.patternList)
-        await box.put('patternList', _config.patternList);
-      if (_portrait != _config.portrait)
-        await box.put('portrait', _config.portrait);
+
+      if (_portrait != _config.orientation)
+        await box.put('portrait', _config.orientation);
       if (_fontSize != _config.fontSize && _config.fontSize! > 0)
         await box.put('fontSize', _config.fontSize);
 
@@ -1301,7 +1251,7 @@ extension AutoR on ContentNotifier {
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
       _loadCallback();
-      _autoF ??= _eventLooper.scheduler.endOfFrame.then((_) => autoRun.start())
+      _autoF ??= EventQueue.scheduler.endOfFrame.then((_) => autoRun.start())
         ..whenComplete(() => _autoF = null);
     } else {
       if (_autoF != null) {
@@ -1393,8 +1343,7 @@ class ContentViewConfig {
     this.fontColor,
     this.locale,
     this.axis,
-    this.patternList,
-    this.portrait,
+    this.orientation,
   });
   double? fontSize;
   double? lineTweenHeight;
@@ -1403,8 +1352,7 @@ class ContentViewConfig {
   Color? fontColor;
   Locale? locale;
   Axis? axis;
-  Map? patternList;
-  bool? portrait;
+  bool? orientation;
   ContentViewConfig copyWith({
     double? fontSize,
     double? lineTweenHeight,
@@ -1413,8 +1361,7 @@ class ContentViewConfig {
     Color? fontColor,
     Locale? locale,
     Axis? axis,
-    Map? patternList,
-    bool? portrait,
+    bool? orientation,
   }) {
     return ContentViewConfig(
         fontColor: fontColor ?? this.fontColor,
@@ -1424,8 +1371,7 @@ class ContentViewConfig {
         bgcolor: bgcolor ?? this.bgcolor,
         locale: locale ?? this.locale,
         axis: axis ?? this.axis,
-        patternList: patternList ?? this.patternList,
-        portrait: portrait ?? this.portrait);
+        orientation: orientation ?? this.orientation);
   }
 
   bool get isEmpty {
@@ -1447,8 +1393,7 @@ class ContentViewConfig {
             bgcolor == other.bgcolor &&
             locale == other.locale &&
             axis == other.axis &&
-            portrait == other.portrait &&
-            patternList == other.patternList;
+            orientation == other.orientation;
   }
 
   @override
@@ -1512,15 +1457,18 @@ class AutoRun {
 
 extension FutureTasksMap<T, E> on Map<T, Future<E>> {
   void addTask(T id, Future<E> f,
-      {void Function()? callback, void Function(T)? solve}) {
+      {void Function()? callback,
+      void Function(T)? solve,
+      void Function(Future<E>)? solveTask}) {
     Log.i('addTask $id');
     if (containsKey(id)) return;
     this[id] = f;
     f.whenComplete(() {
       Log.i('task complete $id');
-      remove(id);
       solve?.call(id);
+      solveTask?.call(f);
       callback?.call();
+      remove(id);
     });
   }
 

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/utils/utils.dart';
+import 'package:useful_tools/common.dart';
 
 class RepositoryImplTest extends Repository with SendEventMixin {
   @override

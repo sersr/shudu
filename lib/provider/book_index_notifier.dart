@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../data/data.dart';
 import '../event/event.dart';
-import '../utils/utils.dart';
 
 class BookIndexsData {
   BookIndexsData({this.indexs, this.bookid, this.contentid});
@@ -244,7 +244,7 @@ class BookIndexNotifier extends ChangeNotifier {
     super.notifyListeners();
   }
 
-  final _looper = EventLooper();
+  final _looper = EventQueue();
 
   Future<void> loadIndexs([int? bookid, int? contentid]) async {
     _looper.addOneEventTask(() => _load(bookid, contentid));

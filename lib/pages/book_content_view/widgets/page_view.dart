@@ -1,13 +1,14 @@
 import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/src/provider.dart';
-import '../../../provider/constansts.dart';
+import 'package:useful_tools/useful_tools.dart';
 
+import '../../../provider/constansts.dart';
 import '../../../provider/provider.dart';
-import '../../../utils/utils.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
 import 'page_view_controller.dart';
@@ -28,6 +29,7 @@ class ContentPageViewState extends State<ContentPageView>
   late NopPageViewController offsetPosition;
   late ContentNotifier bloc;
   late BookIndexNotifier indexBloc;
+
   PanSlideController? controller;
 
   @override
@@ -100,14 +102,14 @@ class ContentPageViewState extends State<ContentPageView>
   Future<void> onshow() async {
     indexBloc.addRegisterKey(lKey);
 
-    if (bloc.config.value.portrait! && bloc.inBook)
+    if (bloc.config.value.orientation! && bloc.inBook)
       return uiOverlay(hide: false);
   }
 
   Future<void> onhide() async {
     indexBloc.removeRegisterKey(lKey);
 
-    if (bloc.config.value.portrait! && bloc.inBook) return uiOverlay();
+    if (bloc.config.value.orientation! && bloc.inBook) return uiOverlay();
   }
 
   Future? _f;
@@ -121,8 +123,6 @@ class ContentPageViewState extends State<ContentPageView>
     await release(const Duration(milliseconds: 300));
   }
 
-  final triggerEventLooper = EventLooper();
-
   @override
   void didUpdateWidget(covariant ContentPageView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -134,12 +134,12 @@ class ContentPageViewState extends State<ContentPageView>
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>()..controller = offsetPosition;
     indexBloc = context.read<BookIndexNotifier>();
-    updateAxis();
   }
 
   void updateAxis() {
-    if (bloc.config.value.axis != null) {
-      offsetPosition.axis = bloc.config.value.axis!;
+    final axis = bloc.config.value.axis;
+    if (axis != null) {
+      offsetPosition.axis = axis;
     }
   }
 
@@ -212,7 +212,7 @@ class ContentPageViewState extends State<ContentPageView>
               },
             ),
             Text(
-              '${time.hour.timePadLeft}:${time.minute.timePadLeft}',
+              time.hourAndMinuteFormat,
               style: bloc.secstyle,
               maxLines: 1,
             ),
@@ -259,7 +259,7 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-        Log.w('size : $size');
+    Log.w('size : $size');
     final child = AnimatedBuilder(
       animation: bloc.notEmptyOrIgnore,
       builder: (context, child) {
@@ -588,7 +588,7 @@ class _SlideRenderObject extends RenderBox {
     }
 
     final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
-        Log.w('bottom: ${size.height}');
+    Log.w('bottom: ${size.height}');
     if (_footer != null) {
       _footer!.layout(_constraints);
       final parentdata = _footer!.parentData as BoxParentData;

@@ -6,8 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
-
-import '../utils/utils.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 class ConfigOptions {
   ConfigOptions(
@@ -100,7 +99,7 @@ class OptionsNotifier extends ChangeNotifier {
   final routeObserver = RouteObserver<PageRoute>();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
-  final _event = EventLooper();
+  final _event = EventQueue();
 
   set options(ConfigOptions o) {
     if (o == options) return;

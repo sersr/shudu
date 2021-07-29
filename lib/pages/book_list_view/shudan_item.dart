@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../embed/images.dart';
+import '../../widgets/images.dart';
 
 class ShudanItem extends StatelessWidget {
   ShudanItem(

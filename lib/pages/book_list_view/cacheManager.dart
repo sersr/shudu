@@ -2,20 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/database.dart';
 import '../../event/event.dart';
-import '../../utils/utils.dart';
-
+import '../../widgets/page_animation.dart';
 import '../book_info_view/book_info_page.dart';
-import '../embed/list_builder.dart';
+
 
 class CacheManager extends StatefulWidget {
   @override
   _CacheManagerState createState() => _CacheManagerState();
 }
 
-class _CacheManagerState extends State<CacheManager> {
+class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
   final _cacheNotifier = _CacheNotifier();
 
   @override
@@ -23,15 +23,17 @@ class _CacheManagerState extends State<CacheManager> {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
     _cacheNotifier.repository = repository;
+    if (_cacheNotifier.initlized) addListener(complete);
   }
 
-  // @override
-  // void complete() => _cacheNotifier.startLoad();
+  void complete() {
+    _cacheNotifier.startLoad();
+    removeListener(complete);
+  }
 
   @override
   void initState() {
     super.initState();
-    scheduleMicrotask(_cacheNotifier.startLoad);
   }
 
   @override
@@ -167,6 +169,8 @@ class _CacheNotifier extends ChangeNotifier {
   Repository? get repository => _repository;
 
   bool _exit = false;
+
+  bool get initlized => _data.isEmpty;
 
   set exit(bool v) {
     _exit = v;

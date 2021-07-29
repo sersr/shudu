@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:lpinyin/lpinyin.dart';
+import 'package:useful_tools/common.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/nop_database.dart';
 import '../../pages/book_list_view/cacheManager.dart';
-import '../../utils/utils.dart';
 import '../base/book_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
@@ -67,7 +67,7 @@ mixin ComplexMixin
           isShow: false,
         ));
       } else {
-        final isNew =
+        final isNew = _book.isNew == true ||
             lastChapter != _book.lastChapter && lastTime != _book.updateTime;
 
         final book = BookCache(

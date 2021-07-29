@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:useful_tools/event_queue.dart';
 
 import '../database/nop_database.dart';
 import '../event/event.dart';
@@ -40,20 +41,22 @@ class BookCacheNotifier extends ChangeNotifier {
 
   FutureOr<List<BookCache>> get getList async {
     return await repository.bookEvent.bookCacheEvent.getMainBookListDb() ??
+        _rawList ??
         const [];
   }
 
   Future<void> _update() async {
     final list = await getList;
-    final _lf = <Future>{};
+    final futureAny = FutureAny();
     for (var item in list) {
-      if (_lf.length >= 10) {
-        await Future.wait(_lf);
-        _lf.clear();
+      final f = updateBookStatus(item.bookId!);
+      futureAny.add(f);
+
+      if (futureAny.length >= 6) {
+        await futureAny.future;
       }
-      _lf.add(updateBookStatus(item.bookId!));
     }
-    if (_lf.isNotEmpty) await Future.wait(_lf);
+    await futureAny.waitAll;
   }
 
   Future<void> load({bool update = false}) async {
@@ -61,8 +64,10 @@ class BookCacheNotifier extends ChangeNotifier {
       await _update();
     }
 
-    _rawList = _showChildren = _sortChildren = null;
-    _rawList = await getList;
+    final list = await getList;
+
+    _showChildren = _sortChildren = null;
+    _rawList = list;
 
     notifyListeners();
   }

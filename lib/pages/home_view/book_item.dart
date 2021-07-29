@@ -6,7 +6,7 @@ import 'package:vector_math/vector_math.dart' as vec4;
 
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../embed/images.dart';
+import '../../widgets/images.dart';
 
 class BookItem extends StatelessWidget {
   BookItem(

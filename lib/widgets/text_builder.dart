@@ -7,15 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../provider/provider.dart';
-import '../utils/utils.dart';
-
-import 'async_text.dart';
-import 'draw_picture.dart';
-import 'list_key.dart';
-import 'picture_info.dart';
-import 'text_stream.dart';
 
 class TextBuilder extends StatelessWidget {
   const TextBuilder({
@@ -146,6 +140,7 @@ class _TextBuilderState extends State<_TextBuilder> {
     final bottomLines = widget.bottomLines;
 
     final keys = [
+      // 'asyncText_builder',
       width,
       topRight,
       top,
@@ -171,9 +166,8 @@ class _TextBuilderState extends State<_TextBuilder> {
 
       final topRightKey = [width, topRight, 1];
       final _tpr = await putIfAbsent(topRightKey, () async {
-        await releaseUI;
-        tpr.layout(maxWidth: width);
-        return tpr;
+        // await releaseUI;
+        return tpr..layout(maxWidth: width);
       });
 
       final _tpWidth = _tpr.painter.width;
@@ -181,25 +175,22 @@ class _TextBuilderState extends State<_TextBuilder> {
       final topWidth = width - _tpWidth;
       final topKey = [topWidth, top, 1];
       await putIfAbsent(topKey, () async {
-        await releaseUI;
-        tp.layout(maxWidth: topWidth);
-        return tp;
+        // await releaseUI;
+        return tp..layout(maxWidth: topWidth);
       });
 
       final centerKey = [width, center, centerLines];
       await putIfAbsent(centerKey, () async {
-        await releaseUI;
-        tc.layout(maxWidth: width);
-        return tc;
+        // await releaseUI;
+        return tc..layout(maxWidth: width);
       });
 
       final bottomKey = [width, bottom, bottomLines];
       await putIfAbsent(bottomKey, () async {
-        await releaseUI;
-        tb.layout(maxWidth: width);
-        await releaseUI;
-        return tb;
+        // await releaseUI;
+        return tb..layout(maxWidth: width);
       });
+      await EventQueue.scheduler.endOfFrame;
     });
 
     if (all != _textStream) {

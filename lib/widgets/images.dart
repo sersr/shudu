@@ -5,13 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
-import '../../event/event.dart';
-import '../../provider/provider.dart';
-import '../../utils/widget/image_shadow.dart';
-import 'image_future.dart';
-
-typedef ImageBuilder = Widget Function(Widget image, bool hasImage);
+import '../event/event.dart';
+import '../provider/provider.dart';
+import 'image_shadow.dart';
 
 class ImageResolve extends StatelessWidget {
   ImageResolve(
@@ -43,6 +41,7 @@ class ImageResolve extends StatelessWidget {
       final width = constraints.maxWidth;
       final _img = img;
       final ratio = ui.window.devicePixelRatio;
+      final repository = context.read<Repository>();
       return _img == null
           ? _errorBuilder(true, width, height, context)
           : Selector<OptionsNotifier, bool>(
@@ -80,6 +79,7 @@ class ImageResolve extends StatelessWidget {
                   height: height,
                   width: width,
                   boxFit: boxFit,
+                  getPath: repository.bookEvent.getImagePath,
                   builder: (child, hasImage) =>
                       _imageBuilder(child, false, hasImage),
                   errorBuilder: (context) =>
@@ -96,11 +96,13 @@ class ImageResolve extends StatelessWidget {
       if (errorBuilder != null) {
         return errorBuilder!(context);
       } else {
+        final repository = context.read<Repository>();
         return ImageFuture(
           url: errorImg,
           width: width,
           height: height,
           boxFit: boxFit,
+          getPath: repository.bookEvent.getImagePath,
           builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
           errorBuilder: (context) =>
               _errorBuilder(false, width, height, context),

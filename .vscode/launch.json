@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "sksl release",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "release",
+            "args": [
+                "--bundle-sksl-path",
+                "flutter_01.sksl.json"
+            ]
+        },
+        {
             "name": "release",
             "type": "dart",
             "request": "launch",
