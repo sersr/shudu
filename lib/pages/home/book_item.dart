@@ -55,7 +55,7 @@ class BookItem extends StatelessWidget {
             child: RepaintBoundary(
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
-                child: TextBuilder(
+                child: TextAsyncLayout(
                       height: 98,
                       top: bookName ?? '',
                       center: '最新：$bookUdateItem',

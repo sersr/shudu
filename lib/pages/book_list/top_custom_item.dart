@@ -45,7 +45,7 @@ class TopCustomItem extends StatelessWidget {
             child: RepaintBoundary(
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
-                child: TextBuilder(
+                child: TextAsyncLayout(
                     topRightScore: topRightScore,
                     top: name ?? '',
                     center: center,

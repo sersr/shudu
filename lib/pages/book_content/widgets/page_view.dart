@@ -12,7 +12,7 @@ import '../../../provider/provider.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
 import 'page_view_controller.dart';
-import 'pan_slide.dart';
+import '../../../widgets/pan_slide.dart';
 import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {

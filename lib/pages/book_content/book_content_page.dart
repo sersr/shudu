@@ -12,7 +12,7 @@ import '../../provider/book_cache_notifier.dart';
 import '../../provider/painter_notifier.dart';
 import '../../widgets/page_animation.dart';
 import 'widgets/page_view.dart';
-import 'widgets/pan_slide.dart';
+import '../../widgets/pan_slide.dart';
 
 enum SettingView { indexs, setting, none }
 

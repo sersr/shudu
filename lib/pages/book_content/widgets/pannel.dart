@@ -12,7 +12,7 @@ import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
 import 'color_picker.dart';
 import 'page_view_controller.dart';
-import 'pan_slide.dart';
+import '../../../widgets/pan_slide.dart';
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);

@@ -491,7 +491,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
             child: RepaintBoundary(
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
-                child: TextBuilder(
+                child: TextAsyncLayout(
                   height: 108,
                   top: l.name ??'',
                   center: '作者：$author',

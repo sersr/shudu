@@ -10,8 +10,8 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../provider/provider.dart';
 
-class TextBuilder extends StatelessWidget {
-  const TextBuilder({
+class TextAsyncLayout extends StatelessWidget {
+  const TextAsyncLayout({
     Key? key,
     this.topRightScore,
     required this.top,
@@ -56,168 +56,133 @@ class TextBuilder extends StatelessWidget {
         builder: (context, useTextCache, child) {
           if (useTextCache)
             return LayoutBuilder(builder: (context, constraints) {
-              return _TextBuilder(
-                top: top,
-                topRightScore: topRightScore,
-                center: center,
-                bottom: bottom,
-                height: height,
-                centerLines: centerLines,
-                bottomLines: bottomLines,
-                constraints: constraints,
-              );
+              return _CenterText(
+                  bottom: bottom,
+                  top: top,
+                  topRightScore: topRightScore,
+                  center: center,
+                  centerLines: centerLines,
+                  bottomLines: bottomLines,
+                  height: height,
+                  maxWidth: constraints.maxWidth);
             });
+
           return child!;
         },
         child: child);
   }
 }
 
-class _TextBuilder extends StatefulWidget {
-  const _TextBuilder({
+class _CenterText extends StatefulWidget {
+  const _CenterText({
     Key? key,
     this.topRightScore,
-    this.top,
-    this.center,
-    this.bottom,
+    required this.top,
+    required this.center,
+    required this.bottom,
+    required this.maxWidth,
     this.centerLines = 1,
     this.bottomLines = 2,
-    required this.constraints,
     this.height = 112,
   }) : super(key: key);
 
   final String? topRightScore;
-  final String? top;
-  final String? center;
-  final String? bottom;
+  final String top;
+  final String center;
+  final String bottom;
   final double height;
-  final BoxConstraints constraints;
   final int centerLines;
   final int bottomLines;
+  final double maxWidth;
+
   @override
-  State<_TextBuilder> createState() => _TextBuilderState();
+  State<_CenterText> createState() => _CenterTextState();
 }
 
-class _TextBuilderState extends State<_TextBuilder> {
+class _CenterTextState extends State<_CenterText> {
   late TextStyleConfig ts;
+
+  late List _keys;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateKeys();
+  }
+
+  void _updateKeys() {
+    _keys = [
+      'asyncText_builder',
+      widget.maxWidth,
+      widget.topRightScore,
+      widget.top,
+      widget.center,
+      widget.bottom,
+      1,
+      1,
+      widget.centerLines,
+      widget.bottomLines
+    ];
+  }
+
+  @override
+  void didUpdateWidget(covariant _CenterText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateKeys();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     ts = context.read<TextStyleConfig>();
-    _subText();
-  }
-
-  @override
-  void didUpdateWidget(_TextBuilder o) {
-    super.didUpdateWidget(o);
-    if (o.top != widget.top ||
-        o.topRightScore != widget.topRightScore ||
-        o.center != widget.center ||
-        o.bottom != widget.bottom ||
-        o.constraints != widget.constraints) _subText();
-  }
-
-  List<TextInfo>? textInfos;
-
-  TextPainter _painter(String? text,
-      {required TextStyle style, int maxLines = 1}) {
-    return TextPainter(
-        text: TextSpan(text: text, style: style),
-        maxLines: maxLines,
-        ellipsis: '...',
-        textDirection: TextDirection.ltr);
-  }
-
-  void _subText() {
-    final width = widget.constraints.maxWidth;
-    final top = widget.top;
-    final topRight = widget.topRightScore;
-    final center = widget.center;
-    final bottom = widget.bottom;
-    final centerLines = widget.centerLines;
-    final bottomLines = widget.bottomLines;
-
-    final keys = [
-      // 'asyncText_builder',
-      width,
-      topRight,
-      top,
-      center,
-      bottom,
-      1,
-      1,
-      centerLines,
-      bottomLines
-    ];
-
-    final all = textCache!.putIfAbsent(keys, (find, putIfAbsent) async {
-      final tpr = _painter(widget.topRightScore,
-          style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1);
-
-      final tp = _painter(widget.top, style: ts.title3, maxLines: 1);
-
-      final tc = _painter(widget.center,
-          style: ts.body2, maxLines: widget.centerLines);
-
-      final tb = _painter(widget.bottom,
-          style: ts.body3, maxLines: widget.bottomLines);
-
-      final topRightKey = [width, topRight, 1];
-      final _tpr = await putIfAbsent(topRightKey, () async {
-        // await releaseUI;
-        return tpr..layout(maxWidth: width);
-      });
-
-      final _tpWidth = _tpr.painter.width;
-
-      final topWidth = width - _tpWidth;
-      final topKey = [topWidth, top, 1];
-      await putIfAbsent(topKey, () async {
-        // await releaseUI;
-        return tp..layout(maxWidth: topWidth);
-      });
-
-      final centerKey = [width, center, centerLines];
-      await putIfAbsent(centerKey, () async {
-        // await releaseUI;
-        return tc..layout(maxWidth: width);
-      });
-
-      final bottomKey = [width, bottom, bottomLines];
-      await putIfAbsent(bottomKey, () async {
-        // await releaseUI;
-        return tb..layout(maxWidth: width);
-      });
-      await EventQueue.scheduler.endOfFrame;
-    });
-
-    if (all != _textStream) {
-      _textStream?.removeListener(onTextListener);
-      all.addListener(onTextListener);
-      _textStream = all;
-    }
-  }
-
-  TextStream? _textStream;
-
-  void onTextListener(List<TextInfo>? infos, bool error) {
-    setState(() {
-      textInfos?.forEach(disposeTextInfo);
-      textInfos = infos;
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    textInfos?.forEach(disposeTextInfo);
-    _textStream?.removeListener(onTextListener);
   }
 
   @override
   Widget build(BuildContext context) {
-    return _items(textInfos);
+    return TextBuilder(
+      keys: _keys,
+      layout: _layoutText,
+      builder: (infos, error) {
+        return _items(infos);
+      },
+    );
+  }
+
+  Future<void> _layoutText(FindTextInfo _, PutIfAbsentText putIfAbsent) async {
+    final tpr = _painter(widget.topRightScore,
+        style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1);
+
+    final tp = _painter(widget.top, style: ts.title3, maxLines: 1);
+
+    final tc =
+        _painter(widget.center, style: ts.body2, maxLines: widget.centerLines);
+
+    final tb =
+        _painter(widget.bottom, style: ts.body3, maxLines: widget.bottomLines);
+
+    final topRightKey = [widget.maxWidth, widget.topRightScore, 1];
+    final _tpr = await putIfAbsent(topRightKey, () async {
+      return tpr..layout(maxWidth: widget.maxWidth);
+    });
+
+    final _tpWidth = _tpr.painter.width;
+
+    final topWidth = widget.maxWidth - _tpWidth;
+    final topKey = [topWidth, widget.top, 1];
+    await putIfAbsent(topKey, () async {
+      return tp..layout(maxWidth: topWidth);
+    });
+
+    final centerKey = [widget.maxWidth, widget.center, widget.centerLines];
+    await putIfAbsent(centerKey, () async {
+      return tc..layout(maxWidth: widget.maxWidth);
+    });
+
+    final bottomKey = [widget.maxWidth, widget.bottom, widget.bottomLines];
+    await putIfAbsent(bottomKey, () async {
+      return tb..layout(maxWidth: widget.maxWidth);
+    });
+    await EventQueue.scheduler.endOfFrame;
   }
 
   Widget _items(Iterable<TextInfo>? data) {
@@ -232,6 +197,15 @@ class _TextBuilderState extends State<_TextBuilder> {
     } else {
       return const SizedBox();
     }
+  }
+
+  TextPainter _painter(String? text,
+      {required TextStyle style, int maxLines = 1}) {
+    return TextPainter(
+        text: TextSpan(text: text, style: style),
+        maxLines: maxLines,
+        ellipsis: '...',
+        textDirection: TextDirection.ltr);
   }
 }
 

@@ -238,7 +238,7 @@ class ShudanListDetailItemWidget extends StatelessWidget {
             id: ImageLayout.text,
             child: Padding(
               padding: const EdgeInsets.only(left: 14.0),
-              child: TextBuilder(
+              child: TextAsyncLayout(
                   height: 108,
                   topRightScore: '${l.score}分',
                   top: l.bookName ?? '',

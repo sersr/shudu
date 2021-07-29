@@ -42,7 +42,7 @@ class BooklistItem extends StatelessWidget {
             child: RepaintBoundary(
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
-                child: TextBuilder(
+                child: TextAsyncLayout(
                   top: title ?? '',
                   center: desc ?? '',
                   bottom: '总共$total本书',
