@@ -4,8 +4,8 @@ import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../../widgets/images.dart';
 
-class ShudanItem extends StatelessWidget {
-  ShudanItem(
+class BooklistItem extends StatelessWidget {
+  BooklistItem(
       {Key? key,
       this.img,
       this.name,

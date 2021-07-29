@@ -10,9 +10,9 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 
 import '../../widgets/images.dart';
-import '../book_info/book_info_page.dart';
-import 'list_shudan.dart';
-import 'top_view.dart';
+import '../book_info/info_page.dart';
+import 'booklist.dart';
+import 'top_custom_item.dart';
 
 class ListCatetoryPage extends StatefulWidget {
   @override
@@ -288,7 +288,7 @@ class _CategListViewState extends State<CategListView>
                   onTap: () => _item.id != null
                       ? BookInfoPage.push(context, _item.id!)
                       : null,
-                  child: BookListItem(item: _item),
+                  child: TopCustomItem(item: _item),
                 );
               },
             );

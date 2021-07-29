@@ -8,12 +8,12 @@ import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../book_info/book_info_page.dart' show BookInfoPage;
+import '../book_info/info_page.dart' show BookInfoPage;
 import '../../widgets/images.dart' show ImageResolve;
-import 'list_shudan.dart';
+import 'booklist.dart';
 
-class BookListItem extends StatelessWidget {
-  const BookListItem({Key? key, required this.item}) : super(key: key);
+class TopCustomItem extends StatelessWidget {
+  const TopCustomItem({Key? key, required this.item}) : super(key: key);
   final BookTopList item;
 
   @override
@@ -165,7 +165,7 @@ class _TopListViewState extends State<TopListView> {
                   onTap: () {
                     if (_item.id != null) BookInfoPage.push(context, _item.id!);
                   },
-                  child: BookListItem(item: _item));
+                  child: TopCustomItem(item: _item));
             },
             itemCount: _data.length + 1,
           );

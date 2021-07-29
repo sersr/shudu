@@ -8,7 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
 import '../../../widgets/indexs.dart';
-import '../../book_info/book_info_page.dart';
+import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
 import 'color_picker.dart';
 import 'page_view_controller.dart';

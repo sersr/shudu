@@ -10,8 +10,8 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/book_list.dart';
 import '../../event/event.dart';
 import '../../provider/text_styles.dart';
-import 'list_shudan_detail.dart';
-import 'shudan_item.dart';
+import 'booklist_detail.dart';
+import 'booklist_item.dart';
 
 class ListShudanPage extends StatelessWidget {
   ListShudanPage({Key? key}) : super(key: key);
@@ -162,12 +162,12 @@ class _WrapWidgetState extends State<WrapWidget>
               height: 112,
               onTap: () {
                 final route = MaterialPageRoute(builder: (_) {
-                  return ShudanDetailPage(
+                  return BooklistDetailPage(
                       total: bookList.bookCount, index: bookList.listId);
                 });
                 Navigator.of(context).push(route);
               },
-              child: ShudanItem(
+              child: BooklistItem(
                 desc: bookList.description,
                 name: bookList.title,
                 total: bookList.bookCount,

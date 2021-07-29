@@ -4,7 +4,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/provider.dart';
 import '../../widgets/page_animation.dart';
-import '../book_info/book_info_page.dart';
+import '../book_info/info_page.dart';
 
 class BookHistory extends StatefulWidget {
   const BookHistory({Key? key}) : super(key: key);

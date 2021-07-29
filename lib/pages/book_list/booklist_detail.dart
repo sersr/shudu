@@ -8,18 +8,19 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../book_info/book_info_page.dart';
+import '../book_info/info_page.dart';
 import '../../widgets/images.dart';
 
-class ShudanDetailPage extends StatefulWidget {
-  const ShudanDetailPage({Key? key, this.total, this.index}) : super(key: key);
+class BooklistDetailPage extends StatefulWidget {
+  const BooklistDetailPage({Key? key, this.total, this.index})
+      : super(key: key);
   final int? total;
   final int? index;
   @override
-  _ShudanDetailPageState createState() => _ShudanDetailPageState();
+  _BooklistDetailPageState createState() => _BooklistDetailPageState();
 }
 
-class _ShudanDetailPageState extends State<ShudanDetailPage> {
+class _BooklistDetailPageState extends State<BooklistDetailPage> {
   final provider = ShudanProvider();
 
   @override
@@ -30,7 +31,7 @@ class _ShudanDetailPageState extends State<ShudanDetailPage> {
   }
 
   @override
-  void didUpdateWidget(covariant ShudanDetailPage oldWidget) {
+  void didUpdateWidget(covariant BooklistDetailPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     provider.load(widget.index);
   }

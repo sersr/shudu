@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/src/provider.dart';
 
 import '../../provider/text_styles.dart';
-import 'list_shudan.dart';
-import 'top_view.dart';
+import 'booklist.dart';
+import 'top_custom_item.dart';
 
 class ListBangdanPage extends StatefulWidget {
   @override
@@ -90,7 +90,8 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
             child: RepaintBoundary(
           child: TopListView(
               index: widget.index,
-              ctg: _urlKeys[_currentIndex], date: _urlDates[widget.index]),
+              ctg: _urlKeys[_currentIndex],
+              date: _urlDates[widget.index]),
         ))
       ],
     );

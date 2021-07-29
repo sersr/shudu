@@ -15,8 +15,8 @@ import '../../provider/painter_notifier.dart';
 import '../../provider/provider.dart';
 import '../../provider/search_notifier.dart';
 import '../book_content/book_content_page.dart';
-import '../book_info/book_info_page.dart';
-import '../book_list/list_main.dart';
+import '../book_info/info_page.dart';
+import '../book_list/main.dart';
 import 'book_item.dart';
 
 class MyHomePage extends StatefulWidget {
