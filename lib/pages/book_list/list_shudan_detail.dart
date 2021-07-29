@@ -8,9 +8,8 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../book_info_view/book_info_page.dart';
+import '../book_info/book_info_page.dart';
 import '../../widgets/images.dart';
-
 
 class ShudanDetailPage extends StatefulWidget {
   const ShudanDetailPage({Key? key, this.total, this.index}) : super(key: key);

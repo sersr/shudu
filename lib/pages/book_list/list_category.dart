@@ -10,7 +10,7 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 
 import '../../widgets/images.dart';
-import '../book_info_view/book_info_page.dart';
+import '../book_info/book_info_page.dart';
 import 'list_shudan.dart';
 import 'top_view.dart';
 

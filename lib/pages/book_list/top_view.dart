@@ -8,7 +8,7 @@ import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
 import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
-import '../book_info_view/book_info_page.dart' show BookInfoPage;
+import '../book_info/book_info_page.dart' show BookInfoPage;
 import '../../widgets/images.dart' show ImageResolve;
 import 'list_shudan.dart';
 
@@ -90,7 +90,7 @@ class _TopListViewState extends State<TopListView> {
     controller?.removeListener(onUpdate);
     controller = DefaultTabController.of(context);
     controller?.addListener(onUpdate);
-      onUpdate();
+    onUpdate();
   }
 
   void onUpdate() {

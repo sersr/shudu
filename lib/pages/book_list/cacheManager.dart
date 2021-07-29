@@ -7,7 +7,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../database/database.dart';
 import '../../event/event.dart';
 import '../../widgets/page_animation.dart';
-import '../book_info_view/book_info_page.dart';
+import '../book_info/book_info_page.dart';
 
 
 class CacheManager extends StatefulWidget {

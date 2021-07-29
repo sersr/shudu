@@ -15,7 +15,7 @@ import '../../widgets/images.dart';
 import '../../widgets/indexs.dart';
 import '../../widgets/page_animation.dart';
 import '../../widgets/text_builder.dart';
-import '../book_content_view/book_content_page.dart';
+import '../book_content/book_content_page.dart';
 
 class BookInfoPage extends StatefulWidget {
   const BookInfoPage({Key? key, required this.id}) : super(key: key);

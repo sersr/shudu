@@ -9,7 +9,7 @@ import 'package:nop_db/nop_db.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
-import '../../pages/book_list_view/cacheManager.dart';
+import '../../pages/book_list/cacheManager.dart';
 
 part 'book_event.g.dart';
 

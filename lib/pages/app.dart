@@ -5,7 +5,7 @@ import 'package:useful_tools/common.dart';
 
 import '../event/event.dart';
 import '../provider/provider.dart';
-import 'home_view/home_page.dart';
+import 'home/home_page.dart';
 
 class ShuduApp extends StatelessWidget {
   @override

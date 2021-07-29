@@ -12,7 +12,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../database/database.dart';
 import '../event/event.dart';
-import '../pages/book_content_view/widgets/page_view_controller.dart';
+import '../pages/book_content/widgets/page_view_controller.dart';
 import 'constansts.dart';
 
 enum Status { ignore, error, done }

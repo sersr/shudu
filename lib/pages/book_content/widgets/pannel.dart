@@ -8,7 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
 import '../../../widgets/indexs.dart';
-import '../../book_info_view/book_info_page.dart';
+import '../../book_info/book_info_page.dart';
 import '../book_content_page.dart';
 import 'color_picker.dart';
 import 'page_view_controller.dart';
@@ -633,7 +633,7 @@ class _TopPannelState extends State<TopPannel> {
                                 var cid = contentNtf.tData.cid!;
                                 var page = contentNtf.currentPage;
                                 var bookid = contentNtf.bookid!;
-              
+
                                 contentNtf
                                   ..dump()
                                   ..out();
@@ -649,7 +649,7 @@ class _TopPannelState extends State<TopPannel> {
                                       break;
                                     }
                                   }
-              
+
                                   contentNtf.newBookOrCid(bookid, cid, page);
                                 });
                               },
@@ -660,10 +660,11 @@ class _TopPannelState extends State<TopPannel> {
                                 onTap: () {
                                   final opt = context.read<OptionsNotifier>();
                                   opt.options = ConfigOptions(
-                                    showPerformanceOverlay:
-                                        opt.options.showPerformanceOverlay != null
-                                            ? !opt.options.showPerformanceOverlay!
-                                            : true,
+                                    showPerformanceOverlay: opt.options
+                                                .showPerformanceOverlay !=
+                                            null
+                                        ? !opt.options.showPerformanceOverlay!
+                                        : true,
                                   );
                                 }),
                             _topButton(
