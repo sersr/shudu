@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/src/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart' show BookTopList;
@@ -47,9 +47,9 @@ class TopCustomItem extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
                     topRightScore: topRightScore,
-                    top: name,
+                    top: name ?? '',
                     center: center,
-                    bottom: desc),
+                    bottom: desc ?? ''),
               ),
             ),
           )
@@ -144,7 +144,7 @@ class _TopListViewState extends State<TopListView> {
               if (index == _data.length) {
                 final state = _topNotifier.state;
                 if (!_topNotifier._hasNext)
-                  return Container(
+                  return SizedBox(
                       height: 50, child: Center(child: Text('到底了~')));
 
                 var child = loadingIndicator();

@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import 'book_history.dart';
-import 'cacheManager.dart';
+import 'booklist.dart';
+import 'cache_manager.dart';
+import 'category.dart';
 import 'chat_room.dart';
 import 'top.dart';
-import 'category.dart';
-import 'booklist.dart';
 
 class ListMainPage extends StatelessWidget {
+  const ListMainPage({Key? key}) : super(key: key);
+
   Widget _builder(String text, VoidCallback onTap) {
     return btn1(
       radius: 10.0,
@@ -33,7 +35,7 @@ class ListMainPage extends StatelessWidget {
                 child: _builder('书单', () {
                   Navigator.of(context)
                       .push(MaterialPageRoute(builder: (context) {
-                    return ListShudanPage();
+                    return BooklistPage();
                   }));
                 }),
               ),
@@ -55,7 +57,7 @@ class ListMainPage extends StatelessWidget {
                 child: _builder('榜单', () {
                   Navigator.of(context)
                       .push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: ListBangdanPage());
+                    return RepaintBoundary(child: TopPage());
                   }));
                 }),
               ),

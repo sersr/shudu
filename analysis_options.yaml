@@ -1,4 +1,4 @@
-include: package:pedantic/analysis_options.yaml
+include: package:flutter_lints/flutter.yaml
 
 
 linter:
@@ -7,6 +7,9 @@ linter:
     prefer_relative_imports: true
     curly_braces_in_flow_control_structures: false
     avoid_single_cascade_in_expression_statements: false
+    non_constant_identifier_names: false
+    avoid_renaming_method_parameters: false
+    prefer_const_constructors: false
 
 analyzer:
   errors:

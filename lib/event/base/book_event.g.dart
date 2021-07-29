@@ -48,10 +48,10 @@ abstract class BookEventResolve extends BookEvent
         BookContentEventResolve,
         ComplexEventResolve {
   @override
-  bool resolve(m) {
-    if (remove(m)) return true;
-    if (m is! IsolateSendMessage) return false;
-    return super.resolve(m);
+  bool resolve(resolveMessage) {
+    if (remove(resolveMessage)) return true;
+    if (resolveMessage is! IsolateSendMessage) return false;
+    return super.resolve(resolveMessage);
   }
 }
 
@@ -87,9 +87,8 @@ mixin CustomEventResolve on Resolve, CustomEvent {
           send(result, resolveMessage);
         } catch (e) {
           send(result, resolveMessage, e);
-        } finally {
-          return true;
         }
+        return true;
       }
     }
     return super.resolve(resolveMessage);
@@ -179,9 +178,8 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
           send(result, resolveMessage);
         } catch (e) {
           send(result, resolveMessage, e);
-        } finally {
-          return true;
         }
+        return true;
       }
     }
     return super.resolve(resolveMessage);
@@ -258,9 +256,8 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
           send(result, resolveMessage);
         } catch (e) {
           send(result, resolveMessage, e);
-        } finally {
-          return true;
         }
+        return true;
       }
     }
     return super.resolve(resolveMessage);
@@ -326,9 +323,8 @@ mixin ComplexEventResolve
           send(result, resolveMessage);
         } catch (e) {
           send(result, resolveMessage, e);
-        } finally {
-          return true;
         }
+        return true;
       }
     }
     return super.resolve(resolveMessage);

@@ -73,7 +73,9 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
   Future<void> _onSystemOverlaysChanges(bool visible) async {
     _systemOverlaysAreVisible = visible;
     if (_changesListeners.isNotEmpty)
-      _changesListeners.forEach((c) => c(visible));
+      for (var c in _changesListeners) {
+        c(visible);
+      }
   }
 
   final _changesListeners = <BoolCallback>{};

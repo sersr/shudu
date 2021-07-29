@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/common.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/nop_database.dart';
-import '../../pages/book_list/cacheManager.dart';
+import '../../pages/book_list/cache_manager.dart';
 import '../base/book_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
@@ -47,8 +45,8 @@ mixin ComplexMixin
       final lastTime = data.lastTime;
 
       final name = data.name;
-      final img =
-          data.img ?? '${PinyinHelper.getPinyinE('$name', separator: '')}.jpg';
+      final img = data.img ??
+          '${PinyinHelper.getPinyinE(name ?? '', separator: '')}.jpg';
 
       final _book = book;
 
@@ -120,7 +118,7 @@ mixin ComplexMixin
     var queryList = getIndexsDbAll().reversed.toList();
     final _map = <int, CacheItem>{};
 
-    queryList.forEach((index) {
+    for (var index in queryList) {
       final bookId = index.bookId;
       final bIndexs = index.bIndexs;
       if (bookId != null && bIndexs != null) {
@@ -141,7 +139,7 @@ mixin ComplexMixin
         _map.putIfAbsent(
             bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
       }
-    });
+    }
     return _map;
   }
 
@@ -201,10 +199,10 @@ mixin ComplexMixin
     final bookContent = await getContentNet(bookid, contentid);
 
     if (bookContent.content != null) {
-      saveContent(bookContent);
-      final lines = textLayout(bookContent.content!);
+      final lines = split(bookContent.content!);
 
       if (lines.isNotEmpty) {
+        insertOrUpdateContent(bookContent);
         return RawContentLines(
           pages: lines,
           nid: bookContent.nid,
@@ -223,7 +221,7 @@ mixin ComplexMixin
     if (queryList.isNotEmpty) {
       final bookContent = queryList.last;
       if (bookContent.content != null) {
-        final lines = textLayout(bookContent.content!);
+        final lines = split(bookContent.content!);
         if (lines.isNotEmpty) {
           return RawContentLines(
             pages: lines,
@@ -238,14 +236,4 @@ mixin ComplexMixin
     }
     return null;
   }
-}
-
-// internal
-extension _ComputeEvent on ComplexMixin {
-  List<String> textLayout(String text) => LineSplitter.split(text).toList();
-}
-
-extension _Database on ComplexMixin {
-  void saveContent(BookContentDb bookContent) =>
-      insertOrUpdateContent(bookContent);
 }

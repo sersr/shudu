@@ -9,7 +9,7 @@ import 'package:nop_db/nop_db.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
-import '../../pages/book_list/cacheManager.dart';
+import '../../pages/book_list/cache_manager.dart';
 
 part 'book_event.g.dart';
 
@@ -23,8 +23,7 @@ abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
 }
 
 @NopIsolateEventItem(separate: true)
-abstract class DatabaseEvent
-    with BookCacheEvent, BookContentEvent {}
+abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
 
 @NopIsolateEventItem()
 abstract class BookContentEvent {
@@ -48,7 +47,6 @@ abstract class ComplexEvent {
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainBookListDb();
-
 
   FutureOr<int?> updateBook(int id, BookCache book);
 
@@ -86,6 +84,7 @@ class RawContentLines {
       this.cname,
       this.hasContent})
       : _pages = pages;
+
   List<String> get pages => _pages;
   final List<String> _pages;
   final int? cid;
@@ -116,11 +115,11 @@ class RawContentLines {
       ..add(raw.pages.length);
     dataString.add(Uint8List.fromList(cname));
 
-    raw.pages.forEach((page) {
+    for (var page in raw.pages) {
       final _p = utf8.encode(page);
       dataInt.add(_p.length);
       dataString.add(Uint8List.fromList(_p));
-    });
+    }
 
     final intData = Int32List.fromList(dataInt);
     return TransferableTypedData.fromList(dataString..insert(0, intData));
@@ -128,8 +127,8 @@ class RawContentLines {
 
   static RawContentLines decode(ByteBuffer data) {
     var start = 0;
-    final six = 6;
-    final sixLengthBytes = six * 4;
+    const six = 6;
+    const sixLengthBytes = six * 4;
     var cname = '';
     final pages = <String>[];
     var list = const <int>[];

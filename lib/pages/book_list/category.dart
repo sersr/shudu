@@ -1,20 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/src/provider.dart';
-import '../../widgets/page_animation.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
-
 import '../../widgets/images.dart';
+import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';
 import 'booklist.dart';
 import 'top_custom_item.dart';
 
 class ListCatetoryPage extends StatefulWidget {
+  const ListCatetoryPage({Key? key}) : super(key: key);
+
   @override
   _ListCatetoryPageState createState() => _ListCatetoryPageState();
 }
@@ -94,7 +95,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                             children: [
                               Expanded(child: ImageResolve(img: e.image)),
                               const SizedBox(height: 4),
-                              Text('${e.name}', style: ts.title2),
+                              Text(e.name ?? '', style: ts.title2),
                             ],
                           ),
                         ),
@@ -279,9 +280,9 @@ class _CategListViewState extends State<CategListView>
               itemBuilder: (context, index) {
                 if (index == _data.length) {
                   if (!_categNotifier._hasNext)
-                    return Container(
+                    return SizedBox(
                         height: 50, child: Center(child: Text('到底了~')));
-                  return Container(height: 50, child: loadingIndicator());
+                  return SizedBox(height: 50, child: loadingIndicator());
                 }
                 final _item = _data[index];
                 return ListItem(

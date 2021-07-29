@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:useful_tools/common.dart';
+
 class ServerBase {
   HttpServer? s;
   final users = <String, WebSocket>{};
@@ -30,7 +32,7 @@ class ServerBase {
           }, onError: (error) {
             users.remove(key);
 
-            print('$error');
+            Log.i('$error');
           });
         }
       });
@@ -65,7 +67,7 @@ class _MessageTransformer extends StreamTransformerBase implements EventSink {
       _data = Message.formJson(jsonDecode(data));
       if (_data != null) _eventSink?.add(_data);
     } catch (e) {
-      print('send: $e');
+      Log.i('send: $e');
     }
   }
 
@@ -130,7 +132,7 @@ class Message {
   final DateTime date;
   final String user;
   final int type;
-  final data;
+  final dynamic data;
 
   Map<String, Object> toJson() {
     return <String, Object>{

@@ -3,6 +3,8 @@ import 'dart:isolate';
 
 import '../base/book_event.dart';
 
+/// 通过 mixin 对特定函数进行重写
+///
 mixin SaveImageMessager on CustomEventMessager {
   @override
   Future<String> getImagePath(String img) async {

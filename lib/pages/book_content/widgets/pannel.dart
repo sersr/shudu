@@ -286,7 +286,7 @@ Widget bottomButton(
             if (icon != null) Icon(icon, color: Colors.grey.shade400),
             SizedBox(height: 5),
             child ??
-                Text('$text',
+                Text(text!,
                     style:
                         TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           ],
@@ -310,7 +310,7 @@ Widget _topButton(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: child ??
           Text(
-            '$text',
+            text!,
             style: TextStyle(fontSize: 11, color: Colors.grey.shade300),
           ),
     ),
@@ -569,7 +569,7 @@ class _BottomEndState extends State<BottomEnd> {
                 animation: bloc.config,
                 builder: (context, _) {
                   return Text(
-                    '${bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动'}',
+                    bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动',
                     style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
                   );
                 },
@@ -988,7 +988,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                 children: [
                   padding2,
                   RepaintBoundary(
-                    child: Container(
+                    child: SizedBox(
                       height: 150,
                       child: onChangeChild,
                     ),
@@ -1081,7 +1081,8 @@ typedef ChildBuilder = Widget Function(
 
 class PannelSlide extends StatefulWidget {
   const PannelSlide(
-      {this.middleChild,
+      {Key? key,
+      this.middleChild,
       this.botChild,
       this.topChild,
       this.leftChild,
@@ -1094,7 +1095,8 @@ class PannelSlide extends StatefulWidget {
             topChild != null ||
             leftChild != null ||
             rightChild != null ||
-            middleChild != null);
+            middleChild != null),
+        super(key: key);
   final bool modal;
   final double ignoreBottomHeight;
   final PanSlideController controller;
@@ -1260,8 +1262,8 @@ class ModalPart extends MultiChildLayoutDelegate {
 
   @override
   void performLayout(Size size) {
-    final _body = 'body';
-    final _bottom = 'bottom';
+    const _body = 'body';
+    const _bottom = 'bottom';
     final height = size.height;
     final width = size.width;
 

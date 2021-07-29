@@ -5,7 +5,7 @@ import '../../widgets/text_builder.dart';
 import '../../widgets/images.dart';
 
 class BooklistItem extends StatelessWidget {
-  BooklistItem(
+  const BooklistItem(
       {Key? key,
       this.img,
       this.name,
@@ -43,8 +43,8 @@ class BooklistItem extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
-                  top: title,
-                  center: desc,
+                  top: title ?? '',
+                  center: desc ?? '',
                   bottom: '总共$total本书',
                   height: height ?? 112,
                   centerLines: 2,

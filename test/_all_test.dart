@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:isolate';
 
@@ -5,16 +7,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
+import 'package:useful_tools/common.dart';
 import 'package:useful_tools/event_queue.dart';
 
 void main() async {
   test('future', () {
     final f = Completer();
-    f.future._resultResolve('sss').then(print);
+    f.future._resultResolve('sss').then(Log.i);
     // f.future.catchError((_) => null).then(print);
     // f.completeError('error');
     f.complete(null);
-    ca()._resultResolve('aaa').then(print);
+    ca()._resultResolve('aaa').then(Log.i);
   });
 
   test('regexp', () {
@@ -22,9 +25,9 @@ void main() async {
     final _e2 = RegExp('[(<br/>\n]');
     final _e3 = RegExp('(?:<br/>)');
     final _ei = RegExp('https?://');
-    final s = '<br/> <br/>   ';
-    final s2 = '(< sfw > b / sff<>\n';
-    final s3 = 'http:// hello ,,, https:// nihao ';
+    const s = '<br/> <br/>   ';
+    const s2 = '(< sfw > b / sff<>\n';
+    const s3 = 'http:// hello ,,, https:// nihao ';
 
     final r3 = s3.replaceAll(_ei, 'ccc');
     expect(r3, 'ccc hello ,,, ccc nihao ', reason: r3);
@@ -169,7 +172,7 @@ void main() async {
   });
 
   test('text layout', () {
-    final str = '一乙二十丁厂七卜人入八九几儿了力乃刀又三于干亏士工土才寸下大丈与万上小口巾山'
+    const str = '一乙二十丁厂七卜人入八九几儿了力乃刀又三于干亏士工土才寸下大丈与万上小口巾山'
         '千乞川亿个勺久凡及夕丸么广亡门义之尸弓己已子卫也女飞刃习叉马乡丰王井开夫天无元专云扎艺'
         '木五支厅不太犬区历尤友匹车巨牙屯比互切瓦止少日中冈贝内水见午牛手毛气升长仁什片仆化仇币'
         '仍仅斤爪反介父从今凶分乏公仓月氏勿欠风丹匀乌凤勾文六方火为斗忆订计户认心尺引丑巴孔队办'
@@ -264,7 +267,7 @@ void main() async {
     t.layout(maxWidth: 300);
     print('double layout: ${(pointend() - point) / 1000}ms');
     point = pointend();
-    final strs = '旧帅归且旦目叶甲申叮电号田由史只央兄叼叫另叨叹四生失禾丘付仗代仙们仪白仔他斥瓜乎丛令用'
+    const strs = '旧帅归且旦目叶甲申叮电号田由史只央兄叼叫另叨叹四生失禾丘付仗代仙们仪白仔他斥瓜乎丛令用'
         '甩印乐句匆册犯外处冬鸟务包饥主市立闪兰半汁汇头汉宁穴它讨写让礼训必议讯记永司尼民出辽奶'
         '奴加召皮边发孕圣对台矛纠母幼丝式刑动扛寺吉扣考托老执巩圾扩扫地扬场耳共芒亚芝朽朴机权过'
         '臣再协西压厌在有百存而页匠夸夺灰达列死成夹轨邪划迈毕至此贞师尘尖劣光当早吐吓虫曲团同吊'

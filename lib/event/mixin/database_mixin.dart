@@ -92,7 +92,7 @@ mixin DatabaseMixin implements DatabaseEvent {
   int deleteCache(int bookId) {
     final delete = bookContentDb.delete..where.bookId.equalTo(bookId);
     final d = delete.go;
-    print('delete: $d');
+    Log.i('delete: $d');
     return d;
   }
 

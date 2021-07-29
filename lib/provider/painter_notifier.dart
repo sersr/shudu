@@ -286,11 +286,11 @@ extension DataLoading on ContentNotifier {
         return remove;
       });
       scheduleMicrotask(() {
-        _dirtys.forEach((element) {
-          element._content.forEach((element) {
+        for (var element in _dirtys) {
+          for (var element in element._content) {
             element.picture.dispose();
-          });
-        });
+          }
+        }
       });
     }
   }
@@ -655,7 +655,7 @@ extension Layout on ContentNotifier {
               if (endOffset != _s.length) {
                 // Unicode 字符占用的字节数不相等
                 // 避免多字节字符导致 [subString] 出错
-                print('no: $_s |$start, ${pc.length}');
+                Log.i('no: $_s |$start, ${pc.length}');
               }
               return true;
             }());
@@ -1401,6 +1401,10 @@ class ContentViewConfig {
     return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor: $fontColor, lineTweenHeight: $lineTweenHeight,'
         ' fontFamily: $fontFamily,  local: $locale, axis: $axis';
   }
+
+  @override
+  int get hashCode => hashValues(fontColor, fontFamily, fontSize,
+      lineTweenHeight, bgcolor, locale, axis, orientation);
 }
 
 class NotifyMessage {

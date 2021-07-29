@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/src/provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../provider/text_styles.dart';
 import 'booklist.dart';
 import 'top_custom_item.dart';
 
-class ListBangdanPage extends StatefulWidget {
+class TopPage extends StatefulWidget {
+  const TopPage({Key? key}) : super(key: key);
+
   @override
-  _ListBangdanPageState createState() => _ListBangdanPageState();
+  _TopPageState createState() => _TopPageState();
 }
 
-class _ListBangdanPageState extends State<ListBangdanPage> {
+class _TopPageState extends State<TopPage> {
   final colorv = ValueNotifier(HSVColor.fromColor(Colors.black));
   final change = ValueNotifier(false);
 
@@ -61,7 +63,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
     super.build(context);
     return Row(
       children: [
-        Container(
+        SizedBox(
             width: 60,
             child: ListView.builder(
               // shrinkWrap: true,

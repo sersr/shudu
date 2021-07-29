@@ -120,7 +120,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '$description',
+                          description ?? '',
                           maxLines: hide.value ? 2 : null,
                           overflow: TextOverflow.fade,
                           style: ts.body2,
@@ -187,7 +187,7 @@ class _TitleWidgetState extends State<TitleWidget>
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
                       child:
-                          Text('${data.title}', maxLines: 2, style: ts.title2),
+                          Text(data.title ?? '', maxLines: 2, style: ts.title2),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
@@ -195,7 +195,7 @@ class _TitleWidgetState extends State<TitleWidget>
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child: Text('${data.updateTime}', style: ts.body3),
+                      child: Text(data.updateTime ?? '', style: ts.body3),
                     ),
                   ],
                 ),
@@ -241,9 +241,9 @@ class ShudanListDetailItemWidget extends StatelessWidget {
               child: TextBuilder(
                   height: 108,
                   topRightScore: '${l.score}分',
-                  top: l.bookName,
+                  top: l.bookName ?? '',
                   center: '${l.categoryName} | ${l.author}',
-                  bottom: '${l.description}'),
+                  bottom: l.description ?? ''),
             ),
           ),
         ],

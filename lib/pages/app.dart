@@ -8,6 +8,8 @@ import '../provider/provider.dart';
 import 'home/home_page.dart';
 
 class ShuduApp extends StatelessWidget {
+  const ShuduApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Selector<OptionsNotifier, List>(selector: (context, opt) {
@@ -17,7 +19,7 @@ class ShuduApp extends StatelessWidget {
         // color: Colors.white,
         title: 'shudu',
         theme: ThemeData.light().copyWith(
-          colorScheme: ColorScheme.light(
+          colorScheme: const ColorScheme.light(
             // primary: Colors.grey.shade100,
             // primaryVariant: Colors.grey.shade200,
             secondary: Colors.grey,
@@ -71,7 +73,7 @@ class MulProvider extends StatelessWidget {
           create: (context) => BookCacheNotifier(context.read<Repository>()),
         )
       ],
-      child: ShuduApp(),
+      child: const ShuduApp(),
     );
   }
 }

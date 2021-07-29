@@ -29,14 +29,15 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
     _callbacks.remove(callback);
   }
 
-
   void _run() {
     if (_done) return;
     _done = true;
     if (_callbacks.isEmpty) return;
     if (mounted) {
       final callbacks = List.of(_callbacks);
-      callbacks.forEach((callback) => callback());
+      for (var callback in callbacks) {
+        callback();
+      }
     }
   }
 

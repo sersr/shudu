@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:useful_tools/common.dart';
 
 class ColorPickerPainter extends CustomPainter {
   ColorPickerPainter({this.r, this.g, this.b});
@@ -32,8 +33,12 @@ class ColorPickerPainter extends CustomPainter {
     var allowMax = cenx > ceny ? ceny : cenx;
     canvas.save();
     canvas.translate(cenx - allowMax, ceny - allowMax);
-    canvas.drawCircle(Offset(allowMax, allowMax), allowMax,
-        Paint()..color = Color.fromRGBO(r!.value.toInt(), g!.value.toInt(), b!.value.toInt(), 1));
+    canvas.drawCircle(
+        Offset(allowMax, allowMax),
+        allowMax,
+        Paint()
+          ..color = Color.fromRGBO(
+              r!.value.toInt(), g!.value.toInt(), b!.value.toInt(), 1));
     canvas.restore();
   }
 
@@ -44,7 +49,12 @@ class ColorPickerPainter extends CustomPainter {
 }
 
 class ColorPickerWidget extends LeafRenderObjectWidget {
-  const ColorPickerWidget({Key? key, this.extent, this.center = true, this.elevation = 8.0, this.radius})
+  const ColorPickerWidget(
+      {Key? key,
+      this.extent,
+      this.center = true,
+      this.elevation = 8.0,
+      this.radius})
       : super(key: key);
   final bool center;
   final double elevation;
@@ -61,7 +71,8 @@ class ColorPickerWidget extends LeafRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant RenderColorPicker renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant RenderColorPicker renderObject) {
     renderObject
       ..extent = extent
       ..center = center
@@ -71,7 +82,11 @@ class ColorPickerWidget extends LeafRenderObjectWidget {
 }
 
 class RenderColorPicker extends RenderBox {
-  RenderColorPicker({ValueNotifier<double?>? extent, bool? center, double? elevation, double? radius})
+  RenderColorPicker(
+      {ValueNotifier<double?>? extent,
+      bool? center,
+      double? elevation,
+      double? radius})
       : _extent = extent,
         _center = center,
         _elevation = elevation,
@@ -127,7 +142,7 @@ class RenderColorPicker extends RenderBox {
     allExent = (_radius! + _elevation!) * 2;
     size = constraints.constrainDimensions(allExent, allExent);
     if (Size(allExent, allExent) != size) {
-      print('...............error');
+      Log.i('...............error');
     }
     extentWithElevation = _radius! + _elevation!;
     rect = Offset(_elevation!, _elevation!) & Size(_radius! * 2, _radius! * 2);
@@ -160,10 +175,13 @@ class RenderColorPicker extends RenderBox {
     path.addArc(rect, 0, math.pi * 2);
     // canvas.drawRect(Offset.zero & Size(extentWithElevation* 2 , extentWithElevation * 2), Paint());
     canvas.drawShadow(path, Colors.black, elevation!, false);
-    canvas.drawCircle(Offset(extentWithElevation, extentWithElevation), _radius!, Paint()..shader = g);
+    canvas.drawCircle(Offset(extentWithElevation, extentWithElevation),
+        _radius!, Paint()..shader = g);
 
-    final gr = RadialGradient(radius: 0.5, colors: [white, opy]).createShader(rect);
-    canvas.drawCircle(Offset(extentWithElevation, extentWithElevation), _radius!, Paint()..shader = gr);
+    final gr =
+        RadialGradient(radius: 0.5, colors: [white, opy]).createShader(rect);
+    canvas.drawCircle(Offset(extentWithElevation, extentWithElevation),
+        _radius!, Paint()..shader = gr);
     // canvas.drawLine(
     //     Offset(extentWithElevation, 0.0), Offset(extentWithElevation, size.height), Paint()..color = Colors.black);
     // canvas.drawPoints(
@@ -192,7 +210,7 @@ class RenderColorPicker extends RenderBox {
 typedef ColorCallback = void Function(HSVColor value);
 
 class SelectColor extends StatefulWidget {
-  SelectColor({
+  const SelectColor({
     Key? key,
     this.onChangeStart,
     this.onChangeUpdate,
@@ -219,7 +237,8 @@ class SelectColor extends StatefulWidget {
 }
 
 class _SelectColorState extends State<SelectColor> {
-  final ValueNotifier<HSVColor> color = ValueNotifier(HSVColor.fromColor(Colors.black));
+  final ValueNotifier<HSVColor> color =
+      ValueNotifier(HSVColor.fromColor(Colors.black));
   final ValueNotifier<double> extent = ValueNotifier(0.0);
   ValueNotifier<double>? value;
 
@@ -334,7 +353,8 @@ class _SelectColorState extends State<SelectColor> {
 }
 
 class Poin extends SingleChildRenderObjectWidget {
-  const Poin({required Widget child, required this.poinOffset}) : super(child: child);
+  const Poin({Key? key, required Widget child, required this.poinOffset})
+      : super(key: key, child: child);
   final ValueNotifier<Offset> poinOffset;
   @override
   PoinRender createRenderObject(BuildContext context) {
@@ -342,7 +362,8 @@ class Poin extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant PoinRender renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant PoinRender renderObject) {
     renderObject.poinOffset = poinOffset;
   }
 }
@@ -379,7 +400,9 @@ class PoinRender extends RenderProxyBox {
     if (!size.isEmpty) {
       final canvas = context.canvas;
       canvas.drawCircle(
-          _poinOffset.value == Offset.zero ? Offset(size.width / 2, size.height / 2) : poinOffset.value,
+          _poinOffset.value == Offset.zero
+              ? Offset(size.width / 2, size.height / 2)
+              : poinOffset.value,
           3,
           Paint()
             ..strokeWidth = 2

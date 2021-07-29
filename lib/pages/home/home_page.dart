@@ -132,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       borderRadius: BorderRadius.circular(height / 2),
                       onTap: () => showSearch(
                           context: context, delegate: MySearchPage()),
-                      child: Container(
+                      child: SizedBox(
                         height: height,
                         width: height,
                         child: Icon(Icons.search),
@@ -153,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   return InkWell(
                     borderRadius: BorderRadius.circular(height / 2),
                     onTap: () => showbts(),
-                    child: Container(
+                    child: SizedBox(
                       height: height,
                       width: height,
                       child: Icon(Icons.menu),
@@ -179,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         iconSize: 18.0,
         selectedFontSize: 11.0,
         unselectedFontSize: 11.0,
-        items: [
+        items: const [
           BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
           BottomNavigationBarItem(
               label: '书城', icon: Icon(Icons.local_grocery_store_rounded))
@@ -635,7 +635,7 @@ class MySearchPage extends SearchDelegate<void> {
 
   @override
   Widget buildLeading(BuildContext context) => Center(
-      child: Container(
+      child: SizedBox(
           // color: Colors.cyan,
           height: 100,
           width: 100,
@@ -757,7 +757,7 @@ class MySearchPage extends SearchDelegate<void> {
                               border: Border(
                                   bottom:
                                       BorderSide(color: Colors.grey.shade300))),
-                          child: Text('${value.name}'),
+                          child: Text(value.name ??''),
                         ),
                       ),
                 ],

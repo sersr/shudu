@@ -55,6 +55,10 @@ class ConfigOptions {
     return '$runtimeType: $platform, $pageBuilder, '
         'resample: $resample, resampleOffset: $resampleOffset';
   }
+
+  @override
+  int get hashCode => hashValues(platform, pageBuilder, resample,
+      resampleOffset, useImageCache, useTextCache, showPerformanceOverlay);
 }
 
 enum PageBuilder {
@@ -197,7 +201,7 @@ class OptionsNotifier extends ChangeNotifier {
     return resample;
   }
 
-  @deprecated
+  @Deprecated('无效')
   Future<void> changeRate() async {
     await Future.delayed(const Duration(seconds: 1));
     final resample = await listenRate();

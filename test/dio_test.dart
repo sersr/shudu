@@ -9,7 +9,7 @@ import 'package:path/path.dart';
 void main() async {
   test('dio download', () async {
     final dio = dioCreater();
-    final path = 'shifangwusheng.jpg';
+    const path = 'shifangwusheng.jpg';
     final url = Api.imageUrl(path);
     final data = await dio.get<ResponseBody>(url,
         options: Options(responseType: ResponseType.stream));

@@ -138,10 +138,10 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                 children: [
                                   Expanded(
                                     child: btn1(
-                                      child: Container(
+                                      child: SizedBox(
                                         height: 56,
                                         child: Center(
-                                          child: Text('${show ? '阅读' : '试读'}'),
+                                          child: Text(show ? '阅读' : '试读'),
                                         ),
                                       ),
                                       onTap: () async {
@@ -167,7 +167,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                       background: false,
                                       onTap: () =>
                                           cache.updateShow(bookid, !show),
-                                      child: Container(
+                                      child: SizedBox(
                                           height: 56,
                                           child: Center(
                                               child: Text(
@@ -265,7 +265,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${info.desc}',
+                      info.desc ?? '',
                       style: ts.body3,
                       maxLines: hide ? 2 : null,
                     ),
@@ -330,7 +330,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                '${info.lastTime}',
+                                info.lastTime ?? '',
                                 softWrap: false,
                                 style: ts.body3,
                                 overflow: TextOverflow.ellipsis,
@@ -342,7 +342,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                       Container(
                         padding: const EdgeInsets.only(top: 6.0),
                         child: Text(
-                          '${info.lastChapter}',
+                          info.lastChapter ?? '',
                           style: ts.body2,
                           overflow: TextOverflow.ellipsis,
                           softWrap: false,
@@ -400,7 +400,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 id: ImageLayout.image,
                 child: ImageResolve(
                     img: img ??
-                        '${PinyinHelper.getPinyinE('$name', separator: '')}.jpg'),
+                        '${PinyinHelper.getPinyinE(name ?? '', separator: '')}.jpg'),
               ),
               LayoutId(
                 id: ImageLayout.text,
@@ -416,7 +416,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             padding:
                                 const EdgeInsets.only(top: 2.0, bottom: 5.0),
                             child: Text(
-                              '$name',
+                              name ?? '',
                               style: ts.title2,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 2,
@@ -424,21 +424,18 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             ),
                           ),
                           Expanded(
-                            child: Container(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  _wrapText('作者：$author'),
-                                  _wrapText('类型：$cName'),
-                                  _wrapText('状态：$bookStatus'),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 2.0),
-                                    child: _wrapText('评分：${bookvote?.scroe}分'),
-                                  ),
-                                ],
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _wrapText('作者：$author'),
+                                _wrapText('类型：$cName'),
+                                _wrapText('状态：$bookStatus'),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 2.0),
+                                  child: _wrapText('评分：${bookvote?.scroe}分'),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -456,7 +453,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
   Text _wrapText(String? text) {
     return Text(
-      '$text',
+      text ?? '',
       overflow: TextOverflow.ellipsis,
       softWrap: false,
     );
@@ -496,7 +493,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
                   height: 108,
-                  top: '${l.name}',
+                  top: l.name ??'',
                   center: '作者：$author',
                   bottom: '最新: ${l.lastChapter}',
                 ),

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:collection';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +27,7 @@ extension Li<E> on ListQueueTest<E> {
 }
 
 class ListQueueTest<E> extends ListQueue<E> {
+  // ignore: constant_identifier_names
   static const int _INITIAL_CAPACITY = 8;
   List<E?> _table;
   int _head;

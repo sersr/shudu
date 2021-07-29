@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/src/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/constansts.dart';
@@ -182,7 +182,7 @@ class ContentPageViewState extends State<ContentPageView>
       animation: bloc.header,
       builder: (__, _) {
         return Text(
-          '${bloc.header.value}',
+          bloc.header.value,
           style: bloc.secstyle,
           softWrap: false,
           overflow: TextOverflow.visible,
@@ -218,7 +218,7 @@ class ContentPageViewState extends State<ContentPageView>
             ),
             const Expanded(child: SizedBox()),
             Text(
-              '${bloc.footer.value}',
+              bloc.footer.value,
               style: bloc.secstyle,
               textAlign: TextAlign.right,
               maxLines: 1,
@@ -338,7 +338,7 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void updategest() {
-    final dragStartBehavior = DragStartBehavior.start;
+    const dragStartBehavior = DragStartBehavior.start;
     if (widget.offsetPosition.axis == Axis.vertical) {
       gestures = <Type, GestureRecognizerFactory>{
         VerticalDragGestureRecognizer:
@@ -433,7 +433,7 @@ class _NopPageViewState extends State<NopPageView> {
 }
 
 class _SlideWidget extends RenderObjectWidget {
-  _SlideWidget({
+  const _SlideWidget({
     required this.paddingRect,
     required this.header,
     required this.body,

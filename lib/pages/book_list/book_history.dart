@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/src/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/provider.dart';
@@ -69,7 +69,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
                             Expanded(
                                 child: Container(
                                     padding: const EdgeInsets.only(left: 12),
-                                    child: Text('${item.name}'))),
+                                    child: Text(item.name ?? ''))),
                             const SizedBox(width: 10),
                             Padding(
                               padding: const EdgeInsets.only(right: 6),

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +14,7 @@ void main() async {
   watcher.sync = true;
   final bookEvent = repository.bookEvent;
   test('event', () async {
-    final bookid = 10111;
+    const bookid = 10111;
 
     /// insertBook
     var x = await bookEvent.insertBook(BookCache(

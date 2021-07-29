@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:useful_tools/common.dart';
 
 import '../data/book_info.dart';
 import '../event/event.dart';
@@ -11,7 +12,7 @@ class BookInfoProvider extends ChangeNotifier {
   Future<void> getData(int id) async {
     if (repository == null) return;
     if (contains(id)) {
-      print('contains');
+      Log.i('contains');
       return;
     }
     lastId = id;

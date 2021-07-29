@@ -13,8 +13,8 @@ import '../../provider/text_styles.dart';
 import 'booklist_detail.dart';
 import 'booklist_item.dart';
 
-class ListShudanPage extends StatelessWidget {
-  ListShudanPage({Key? key}) : super(key: key);
+class BooklistPage extends StatelessWidget {
+  const BooklistPage({Key? key}) : super(key: key);
   final c = const ['new', 'hot', 'collect'];
 
   @override

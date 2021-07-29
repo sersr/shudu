@@ -270,7 +270,9 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 }
 
 class ContentPreNextWidget extends RenderObjectWidget {
-  ContentPreNextWidget({required this.builder, required this.offset});
+  const ContentPreNextWidget(
+      {Key? key, required this.builder, required this.offset})
+      : super(key: key);
   final WidgetCallback builder;
   final NopPageViewController offset;
   @override
@@ -321,9 +323,9 @@ class ContentPreNextElement extends RenderObjectElement {
 
   @override
   void visitChildren(ElementVisitor visitor) {
-    childElement.values.forEach((element) {
+    for (var element in childElement.values) {
       visitor(element);
-    });
+    }
   }
 
   @override
@@ -458,9 +460,9 @@ class ContentPreNextRenderObject extends RenderBox {
   void attach(PipelineOwner owner) {
     super.attach(owner);
     _nopController.addListener(markNeedsLayout);
-    childlist.values.forEach((element) {
+    for (var element in childlist.values) {
       element.attach(owner);
-    });
+    }
   }
 
   int? firstIndex;
@@ -652,22 +654,22 @@ class ContentPreNextRenderObject extends RenderBox {
     super.detach();
 
     _nopController.removeListener(markNeedsLayout);
-    childlist.values.forEach((element) {
+    for (var element in childlist.values) {
       element.detach();
-    });
+    }
   }
 
   @override
   void visitChildren(visitor) {
-    childlist.values.forEach((element) {
+    for (var element in childlist.values) {
       visitor(element);
-    });
+    }
   }
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    childlist.values.forEach((element) {
+    for (var element in childlist.values) {
       visitor(element);
-    });
+    }
   }
 }

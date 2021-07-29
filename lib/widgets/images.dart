@@ -12,7 +12,7 @@ import '../provider/provider.dart';
 import 'image_shadow.dart';
 
 class ImageResolve extends StatelessWidget {
-  ImageResolve(
+  const ImageResolve(
       {Key? key,
       this.img,
       this.builder,

@@ -66,7 +66,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
         parent: bloc.config, shouldNotify: (config) => config.bgcolor);
 
     if (Platform.isAndroid) {
-      FlutterDisplayMode.active.then(print);
+      FlutterDisplayMode.active.then(Log.i);
 
       getExternalStorageDirectories().then((value) => Log.w(value));
       getApplicationDocumentsDirectory().then((value) => Log.w(value));

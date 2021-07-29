@@ -53,8 +53,8 @@ class _IndexsWidgetState extends State<IndexsWidget> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final height = constraints.maxHeight;
-                final extent = 32.0;
-                final headerextent = 21.0;
+                const extent = 32.0;
+                const headerextent = 21.0;
                 final halfHeight = (height - extent - headerextent) / 2;
 
                 return AnimatedBuilder(
@@ -169,7 +169,7 @@ class _StickyBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${l[index].name}',
+                    l[index].name ?? '',
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class BatteryView extends LeafRenderObjectWidget {
-  BatteryView({required this.progress, Color? color}) : color = color ?? Colors.grey.shade800;
+  BatteryView({Key? key, required this.progress, Color? color})
+      : color = color ?? Colors.grey.shade800,
+        super(key: key);
 
   final double progress;
   final Color color;
@@ -86,7 +88,7 @@ class BatteryViewObject extends RenderBox {
     if (progress < 0.11) _color = Colors.red.shade600;
 
     if (progress == 1.0) {
-      final rect = const Rect.fromLTWH(2.0, 2, 20, 6);
+      const rect = Rect.fromLTWH(2.0, 2, 20, 6);
       rrect2 = RRect.fromRectXY(rect, _radius, _radius);
     } else {
       final rect = Rect.fromLTWH(2.0, 2, 19 * progress, 6);

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -11,6 +10,8 @@ import '../book_info/info_page.dart';
 
 
 class CacheManager extends StatefulWidget {
+  const CacheManager({Key? key}) : super(key: key);
+
   @override
   _CacheManagerState createState() => _CacheManagerState();
 }
@@ -110,7 +111,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
                         const SizedBox(height: 2),
                         Expanded(
                           child: Text(
-                            '${_cacheNotifier.getName(_e.id)}',
+                            _cacheNotifier.getName(_e.id),
                             maxLines: 1,
                           ),
                         ),

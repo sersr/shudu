@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:provider/src/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../provider/provider.dart';
@@ -15,18 +14,18 @@ class TextBuilder extends StatelessWidget {
   const TextBuilder({
     Key? key,
     this.topRightScore,
-    this.top,
-    this.center,
-    this.bottom,
+    required this.top,
+    required this.center,
+    required this.bottom,
     this.centerLines = 1,
     this.bottomLines = 2,
     this.height = 112,
   }) : super(key: key);
 
   final String? topRightScore;
-  final String? top;
-  final String? center;
-  final String? bottom;
+  final String top;
+  final String center;
+  final String bottom;
   final double height;
   final int centerLines;
   final int bottomLines;
@@ -36,18 +35,18 @@ class TextBuilder extends StatelessWidget {
 
     final child = ItemWidget(
         topRight: topRightScore != null
-            ? Text('$topRightScore',
+            ? Text(topRightScore ?? '',
                 style: ts.body2.copyWith(color: Colors.yellow.shade700),
                 maxLines: 1,
                 textDirection: TextDirection.ltr)
             : null,
-        top: Text('$top',
+        top: Text(top,
             style: ts.title3, maxLines: 1, textDirection: TextDirection.ltr),
-        center: Text('$center',
+        center: Text(center,
             style: ts.body2,
             maxLines: centerLines,
             textDirection: TextDirection.ltr),
-        bottom: Text('$bottom',
+        bottom: Text(bottom,
             style: ts.body3,
             maxLines: bottomLines,
             textDirection: TextDirection.ltr));
@@ -204,7 +203,7 @@ class _TextBuilderState extends State<_TextBuilder> {
 
   void onTextListener(List<TextInfo>? infos, bool error) {
     setState(() {
-      textInfos?.forEach((info) => info.dispose());
+      textInfos?.forEach(disposeTextInfo);
       textInfos = infos;
     });
   }
@@ -212,7 +211,7 @@ class _TextBuilderState extends State<_TextBuilder> {
   @override
   void dispose() {
     super.dispose();
-    textInfos?.forEach((info) => info.dispose());
+    textInfos?.forEach(disposeTextInfo);
     _textStream?.removeListener(onTextListener);
   }
 
@@ -273,10 +272,10 @@ class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
 
   @override
   void performLayout(Size size) {
-    final _top = 'top';
-    final _topRight = 'topRight';
-    final _center = 'center';
-    final _bottom = 'bottom';
+    const _top = 'top';
+    const _topRight = 'topRight';
+    const _center = 'center';
+    const _bottom = 'bottom';
     final constraints = BoxConstraints.loose(size);
 
     var topRight = Size.zero;

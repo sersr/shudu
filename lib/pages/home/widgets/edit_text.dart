@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/common.dart';
 import '../../../provider/provider.dart';
 
 class EditText extends StatefulWidget {
+  const EditText({Key? key}) : super(key: key);
+
   @override
   _EditTextState createState() => _EditTextState();
 }
@@ -15,7 +18,7 @@ class _EditTextState extends State<EditText> {
   void initState() {
     super.initState();
     forceNode.addListener(() {
-      print('forc Node');
+      Log.i('forc Node');
     });
   }
 
@@ -23,14 +26,12 @@ class _EditTextState extends State<EditText> {
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>();
     Draggable;
-    return Container(
-      child: EditableText(
-        controller: controller,
-        backgroundCursorColor: Colors.grey,
-        cursorColor: Colors.cyan,
-        focusNode: forceNode,
-        style: ts.body1,
-      ),
+    return EditableText(
+      controller: controller,
+      backgroundCursorColor: Colors.grey,
+      cursorColor: Colors.cyan,
+      focusNode: forceNode,
+      style: ts.body1,
     );
   }
 }

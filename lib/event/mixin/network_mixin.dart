@@ -40,7 +40,7 @@ mixin NetworkMixin implements CustomEvent {
     if (frequency >= 6) {
       await Future.delayed(const Duration(seconds: 1));
     } else if (frequency > 2) {
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 200));
     }
 
     frequency++;

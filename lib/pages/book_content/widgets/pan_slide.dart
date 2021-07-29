@@ -50,7 +50,11 @@ abstract class PanSlideState<T extends StatefulWidget> extends State<T>
     }
   }
 
-  void hideAll() => _entries.forEach((el) => el.dispose());
+  void hideAll() {
+    for (var el in _entries) {
+      el.dispose();
+    }
+  }
 
   int get entriesLength => _entries.length;
   Iterable<PanSlideController> get showEntries =>
@@ -80,13 +84,15 @@ abstract class PanSlideState<T extends StatefulWidget> extends State<T>
 
   @override
   void dispose() {
-    _entries.forEach((el) => el._stop());
+    for (var el in _entries) {
+      el._stop();
+    }
     super.dispose();
   }
 }
 
 class PanOverlay extends StatefulWidget {
-  PanOverlay({Key? key}) : super(key: key);
+  const PanOverlay({Key? key}) : super(key: key);
   @override
   PanOverlayState createState() => PanOverlayState();
 }

@@ -9,7 +9,7 @@ import '../../widgets/text_builder.dart';
 import '../../widgets/images.dart';
 
 class BookItem extends StatelessWidget {
-  BookItem(
+  const BookItem(
       {Key? key,
       this.img,
       this.bookName,
@@ -57,9 +57,9 @@ class BookItem extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextBuilder(
                       height: 98,
-                      top: bookName,
+                      top: bookName ?? '',
                       center: '最新：$bookUdateItem',
-                      bottom: bookUpdateTime),
+                      bottom: bookUpdateTime ?? ''),
               ),
             ),
           ),
@@ -71,7 +71,7 @@ class BookItem extends StatelessWidget {
 }
 
 class UpdateIcon extends SingleChildRenderObjectWidget {
-  UpdateIcon({
+  const UpdateIcon({
     Key? key,
     Widget? child,
     required this.isNew,
