@@ -12,8 +12,8 @@ import '../book_info/info_page.dart' show BookInfoPage;
 import '../../widgets/images.dart' show ImageResolve;
 import 'booklist.dart';
 
-class TopCustomItem extends StatelessWidget {
-  const TopCustomItem({Key? key, required this.item}) : super(key: key);
+class TopItem extends StatelessWidget {
+  const TopItem({Key? key, required this.item}) : super(key: key);
   final BookTopList item;
 
   @override
@@ -165,7 +165,7 @@ class _TopListViewState extends State<TopListView> {
                   onTap: () {
                     if (_item.id != null) BookInfoPage.push(context, _item.id!);
                   },
-                  child: TopCustomItem(item: _item));
+                  child: TopItem(item: _item));
             },
             itemCount: _data.length + 1,
           );

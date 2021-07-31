@@ -54,9 +54,10 @@ class TextAsyncLayout extends StatelessWidget {
     return Selector<OptionsNotifier, bool>(
         selector: (_, opt) => opt.options.useTextCache ?? false,
         builder: (context, useTextCache, child) {
-          if (useTextCache)
+          /// 只有绑定 [CacheBinding] 才能启用
+          if (useTextCache && textCache != null)
             return LayoutBuilder(builder: (context, constraints) {
-              return _CenterText(
+              return _CacheText(
                   bottom: bottom,
                   top: top,
                   topRightScore: topRightScore,
@@ -73,8 +74,8 @@ class TextAsyncLayout extends StatelessWidget {
   }
 }
 
-class _CenterText extends StatefulWidget {
-  const _CenterText({
+class _CacheText extends StatefulWidget {
+  const _CacheText({
     Key? key,
     this.topRightScore,
     required this.top,
@@ -96,10 +97,10 @@ class _CenterText extends StatefulWidget {
   final double maxWidth;
 
   @override
-  State<_CenterText> createState() => _CenterTextState();
+  State<_CacheText> createState() => _CacheTextState();
 }
 
-class _CenterTextState extends State<_CenterText> {
+class _CacheTextState extends State<_CacheText> {
   late TextStyleConfig ts;
 
   late List _keys;
@@ -112,7 +113,7 @@ class _CenterTextState extends State<_CenterText> {
 
   void _updateKeys() {
     _keys = [
-      'asyncText_builder',
+      runtimeType, // 以[runtimeType]识别布局方式
       widget.maxWidth,
       widget.topRightScore,
       widget.top,
@@ -126,7 +127,7 @@ class _CenterTextState extends State<_CenterText> {
   }
 
   @override
-  void didUpdateWidget(covariant _CenterText oldWidget) {
+  void didUpdateWidget(covariant _CacheText oldWidget) {
     super.didUpdateWidget(oldWidget);
     _updateKeys();
   }
@@ -148,6 +149,7 @@ class _CenterTextState extends State<_CenterText> {
     );
   }
 
+  // 如果是一个匿名函数每次重建都会新建一个对象
   Future<void> _layoutText(FindTextInfo _, PutIfAbsentText putIfAbsent) async {
     final tpr = _painter(widget.topRightScore,
         style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1);

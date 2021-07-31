@@ -560,7 +560,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return RefreshIndicator(
       key: _refreshKey,
       displacement: 20.0,
-      triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () => cache.load(update: true),
       child: NotificationListener<OverscrollIndicatorNotification>(
         onNotification: (OverscrollIndicatorNotification no) {

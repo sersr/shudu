@@ -96,8 +96,7 @@ class BookIndexsData {
   bool shouldUpdate([int? bookid, int? contentid]) =>
       this.bookid != bookid ||
       this.contentid != contentid ||
-      indexs == null ||
-      indexs?.list != null ||
+      indexs?.list == null ||
       _index == null ||
       _volIndex == null;
 
@@ -244,19 +243,30 @@ class BookIndexNotifier extends ChangeNotifier {
     super.notifyListeners();
   }
 
-  final _looper = EventQueue();
+  final _queue = EventQueue();
+  Future? get taskRunner => _queue.runner;
 
-  Future<void> loadIndexs([int? bookid, int? contentid]) async {
-    _looper.addOneEventTask(() => _load(bookid, contentid));
+  void loadIndexs([int? bookid, int? contentid, bool restore = false]) {
+    if (_queue.runner == null) {
+      // 先执行在添加到队列中
+      final f = _load(bookid, contentid, restore);
+      // 已经处于运行中，所以不能被忽略
+      // 如果有两个异步执行相同函数会对数据造成影响
+      _queue.addEventTask(() => f);
+      return;
+    }
+    _queue.addOneEventTask(() => _load(bookid, contentid, restore));
   }
 
-  Future<void> _load([int? bookid, int? contentid]) async {
+  Future<void> _load(
+      [int? bookid, int? contentid, bool restore = false]) async {
     bookid ??= data?.bookid;
     contentid ??= data?.contentid;
 
     if (bookid == null || contentid == null) return;
 
     final refresh = data?.shouldUpdate(bookid, contentid) ?? true;
+
     final newBook = data?.bookid != bookid;
 
     if (data?.bookid != bookid) _listenerReset();
@@ -273,6 +283,8 @@ class BookIndexNotifier extends ChangeNotifier {
       setIndexData(bookid, contentid, bookIndexShort);
     } else if (refresh && data?.isValid == true) {
       setIndexData(bookid, contentid, data!.indexs!);
+    } else if (restore) {
+      notifyListeners();
     }
 
     // data == null or data.bookid != bookid or data.contentid != contentid

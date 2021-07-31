@@ -63,7 +63,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
     notifyColor = ChangeNotifierSelector<ContentViewConfig, Color?>(
-        parent: bloc.config, shouldNotify: (config) => config.bgcolor);
+        parent: bloc.config, notifyValue: (config) => config.bgcolor);
 
     if (Platform.isAndroid) {
       FlutterDisplayMode.active.then(Log.i);

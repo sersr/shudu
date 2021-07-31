@@ -33,11 +33,6 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
   }
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void dispose() {
     super.dispose();
     _cacheNotifier.dispose();
@@ -45,13 +40,10 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
-    // final ts = context.read<TextStyleConfig>();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text('缓存管理'),
-        // backgroundColor: Colors.white,
-        // titleTextStyle: ts.bigTitle1,
         elevation: 1.0,
       ),
       body: AnimatedBuilder(
@@ -202,7 +194,7 @@ class _CacheNotifier extends ChangeNotifier {
       _data.clear();
       _data.addAll(_l);
       _auto();
-      await release(const Duration(milliseconds: 400));
+      await release(const Duration(milliseconds: 100));
       notifyListeners();
     }
   }

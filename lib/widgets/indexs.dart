@@ -8,33 +8,9 @@ import 'package:useful_tools/useful_tools.dart';
 import '../data/data.dart';
 import '../provider/provider.dart';
 
-class IndexsWidget extends StatefulWidget {
+class IndexsWidget extends StatelessWidget {
   const IndexsWidget({Key? key, required this.onTap}) : super(key: key);
   final void Function(BuildContext context, int id, int cid) onTap;
-
-  @override
-  _IndexsWidgetState createState() => _IndexsWidgetState();
-}
-
-class _IndexsWidgetState extends State<IndexsWidget> {
-  ScrollController? controller;
-
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
-    indexBloc.removeRegisterKey(lKey);
-  }
-
-  late BookIndexNotifier indexBloc;
-  final lKey = Object();
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    indexBloc = context.read<BookIndexNotifier>();
-    indexBloc.addRegisterKey(lKey);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,87 +33,170 @@ class _IndexsWidgetState extends State<IndexsWidget> {
                 const headerextent = 21.0;
                 final halfHeight = (height - extent - headerextent) / 2;
 
-                return AnimatedBuilder(
-                    animation: indexBloc,
-                    builder: (context, _) {
-                      final data = indexBloc.data;
-
-                      if (data == null) {
-                        return loadingIndicator();
-                      } else if (!data.isValid) {
-                        return reloadBotton(indexBloc.loadIndexs);
-                      }
-
-                      final indexs = data.chapters!;
-                      final volIndex = data.volIndex!;
-                      final index = data.index!;
-                      final vols = data.vols!;
-
-                      var offset = 0.0;
-                      offset = headerextent * volIndex;
-                      for (var i = 0; i < volIndex; i++) {
-                        offset += indexs[i].length * extent;
-                      }
-                      offset += index * extent - halfHeight;
-
-                      final allChapters = data.allChapters!;
-
-                      final max = allChapters.length * extent +
-                          vols.length * headerextent;
-
-                      offset = math.max(0.0, math.min(offset, max - height));
-                      if (controller != null) {
-                        // if (controller!.hasClients) {
-                        //   controller?.animateTo(offset,
-                        //       duration: const Duration(milliseconds: 300),
-                        //       curve: Curves.easeInOut);
-                        // } else {
-                        controller!.dispose();
-                        controller =
-                            ScrollController(initialScrollOffset: offset);
-                        // }
-                      } else {
-                        controller =
-                            ScrollController(initialScrollOffset: offset);
-                      }
-
-                      return Scrollbar(
-                        controller: controller,
-                        interactive: true,
-                        thickness: 8,
-                        radius: const Radius.circular(5),
-                        child: CustomScrollView(
-                          controller: controller,
-                          slivers: [
-                            for (var i = 0; i < indexs.length; i++)
-                              SliverStickyHeader.builder(
-                                builder: (context, st) {
-                                  return Container(
-                                    height: headerextent,
-                                    color:
-                                        const Color.fromRGBO(150, 180, 160, 1),
-
-                                    child: Center(child: Text(vols[i])),
-                                    // height: headerextent,
-                                  );
-                                },
-                                sliver: _StickyBody(
-                                    l: indexs[i],
-                                    bookid: data.bookid!,
-                                    indexBloc: indexBloc,
-                                    onTap: widget.onTap,
-                                    extent: extent),
-                              ),
-                          ],
-                        ),
-                      );
-                    });
+                return _Indexs(
+                  headerextent: headerextent,
+                  extent: extent,
+                  halfHeight: halfHeight,
+                  height: height,
+                  onTap: onTap,
+                );
               },
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _Indexs extends StatefulWidget {
+  const _Indexs({
+    Key? key,
+    required this.headerextent,
+    required this.extent,
+    required this.halfHeight,
+    required this.height,
+    required this.onTap,
+  }) : super(key: key);
+
+  final double headerextent;
+  final double extent;
+  final double halfHeight;
+  final double height;
+  final void Function(BuildContext context, int id, int cid) onTap;
+
+  @override
+  State<_Indexs> createState() => _IndexsState();
+}
+
+class _IndexsState extends State<_Indexs> {
+  ScrollController? controller;
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    indexBloc?.removeRegisterKey(lKey);
+    indexBloc?.removeListener(_listenOnUpdate);
+    super.dispose();
+  }
+
+  BookIndexNotifier? indexBloc;
+  final lKey = Object();
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    indexBloc
+      ?..removeRegisterKey(lKey)
+      ..removeListener(_listenOnUpdate);
+
+    indexBloc = context.read<BookIndexNotifier>();
+
+    indexBloc
+      ?..addRegisterKey(lKey)
+      ..addListener(_listenOnUpdate);
+    setController();
+  }
+
+  void setController() {
+    if (controller == null && indexBloc!.data?.isValid == true) {
+      final offset = _compute();
+      controller = ScrollController(initialScrollOffset: offset);
+    }
+  }
+
+  double _compute() {
+    final data = indexBloc!.data;
+
+    if (data == null || !data.isValid) {
+      return 0;
+    }
+
+    final indexs = data.chapters!;
+    final volIndex = data.volIndex!;
+    final index = data.index!;
+    final vols = data.vols!;
+
+    var offset = 0.0;
+    offset = widget.headerextent * volIndex;
+    for (var i = 0; i < volIndex; i++) {
+      offset += indexs[i].length * widget.extent;
+    }
+    offset += index * widget.extent - widget.halfHeight;
+
+    final allChapters = data.allChapters!;
+
+    final max =
+        allChapters.length * widget.extent + vols.length * widget.headerextent;
+
+    offset = math.max(0.0, math.min(offset, max - widget.height));
+    return offset;
+  }
+
+  void _listenOnUpdate() {
+    setController();
+    if (controller?.hasClients == true) {
+      final offset = _compute();
+      final position = controller!.offset;
+      if ((position - offset).abs() <= 100) {
+        controller!.animateTo(offset,
+            duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      } else {
+        controller!.jumpTo(offset);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+        animation: indexBloc!,
+        builder: (context, _) {
+          final data = indexBloc!.data;
+
+          if (data == null) {
+            return loadingIndicator();
+          } else if (!data.isValid) {
+            return reloadBotton(indexBloc!.loadIndexs);
+          }
+
+          final indexs = data.chapters!;
+          final vols = data.vols!;
+
+          return Scrollbar(
+            controller: controller,
+            interactive: true,
+            thickness: 8,
+            radius: const Radius.circular(5),
+            child: CustomScrollView(
+              controller: controller,
+              slivers: [
+                for (var i = 0; i < indexs.length; i++)
+                  SliverStickyHeader.builder(
+                    builder: (context, st) {
+                      return Container(
+                        height: widget.headerextent,
+                        color: const Color.fromRGBO(150, 180, 160, 1),
+
+                        child: Center(child: Text(vols[i])),
+                        // height: headerextent,
+                      );
+                    },
+                    sliver: _StickyBody(
+                        l: indexs[i],
+                        bookid: data.bookid!,
+                        indexBloc: indexBloc!,
+                        onTap: widget.onTap,
+                        extent: widget.extent),
+                  ),
+              ],
+            ),
+          );
+        });
   }
 }
 

@@ -343,6 +343,7 @@ class _BottomEndState extends State<BottomEnd> {
     controller = PanSlideController.showPan(
       this,
       onhideEnd: onhideEnd,
+      onshowEnd: onshowEnd,
       builder: (contxt, _controller) {
         return RepaintBoundary(
           child: PannelSlide(
@@ -445,7 +446,7 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
-  void onshowEnd() => indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid);
+  void onshowEnd() => indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, true);
 
   @override
   void dispose() {
@@ -476,9 +477,9 @@ class _BottomEndState extends State<BottomEnd> {
                   getController().show();
 
                   bloc.showCname.value = false;
-                  context
-                      .read<BookIndexNotifier>()
-                      .loadIndexs(bloc.bookid, bloc.tData.cid);
+                  // context
+                  //     .read<BookIndexNotifier>()
+                  //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -490,9 +491,9 @@ class _BottomEndState extends State<BottomEnd> {
                 if (showSettings.value != SettingView.indexs) {
                   getController().show();
                   bloc.showCname.value = false;
-                  context.read<BookIndexNotifier>()
+                  indexBloc
                     ..bookUpDateTime.remove(bloc.bookid)
-                    ..loadIndexs(bloc.bookid, bloc.tData.cid);
+                    ..loadIndexs(bloc.bookid, bloc.tData.cid, true);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -1036,29 +1037,26 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     );
   }
 
-  List<Widget>? children;
-
   @override
   Widget build(BuildContext context) {
-    children ??= [
-      IndexsWidget(
-        onTap: (context, id, cid) {
-          final index = context.read<BookIndexNotifier>();
-          // 先完成动画再调用
-          widget.close(() {
-            index.loadIndexs(id, cid);
-            bloc.newBookOrCid(id, cid, 1, inBook: true);
-          });
-        },
-      ),
-      settings(),
-      const SizedBox(),
-    ];
     Widget child = AnimatedBuilder(
       animation: widget.showSettings,
       builder: (context, child) {
-        return IndexedStack(
-            index: widget.showSettings.value.index, children: children!);
+        final children = [
+          IndexsWidget(
+            onTap: (context, id, cid) {
+              final index = context.read<BookIndexNotifier>();
+              // 先完成动画再调用
+              widget.close(() {
+                index.loadIndexs(id, cid);
+                bloc.newBookOrCid(id, cid, 1, inBook: true);
+              });
+            },
+          ),
+          settings(),
+          const SizedBox(),
+        ];
+        return children[widget.showSettings.value.index];
       },
     );
     return SliderTheme(

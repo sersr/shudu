@@ -11,7 +11,7 @@ import '../../widgets/images.dart';
 import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';
 import 'booklist.dart';
-import 'top_custom_item.dart';
+import 'top_item.dart';
 
 class ListCatetoryPage extends StatefulWidget {
   const ListCatetoryPage({Key? key}) : super(key: key);
@@ -289,7 +289,7 @@ class _CategListViewState extends State<CategListView>
                   onTap: () => _item.id != null
                       ? BookInfoPage.push(context, _item.id!)
                       : null,
-                  child: TopCustomItem(item: _item),
+                  child: TopItem(item: _item),
                 );
               },
             );
@@ -356,7 +356,7 @@ class TopNotifier extends ChangeNotifier {
         _index--;
         _failed = true;
       }
-      await release(const Duration(milliseconds: 500));
+      await release(const Duration(milliseconds: 100));
     }
   }
 

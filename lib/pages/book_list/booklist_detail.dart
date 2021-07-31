@@ -11,6 +11,7 @@ import '../../widgets/text_builder.dart';
 import '../book_info/info_page.dart';
 import '../../widgets/images.dart';
 
+/// 书单详情页面
 class BooklistDetailPage extends StatefulWidget {
   const BooklistDetailPage({Key? key, this.total, this.index})
       : super(key: key);

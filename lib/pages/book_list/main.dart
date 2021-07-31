@@ -112,14 +112,14 @@ class ListMainPage extends StatelessWidget {
                                   '清除',
                                   () {
                                     imageCache?.clear();
-                                    imageCacheLoop?.clear();
+                                    imageRefCache?.clear();
                                     textCache?.clear();
                                   },
                                 ),
                                 _builder(
                                   'count: !done',
                                   () {
-                                    imageCacheLoop?.picturePrint();
+                                    imageRefCache?.printDone();
                                   },
                                 ),
                               ],

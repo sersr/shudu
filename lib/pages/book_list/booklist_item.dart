@@ -4,6 +4,7 @@ import '../../widgets/image_text.dart';
 import '../../widgets/text_builder.dart';
 import '../../widgets/images.dart';
 
+/// 书单列表项
 class BooklistItem extends StatelessWidget {
   const BooklistItem(
       {Key? key,

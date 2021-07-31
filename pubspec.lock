@@ -614,7 +614,7 @@ packages:
       name: source_helper
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.2.0"
+    version: "1.2.1"
   source_span:
     dependency: transitive
     description:

@@ -23,9 +23,10 @@ class BookInfoPage extends StatefulWidget {
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
-  static Future push(BuildContext context, int bookid) async {
+  static Future push(BuildContext context, int bookid,
+      {bool maintainState = true}) async {
     return Navigator.of(context).push(MaterialPageRoute(
-        maintainState: false, // 存在许多个[BookInfoPage]页面的可能，所以不应常驻内存
+        maintainState: maintainState, // 存在许多个[BookInfoPage]页面的可能，所以不应常驻内存
         builder: (context) {
           return BookInfoPage(id: bookid);
         }));
@@ -373,8 +374,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         yield ListItem(
             height: 108,
             child: _BookInfoSameItemWidget(l: l, author: info.author),
-            onTap: () =>
-                l.id == null ? null : BookInfoPage.push(context, l.id!));
+            onTap: () => l.id == null
+                ? null
+                : BookInfoPage.push(context, l.id!, maintainState: false));
   }
 
   Widget header(
@@ -493,7 +495,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextAsyncLayout(
                   height: 108,
-                  top: l.name ??'',
+                  top: l.name ?? '',
                   center: '作者：$author',
                   bottom: '最新: ${l.lastChapter}',
                 ),

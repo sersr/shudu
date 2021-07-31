@@ -119,10 +119,8 @@ class PanOverlayState extends State<PanOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Stack(
-        children: _children,
-      ),
+    return Stack(
+      children: _children,
     );
   }
 }

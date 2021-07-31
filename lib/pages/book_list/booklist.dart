@@ -13,6 +13,7 @@ import '../../provider/text_styles.dart';
 import 'booklist_detail.dart';
 import 'booklist_item.dart';
 
+// 书单页面
 class BooklistPage extends StatelessWidget {
   const BooklistPage({Key? key}) : super(key: key);
   final c = const ['new', 'hot', 'collect'];
@@ -277,8 +278,8 @@ class ShudanCategProvider extends ChangeNotifier {
       }
     }
 
-    // if (_list == null)
-    await release(const Duration(milliseconds: 400));
+
+    await release(const Duration(milliseconds: 100));
     list ??= const [];
 
     notifyListeners();
