@@ -113,7 +113,7 @@ class _CacheTextState extends State<_CacheText> {
 
   void _updateKeys() {
     _keys = [
-      runtimeType, // 以[runtimeType]识别布局方式
+      runtimeType, // 以[runtimeType]区分布局方式
       widget.maxWidth,
       widget.topRightScore,
       widget.top,
@@ -151,54 +151,52 @@ class _CacheTextState extends State<_CacheText> {
 
   // 如果是一个匿名函数每次重建都会新建一个对象
   Future<void> _layoutText(FindTextInfo _, PutIfAbsentText putIfAbsent) async {
-    final tpr = _painter(widget.topRightScore,
-        style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1);
-
-    final tp = _painter(widget.top, style: ts.title3, maxLines: 1);
-
-    final tc =
-        _painter(widget.center, style: ts.body2, maxLines: widget.centerLines);
-
-    final tb =
-        _painter(widget.bottom, style: ts.body3, maxLines: widget.bottomLines);
-
     final topRightKey = [widget.maxWidth, widget.topRightScore, 1];
-    final _tpr = await putIfAbsent(topRightKey, () async {
-      return tpr..layout(maxWidth: widget.maxWidth);
+    final _tpr = await putIfAbsent(topRightKey, () {
+      return _painter(widget.topRightScore,
+          style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1)
+        ..layout(maxWidth: widget.maxWidth);
     });
 
     final _tpWidth = _tpr.painter.width;
 
     final topWidth = widget.maxWidth - _tpWidth;
     final topKey = [topWidth, widget.top, 1];
-    await putIfAbsent(topKey, () async {
-      return tp..layout(maxWidth: topWidth);
+    await putIfAbsent(topKey, () {
+      return _painter(widget.top, style: ts.title3, maxLines: 1)
+        ..layout(maxWidth: topWidth);
     });
 
     final centerKey = [widget.maxWidth, widget.center, widget.centerLines];
-    await putIfAbsent(centerKey, () async {
-      return tc..layout(maxWidth: widget.maxWidth);
+    await putIfAbsent(centerKey, () {
+      return _painter(widget.center,
+          style: ts.body2, maxLines: widget.centerLines)
+        ..layout(maxWidth: widget.maxWidth);
     });
 
     final bottomKey = [widget.maxWidth, widget.bottom, widget.bottomLines];
-    await putIfAbsent(bottomKey, () async {
-      return tb..layout(maxWidth: widget.maxWidth);
+    await putIfAbsent(bottomKey, () {
+      return _painter(widget.bottom,
+          style: ts.body3, maxLines: widget.bottomLines)
+        ..layout(maxWidth: widget.maxWidth);
     });
-    await EventQueue.scheduler.endOfFrame;
+    await releaseUI;
   }
 
   Widget _items(Iterable<TextInfo>? data) {
     final length = data?.length;
+    Widget child;
     if (data != null && length! >= 4) {
-      return ItemWidget(
+      child = ItemWidget(
           height: widget.height,
           topRight: AsyncText.async(data.elementAt(0).painter),
           top: AsyncText.async(data.elementAt(1).painter),
           center: AsyncText.async(data.elementAt(2).painter),
           bottom: AsyncText.async(data.elementAt(3).painter));
     } else {
-      return const SizedBox();
+      child = const ItemWidget();
     }
+    return child;
   }
 
   TextPainter _painter(String? text,
@@ -252,12 +250,12 @@ class _ItemLayoutDelegate extends MultiChildLayoutDelegate {
     const _topRight = 'topRight';
     const _center = 'center';
     const _bottom = 'bottom';
-    final constraints = BoxConstraints.loose(size);
-
-    var topRight = Size.zero;
-    final hasRight = hasChild(_topRight);
-    if (hasRight) topRight = layoutChild(_topRight, constraints);
     if (hasChild(_top) && hasChild(_center) && hasChild(_bottom)) {
+      final constraints = BoxConstraints.loose(size);
+
+      var topRight = Size.zero;
+      final hasRight = hasChild(_topRight);
+      if (hasRight) topRight = layoutChild(_topRight, constraints);
       final top = layoutChild(
           _top,
           constraints.copyWith(

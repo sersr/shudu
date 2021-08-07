@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -66,11 +65,14 @@ class BookContentPageState extends PanSlideState<BookContentPage>
         parent: bloc.config, notifyValue: (config) => config.bgcolor);
 
     if (Platform.isAndroid) {
-      FlutterDisplayMode.active.then(Log.i);
-
       getExternalStorageDirectories().then((value) => Log.w(value));
       getApplicationDocumentsDirectory().then((value) => Log.w(value));
     }
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // bloc.updateBrightness();
   }
 
   @override
@@ -179,7 +181,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     }
 
     bloc.out();
-    bloc.notifyState(notEmptyOrIgnore: true, loading: false);
+    // bloc.notifyState(notEmptyOrIgnore: true, loading: false);
+    // await bloc.dataEvent.runner;
     await uiOverlay(hide: false);
     await bloc.dump();
 
@@ -188,7 +191,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await bloc.taskRunner;
     uiStyle();
 
-    bloc.out();
+    // bloc.out();
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
 

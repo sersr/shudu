@@ -446,7 +446,10 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
-  void onshowEnd() => indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, true);
+  void onshowEnd() {
+    bloc.reloadBrightness();
+    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, true);
+  }
 
   @override
   void dispose() {
@@ -633,7 +636,7 @@ class _TopPannelState extends State<TopPannel> {
                                 contentNtf.controller?.goIdle();
                                 var cid = contentNtf.tData.cid!;
                                 var page = contentNtf.currentPage;
-                                var bookid = contentNtf.bookid!;
+                                var bookid = contentNtf.bookid;
 
                                 contentNtf
                                   ..dump()
@@ -713,7 +716,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
 
   late ContentNotifier bloc;
   Widget? _setting;
-
+  late ChangeNotifierSelector<ContentViewConfig, bool> _audioNotifier;
   @override
   void initState() {
     super.initState();
@@ -723,6 +726,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
+    _audioNotifier = ChangeNotifierSelector<ContentViewConfig, bool>(
+        parent: bloc.config, notifyValue: (config) => config.audio ?? false);
     update();
   }
 
@@ -1027,6 +1032,68 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       ),
                     ),
                   ),
+                  RepaintBoundary(
+                      child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                                animation: bloc.brightness,
+                                builder: (context, _) {
+                                  return Slider(
+                                      value: bloc.brightness.value,
+                                      min: 0.0,
+                                      max: 1.0,
+                                      onChanged: bloc.setBrightness);
+                                }),
+                          ),
+                        ),
+                        AnimatedBuilder(
+                            animation: bloc.follow,
+                            builder: (context, _) {
+                              return Checkbox(
+                                  value: bloc.follow.value,
+                                  onChanged: bloc.setFollow);
+                            }),
+                        Center(child: Text('跟随系统')),
+                      ],
+                    ),
+                  )),
+                  // RepaintBoundary(
+                  //     child: Padding(
+                  //   padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+                  //   child: Row(
+                  //     children: [
+                  //       RepaintBoundary(
+                  //         child: AnimatedBuilder(
+                  //             animation: _audioNotifier,
+                  //             builder: (context, _) {
+                  //               return Switch(
+                  //                   value: _audioNotifier.value,
+                  //                   onChanged: (audio) => bloc.setPrefs(bloc
+                  //                       .config.value
+                  //                       .copyWith(audio: audio)));
+                  //             }),
+                  //       ),
+                  //       Expanded(
+                  //         child: RepaintBoundary(
+                  //           child: AnimatedBuilder(
+                  //               animation: bloc.ttsProgress,
+                  //               builder: (context, _) {
+                  //                 return Row(
+                  //                   children: [
+                  //                     Expanded(child: const SizedBox()),
+                  //                     Text(bloc.ttsProgress.value),
+                  //                   ],
+                  //                 );
+                  //               }),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // )),
                 ],
               ),
             ),

@@ -12,6 +12,8 @@ class BookCacheNotifier extends ChangeNotifier {
 
   List<BookCache>? _rawList;
 
+  List<BookCache>? get rawList => _rawList;
+
   List<BookCache>? _sortChildren;
   List<BookCache> get sortChildren {
     if (_sortChildren != null) return _sortChildren!;

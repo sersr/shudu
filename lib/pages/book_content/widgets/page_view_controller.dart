@@ -32,7 +32,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   double get pixels => _pixels;
 
-
   void beginActivity(Activity activity) {
     if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
       _lastvelocity = _activity!.velocity;
@@ -103,15 +102,15 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
-      // } else {
+        // } else {
         //   if (getBounds() & ContentBoundary.addRight != 0) {
         //     var _n = page;
 
-      //     if (maxExtent.isFinite) {
+        //     if (maxExtent.isFinite) {
         //       _maxExtent = double.infinity;
         //     }
 
-      //     if (ContentBoundary.hasRight(getBounds())) {
+        //     if (ContentBoundary.hasRight(getBounds())) {
         //       _n += 1;
         //     } else {
         //       _n = (page + 0.5).roundToDouble();
@@ -148,7 +147,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void setPixels(double v) {
     if (v == _pixels) return;
-
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
@@ -233,6 +231,15 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   @override
   void applyUserOffset(double delta) {
     if (delta == 0.0) return;
+    if (pixels == minExtent || pixels == maxExtent) {
+      final contentValue = getBounds();
+      final hasRight = ContentBoundary.hasRight(contentValue);
+      final hasLeft = ContentBoundary.hasLeft(contentValue);
+      applyConentDimension(
+          minExtent: hasLeft ? double.negativeInfinity : minExtent,
+          maxExtent: hasRight ? double.infinity : maxExtent);
+    }
+
     setPixels(pixels - delta);
   }
 

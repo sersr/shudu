@@ -129,7 +129,7 @@ class _WrapWidgetState extends State<WrapWidget>
       child: ListViewBuilder(
           scrollController: scrollController,
           itemCount: list.length + 1,
-          cacheExtent: 100,
+          cacheExtent: 200,
           finishLayout: (first, last) {
             final state = shudanProvider.state;
 
@@ -153,7 +153,7 @@ class _WrapWidgetState extends State<WrapWidget>
 
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                height: 40,
+                height: 60,
                 child: child,
               );
             }

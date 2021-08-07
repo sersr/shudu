@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-/// 小型的手势行为，没有发送监听事件
+/// 模仿 [ScrollActivity]
 abstract class Activity {
   Activity(this.delegate);
   ActivityDelegate delegate;

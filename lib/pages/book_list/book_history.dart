@@ -45,10 +45,10 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
         body: AnimatedBuilder(
             animation: _listenable,
             builder: (context, _) {
-              final data = notifier.sortChildren;
+              final data = notifier.rawList;
               if (!notifier.initialized || !show.value)
                 return loadingIndicator(radius: 30);
-              else if (data.isEmpty) {
+              else if (data!.isEmpty) {
                 return reloadBotton(notifier.load);
               }
               return ListViewBuilder(

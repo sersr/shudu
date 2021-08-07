@@ -24,38 +24,43 @@ class BooklistItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints:
-          BoxConstraints(maxHeight: height ?? 112, minHeight: height ?? 112),
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 72),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(img: img),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: TextAsyncLayout(
-                  top: title ?? '',
-                  center: desc ?? '',
-                  bottom: '总共$total本书',
-                  height: height ?? 112,
-                  centerLines: 2,
-                  bottomLines: 1,
+    return LayoutBuilder(builder: (context, constaints) {
+      return Container(
+        constraints: constaints.tighten(
+            height: height ?? 112, width: constaints.maxHeight),
+        // BoxConstraints(maxHeight: height ?? 112, minHeight: height ?? 112),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: RepaintBoundary(
+          child: CustomMultiChildLayout(
+            delegate: ImageLayout(width: 72),
+            children: [
+              LayoutId(
+                id: ImageLayout.image,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: ImageResolve(img: img),
                 ),
               ),
-            ),
+              LayoutId(
+                id: ImageLayout.text,
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 14.0),
+                    child: TextAsyncLayout(
+                      top: title ?? '',
+                      center: desc ?? '',
+                      bottom: '总共$total本书',
+                      height: height ?? 112,
+                      centerLines: 2,
+                      bottomLines: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }

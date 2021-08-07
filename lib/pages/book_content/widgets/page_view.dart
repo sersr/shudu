@@ -523,7 +523,6 @@ class _SlideElement extends RenderObjectElement {
 }
 
 /// TODO: 使用 [CustomMultiChildLayout] 代替
-
 class _SlideRenderObject extends RenderBox {
   _SlideRenderObject(EdgeInsets epadding) : _paddingRect = epadding;
   RenderBox? _header;

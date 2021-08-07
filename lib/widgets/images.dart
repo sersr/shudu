@@ -11,7 +11,7 @@ import '../event/event.dart';
 import '../provider/provider.dart';
 import 'image_shadow.dart';
 
-class ImageResolve extends StatelessWidget {
+class ImageResolve extends StatefulWidget {
   const ImageResolve(
       {Key? key,
       this.img,
@@ -29,17 +29,24 @@ class ImageResolve extends StatelessWidget {
   final Widget? placeholder;
 
   @override
+  State<ImageResolve> createState() => _ImageResolveState();
+}
+
+class _ImageResolveState extends State<ImageResolve> {
+  @override
   Widget build(BuildContext context) {
     final child = _layoutBuilder();
 
     return RepaintBoundary(child: Center(child: child));
   }
 
+  String? path;
+
   Widget _layoutBuilder() {
     return LayoutBuilder(builder: (context, constraints) {
       final height = constraints.maxHeight;
       final width = constraints.maxWidth;
-      final _img = img;
+      final _img = widget.img;
       final ratio = ui.window.devicePixelRatio;
       final repository = context.read<Repository>();
       return _img == null
@@ -49,9 +56,11 @@ class ImageResolve extends StatelessWidget {
               builder: (context, useImageCache, _) {
                 if (!useImageCache) {
                   final repository = context.read<Repository>();
-                  final path = repository.bookEvent.getImagePath(_img);
+                  final getPath = repository.bookEvent.getImagePath(_img);
                   return FutureBuilder<String?>(
-                      future: Future.value(path),
+                      initialData: path,
+                      future: Future.value(getPath)
+                        ..then((value) => path = value),
                       builder: (context, snap) {
                         final data = snap.data;
                         if (data != null && data.isNotEmpty) {
@@ -60,7 +69,7 @@ class ImageResolve extends StatelessWidget {
                             f,
                             // cacheHeight: (constraints.maxHeight * ratio).toInt(),
                             cacheWidth: (width * ratio).toInt(),
-                            fit: boxFit,
+                            fit: widget.boxFit,
                             frameBuilder: (_, child, frame, sync) {
                               return _imageBuilder(child, sync, frame != null);
                             },
@@ -71,14 +80,14 @@ class ImageResolve extends StatelessWidget {
                             ConnectionState.done) {
                           return _errorBuilder(false, width, height, context);
                         }
-                        return placeholder ?? const SizedBox();
+                        return widget.placeholder ?? const SizedBox();
                       });
                 }
                 return ImageFuture(
                   url: _img,
                   height: height,
                   width: width,
-                  boxFit: boxFit,
+                  boxFit: widget.boxFit,
                   getPath: repository.bookEvent.getImagePath,
                   builder: (child, hasImage) =>
                       _imageBuilder(child, false, hasImage),
@@ -93,15 +102,15 @@ class ImageResolve extends StatelessWidget {
   Widget _errorBuilder(
       bool isFirst, double width, double height, BuildContext context) {
     if (isFirst) {
-      if (errorBuilder != null) {
-        return errorBuilder!(context);
+      if (widget.errorBuilder != null) {
+        return widget.errorBuilder!(context);
       } else {
         final repository = context.read<Repository>();
         return ImageFuture(
           url: errorImg,
           width: width,
           height: height,
-          boxFit: boxFit,
+          boxFit: widget.boxFit,
           getPath: repository.bookEvent.getImagePath,
           builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
           errorBuilder: (context) =>
@@ -114,16 +123,16 @@ class ImageResolve extends StatelessWidget {
 
   Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
     if (hasImage) {
-      if (builder != null) child = builder!(child);
-      if (shadow) child = ImageShadow(child: child);
-      if (sync) return child;
-    } else {
-      return placeholder ?? child;
+      if (widget.builder != null) child = widget.builder!(child);
+      if (widget.shadow) child = ImageShadow(child: child);
+      // if (sync) return child;
+      // } else {
+      //   return widget.placeholder ?? child;
     }
-    return child;
-    // return AnimatedOpacity(
-    //     opacity: hasImage ? 1 : 0,
-    //     duration: const Duration(milliseconds: 300),
-    //     child: child);
+    // return child;
+    return AnimatedOpacity(
+        opacity: hasImage ? 1 : 0,
+        duration: const Duration(milliseconds: 300),
+        child: child);
   }
 }

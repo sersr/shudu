@@ -456,7 +456,7 @@ extension _NetworkImpl on NetworkMixin {
     if (exits) {
       if (!shouldUpdate) return imgPath;
     } else {
-      images.delete(imgName.hashCode);
+      await images.delete(imgName.hashCode);
     }
 
     return getImageFromNet(img);

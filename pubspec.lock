@@ -52,6 +52,41 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.1"
+  bitsdojo_window:
+    dependency: "direct main"
+    description:
+      name: bitsdojo_window
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.1+1"
+  bitsdojo_window_linux:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_linux
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.1"
+  bitsdojo_window_macos:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_macos
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0"
+  bitsdojo_window_platform_interface:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_platform_interface
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0"
+  bitsdojo_window_windows:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_windows
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -65,7 +100,7 @@ packages:
       name: build
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.3"
+    version: "2.1.0"
   build_config:
     dependency: transitive
     description:
@@ -93,14 +128,14 @@ packages:
       name: build_runner
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.6"
+    version: "2.1.0"
   build_runner_core:
     dependency: transitive
     description:
       name: build_runner_core
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "7.0.1"
+    version: "7.1.0"
   built_collection:
     dependency: transitive
     description:
@@ -260,13 +295,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_displaymode:
-    dependency: "direct main"
-    description:
-      name: flutter_displaymode
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.3.2"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -582,6 +610,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.0"
+  screen_brightness:
+    dependency: "direct main"
+    description:
+      name: screen_brightness
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.4"
   shelf:
     dependency: transitive
     description:
@@ -783,6 +818,41 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.2"
+  wakelock:
+    dependency: "direct main"
+    description:
+      name: wakelock
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.5.3+3"
+  wakelock_macos:
+    dependency: transitive
+    description:
+      name: wakelock_macos
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0+2"
+  wakelock_platform_interface:
+    dependency: transitive
+    description:
+      name: wakelock_platform_interface
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.1+2"
+  wakelock_web:
+    dependency: transitive
+    description:
+      name: wakelock_web
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0+2"
+  wakelock_windows:
+    dependency: transitive
+    description:
+      name: wakelock_windows
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0+1"
   watcher:
     dependency: transitive
     description:

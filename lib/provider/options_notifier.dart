@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive/hive.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -163,7 +161,7 @@ class OptionsNotifier extends ChangeNotifier {
 
     final bool resample = _box.get(_resample, defaultValue: true);
     final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
-    final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
+    final bool useImageCache = _box.get(_useImageCache, defaultValue: false);
     final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
 
     GestureBinding.instance!
@@ -179,33 +177,6 @@ class OptionsNotifier extends ChangeNotifier {
         useImageCache: useImageCache,
         useTextCache: useTextCache,
         resampleOffset: resampleOffset);
-  }
-
-  @Deprecated('指针采样算法已修改，默认启用 resamplingEnabled')
-  Future<bool> listenRate() async {
-    if (!Platform.isAndroid) return false;
-    await Future.delayed(const Duration(seconds: 1));
-    final modes = await FlutterDisplayMode.supported;
-    final activeMode = await FlutterDisplayMode.active;
-
-    var newMode = modes.first;
-    for (final mode in modes) {
-      if (mode.refreshRate > newMode.refreshRate) {
-        newMode = mode;
-      }
-    }
-
-    final resample = newMode != activeMode;
-
-    GestureBinding.instance!..resamplingEnabled = resample;
-    return resample;
-  }
-
-  @Deprecated('无效')
-  Future<void> changeRate() async {
-    await Future.delayed(const Duration(seconds: 1));
-    final resample = await listenRate();
-    options = ConfigOptions(resample: resample);
   }
 
   Future<void> saveOptions() async {

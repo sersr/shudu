@@ -183,8 +183,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                       ),
                     ],
                   ),
-                  // Widget层动画
-                  // TODO: 优化动画
+
                   Positioned.fill(
                     child: AnimatedBuilder(
                       animation: Listenable.merge([showIndexs, showSecondary]),

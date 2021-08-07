@@ -154,8 +154,9 @@ class _TopListViewState extends State<TopListView> {
                   child = reloadBotton(
                       () => _topNotifier.getNextData(widget.ctg, widget.date));
                 }
-                return Padding(
+                return Container(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  height: 60,
                   child: child,
                 );
               }
@@ -215,8 +216,7 @@ class TopNotifier extends ChangeNotifier {
 
     if (_index == _oldIndex) {
       if (!success) _index--;
-      // TODO: 使用页面动画监听替代
-      await release(const Duration(milliseconds: 500));
+      await release(const Duration(milliseconds: 100));
       notifyListeners();
     }
   }
