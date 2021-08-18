@@ -39,7 +39,12 @@ class ContentPageViewState extends State<ContentPageView>
       vsync: this,
       scrollingNotify: scrollingNotify,
       getBounds: isBoundary,
+      canDrag: canDrag,
     );
+  }
+
+  bool canDrag() {
+    return bloc.initQueue.runner == null;
   }
 
   PanSlideController getController() {
@@ -259,7 +264,7 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    Log.w('size : $size');
+
     final child = AnimatedBuilder(
       animation: bloc.notEmptyOrIgnore,
       builder: (context, child) {
@@ -522,7 +527,6 @@ class _SlideElement extends RenderObjectElement {
   }
 }
 
-/// TODO: 使用 [CustomMultiChildLayout] 代替
 class _SlideRenderObject extends RenderBox {
   _SlideRenderObject(EdgeInsets epadding) : _paddingRect = epadding;
   RenderBox? _header;
@@ -587,7 +591,7 @@ class _SlideRenderObject extends RenderBox {
     }
 
     final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
-    Log.w('bottom: ${size.height}');
+    
     if (_footer != null) {
       _footer!.layout(_constraints);
       final parentdata = _footer!.parentData as BoxParentData;
@@ -617,7 +621,6 @@ class _SlideRenderObject extends RenderBox {
     }
 
     if (_footer != null) {
-      Log.w(offset);
       context.paintChild(_footer!, childOffset(_footer!) + offset);
     }
   }

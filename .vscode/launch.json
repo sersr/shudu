@@ -56,7 +56,6 @@
             "request": "launch",
             "program": "lib/main.dart",
             "flutterMode": "profile",
-            // "args": ["--cache-sksl"]
         },
         {
             "name": "Flutter: Run all Tests",

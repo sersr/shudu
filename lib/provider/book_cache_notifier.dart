@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:useful_tools/event_queue.dart';
+import 'package:useful_tools/common.dart';
 
 import '../database/nop_database.dart';
 import '../event/event.dart';
@@ -55,10 +55,10 @@ class BookCacheNotifier extends ChangeNotifier {
       futureAny.add(f);
 
       if (futureAny.length >= 6) {
-        await futureAny.future;
+        await futureAny.any;
       }
     }
-    await futureAny.waitAll;
+    await futureAny.wait;
   }
 
   Future<void> load({bool update = false}) async {

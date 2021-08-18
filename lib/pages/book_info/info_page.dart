@@ -23,13 +23,28 @@ class BookInfoPage extends StatefulWidget {
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
+  static final ValueNotifier<int> _count = ValueNotifier(0);
+
   static Future push(BuildContext context, int bookid,
       {bool maintainState = true}) async {
-    return Navigator.of(context).push(MaterialPageRoute(
-        maintainState: maintainState, // 存在许多个[BookInfoPage]页面的可能，所以不应常驻内存
-        builder: (context) {
-          return BookInfoPage(id: bookid);
-        }));
+    _count.value += 1;
+    final local = _count.value;
+
+    final _ntf = ChangeNotifierSelector<int, bool>(
+        parent: _count, notifyValue: (count) => local < count - 3);
+
+    return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return AnimatedBuilder(
+          animation: _ntf,
+          builder: (context, child) {
+            // Log.w('${_count.value}: ${_ntf.value}', onlyDebug: false);
+            return TickerMode(
+                enabled: !_ntf.value,
+                child: Offstage(offstage: _ntf.value, child: child));
+          },
+          child: BookInfoPage(id: bookid));
+    }))
+      ..whenComplete(() => _count.value -= 1);
   }
 }
 
@@ -70,6 +85,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
           elevation: 1.0,
         ),
         body: SafeArea(
+          bottom: false,
           child: AnimatedBuilder(
             animation: info,
             builder: (context, child) {
@@ -125,49 +141,56 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                               }
                             }
 
-                            return Container(
-                              padding: EdgeInsets.only(
-                                  bottom: bottom > 0.0 &&
-                                          defaultTargetPlatform ==
-                                              TargetPlatform.iOS
-                                      ? 10.0
-                                      : 0.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  Expanded(
-                                    child: btn1(
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Expanded(
+                                  child: btn1(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          bottom: bottom > 0.0 &&
+                                                  defaultTargetPlatform ==
+                                                      TargetPlatform.iOS
+                                              ? 10.0
+                                              : 0.0),
                                       child: SizedBox(
                                         height: 56,
                                         child: Center(
                                           child: Text(show ? '阅读' : '试读'),
                                         ),
                                       ),
-                                      onTap: () async {
-                                        final _list = await cache.getList;
-                                        int? _cid, _page;
-                                        for (final bookCache in _list) {
-                                          if (bookCache.bookId == bookid) {
-                                            _cid = bookCache.chapterId;
-                                            _page = bookCache.page;
-                                            break;
-                                          }
-                                        }
-                                        _cid ??= cid ?? infos.firstChapterId!;
-                                        _page ??= currentPage ?? 1;
-                                        BookContentPage.push(
-                                            context, bookid, _cid, _page);
-                                      },
-                                      background: false,
                                     ),
+                                    onTap: () async {
+                                      final _list = await cache.getList;
+                                      int? _cid, _page;
+                                      for (final bookCache in _list) {
+                                        if (bookCache.bookId == bookid) {
+                                          _cid = bookCache.chapterId;
+                                          _page = bookCache.page;
+                                          break;
+                                        }
+                                      }
+                                      _cid ??= cid ?? infos.firstChapterId!;
+                                      _page ??= currentPage ?? 1;
+                                      BookContentPage.push(
+                                          context, bookid, _cid, _page);
+                                    },
+                                    background: false,
                                   ),
-                                  Expanded(
-                                    child: btn1(
-                                      background: false,
-                                      onTap: () =>
-                                          cache.updateShow(bookid, !show),
+                                ),
+                                Expanded(
+                                  child: btn1(
+                                    background: false,
+                                    onTap: () =>
+                                        cache.updateShow(bookid, !show),
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          bottom: bottom > 0.0 &&
+                                                  defaultTargetPlatform ==
+                                                      TargetPlatform.iOS
+                                              ? 10.0
+                                              : 0.0),
                                       child: SizedBox(
                                           height: 56,
                                           child: Center(
@@ -175,15 +198,14 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                                   '${show ? '移除' : '添加到'}书架'))),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             );
                           },
                         ),
                       ),
                     ],
                   ),
-
                   Positioned.fill(
                     child: AnimatedBuilder(
                       animation: Listenable.merge([showIndexs, showSecondary]),

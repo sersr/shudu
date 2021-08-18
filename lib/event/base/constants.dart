@@ -1,5 +1,6 @@
 const int oneDay = 1000 * 60 * 60 * 24 * 1;
 const int thirtySeconds = 1000 * 30;
+/// 这是图片加载错误时显示的图片
 const errorImg = 'guizhenwuji.jpg';
 
 final trimReg = RegExp('\u0009|\u000B|\u000C|\u000D|\u0020|'

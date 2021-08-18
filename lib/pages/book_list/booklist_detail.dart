@@ -84,13 +84,17 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
           }
 
           final children = _getChildren(data, ts);
-          return ListViewBuilder(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            cacheExtent: 100,
-            itemBuilder: (context, index) {
-              return children.elementAt(index);
-            },
-            itemCount: children.length,
+          return Scrollbar(
+            interactive: true,
+            thickness: 8,
+            child: ListViewBuilder(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              cacheExtent: 100,
+              itemBuilder: (context, index) {
+                return children.elementAt(index);
+              },
+              itemCount: children.length,
+            ),
           );
         },
       ),

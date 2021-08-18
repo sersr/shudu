@@ -7,6 +7,7 @@ import '_database_impl.dart';
 
 void main() async {
   final db = Database();
+  await db.db.initDb();
   db.watcher.sync = true;
   final table = db.bookCache;
   test('bookContent test', () async {
@@ -19,7 +20,7 @@ void main() async {
         print('2: ${event.length}');
       });
     print(xa);
-    db.insertBook(BookCache(
+    await db.insertBook(BookCache(
         bookId: 101,
         chapterId: 1010,
         img: 'img,',
@@ -31,7 +32,7 @@ void main() async {
         isShow: true,
         updateTime: 'updatetime',
         sortKey: 1111));
-    db.insertBook(BookCache(
+   await db.insertBook(BookCache(
         bookId: 1021,
         chapterId: 1010,
         img: 'img,',
@@ -44,7 +45,7 @@ void main() async {
         updateTime: 'updatetime',
         sortKey: 1111));
 
-    final x = db.insertBook(BookCache(
+    final x = await db.insertBook(BookCache(
         bookId: 1021,
         chapterId: 1010,
         img: 'img,',
@@ -86,6 +87,6 @@ void main() async {
             updateTime: 'updatetime',
             sortKey: 1111))
         .go;
-    print(table.query.goToTable.length);
+    print((await table.query.goToTable).length);
   });
 }

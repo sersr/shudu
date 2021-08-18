@@ -226,8 +226,7 @@ class CnamePan extends StatelessWidget {
                           getTimer()?.cancel();
                           bloc.showCname.value = false;
                           if (cid != -1)
-                            bloc.newBookOrCid(data.bookid!, cid, 1,
-                                inBook: true);
+                            bloc.newBookOrCid(data.bookid!, cid, 1);
                         }
                       },
                       child: Container(
@@ -459,15 +458,13 @@ class _BottomEndState extends State<BottomEnd> {
 
   @override
   Widget build(BuildContext context) {
-    final data = MediaQuery.of(context);
-    final size = data.size;
+
     return RepaintBoundary(
         child: AnimatedBuilder(
       animation: bloc.safeBottom,
       builder: (context, child) {
-        final bottom = size.height >= size.width ? bloc.safeBottom.value : 0.0;
         return Padding(
-            padding: EdgeInsets.only(top: 6.0, bottom: 8.0 + bottom),
+            padding: const EdgeInsets.only(top: 6.0, bottom: 10.0),
             child: child);
       },
       child: Row(
@@ -709,14 +706,14 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   final ValueNotifier<double> ftBrightness = ValueNotifier(1.0);
   final ValueNotifier<double> fontvalue = ValueNotifier(10.0);
   final ValueNotifier<double> fontHvalue = ValueNotifier(1.0);
-  late ValueNotifier<HSVColor> bgColor =
+  ValueNotifier<HSVColor> bgColor =
       ValueNotifier(HSVColor.fromColor(Colors.transparent));
-  late ValueNotifier<HSVColor> ftColor =
+  ValueNotifier<HSVColor> ftColor =
       ValueNotifier(HSVColor.fromColor(Colors.transparent));
 
   late ContentNotifier bloc;
   Widget? _setting;
-  late ChangeNotifierSelector<ContentViewConfig, bool> _audioNotifier;
+  // late ChangeNotifierSelector<ContentViewConfig, bool> _audioNotifier;
   @override
   void initState() {
     super.initState();
@@ -726,8 +723,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
-    _audioNotifier = ChangeNotifierSelector<ContentViewConfig, bool>(
-        parent: bloc.config, notifyValue: (config) => config.audio ?? false);
+    // _audioNotifier = ChangeNotifierSelector<ContentViewConfig, bool>(
+    //     parent: bloc.config, notifyValue: (config) => config.audio ?? false);
     update();
   }
 
@@ -1116,7 +1113,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               // 先完成动画再调用
               widget.close(() {
                 index.loadIndexs(id, cid);
-                bloc.newBookOrCid(id, cid, 1, inBook: true);
+                bloc.newBookOrCid(id, cid, 1);
               });
             },
           ),

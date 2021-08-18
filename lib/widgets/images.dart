@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -40,81 +39,91 @@ class _ImageResolveState extends State<ImageResolve> {
     return RepaintBoundary(child: Center(child: child));
   }
 
+  late Repository repository;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    repository = context.read();
+  }
+
   String? path;
+  final ratio = ui.window.devicePixelRatio;
 
   Widget _layoutBuilder() {
     return LayoutBuilder(builder: (context, constraints) {
       final height = constraints.maxHeight;
       final width = constraints.maxWidth;
       final _img = widget.img;
-      final ratio = ui.window.devicePixelRatio;
-      final repository = context.read<Repository>();
+
       return _img == null
-          ? _errorBuilder(true, width, height, context)
+          ? _errorBuilder(true, width, height)
           : Selector<OptionsNotifier, bool>(
               selector: (_, opt) => opt.options.useImageCache ?? false,
               builder: (context, useImageCache, _) {
                 if (!useImageCache) {
                   final repository = context.read<Repository>();
-                  final getPath = repository.bookEvent.getImagePath(_img);
-                  return FutureBuilder<String?>(
-                      initialData: path,
-                      future: Future.value(getPath)
-                        ..then((value) => path = value),
-                      builder: (context, snap) {
-                        final data = snap.data;
-                        if (data != null && data.isNotEmpty) {
-                          final f = File(snap.data!);
-                          return Image.file(
-                            f,
-                            // cacheHeight: (constraints.maxHeight * ratio).toInt(),
-                            cacheWidth: (width * ratio).toInt(),
-                            fit: widget.boxFit,
-                            frameBuilder: (_, child, frame, sync) {
-                              return _imageBuilder(child, sync, frame != null);
-                            },
-                            errorBuilder: (context, __, ___) =>
-                                _errorBuilder(true, width, height, context),
-                          );
-                        } else if (snap.connectionState ==
-                            ConnectionState.done) {
-                          return _errorBuilder(false, width, height, context);
-                        }
-                        return widget.placeholder ?? const SizedBox();
-                      });
+
+                  final getImageBytes = repository.bookEvent.getImageBytes;
+                  final rw = (width * ratio).toInt();
+                  final plh = CallbackWithKeyImage(
+                          keys: errorImg,
+                          callback: () => getImageBytes(errorImg))
+                      .resize(width: rw);
+                  Widget child = FadeInImage(
+                    // width: width,
+                    fit: BoxFit.contain,
+                    placeholder: plh,
+                    image: CallbackWithKeyImage(
+                        keys: _img,
+                        callback: () => getImageBytes(_img)).resize(width: rw),
+                    imageErrorBuilder: (_, o, s) {
+                      return Image(image: plh, fit: BoxFit.contain);
+                    },
+                    placeholderErrorBuilder: (_, o, s) {
+                      return const SizedBox();
+                    },
+                  );
+                  if (widget.builder != null) child = widget.builder!(child);
+                  // if (widget.shadow) child = ImageShadow(child: child);
+                  return child;
                 }
-                return ImageFuture(
-                  url: _img,
-                  height: height,
-                  width: width,
-                  boxFit: widget.boxFit,
-                  getPath: repository.bookEvent.getImagePath,
-                  builder: (child, hasImage) =>
-                      _imageBuilder(child, false, hasImage),
-                  errorBuilder: (context) =>
-                      _errorBuilder(true, width, height, context),
-                );
+
+                return _useMemoryImage(_img, height, width);
               },
             );
     });
   }
 
-  Widget _errorBuilder(
-      bool isFirst, double width, double height, BuildContext context) {
+  Widget _useMemoryImage(String _img, double height, double width) {
+    final bookEvent = repository.bookEvent;
+    final callback = bookEvent.getImageBytes;
+    // final image = _errorBuilder(true, width, height);
+
+    return ImageFuture.memory(
+      imageKey: [_img, callback],
+      height: height,
+      width: width,
+      boxFit: widget.boxFit,
+      getMemory: () => callback(_img),
+      builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
+      errorBuilder: (context) => _errorBuilder(true, width, height),
+    );
+  }
+
+  Widget _errorBuilder(bool isFirst, double width, double height) {
     if (isFirst) {
       if (widget.errorBuilder != null) {
         return widget.errorBuilder!(context);
       } else {
-        final repository = context.read<Repository>();
-        return ImageFuture(
-          url: errorImg,
+        final callback = repository.bookEvent.getImageBytes;
+        return ImageFuture.memory(
+          imageKey: [errorImg, callback],
           width: width,
           height: height,
           boxFit: widget.boxFit,
-          getPath: repository.bookEvent.getImagePath,
+          getMemory: () => callback(errorImg),
           builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
-          errorBuilder: (context) =>
-              _errorBuilder(false, width, height, context),
+          errorBuilder: (context) => _errorBuilder(false, width, height),
         );
       }
     }
@@ -130,6 +139,9 @@ class _ImageResolveState extends State<ImageResolve> {
       //   return widget.placeholder ?? child;
     }
     // return child;
+    // return AnimatedSwitcher(
+    //     child: hasImage ? child : place,
+    //     duration: const Duration(milliseconds: 500));
     return AnimatedOpacity(
         opacity: hasImage ? 1 : 0,
         duration: const Duration(milliseconds: 300),

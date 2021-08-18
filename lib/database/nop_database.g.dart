@@ -104,7 +104,7 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
       isShow: Table.intToBool(map['isShow'] as int?));
 
   @override
-  List<BookCache> toTable(Iterable<Row> query) =>
+  List<BookCache> toTable(Iterable<Map<String, Object?>> query) =>
       query.map((e) => _toTable(e)).toList();
 }
 
@@ -252,7 +252,7 @@ class _GenBookContentDb
       hasContent: Table.intToBool(map['hasContent'] as int?));
 
   @override
-  List<BookContentDb> toTable(Iterable<Row> query) =>
+  List<BookContentDb> toTable(Iterable<Map<String, Object?>> query) =>
       query.map((e) => _toTable(e)).toList();
 }
 
@@ -343,7 +343,7 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
       bIndexs: map['bIndexs'] as String?);
 
   @override
-  List<BookIndex> toTable(Iterable<Row> query) =>
+  List<BookIndex> toTable(Iterable<Map<String, Object?>> query) =>
       query.map((e) => _toTable(e)).toList();
 }
 

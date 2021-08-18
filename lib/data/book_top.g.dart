@@ -6,17 +6,15 @@ part of 'book_top.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-BookTopList _$BookTopListFromJson(Map<String, dynamic> json) {
-  return BookTopList(
-    author: json['Author'] as String?,
-    desc: json['Desc'] as String?,
-    id: json['Id'] as int?,
-    img: json['Img'] as String?,
-    name: json['Name'] as String?,
-    score: (json['Score'] as num?)?.toDouble(),
-    cname: json['CName'] as String?,
-  );
-}
+BookTopList _$BookTopListFromJson(Map<String, dynamic> json) => BookTopList(
+      author: json['Author'] as String?,
+      desc: json['Desc'] as String?,
+      id: json['Id'] as int?,
+      img: json['Img'] as String?,
+      name: json['Name'] as String?,
+      score: (json['Score'] as num?)?.toDouble(),
+      cname: json['CName'] as String?,
+    );
 
 Map<String, dynamic> _$BookTopListToJson(BookTopList instance) =>
     <String, dynamic>{
@@ -29,15 +27,13 @@ Map<String, dynamic> _$BookTopListToJson(BookTopList instance) =>
       'Score': instance.score,
     };
 
-BookTopData _$BookTopDataFromJson(Map<String, dynamic> json) {
-  return BookTopData(
-    bookList: (json['BookList'] as List<dynamic>?)
-        ?.map((e) => BookTopList.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    hasNext: json['HasNext'] as bool?,
-    page: json['Page'] as int?,
-  );
-}
+BookTopData _$BookTopDataFromJson(Map<String, dynamic> json) => BookTopData(
+      bookList: (json['BookList'] as List<dynamic>?)
+          ?.map((e) => BookTopList.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      hasNext: json['HasNext'] as bool?,
+      page: json['Page'] as int?,
+    );
 
 Map<String, dynamic> _$BookTopDataToJson(BookTopData instance) =>
     <String, dynamic>{
@@ -46,15 +42,13 @@ Map<String, dynamic> _$BookTopDataToJson(BookTopData instance) =>
       'HasNext': instance.hasNext,
     };
 
-BookTopWrap _$BookTopWrapFromJson(Map<String, dynamic> json) {
-  return BookTopWrap(
-    data: json['data'] == null
-        ? null
-        : BookTopData.fromJson(json['data'] as Map<String, dynamic>),
-    info: json['info'] as String?,
-    status: json['status'] as int?,
-  );
-}
+BookTopWrap _$BookTopWrapFromJson(Map<String, dynamic> json) => BookTopWrap(
+      data: json['data'] == null
+          ? null
+          : BookTopData.fromJson(json['data'] as Map<String, dynamic>),
+      info: json['info'] as String?,
+      status: json['status'] as int?,
+    );
 
 Map<String, dynamic> _$BookTopWrapToJson(BookTopWrap instance) =>
     <String, dynamic>{

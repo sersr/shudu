@@ -5,12 +5,13 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
+import 'package:nop_db/database/nop_impl/sqflite_main_isolate.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
 import 'package:useful_tools/common.dart';
 
-class RepositoryImplTest extends Repository with SendEventMixin {
+class RepositoryImplTest extends Repository with SendEventPortMixin {
   @override
   late BookEvent bookEvent = BookEventMain(this);
 
@@ -20,7 +21,9 @@ class RepositoryImplTest extends Repository with SendEventMixin {
   @override
   Future<void> get initState async {
     client = Client(this)..init();
-    server = Server()..init(client.sendSP);
+    server = Server();
+    SqfliteMainIsolate.initMainDb();
+    return server.init(client.sendSP);
   }
 
   @override
@@ -45,21 +48,27 @@ class RepositoryImplTest extends Repository with SendEventMixin {
 
   @override
   ValueNotifier<double> get safeBottom => ValueNotifier(0);
+
+  @override
+  ValueNotifier<bool> get init => throw UnimplementedError();
+
+  @override
+  void close() {}
 }
 
 class Client {
   Client(this.repositoryImpl);
 
-  final SendEventMixin repositoryImpl;
+  final SendEventPortMixin repositoryImpl;
 
   final client = StreamController();
   StreamSubscription? clientListen;
 
   void init() {
-    clientListen = client.stream.listen((event) {
-      if (repositoryImpl.add(event)) return;
-      Log.e('messager error!!!');
-    });
+    // clientListen = client.stream.listen((event) {
+    //   if (repositoryImpl.add(event)) return;
+    //   Log.e('messager error!!!');
+    // });
   }
 
   EventSink get sendSP => client.sink;
@@ -82,14 +91,15 @@ class Server {
   }
 
   late BookEventIsolate bookEventIsolate;
-  void init(EventSink clientSP) {
+  Future<void> init(EventSink clientSP) async {
     sp = clientSP;
 
     tranf?.cancel();
     tranf = receivePort.listen(_tran);
 
-    bookEventIsolate = BookEventIsolateTest(receivePort.sendPort)
-      ..netEventInit();
+    bookEventIsolate = BookEventIsolateTest(receivePort.sendPort);
+    await bookEventIsolate.db.initDb();
+    await bookEventIsolate.netEventInit();
     serverListen?.cancel();
     serverListen = server.stream.listen((event) {
       if (bookEventIsolate.resolve(event)) return;
@@ -102,7 +112,7 @@ class Server {
 }
 
 class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendPort sp) : super(sp, '', '');
+  BookEventIsolateTest(SendPort sp) : super(sp, '', '', false, true);
   @override
   bool remove(key) {
     if (key is KeyController) Log.e(key.keyType);

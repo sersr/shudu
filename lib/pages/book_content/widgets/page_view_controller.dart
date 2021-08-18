@@ -13,7 +13,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   NopPageViewController({
     required this.scrollingNotify,
     required this.vsync,
-    // required this.getDragState,
+    required this.canDrag, // required this.getDragState,
     required this.getBounds,
   })  : _maxExtent = double.infinity,
         _minExtent = double.negativeInfinity {
@@ -25,7 +25,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   // BoolCallback getDragState;
   void Function(bool) scrollingNotify;
   int Function() getBounds;
-
+  bool Function() canDrag;
   Activity? _activity;
 
   double _pixels = 0.0;
@@ -58,14 +58,18 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   bool _reset = false;
   void needLayout() {
     _reset = true;
+
+    applyConentDimension(
+        minExtent: double.negativeInfinity, maxExtent: double.infinity);
+
     notifyListeners();
   }
 
   void resetDone(VoidCallback? reset) {
     if (_reset && reset != null) {
       reset();
-      _reset = false;
     }
+    _reset = false;
   }
 
   double? _viewPortDimension;
@@ -146,7 +150,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void setPixels(double v) {
-    if (v == _pixels) return;
+    if (v == _pixels || !canDrag()) return;
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
@@ -244,12 +248,9 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   PreNextDragController? _currentDrag;
-  // 指示是否可拖动
-  // 当进行文本布局时，占用UI资源
-  // bool _canDrag = true;
+
   PreNextDragController? drag(
       DragStartDetails details, VoidCallback cancelCallback) {
-    scrollingnotifier(true);
     final _drag =
         PreNextDragController(delegate: this, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
@@ -259,6 +260,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   var _lastActivityIsIdle = true;
   ScrollHoldController hold(VoidCallback cancel) {
+    scrollingnotifier(true);
+
     final _hold = HoldActivity(this, cancelCallback: cancel);
     _lastActivityIsIdle = _activity is IdleActivity;
 
@@ -522,6 +525,8 @@ class ContentPreNextRenderObject extends RenderBox {
             ? double.infinity
             : indexToLayoutOffset(extent, lastIndex!),
       );
+    } else {
+      collectGarbage(0, 0);
     }
   }
 
@@ -549,8 +554,9 @@ class ContentPreNextRenderObject extends RenderBox {
     nopController.resetDone(_element?.removeAll);
 
     _layout(nopController.pixels, extent);
+
     // 一次校验
-    if (!correct()) {
+    if (!correct() || !canPaint) {
       _layout(_nopController.pixels, extent);
     }
 
@@ -559,7 +565,6 @@ class ContentPreNextRenderObject extends RenderBox {
 
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         final child = childlist[i]!;
-        assert(childlist.containsKey(i));
         final data = child.parentData as NopPageViewParenData;
 
         child.layout(constraints, parentUsesSize: true);
@@ -604,9 +609,8 @@ class ContentPreNextRenderObject extends RenderBox {
   }
 
   void defaultPaint(PaintingContext context, Offset offset) {
-    context.setWillChangeHint();
+    // context.setWillChangeHint();
     for (var i = firstIndex!; i <= lastIndex!; i++) {
-      assert(childlist.containsKey(i));
       final child = childlist[i]!;
       context.paintChild(child, offset + childScrollOffset(child)!);
     }

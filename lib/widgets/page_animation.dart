@@ -16,6 +16,7 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
     animation?.removeStatusListener(_listenAnimationStatus);
     animation = ModalRoute.of(context)?.animation;
     animation?.addStatusListener(_listenAnimationStatus);
+    addListener(initOnceTask);
     // 初始时status == AnimationStatus.completed
     // 延迟判断
     Timer.run(() => isCompleted ? _run() : null);
@@ -27,6 +28,11 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
 
   void removeListener(VoidCallback callback) {
     _callbacks.remove(callback);
+  }
+
+  @mustCallSuper
+  void initOnceTask() {
+    removeListener(initOnceTask);
   }
 
   void _run() {

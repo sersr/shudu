@@ -29,7 +29,8 @@ class RenderContentView extends RenderBox
     with RenderObjectWithChildMixin<RenderBox> {
   RenderContentView({
     required ContentMetrics contentMetrics,
-  }) : _contentMetrics = contentMetrics;
+  })  : _contentMetrics = contentMetrics,
+        _pictureRefInfo = contentMetrics.picture.clone();
 
   final TextPainter bottomLeft =
       TextPainter(text: const TextSpan(), textDirection: TextDirection.ltr);
@@ -40,7 +41,25 @@ class RenderContentView extends RenderBox
   set contentMetrics(ContentMetrics v) {
     if (_contentMetrics == v) return;
     _contentMetrics = v;
+    pictureRef = _contentMetrics.picture.clone();
     markNeedsLayout();
+  }
+
+  PictureRefInfo _pictureRefInfo;
+  set pictureRef(PictureRefInfo ref) {
+    if (ref.isCloneOf(_pictureRefInfo)) {
+      ref.dispose();
+      return;
+    }
+    _pictureRefInfo.dispose();
+    _pictureRefInfo = ref;
+    markNeedsLayout();
+  }
+
+  @override
+  void dispose() {
+    _pictureRefInfo.dispose();
+    super.dispose();
   }
 
   @override
@@ -71,15 +90,17 @@ class RenderContentView extends RenderBox
     // final _size = contentMetrics.size;
     // context.setIsComplexHint();
     final canvas = context.canvas;
-    canvas.drawPicture(contentMetrics.picture);
+
+    canvas.drawPicture(_pictureRefInfo.pictureRef.picture);
 
     final left = contentMetrics.left;
+    final bottom = contentMetrics.bottom;
 
     if (child != null) {
       final height = bottomLeft.size.height;
       final width = child!.size.width;
       final dx = left + offset.dx;
-      final dy = size.height - contentBotttomPad - height + offset.dy;
+      final dy = size.height - contentBotttomPad - height - bottom + offset.dy;
       bottomLeft.paint(canvas, Offset(dx + width, dy));
       context.paintChild(
           child!, Offset(dx, dy - (child!.size.height - height) / 2));

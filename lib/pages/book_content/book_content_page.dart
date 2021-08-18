@@ -7,11 +7,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../database/database.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/painter_notifier.dart';
 import '../../widgets/page_animation.dart';
-import 'widgets/page_view.dart';
 import '../../widgets/pan_slide.dart';
+import 'widgets/page_view.dart';
 
 enum SettingView { indexs, setting, none }
 
@@ -23,15 +24,15 @@ class BookContentPage extends StatefulWidget {
   final int cid;
   final int page;
 
-  static Future? _wait;
+  static Object? _wait;
   static Future push(
       BuildContext context, int newBookid, int cid, int page) async {
     if (_wait != null) return;
+    _wait = Object();
     final bloc = context.read<ContentNotifier>();
     bloc.touchBook(newBookid, cid, page);
 
     await EventQueue.scheduler.endOfFrame;
-    await _wait;
     _wait = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
@@ -51,8 +52,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   @override
   void initState() {
     super.initState();
-    addListener(showUiOverlay);
-
     WidgetsBinding.instance!.addObserver(this);
   }
 
@@ -68,11 +67,11 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       getExternalStorageDirectories().then((value) => Log.w(value));
       getApplicationDocumentsDirectory().then((value) => Log.w(value));
     }
-  }
 
-  @override
-  void didChangePlatformBrightness() {
-    // bloc.updateBrightness();
+    _book =
+        bloc.repository.bookEvent.getBookCacheDb(widget.bookId).then((book) {
+      if (book?.isNotEmpty == true) return book!.last;
+    });
   }
 
   @override
@@ -81,16 +80,26 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.dispose();
   }
 
-  void showUiOverlay() {
-    uiOverlay()
-        .then((_) => bloc.newBookOrCid(widget.bookId, widget.cid, widget.page));
-    removeListener(showUiOverlay);
+  late FutureOr<BookCache?> _book;
+
+  @override
+  void initOnceTask() {
+    super.initOnceTask();
+    bloc.addInitEventTask(() async {
+      final u = uiOverlay();
+      final book = await _book;
+      bloc.newBookOrCid(widget.bookId, book?.chapterId ?? widget.cid,
+          book?.page ?? widget.page);
+
+      await u;
+      await release(const Duration(milliseconds: 300));
+      uiStyle(dark: false);
+    });
   }
 
   Timer? errorTimer;
   @override
   Widget wrapOverlay(context, overlay) {
-    //
     bloc.metricsChange(MediaQuery.of(context));
 
     Widget child = AnimatedBuilder(
@@ -181,17 +190,15 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     }
 
     bloc.out();
-    // bloc.notifyState(notEmptyOrIgnore: true, loading: false);
-    // await bloc.dataEvent.runner;
-    await uiOverlay(hide: false);
+
     await bloc.dump();
 
     await blocCache.load();
 
-    await bloc.taskRunner;
-    uiStyle();
-
-    // bloc.out();
+    bloc.initQueue.addEventTask(() async {
+      uiStyle();
+      await uiOverlay(hide: false);
+    });
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
 

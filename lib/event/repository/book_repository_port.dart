@@ -8,34 +8,38 @@ import './book_repository_base.dart';
 class BookRepositoryPort extends BookRepositoryBase with SendEventPortMixin {
   SendPort? _clientSP;
 
-  Future<void>? _f;
-
   @override
   Future<void> get initState async {
-    _f ??= _initState()..whenComplete(() => _f = null);
-    return _f;
+    initBase();
+    await runner;
   }
 
-  Future<void> _initState() async {
-    if (closeTask != null) await closeTask;
-
-    final rcPort = await initBase();
-
-    if (rcPort != null) {
-      _clientSP = await rcPort.first;
-      rcPort.close();
+  @override
+  Future<void> onDone(ReceivePort rcPort) async {
+    _clientSP = await rcPort.first;
+    if (pendingMessages.isNotEmpty) {
+      final _pendings = List.of(pendingMessages);
+      pendingMessages.clear();
+      _pendings.forEach(send);
     }
   }
 
+  final pendingMessages = [];
   @override
   void send(message) {
-    assert(_clientSP != null);
-    _clientSP?.send(message);
+    if (_clientSP == null) {
+      pendingMessages.add(message);
+      return;
+    }
+    _clientSP!.send(message);
   }
 
   @override
-  Future<void> dispose() {
-    super.dispose();
-    return close().then((_) => _clientSP = null);
+  Future<void> onClose() {
+    // 关闭连接
+    _clientSP == null;
+    dispose();
+    pendingMessages.clear();
+    return super.onClose();
   }
 }

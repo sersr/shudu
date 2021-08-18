@@ -1,9 +1,6 @@
-
 import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
 
-// ignore: unused_import
-import '../repository/book_repository.dart' show BookRepository;
 // ignore: unused_import
 import '../repository/book_repository_port.dart' show BookRepositoryPort;
 import 'book_event.dart';
@@ -12,7 +9,9 @@ abstract class Repository {
   Repository();
 
   Future<void> get initState;
-  void dispose();
+  
+  void close();
+  ValueNotifier<bool> get init;
 
   BookEvent get bookEvent;
 
@@ -24,7 +23,7 @@ abstract class Repository {
 
     return _instance!;
   }
- ValueNotifier<double> get safeBottom;
+  ValueNotifier<double> get safeBottom;
   @visibleForTesting
   static void repositoryTest(Repository repository) {
     _instance ??= repository;

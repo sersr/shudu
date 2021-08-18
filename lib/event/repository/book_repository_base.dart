@@ -10,15 +10,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:nop_db/database/nop_impl/sqflite_main_isolate.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/common.dart';
+import 'package:useful_tools/event_queue.dart';
 
+import '../../provider/options_notifier.dart';
 import '../base/book_event.dart';
 import '../base/repository.dart';
-import '../base/type_adapter.dart';
 import '../event.dart';
 
 abstract class BookRepositoryBase extends Repository implements SendEvent {
@@ -91,18 +93,38 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _changesListeners.remove(callback);
   }
 
-  bool isShowing = false;
+  bool hasBottomNavbar = false;
   double height = 0;
 
   final _safeBottom = ValueNotifier(0.0);
   @override
   ValueNotifier<double> get safeBottom => _safeBottom;
 
+  ///
+  /// Isolate
+  ///
+
   Isolate? _isolate;
+
   Isolate? get isolate => _isolate;
 
-  Future<ReceivePort?> initBase() async {
-    if (init) return null;
+  set isolate(Isolate? n) {
+    if (_isolate != n && _isolate != null) {
+      _isolate!.kill(priority: Isolate.immediate);
+    }
+    _isolate = n;
+    _init.value = _isolate != null;
+  }
+
+  EventQueue get _initQueue => EventQueue.createEventQueue('app Init');
+  Future? get runner => _initQueue.runner;
+
+  Future<void> onDone(ReceivePort rcPort);
+  Future<void> onInit() async {
+    if (_isolate != null) {
+      assert(_init.value);
+      return;
+    }
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     final _waits = <Future>{};
 
@@ -113,6 +135,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
     if (Platform.isAndroid) {
       Bangs.bangs.setNavigationChangeCallback(_changeCallback);
+      // 存储在外部，避免重新安装时数据丢失
       appDirExt = Directory('/storage/emulated/0/shudu');
       _waits
         ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
@@ -137,36 +160,65 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
-    hiveInit(join(appPath, 'shudu', 'hive'));
+    // hiveInit(join(appPath, 'shudu', 'hive'));
 
     final rcPort = ReceivePort();
+    bool useFfi = false;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        useFfi = true;
+        break;
+      default:
+    }
+    bool useSqflite3 = await OptionsNotifier.sqfliteBox;
+    Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
+    if (!useFfi && useSqflite3) {
+      SqfliteMainIsolate.initMainDb();
+    }
 
     /// Isolate event
-    await Isolate.spawn(isolateEvent, [rcPort.sendPort, appPath, cachePath])
-        .then((value) => _isolate = value);
+    final newIsolate = await Isolate.spawn(isolateEvent,
+        [rcPort.sendPort, appPath, cachePath, useFfi, useSqflite3]);
+    await onDone(rcPort);
 
-    return rcPort;
+    /// 完成时再设置
+    isolate = newIsolate;
+  }
+
+  void initBase() {
+    _initQueue.addOneEventTask(onInit);
   }
 
   void _changeCallback(bool isShow, int navHeight) {
-    isShowing = isShow;
+    hasBottomNavbar = isShow;
     height = navHeight / window.devicePixelRatio;
 
-    if (isShowing) {
+    if (hasBottomNavbar) {
       safeBottom.value = height;
     } else {
       safeBottom.value = 0;
     }
   }
 
-  bool get init => _isolate != null;
-  Future? closeTask;
+  final ValueNotifier<bool> _init = ValueNotifier(false);
 
+  @override
+  ValueNotifier<bool> get init {
+    assert(_init.value == (_isolate != null));
+    return _init;
+  }
+
+  @mustCallSuper
+  Future<void> onClose() async {
+    await Hive.close();
+    isolate = null;
+  }
+
+  @override
   Future<void> close() {
-    return closeTask ??= Hive.close().then((_) {
-      _isolate?.kill(priority: Isolate.immediate);
-      _isolate = null;
-    })
-      ..whenComplete(() => closeTask = null);
+    final t = _initQueue.addOneEventTask(onClose);
+    assert(runner != null);
+    return runner ?? t;
   }
 }

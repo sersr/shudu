@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -230,7 +231,7 @@ class ContentNotifier extends ChangeNotifier {
       brightness.value = _clamp;
       _lastBrightness = _clamp;
       follow.value = false;
-      return ScreenBrightness.setScreenBrightness(_clamp);
+      if (_brightNess) return ScreenBrightness.setScreenBrightness(_clamp);
     });
   }
 
@@ -240,13 +241,13 @@ class ContentNotifier extends ChangeNotifier {
     follow.value = v;
     _brightness.addOneEventTask(() async {
       if (v) {
-        await ScreenBrightness.resetScreenBrightness();
+        if (_brightNess) await ScreenBrightness.resetScreenBrightness();
       } else {
         final _old = _lastBrightness;
         if (_old != null) {
           final _v = _old.clamp(0.0, 1.0);
           brightness.value = _v;
-          await ScreenBrightness.setScreenBrightness(_v);
+          if (_brightNess) await ScreenBrightness.setScreenBrightness(_v);
         }
       }
     });
@@ -264,7 +265,7 @@ class ContentNotifier extends ChangeNotifier {
   }
 
   Future<void> _fo() async {
-    brightness.value = await ScreenBrightness.current;
+    if (_brightNess) brightness.value = await ScreenBrightness.current;
   }
 
   // late FlutterTts tts = FlutterTts()
@@ -304,6 +305,8 @@ class ContentNotifier extends ChangeNotifier {
   // void ttsStopAndStartCurrent() {
   //   ttsStop();
   // }
+
+  final bool _brightNess = Platform.isAndroid || Platform.isIOS;
 }
 
 extension ContentStatus on ContentNotifier {
@@ -312,11 +315,12 @@ extension ContentStatus on ContentNotifier {
 
     _inBookView = false;
     _notifyCustom();
-    _brightness.addOneEventTask(() async {
-      await ScreenBrightness.resetScreenBrightness();
+    if (_brightNess)
+      _brightness.addOneEventTask(() async {
+        await ScreenBrightness.resetScreenBrightness();
 
-      return _fo();
-    });
+        return _fo();
+      });
   }
 
   bool get inBook => _inBookView;
@@ -346,27 +350,45 @@ extension ContentStatus on ContentNotifier {
 }
 
 extension DataLoading on ContentNotifier {
-  Future<void> reset({bool clearCache = false, int? cid}) async {
+  Future<void> reset({bool clearCache = false}) async {
     if (clearCache) {
-      _caches.clear();
+      if (_caches.isNotEmpty) {
+        var _c = List.of(_caches.values);
+        _caches.clear();
+        for (var t in _c) {
+          for (var p in t.content) {
+            p.picture.dispose();
+          }
+        }
+      }
+      //  _c.forEach((element) {element.content.forEach((element) {element.picture.dispose();})});
 
       if (_futures.isNotEmpty) {
         final _tasks = List.of(_futures.values);
 
         _disposeFutures.addAll(_tasks);
-        await Future.wait(_disposeFutures);
+        final f = FutureAny()..addAll(_disposeFutures);
+        await f.wait;
+        // await Future.wait(_disposeFutures);
       }
-
-      _caches.clear();
+      if (_caches.isNotEmpty) {
+        var _c = List.of(_caches.values);
+        _caches.clear();
+        for (var t in _c) {
+          for (var p in t.content) {
+            p.picture.dispose();
+          }
+        }
+      }
     }
-    _tData = TextData(cid: cid ?? tData.cid);
+    // _tData = TextData(cid: cid ?? tData.cid);
     _getCurrentIds();
   }
 
   Future<void> dump() async {
     final cid = tData.cid;
     final _bookid = bookid;
-    if (cid == null) return;
+    if (cid == null || _bookid == -1) return;
     final _currentPage = currentPage;
     final u = BookCache(
       page: _currentPage,
@@ -405,9 +427,9 @@ extension DataLoading on ContentNotifier {
         return remove;
       });
       scheduleMicrotask(() {
-        for (var element in _dirtys) {
-          for (var element in element._content) {
-            element.picture.dispose();
+        for (var mes in _dirtys) {
+          for (var p in mes._content) {
+            p.picture.dispose();
           }
         }
       });
@@ -421,10 +443,11 @@ extension DataLoading on ContentNotifier {
 
   Future<void> load(int _bookid, int contentid, {bool update = false}) async {
     EventQueue.currentTask?.value = contentid;
-    if (_ignoreTask(update: update)) return;
+    if (_ignoreTask(update: update) || _bookid == -1 || contentid == -1) return;
 
     final lines =
         await repository.bookEvent.getContent(_bookid, contentid, update);
+    if (_ignoreTask(update: update)) return;
 
     if (lines != null && lines.contentIsNotEmpty) {
       final pages = await _asyncLayout(lines.pages, lines.cname!);
@@ -451,9 +474,7 @@ extension Tasks on ContentNotifier {
     if (tData.cid == null) return;
     final _bookid = bookid;
     final _key = tData.cid!;
-    assert(Log.i(
-      'cid: $_key',
-    ));
+    assert(Log.i('cid: $_key'));
     _loadWithId(_key);
 
     await _futures.awaitId(_key);
@@ -464,6 +485,7 @@ extension Tasks on ContentNotifier {
         _currentText.contentIsNotEmpty &&
         _key == _currentText.cid) {
       tData = _currentText;
+      assert(Log.i('sssss: $_key'));
 
       if (currentPage > tData.content.length)
         currentPage = tData.content.length;
@@ -480,6 +502,7 @@ extension Tasks on ContentNotifier {
     if (!inBook || _futures.length > 5) return;
 
     if (_bookid == bookid &&
+        _bookid != -1 &&
         contentid != null &&
         contentid != -1 &&
         !_caches.containsKey(contentid) &&
@@ -497,9 +520,7 @@ extension Tasks on ContentNotifier {
 
   void _loadWithId(int? id) => _loadTasks(bookid, id);
 
-  void unDelayedLoad() => _loadCallback();
-
-  void _loadCallback() {
+  void scheduleTask() {
     if (_scheduled) return;
     scheduleMicrotask(() {
       _scheduled = false;
@@ -521,37 +542,39 @@ extension Tasks on ContentNotifier {
     if (tData.nid == -1 || !tData.hasContent) {
       if (tData.contentIsEmpty) return;
 
-      void _getdata() {
+      bool _getdata() {
         if (_caches.containsKey(tData.cid)) {
           if (tData.contentIsNotEmpty &&
               (currentPage == tData.content.length || currentPage == 1)) {
-            tData = _getTextData(tData.cid!)!;
-            if (currentPage > tData.content.length) {
-              currentPage = tData.content.length;
+            final _tData = _getTextData(tData.cid!)!;
+            if (tData != _tData) {
+              tData = _tData;
+              if (currentPage > tData.content.length) {
+                currentPage = tData.content.length;
+              }
+              _notify();
+              if (config.value.axis == Axis.vertical) {
+                final footv = '$currentPage/${tData.content.length}页';
+                footer.value = footv;
+                header.value = tData.cname!;
+              }
+              return true;
             }
-            _notify();
           }
         }
+        return false;
       }
+
+      if (_getdata()) return;
 
       final cid = tData.cid!;
-      final _data = _caches[cid];
-
-      if (_data != null &&
-          _data.contentIsNotEmpty &&
-          tData.nid != -1 &&
-          tData.hasContent) {
-        // 已经重新加载到 caches 了
-        _getdata();
-        return;
-      }
-
       if (_reloadIds.contains(cid)) return;
       assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
 
       _reloadIds.add(cid);
       Future.delayed(const Duration(seconds: 10), () => _reloadIds.remove(cid));
-      await load(bookid, cid, update: true);
+
+      await _taskEvent.addEventTask(() => load(bookid, cid, update: true));
       _getdata();
     }
   }
@@ -566,7 +589,7 @@ extension Tasks on ContentNotifier {
   }
 
   Future<void> _reload() async {
-    await load(bookid, tData.cid!, update: true);
+    await _taskEvent.addEventTask(() => load(bookid, tData.cid!, update: true));
     final _data = _getTextData(tData.cid);
     if (_data != null && _data.contentIsNotEmpty) {
       tData = _data;
@@ -574,6 +597,7 @@ extension Tasks on ContentNotifier {
     if (currentPage > tData.content.length) {
       currentPage = tData.content.length;
     }
+    _notify();
   }
 
   Future<void> updateCurrent() => _reload().then((_) => _notify());
@@ -612,7 +636,7 @@ extension Layout on ContentNotifier {
 
   bool _ignoreTask({bool update = false}) {
     final contentid = EventQueue.currentTask?.value;
-    assert(EventQueue.currentTask == null || contentid is int);
+    assert(contentid is int);
     if (_disposeFutures.remove(_futures[contentid])) return true;
 
     if (!inBook) return true;
@@ -845,10 +869,11 @@ extension Layout on ContentNotifier {
       final picture = recorder.endRecording();
 
       final met = ContentMetrics(
-        picture: picture,
+        picture: PictureRefInfo(picture),
         secstyle: secstyle,
         left: left,
         size: _size,
+        bottom: paddingRect.bottom,
       );
       textPages.add(met);
     }
@@ -919,7 +944,11 @@ extension Event on ContentNotifier {
   Future<void> showdow() async {
     showrect = !showrect;
     if (inBook && tData.cid != null) {
-      addLoadEvent();
+      if (initQueue.runner == null) {
+        addLoadEvent();
+      } else {
+        initQueue.runner!.whenComplete(addLoadEvent);
+      }
       return initQueue.runner;
     }
   }
@@ -928,9 +957,8 @@ extension Event on ContentNotifier {
   void touchBook(int newBookid, int cid, int page) {
     if (!inBook) resetController();
     inbook();
-    scheduleMicrotask(() {
-      setOrientation(config.value.orientation!);
-    });
+
+    setOrientation(config.value.orientation!);
 
     if (tData.cid != cid || bookid != newBookid) {
       assert(Log.i('new: $newBookid $cid'));
@@ -946,42 +974,61 @@ extension Event on ContentNotifier {
     }
   }
 
-  Future<bool> _setNewBookOrCid(int newBookid, int cid, int page) async {
+  bool _setNewBookOrCid(int newBookid, int cid, int page) {
     if (tData.cid != cid || bookid != newBookid) {
       assert(Log.i('new: $newBookid $cid'));
-      footer.value = '';
-      header.value = '';
+      // footer.value = '';
+      // header.value = '';
       notifyState(notEmptyOrIgnore: true, loading: false);
 
-      final diff = bookid != newBookid;
       _tData = TextData(cid: cid);
       currentPage = page;
       bookid = newBookid;
-      return diff;
+      return true;
     }
     return false;
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page,
-      {bool inBook = false}) async {
+  Future<T?> addInitEventTask<T>(EventCallback<T> callback) {
+    return initQueue.addOneEventTask(callback);
+  }
+
+  Future<void> addLoadEvent(
+      {bool zero = true,
+      void Function()? callback,
+      void Function()? resetDone,
+      void Function()? done}) {
+    return initQueue.addOneEventTask(() async {
+      autoRun.stopSave();
+
+      callback?.call();
+      await reset(clearCache: zero);
+      resetDone?.call();
+      await _loadFirst();
+      _notify();
+
+      /// 重置边界
+      controller?.applyConentDimension(
+          minExtent: double.negativeInfinity, maxExtent: double.infinity);
+      done?.call();
+
+      scheduleMicrotask(autoRun.stopAutoRun);
+    });
+  }
+
+  Future<void> newBookOrCid(int newBookid, int cid, int page) async {
+    if (!inBook) return;
+
     if (cid == -1) return;
-
-    setOrientation(config.value.orientation!);
-
-    assert(inBook);
-    final _reset = await _setNewBookOrCid(newBookid, cid, page);
+    final _reset = _setNewBookOrCid(newBookid, cid, page);
     if (tData.contentIsEmpty || _reset) {
       final _t = Timer(
           const Duration(milliseconds: 300), () => notifyState(loading: true));
-      addLoadEvent(resetDone: () {
-        notifyState(notEmptyOrIgnore: true);
-        resetController();
-      });
-      await initQueue.runner;
-
+      await addLoadEvent(zero: false, done: resetController);
+      // await initQueue.runner;
+      // controller?.needLayout();
       _t.cancel();
     }
-    uiStyle(dark: false);
   }
 
   void metricsChange(MediaQueryData data) {
@@ -992,7 +1039,7 @@ extension Event on ContentNotifier {
         if (tData.cid != null) {
           addLoadEvent(callback: () {
             resetController();
-            _notify();
+            // _notify();
             notifyState(notEmptyOrIgnore: true);
           });
         }
@@ -1018,6 +1065,7 @@ extension Event on ContentNotifier {
 
   Future<void> _willGoPreOrNext({bool isPid = false}) async {
     if (tData.contentIsEmpty) return;
+    notifyState(error: NotifyMessage.hide);
 
     autoRun.stopSave();
     final timer = Timer(const Duration(milliseconds: 100), () {
@@ -1053,31 +1101,9 @@ extension Event on ContentNotifier {
       left: safePadding.left + 16,
       top: safePadding.top,
       right: safePadding.right + 16,
-      // bottom: safePadding.bottom,
+      bottom: defaultTargetPlatform == TargetPlatform.iOS ? 10.0 : 4.0,
     );
 
-    // switch (defaultTargetPlatform) {
-    //   case TargetPlatform.android:
-    //   case TargetPlatform.fuchsia:
-    //   case TargetPlatform.linux:
-    //   case TargetPlatform.macOS:
-    //   case TargetPlatform.windows:
-    //     break;
-
-    //   case TargetPlatform.iOS:
-    //     if ((_p.top == 0.0 && safePadding.top != _p.top) ||
-    //         size.height < _size.height ||
-    //         size.width != _size.width) {
-    //       size = _size;
-    //       safePadding = _p;
-    //       paddingRect = safePadding.copyWith(
-    //           bottom: _p.bottom != 0.0 ? 10.0 : 0.0, left: 16.0, right: 16.0);
-
-    //       return true;
-    //     } else {
-    //       return false;
-    //     }
-    // }
     if (size != _size) {
       size = _size;
       return true;
@@ -1097,10 +1123,10 @@ extension ContentGetter on ContentNotifier {
       if (hasRight) _r |= ContentBoundary.addRight;
       if (hasLeft) _r |= ContentBoundary.addLeft;
     } else {
-      return ContentBoundary.notLeftAndRight;
+      return ContentBoundary.empty;
     }
 
-    unDelayedLoad();
+    scheduleTask();
 
     return _r;
   }
@@ -1116,8 +1142,7 @@ extension ContentGetter on ContentNotifier {
   // 首先确定当前章节首页位置
   // 再根据当前页面实际位置判断位于哪一个章节，和此章节的哪一页
   ContentMetrics? getContentMes(int page, {bool changeState = false}) {
-    if (changeState && page == _innerIndex || initQueue.runner != null)
-      return null;
+    if (changeState && page == _innerIndex) return null;
     var currentContentFirstIndex = _innerIndex - currentPage + 1;
     var text = tData;
     ContentMetrics? child;
@@ -1139,7 +1164,7 @@ extension ContentGetter on ContentNotifier {
           currentPage = _currentPage;
           tData = text;
           dump();
-          unDelayedLoad();
+          scheduleTask();
           if (config.value.axis == Axis.vertical) {
             final footv = '$currentPage/${text.content.length}页';
             scheduleMicrotask(() {
@@ -1184,18 +1209,18 @@ extension Configs on ContentNotifier {
     final _axis = _config.axis!;
     final _orientation = _config.orientation!;
 
+    var align = _axis != config.value.axis;
+
     if (_fontSize != config.value.fontSize ||
         _fontFamily != config.value.fontFamily ||
         _fontColor != config.value.fontColor ||
         _height != config.value.lineTweenHeight ||
-        _axis != config.value.axis) {
+        align) {
       flush = true;
     }
 
     final orientation = config.value.orientation;
-    var align = _axis != config.value.axis;
 
-    flush |= align;
     if (_orientation != orientation) {
       await setOrientation(_orientation);
     }
@@ -1212,29 +1237,12 @@ extension Configs on ContentNotifier {
     // }
 
     if (flush) {
-      addLoadEvent();
-      await initQueue.runner;
-      if (currentPage == tData.content.length || currentPage == 1) {
-        resetController();
-      }
+      final done =
+          currentPage == tData.content.length || currentPage == 1 || align
+              ? resetController
+              : null;
+      addLoadEvent(resetDone: done);
     }
-  }
-
-  void addLoadEvent(
-      {bool zero = true,
-      void Function()? callback,
-      void Function()? resetDone}) {
-    initQueue.addOneEventTask(() async {
-      autoRun.stopSave();
-
-      callback?.call();
-      if (zero) await reset(clearCache: true);
-      resetDone?.call();
-      await _loadFirst();
-      _notify();
-      scheduleMicrotask(autoRun.stopAutoRun);
-      controller?.needLayout();
-    });
   }
 
   Future<void> initConfigs() async {
@@ -1361,7 +1369,7 @@ extension AutoR on ContentNotifier {
     autoRun.value = !autoRun.value;
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
-      unDelayedLoad();
+      scheduleTask();
       _autoF ??= EventQueue.scheduler.endOfFrame.then((_) => autoRun.start())
         ..whenComplete(() => _autoF = null);
     } else {
@@ -1417,6 +1425,7 @@ class ContentMetrics {
     // required this.windowTopPadding,
     // required this.showrect,
     // required this.topExtraHeight,
+    required this.bottom,
     required this.picture,
   });
   // final List<TextPainter> painters;
@@ -1434,13 +1443,14 @@ class ContentMetrics {
   // final double windowTopPadding;
   // final bool showrect;
   // final double topExtraHeight;
-  final ui.Picture picture;
+  final double bottom;
+  final PictureRefInfo picture;
 }
 
 class ContentBoundary {
   static int addLeft = 1;
   static const int addRight = 2;
-  static const int notLeftAndRight = 3;
+  static const int empty = 3;
   static bool hasLeft(int i) => i & addLeft != 0;
   static bool hasRight(int i) => i & addRight != 0;
 }

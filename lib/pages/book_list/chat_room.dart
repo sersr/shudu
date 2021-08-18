@@ -89,7 +89,7 @@ class _ChatRoomState extends State<ChatRoom> {
               child: NotificationListener(
                 onNotification: (Notification notification) {
                   if (notification is OverscrollIndicatorNotification) {
-                    notification.disallowGlow();
+                    notification.disallowIndicator();
                   }
                   return false;
                 },

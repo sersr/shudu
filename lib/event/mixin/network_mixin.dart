@@ -20,9 +20,7 @@ mixin NetworkMixin implements CustomEvent {
   var frequency = 0;
   late Dio dio;
 
-  // todo: 使用 sqlite
   late Box<int> imageUpdate;
-  late Box<String> images;
 
   String get appPath;
   String get cachePath;
@@ -87,7 +85,15 @@ mixin NetworkMixin implements CustomEvent {
       _getCategLists(c, date, index);
 
   @override
-  Future<String> getImagePath(String img) => _saveImage(img);
+  Future<String> getImagePath(String img) => _getImagePath(img);
+
+  @override
+  Future<Uint8List?> getImageBytes(String img) => _getImageBytes(img);
+
+  // @override
+  // Future<Uint8List?> getImageFromNetMemory(String img) =>
+  //     _getImageFromNetMemory(img);
+
   @override
   Future<List<BookCategoryData>> getCategoryData() => _getCategoryData();
 
@@ -107,8 +113,8 @@ mixin NetworkMixin implements CustomEvent {
   final _e2f = RegExp('/|%2F');
 }
 
-final iOLoop = EventQueue.iOQueue;
-final imageNet = EventQueue(channels: 4);
+final iOTask = EventQueue.iOQueue;
+final imageNet = EventQueue(channels: 6);
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
@@ -139,36 +145,38 @@ extension _NetworkImpl on NetworkMixin {
     }
     // assert(Log.w((await d.list().toList()).join(' | img.\n')));
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    var map = imageUpdate.toMap();
-    for (final m in map.entries) {
-      final key = m.key;
-      final value = m.value;
-      if (key == '_version_') continue;
+    // final now = DateTime.now().millisecondsSinceEpoch;
+    // var map = imageUpdate.toMap();
+    // for (final m in map.entries) {
+    //   final key = m.key;
+    //   final value = m.value;
+    //   if (key == '_version_') continue;
 
-      if (value + oneDay / 2 < now) {
-        await imageUpdate.delete(key);
-      }
-    }
+    //   if (value + oneDay / 2 < now) {
+    //     await imageUpdate.delete(key);
+    //   }
+    // }
 
-    images = await Hive.openBox<String>('images');
-    map = imageUpdate.toMap();
+    // images = await Hive.openBox<String>('images');
+    // map = imageUpdate.toMap();
 
-    final _f = <Future>{};
-    images.toMap().forEach((key, value) {
-      if (key == '_version_') return;
+    // final _img = images.toMap().entries;
+    // final tasks = <Future>[];
+    // for (final e in _img) {
+    //   final key = e.key;
+    //   final value = e.value;
+    //   if (key == '_version_') return;
 
-      if (!map.containsKey(key)) {
-        images.delete(key);
-        // Log.w('delete: $value');
+    //   if (!map.containsKey(key)) {
+    //     tasks.add(images.delete(key));
 
-        final f = File(join(imageLocalPath, value));
-        _f.add(f
-            .exists()
-            .then((exists) => exists ? f.delete(recursive: true) : null));
-      }
-    });
-    await Future.wait(_f);
+    //     final f = File(join(imageLocalPath, value));
+    //     tasks.add(f.exists().then((exists) {
+    //       if (exists) return f.delete(recursive: true);
+    //     }));
+    //   }
+    // }
+    // iOTask.addEventTask(() => Future.wait(tasks));
   }
 
   Future<T> _decode<T>(dynamic url,
@@ -185,6 +193,7 @@ extension _NetworkImpl on NetworkMixin {
       Log.i('$e, $url');
       throw str;
     } catch (e) {
+      /// 可能的错误：json 解码错误
       throw str;
     }
   }
@@ -373,6 +382,7 @@ extension _NetworkImpl on NetworkMixin {
         throw Exception('');
       },
     ).catchError((str) {
+      /// 手动处理json解析失败的情况
       if (str is String && str.isNotEmpty) {
         var cid = -1;
         var cname = '';
@@ -419,8 +429,7 @@ extension _NetworkImpl on NetworkMixin {
           );
         }
       }
-      Log.e('load content: faild');
-      throw Exception('load content faild');
+      throw Exception('load content failed');
     });
   }
 
@@ -443,23 +452,24 @@ extension _NetworkImpl on NetworkMixin {
     return [url, '${url.hashCode}_$imgName'];
   }
 
-  Future<String> _saveImage(String img) async {
+  Future<String> _getImagePath(String img) async {
     final imgResolve = imageUrlResolve(img);
     final imgName = imgResolve[1];
 
     final imgPath = join(imageLocalPath, imgName);
 
     final imgdateTime = imageUpdate.get(imgName.hashCode);
-    final shouldUpdate = imgdateTime == null;
-    final exits = await File(imgPath).exists();
+    final f = File(imgPath);
 
-    if (exits) {
-      if (!shouldUpdate) return imgPath;
-    } else {
-      await images.delete(imgName.hashCode);
+    final exits = await f.exists();
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
+    if (exits && !shouldUpdate) {
+      return imgPath;
     }
 
-    return getImageFromNet(img);
+    return getImagePathFromNet(img);
   }
 
   bool _isVaild(Headers header) {
@@ -472,7 +482,7 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<String> getImageFromNet(String img) async {
+  Future<String> getImagePathFromNet(String img) async {
     final imgResolve = imageUrlResolve(img);
     final url = imgResolve[0];
     final imgName = imgResolve[1];
@@ -486,26 +496,20 @@ extension _NetworkImpl on NetworkMixin {
         // 再次发送网络请求
         _errorLoading.remove(imgName);
       } else {
-        // 由于没有内置的错误图片，暂时的解决方案
-        if (img != errorImg) {
-          return _saveImage(errorImg);
-        }
         return imgPath;
       }
     }
 
     var success = false;
 
-    await releaseUI;
     List<Uint8List>? imgData;
     await imageNet.addEventTask(() async {
-      await releaseUI;
-
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
 
         imgData = (await data.data?.stream.toList());
+
         success = imgData != null && _isVaild(data.headers);
       } catch (e) {
         success = false;
@@ -516,51 +520,130 @@ extension _NetworkImpl on NetworkMixin {
 
     final data = imgData;
     if (data != null && success) {
-      await iOLoop.addEventTask(() async {
-        final f = File(imgPath);
-        await f.create(recursive: true);
-        final o = await f.open(mode: FileMode.writeOnly);
+      try {
+        await iOTask.addEventTask(() async {
+          final f = File(imgPath);
+          await f.create(recursive: true);
+          final o = await f.open(mode: FileMode.writeOnly);
 
-        for (final d in data) {
-          await releaseUI;
+          for (final d in data) {
+            await o.writeFrom(d);
+          }
 
-          // final length = d.length;
-          // await releaseUI;
-          await o.writeFrom(d);
-          // print('data: $length');
-          // for (var i = 0; i < length;) {
-          //     final start = i;
-          //     i += 400;
-          //     final end = math.min(i, length);
-          //     await o.writeFrom(d, start, end);
-          //     await releaseUI;
-          //   }
-        }
+          await o.close();
+        });
 
-        await o.close();
-        // await releaseUI;
-      });
-    }
-
-    if (success) {
-      _errorLoading.remove(imgName);
-      await imageUpdate.put(
-          imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
-      await images.put(imgName.hashCode, imgName);
+        _errorLoading.remove(imgName);
+        await imageUpdate.put(
+            imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+      } catch (e) {
+        success = false;
+      }
     }
 
     final exists = await File(imgPath).exists();
 
-    if (!success) {
-      if (!exists) {
-        await imageUpdate.delete(imgName.hashCode);
-        await images.delete(imgName.hashCode);
+    if (!exists) {
+      await imageUpdate.delete(imgName.hashCode);
+    }
+
+    return imgPath;
+  }
+
+  /// Uint8List
+  Future<Uint8List?> _getImageBytes(String img) async {
+    final imgResolve = imageUrlResolve(img);
+    final imgName = imgResolve[1];
+
+    final imgPath = join(imageLocalPath, imgName);
+
+    final imgdateTime = imageUpdate.get(imgName.hashCode);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
+
+    final _bytes = await iOTask.addEventTask(() async {
+      final f = File(imgPath);
+      final exits = await f.exists();
+
+      if (exits && !shouldUpdate) {
+        return f.readAsBytes();
+      }
+    });
+
+    if (_bytes != null) return _bytes;
+
+    return getImageBytesFromNet(img);
+  }
+
+  Future<Uint8List?> getImageBytesFromNet(String img) async {
+    final imgResolve = imageUrlResolve(img);
+    final url = imgResolve[0];
+    final imgName = imgResolve[1];
+
+    final imgPath = join(imageLocalPath, imgName);
+
+    // 避免太过频繁访问网络
+    if (_errorLoading.containsKey(imgName)) {
+      final time = _errorLoading[imgName]!;
+      if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
+        // 再次发送网络请求
+        _errorLoading.remove(imgName);
+      } else {
+        return null;
       }
     }
 
-    if (!exists && img != errorImg) {
-      return _saveImage(errorImg);
+    var success = false;
+
+    List<int> dataBytes = <int>[];
+
+    await imageNet.addEventTask(() async {
+      try {
+        final data = await dio.get<ResponseBody>(url,
+            options: Options(responseType: ResponseType.stream));
+
+        final stream = data.data?.stream;
+        if (stream != null) {
+          await for (final data in stream) {
+            dataBytes.addAll(data);
+          }
+          success = _isVaild(data.headers);
+        } else {
+          success = false;
+        }
+      } catch (e) {
+        success = false;
+        assert(Log.w('error: $imgName | $url'));
+      } finally {
+        if (success)
+          _errorLoading.remove(imgName);
+        else
+          _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
+      }
+    });
+
+    if (success && dataBytes.isNotEmpty) {
+      final f = File(imgPath);
+      iOTask.addEventTask(() async {
+        try {
+          await f.create(recursive: true);
+          final o = await f.open(mode: FileMode.writeOnly);
+
+          await o.writeFrom(dataBytes);
+          await o.close();
+        } catch (e) {
+          success = false;
+        } finally {
+          if (success) {
+            await imageUpdate.put(
+                imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+          } else {
+            await imageUpdate.delete(imgName.hashCode);
+            await f.delete(recursive: true);
+          }
+        }
+      });
+      return Uint8List.fromList(dataBytes);
     }
-    return imgPath;
   }
 }

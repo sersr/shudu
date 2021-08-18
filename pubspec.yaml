@@ -13,6 +13,7 @@ dependencies:
   # animations: ^2.0.0
   # audio_service: ^0.17.1
   battery: ^2.0.2
+  async: any
   # characters: ^1.1.0
   # collection: ^1.15.0
   cupertino_icons: ^1.0.0
@@ -21,11 +22,14 @@ dependencies:
   equatable: ^2.0.2
   fake_async: ^1.2.0
   # flutter_bloc: ^7.0.0
+  flutter_local_notifications: ^8.1.1+1
   flutter_sticky_header: ^0.6.0
   # flutter_tts: ^3.2.2
   # flutter_displaymode: ^0.3.2
+  get: ^4.3.6
   hive: ^2.0.4
   hive_flutter: ^1.0.0
+  infinite_scroll_pagination: ^3.1.0
   intl: ^0.17.0
   json_annotation: ^4.0.1
   logger: ^1.0.0
@@ -42,7 +46,7 @@ dependencies:
     path: ../useful_tools
   video_player: ^2.1.0
   wakelock: ^0.5.3+3
-  bitsdojo_window: ^0.1.1+1
+  # bitsdojo_window: ^0.1.1+1
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
   bangs:
@@ -52,10 +56,12 @@ dependencies:
   # pull_to_refresh: ^2.0.0
 
   # shared_preferences: ^2.0.5
+  # nop_db:
+  #   git:
+  #     url: https://github.com/sersr/nop_db
+  #     ref: master
   nop_db:
-    git:
-      url: https://github.com/sersr/nop_db
-      ref: master
+    path: ../nop_db
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 
@@ -63,8 +69,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: ^2.0.4
-  hive_generator: ^1.1.0
-  json_serializable: ^4.1.2
+  # hive_generator: any
+  analyzer: ^2.0.0
+  json_serializable: ^5.0.0
   flutter_lints: ^1.0.0
   # nop_db_gen:
   #   git: 
@@ -98,3 +105,8 @@ flutter:
     #     - asset: assets/fonts/SourceHanSansSC-Regular.otf
     #     - asset: assets/fonts/SourceHanSansSC-Bold.otf
     #       weight: 700
+# dependency_overrides:
+#   sky_engine:
+#     path: /Volumes/mbp/macos/engine/src/out/host_release/gen/dart-pkg/sky_engine
+  # sky_services:
+  #   path: /Volumes/mbp/macos/engine/src/out/host_release/gen/dart-pkg/sky_services

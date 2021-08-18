@@ -7,8 +7,19 @@ import '../event/event.dart';
 import '../provider/provider.dart';
 import 'home/home_page.dart';
 
-class ShuduApp extends StatelessWidget {
+class ShuduApp extends StatefulWidget {
   const ShuduApp({Key? key}) : super(key: key);
+
+  @override
+  State<ShuduApp> createState() => _ShuduAppState();
+}
+
+class _ShuduAppState extends State<ShuduApp> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    context.read<OptionsNotifier>().init();
+  }
 
   @override
   Widget build(BuildContext context) {

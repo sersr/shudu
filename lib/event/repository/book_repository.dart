@@ -6,43 +6,51 @@ import 'package:useful_tools/common.dart';
 
 import './book_repository_base.dart';
 
+@Deprecated('use BookRepositoryPort instead.')
 class BookRepository extends BookRepositoryBase with SendEventMixin {
   ReceivePort? _clientRP;
   SendPort? _clientSP;
 
-  Future<void>? _f;
-
   @override
   Future<void> get initState async {
-    _f ??= _initState()..whenComplete(() => _f = null);
-    return _f;
+    initBase();
+    return runner;
   }
 
-  Future<void> _initState() async {
-    // if (init) return;
-    if (closeTask != null) await closeTask;
+  @override
+  Future<void> onDone(ReceivePort rcPort) async {
+    _getClientSP ??= Completer<void>();
 
-    final rcPort = await initBase();
+    rcPort.listen(_listen);
 
-    if (rcPort != null) {
-      _clientF ??= Completer<void>();
-
-      rcPort.listen(_listen);
-
-      await _clientF?.future;
-      _clientF = null;
-      _clientRP = rcPort;
+    await _getClientSP?.future;
+    _getClientSP = null;
+    _clientRP = rcPort;
+    if (pendingMessages.isNotEmpty) {
+      final _pendings = List.of(pendingMessages);
+      pendingMessages.clear();
+      _pendings.forEach(send);
     }
   }
 
-  Completer<void>? _clientF;
+  final pendingMessages = [];
+  @override
+  void send(message) {
+    if (_clientSP == null) {
+      pendingMessages.add(message);
+      return;
+    }
+    _clientSP!.send(message);
+  }
+
+  Completer<void>? _getClientSP;
 
   void _listen(r) {
     if (add(r)) return;
 
     if (r is SendPort) {
-      _clientF?.complete();
-      _clientF = null;
+      _getClientSP?.complete();
+      _getClientSP = null;
       _clientSP = r;
       return;
     }
@@ -56,16 +64,12 @@ class BookRepository extends BookRepositoryBase with SendEventMixin {
   }
 
   @override
-  Future<void> dispose() {
-    super.dispose();
-    return close().then((_) {
-      _clientRP?.close();
-      dispose();
-    });
-  }
-
-  @override
-  void send(message) {
-    _clientSP?.send(message);
+  Future<void> onClose() async {
+    _clientRP?.close();
+    _clientRP = null;
+    _clientSP = null;
+    dispose();
+    pendingMessages.clear();
+    return super.onClose();
   }
 }

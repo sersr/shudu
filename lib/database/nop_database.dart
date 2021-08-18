@@ -95,8 +95,11 @@ class BookIndex extends Table {
 
 @Nop(tables: [BookCache, BookContentDb, BookIndex])
 class BookDatabase extends _GenBookDatabase {
-  BookDatabase(this.path, this.version);
-
+  BookDatabase(this.path, this.version, this.useFfi, this.useSqfite3);
+  @override
+  final bool useSqfite3;
+  @override
+  final bool useFfi;
   @override
   final String path;
   @override

@@ -147,7 +147,7 @@ class BookIndexNotifier extends ChangeNotifier {
 
   void addRegisterKey(Object key) {
     _listenOnIds.add(key);
-    Log.i('register');
+    assert(Log.i('register'));
 
     if (data?.isValid == true) {
       _watchCurrentCid?.resume();
@@ -159,7 +159,7 @@ class BookIndexNotifier extends ChangeNotifier {
   void removeRegisterKey(Object key) {
     _listenOnIds.remove(key);
     if (!listenOn) {
-      Log.i('pause');
+      assert(Log.i('pause'));
       _watchCurrentCid?.pause();
       _cids?.pause();
     }
@@ -180,7 +180,7 @@ class BookIndexNotifier extends ChangeNotifier {
     _watchCurrentCid ??= repository.bookEvent.bookCacheEvent
         .watchBookCacheCid(bookid)
         .listen((_bookCaches) {
-      Log.e('_bookCaches cache ids');
+      assert(Log.e('_bookCaches cache ids'));
 
       if (data?.isValid != true) return;
 
@@ -202,7 +202,7 @@ class BookIndexNotifier extends ChangeNotifier {
       if (listData == null) return;
       _cacheList = listData;
 
-      Log.e('book cache ids');
+      assert(Log.e('book cache ids'));
       if (data?.isValid != true) return;
 
       if (data?.bookid == bookid &&

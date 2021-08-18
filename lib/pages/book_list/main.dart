@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -25,6 +23,7 @@ class ListMainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var v = 0;
     return Container(
       color: Colors.grey.shade100,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -118,73 +117,19 @@ class ListMainPage extends StatelessWidget {
                                     textCache?.clear();
                                   },
                                 ),
-                                _builder(
-                                  'count: !done',
-                                  () {
-                                    imageRefCache?.printDone();
-                                  },
-                                ),
-                                GestureDetector(
-                                  child: Container(
-                                      color: Colors.blue,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 6),
-                                      child: Text('scheduleMicrotask')),
-                                  onTap: () {
-                                    Timer(const Duration(milliseconds: 500),
-                                        () {
-                                      Log.e('scheduleMicrotask....Timer',
-                                          onlyDebug: false);
-                                    });
-                                    // Future.delayed(
-                                    //     const Duration(milliseconds: 500), () {
-                                    //   Log.w('scheduleMicrotask...',
-                                    //       onlyDebug: false);
-                                    //   scheduleMicrotask(() {
-                                    //     Log.w('scheduleMicrotask 微任务。。。',
-                                    //         onlyDebug: false);
-                                    //   });
-                                    // });
-                                  },
-                                ),
+                                StatefulBuilder(builder: (context, setstate) {
+                                  return _builder(
+                                    'count: !done: $v',
+                                    () {
+                                      setstate(() {
+                                        v = imageRefCache?.printDone() ?? 0;
+                                      });
+                                    },
+                                  );
+                                }),
+                                SelectableText('aa')
                               ],
                             ),
-                            Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  GestureDetector(
-                                    child: Container(
-                                        color: Colors.blue,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
-                                        child: Text('scheduleMicrotask no')),
-                                    onTap: () {
-                                      Log.e('scheduleMicrotask....Timer',
-                                          onlyDebug: false);
-
-                                      // Future.delayed(
-                                      //     const Duration(milliseconds: 500), () {
-                                      //   Log.w('scheduleMicrotask...',
-                                      //       onlyDebug: false);
-                                      //   scheduleMicrotask(() {
-                                      //     Log.w('scheduleMicrotask 微任务。。。',
-                                      //         onlyDebug: false);
-                                      //   });
-                                      // });
-                                    },
-                                  ),
-                                  GestureDetector(
-                                    child: Container(
-                                        color: Colors.blue,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
-                                        child: Text('tet')),
-                                    onTap: () {
-                                      tet();
-                                    },
-                                  ),
-                                ]),
                           ],
                         ),
                       )));
@@ -194,37 +139,4 @@ class ListMainPage extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> tet() async {
-  Foo? result;
-  for (var i = 0; i < 100; i++) {
-    // result = null;
-    result = await calc(result);
-    // result.foo = null;
-  }
-  print('done');
-}
-
-Future<Foo> calc(Foo? oldResult) async {
-  // final _old = oldResult;
-  // oldResult?.foo?.call();
-  oldResult;
-  var newResult = calcInternal(null);
-  final foo = () {
-    print('hello world');
-  };
-  // print(foo.hashCode);
-  newResult.foo = foo;
-  return newResult;
-}
-
-Foo calcInternal(Foo? oldResult) {
-  return Foo(List.filled(100000, 0));
-}
-
-class Foo {
-  void Function()? foo;
-  final List<int> data;
-  Foo(this.data);
 }

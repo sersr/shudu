@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:isolate';
+
 import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/common.dart';
 
@@ -13,11 +16,21 @@ import 'network_mixin.dart';
 /// 处理复杂任务
 mixin ComplexMixin
     on DatabaseMixin, NetworkMixin
-    implements ComplexEventDynamic {
+    implements
+        ComplexEvent /*显示 override */,
+        ComplexEventDynamic,
+        CustomEventDynamic {
   @override
   Future getContentDynamic(int bookid, int contentid, bool update) {
-    return getContent(bookid, contentid, update);
-    // .then(RawContentLines.encode);
+    return getContent(bookid, contentid, update).then(RawContentLines.encode);
+  }
+
+  @override
+  Future<dynamic> getImageBytesDynamic(String img) async {
+    final data = await getImageBytes(img);
+    if (data != null) {
+      return TransferableTypedData.fromList([data]);
+    }
   }
 
   @override
@@ -31,7 +44,7 @@ mixin ComplexMixin
     final rawData = await getInfoNet(id);
 
     final data = rawData.data;
-    final mainBook = getBookCacheDb(id);
+    final mainBook = await getBookCacheDb(id);
 
     if (data != null) {
       BookCache? book;
@@ -76,19 +89,19 @@ mixin ComplexMixin
             isNew: isNew);
 
         final x = updateBook(id, book);
-        Log.w('update $x');
+        assert(Log.w('update ${await x}'));
       }
     }
     return rawData;
   }
 
   @override
-  CacheItem getCacheItem(int id) {
-    var cacheListRaw = getCacheContentsCidDb(id);
+  Future<CacheItem> getCacheItem(int id) async {
+    var cacheListRaw = await getCacheContentsCidDb(id);
     final cacheItemCounts = cacheListRaw.length;
 
     int? itemCounts;
-    var queryList = getIndexsDb(id);
+    var queryList = await getIndexsDb(id);
 
     if (queryList.isNotEmpty) {
       final restr = queryList.last.bIndexs;
@@ -96,8 +109,8 @@ mixin ComplexMixin
       if (restr != null) {
         final indexs = getIndexsDecodeLists(restr);
         final list = indexs.list;
-        var count = 0;
         if (list != null && list.isNotEmpty) {
+          var count = 0;
           for (var item in list) count += item.list?.length ?? 0;
 
           // final _num = list.fold<int>(
@@ -108,22 +121,24 @@ mixin ComplexMixin
     }
 
     itemCounts ??= cacheItemCounts;
+
     return CacheItem(id, itemCounts, cacheItemCounts);
   }
 
   @override
-  Map<int, CacheItem> getCacheItemAll() {
-    var cacheListRaw = getCacheContentsCidDbALl();
+  Future<Map<int, CacheItem>> getCacheItemAll() async {
+    var cacheListRaw = getCacheContentsCidDbAll();
 
-    var queryList = getIndexsDbAll().reversed.toList();
+    var queryList = (await getIndexsDbAll()).reversed.toList();
     final _map = <int, CacheItem>{};
 
     for (var index in queryList) {
       final bookId = index.bookId;
       final bIndexs = index.bIndexs;
       if (bookId != null && bIndexs != null) {
-        final cacheItemCounts =
-            cacheListRaw.where((element) => element.bookId == bookId).length;
+        final cacheItemCounts = (await cacheListRaw)
+            .where((element) => element.bookId == bookId)
+            .length;
         var itemCounts = cacheItemCounts;
 
         final indexs = getIndexsDecodeLists(bIndexs);
@@ -132,8 +147,6 @@ mixin ComplexMixin
         if (list != null && list.isNotEmpty) {
           for (var item in list) count += item.list?.length ?? 0;
 
-          // final _num = list.fold<int>(
-          //     0, (previousValue, element) => previousValue + element.list - 1);
           itemCounts = count;
         }
         _map.putIfAbsent(
@@ -143,12 +156,8 @@ mixin ComplexMixin
     return _map;
   }
 
-  List<BookContentDb> getCacheContentsCidDbALl() {
-    late List<BookContentDb> l;
-
-    bookContentDb.query.bookId..let((s) => l = s.goToTable);
-
-    return l;
+  FutureOr<List<BookContentDb>> getCacheContentsCidDbAll() {
+    return bookContentDb.query.bookId.goToTable;
   }
 
   @override
@@ -175,7 +184,7 @@ mixin ComplexMixin
     if (update) {
       return _getIndexsNet(bookid);
     } else {
-      final db = _getIndexsDb(bookid);
+      final db = await _getIndexsDb(bookid);
       if (db.list?.isNotEmpty != true) return _getIndexsNet(bookid);
       return db;
     }
@@ -187,8 +196,8 @@ mixin ComplexMixin
     return getIndexsDecodeLists(str);
   }
 
-  NetBookIndex _getIndexsDb(bookid) {
-    final db = getIndexsDb(bookid);
+  Future<NetBookIndex> _getIndexsDb(bookid) async {
+    final db = await getIndexsDb(bookid);
     if (db.isEmpty || db.last.bIndexs == null) return const NetBookIndex();
     return getIndexsDecodeLists(db.last.bIndexs!);
   }
@@ -217,7 +226,7 @@ mixin ComplexMixin
   }
 
   Future<RawContentLines?> _getContentDb(int bookid, int contentid) async {
-    final queryList = getContentDb(bookid, contentid);
+    final queryList = await getContentDb(bookid, contentid);
     if (queryList.isNotEmpty) {
       final bookContent = queryList.last;
       if (bookContent.content != null) {

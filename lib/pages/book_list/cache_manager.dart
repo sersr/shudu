@@ -8,7 +8,6 @@ import '../../event/event.dart';
 import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';
 
-
 class CacheManager extends StatefulWidget {
   const CacheManager({Key? key}) : super(key: key);
 
@@ -222,7 +221,7 @@ class _CacheNotifier extends ChangeNotifier {
     if (repository == null) return;
     _items.remove(id);
     await repository!.bookEvent.bookContentEvent.deleteCache(id);
-    loadItem(id);
+    await loadItem(id);
     notifyListeners();
   }
 

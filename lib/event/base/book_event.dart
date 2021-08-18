@@ -47,6 +47,7 @@ abstract class ComplexEvent {
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainBookListDb();
+  FutureOr<List<BookCache>?> getBookCacheDb(int bookid);
 
   FutureOr<int?> updateBook(int id, BookCache book);
 
@@ -63,7 +64,11 @@ abstract class BookCacheEvent {
 abstract class CustomEvent {
   FutureOr<SearchList?> getSearchData(String key);
 
+  @Deprecated('use getImageBytes instead.')
   FutureOr<String?> getImagePath(String img);
+
+  @NopIsolateMethod(isDynamic: true)
+  FutureOr<Uint8List?> getImageBytes(String img);
 
   FutureOr<List<BookList>?> getHiveShudanLists(String c);
 
@@ -156,16 +161,13 @@ class RawContentLines {
         cname = utf8.decode(_c);
         start += cnameLength;
       }
-      if (pageListLength.isNotEmpty) {
-        for (var i = 0; i < pageListLength.length; i++) {
-          final _length = pageListLength[i];
-          final _p = data.asUint8List(start, _length);
-          pages.add(utf8.decode(_p));
-          start += _length;
-        }
+
+      for (final length in pageListLength) {
+        final _p = data.asUint8List(start, length);
+        pages.add(utf8.decode(_p));
+        start += length;
       }
-    }
-    if (list.isNotEmpty) {
+
       return RawContentLines(
           cid: list[0],
           pid: list[1],
@@ -173,9 +175,8 @@ class RawContentLines {
           hasContent: Table.intToBool(list[3]),
           cname: cname,
           pages: pages);
-    } else {
-      return const RawContentLines();
     }
+    return const RawContentLines();
   }
 
   bool get isNotEmpty => !isEmpty;

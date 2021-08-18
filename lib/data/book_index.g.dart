@@ -6,15 +6,13 @@ part of 'book_index.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-NetBookIndex _$NetBookIndexFromJson(Map<String, dynamic> json) {
-  return NetBookIndex(
-    id: json['id'] as int?,
-    list: (json['list'] as List<dynamic>?)
-        ?.map((e) => BookIndexDiv.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    name: json['name'] as String?,
-  );
-}
+NetBookIndex _$NetBookIndexFromJson(Map<String, dynamic> json) => NetBookIndex(
+      id: json['id'] as int?,
+      list: (json['list'] as List<dynamic>?)
+          ?.map((e) => BookIndexDiv.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      name: json['name'] as String?,
+    );
 
 Map<String, dynamic> _$NetBookIndexToJson(NetBookIndex instance) =>
     <String, dynamic>{
@@ -23,14 +21,12 @@ Map<String, dynamic> _$NetBookIndexToJson(NetBookIndex instance) =>
       'name': instance.name,
     };
 
-BookIndexDiv _$BookIndexDivFromJson(Map<String, dynamic> json) {
-  return BookIndexDiv(
-    list: (json['list'] as List<dynamic>?)
-        ?.map((e) => BookIndexChapter.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    name: json['name'] as String?,
-  );
-}
+BookIndexDiv _$BookIndexDivFromJson(Map<String, dynamic> json) => BookIndexDiv(
+      list: (json['list'] as List<dynamic>?)
+          ?.map((e) => BookIndexChapter.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      name: json['name'] as String?,
+    );
 
 Map<String, dynamic> _$BookIndexDivToJson(BookIndexDiv instance) =>
     <String, dynamic>{
@@ -38,13 +34,12 @@ Map<String, dynamic> _$BookIndexDivToJson(BookIndexDiv instance) =>
       'name': instance.name,
     };
 
-BookIndexChapter _$BookIndexChapterFromJson(Map<String, dynamic> json) {
-  return BookIndexChapter(
-    hasContent: json['hasContent'] as int?,
-    id: json['id'] as int?,
-    name: json['name'] as String?,
-  );
-}
+BookIndexChapter _$BookIndexChapterFromJson(Map<String, dynamic> json) =>
+    BookIndexChapter(
+      hasContent: json['hasContent'] as int?,
+      id: json['id'] as int?,
+      name: json['name'] as String?,
+    );
 
 Map<String, dynamic> _$BookIndexChapterToJson(BookIndexChapter instance) =>
     <String, dynamic>{
@@ -53,16 +48,15 @@ Map<String, dynamic> _$BookIndexChapterToJson(BookIndexChapter instance) =>
       'name': instance.name,
     };
 
-BookIndexRoot _$BookIndexRootFromJson(Map<String, dynamic> json) {
-  return BookIndexRoot(
-    data: json['data'] == null
-        ? null
-        : NetBookIndex.fromJson(json['data'] as Map<String, dynamic>),
-    id: json['id'] as int?,
-    info: json['info'] as String?,
-    status: json['status'] as int?,
-  );
-}
+BookIndexRoot _$BookIndexRootFromJson(Map<String, dynamic> json) =>
+    BookIndexRoot(
+      data: json['data'] == null
+          ? null
+          : NetBookIndex.fromJson(json['data'] as Map<String, dynamic>),
+      id: json['id'] as int?,
+      info: json['info'] as String?,
+      status: json['status'] as int?,
+    );
 
 Map<String, dynamic> _$BookIndexRootToJson(BookIndexRoot instance) =>
     <String, dynamic>{

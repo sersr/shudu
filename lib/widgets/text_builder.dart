@@ -150,9 +150,9 @@ class _CacheTextState extends State<_CacheText> {
   }
 
   // 如果是一个匿名函数每次重建都会新建一个对象
-  Future<void> _layoutText(FindTextInfo _, PutIfAbsentText putIfAbsent) async {
+  Future<void> _layoutText(PutIfAbsentText putIfAbsent) async {
     final topRightKey = [widget.maxWidth, widget.topRightScore, 1];
-    final _tpr = await putIfAbsent(topRightKey, () {
+    final _tpr = putIfAbsent(topRightKey, () {
       return _painter(widget.topRightScore,
           style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1)
         ..layout(maxWidth: widget.maxWidth);
@@ -162,25 +162,27 @@ class _CacheTextState extends State<_CacheText> {
 
     final topWidth = widget.maxWidth - _tpWidth;
     final topKey = [topWidth, widget.top, 1];
-    await putIfAbsent(topKey, () {
+
+    putIfAbsent(topKey, () {
       return _painter(widget.top, style: ts.title3, maxLines: 1)
         ..layout(maxWidth: topWidth);
     });
+    await releaseUI;
 
     final centerKey = [widget.maxWidth, widget.center, widget.centerLines];
-    await putIfAbsent(centerKey, () {
+    putIfAbsent(centerKey, () {
       return _painter(widget.center,
           style: ts.body2, maxLines: widget.centerLines)
         ..layout(maxWidth: widget.maxWidth);
     });
+    await releaseUI;
 
     final bottomKey = [widget.maxWidth, widget.bottom, widget.bottomLines];
-    await putIfAbsent(bottomKey, () {
+    putIfAbsent(bottomKey, () {
       return _painter(widget.bottom,
           style: ts.body3, maxLines: widget.bottomLines)
         ..layout(maxWidth: widget.maxWidth);
     });
-    await releaseUI;
   }
 
   Widget _items(Iterable<TextInfo>? data) {
@@ -194,6 +196,7 @@ class _CacheTextState extends State<_CacheText> {
           center: AsyncText.async(data.elementAt(2).painter),
           bottom: AsyncText.async(data.elementAt(3).painter));
     } else {
+      if (length != null) Log.e('data: $length');
       child = const ItemWidget();
     }
     return child;

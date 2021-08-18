@@ -14,6 +14,9 @@ class ConfigOptions {
       this.resampleOffset,
       this.useImageCache,
       this.useTextCache,
+      // this.useMemoryImage,
+      this.nopResample,
+      this.useSqflite3,
       this.showPerformanceOverlay});
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
@@ -22,7 +25,11 @@ class ConfigOptions {
   bool? showPerformanceOverlay;
 
   bool? useImageCache;
+
   bool? useTextCache;
+  // bool? useMemoryImage;
+  bool? useSqflite3;
+  bool? nopResample;
 
   ConfigOptions coveredWith(ConfigOptions o) {
     return o
@@ -31,6 +38,9 @@ class ConfigOptions {
       ..resample ??= resample
       ..useImageCache ??= useImageCache
       ..useTextCache ??= useTextCache
+      ..useSqflite3 ??= useSqflite3
+      ..nopResample ??= nopResample
+      // ..useMemoryImage ??= useMemoryImage
       ..showPerformanceOverlay ??= showPerformanceOverlay
       ..resampleOffset ??= resampleOffset;
   }
@@ -44,6 +54,9 @@ class ConfigOptions {
             other.resample == resample &&
             other.resampleOffset == resampleOffset &&
             other.useImageCache == useImageCache &&
+            other.nopResample == nopResample &&
+            other.useSqflite3 == useSqflite3 &&
+            // other.useMemoryImage == useMemoryImage &&
             other.useTextCache == useTextCache &&
             other.showPerformanceOverlay == showPerformanceOverlay;
   }
@@ -51,12 +64,20 @@ class ConfigOptions {
   @override
   String toString() {
     return '$runtimeType: $platform, $pageBuilder, '
-        'resample: $resample, resampleOffset: $resampleOffset';
+        'resample: $resample, resampleOffset: $resampleOffset, nopResample: $nopResample';
   }
 
   @override
-  int get hashCode => hashValues(platform, pageBuilder, resample,
-      resampleOffset, useImageCache, useTextCache, showPerformanceOverlay);
+  int get hashCode => hashValues(
+      platform,
+      pageBuilder,
+      resample,
+      resampleOffset,
+      useImageCache,
+      // useMemoryImage,
+      useSqflite3,
+      useTextCache,
+      showPerformanceOverlay);
 }
 
 enum PageBuilder {
@@ -116,15 +137,38 @@ class OptionsNotifier extends ChangeNotifier {
   static const _platform = 'platform';
   static const _pageBuilder = 'pageBuilder';
   static const _resample = 'resample';
+  static const _nopResample = 'nopResample';
   static const _resampleOffset = 'resampleOffset';
   static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
+  // static const _useMemoryImage = 'useMemoryImage';
+
+  static Future<bool> get sqfliteBox async {
+    final e = EventQueue.createEventQueue('_');
+    return e.addEventTask(() async {
+      final box = await Hive.openBox('_sqlfiteBox');
+      final result = box.get('_useSqflite3', defaultValue: false);
+      await box.close();
+      return result;
+    });
+  }
+
+  static Future<void> setSqfliteBox(bool use) async {
+    final e = EventQueue.createEventQueue('_');
+    return e.addEventTask(() async {
+      final box = await Hive.openBox('_sqlfiteBox');
+      await box.put('_useSqflite3', use);
+      return box.close();
+    });
+  }
+
 
   Box? box;
   // 简洁
   Box get _box => box!;
 
   Future<void> init() async {
+    if (box != null) return;
     box ??= await Hive.openBox(_options_);
 
     // 版本适配
@@ -161,13 +205,15 @@ class OptionsNotifier extends ChangeNotifier {
 
     final bool resample = _box.get(_resample, defaultValue: true);
     final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
-    final bool useImageCache = _box.get(_useImageCache, defaultValue: false);
+    final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
     final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
+    // final bool useMemoryImage = _box.get(_useMemoryImage, defaultValue: false);
+    final bool nopResample = _box.get(_nopResample, defaultValue: true);
 
     GestureBinding.instance!
       ..resamplingEnabled = resample
       ..samplingOffset = Duration(milliseconds: resampleOffset);
-
+    NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
     // resample = await listenRate();
 
     options = ConfigOptions(
@@ -175,6 +221,9 @@ class OptionsNotifier extends ChangeNotifier {
         pageBuilder: pageBuilder,
         resample: resample,
         useImageCache: useImageCache,
+        // useMemoryImage: useMemoryImage,
+        nopResample: nopResample,
+        useSqflite3: await sqfliteBox,
         useTextCache: useTextCache,
         resampleOffset: resampleOffset);
   }
@@ -195,6 +244,14 @@ class OptionsNotifier extends ChangeNotifier {
     if (useImageCache != null && _box.get(_useImageCache) != useImageCache)
       _f.add(_box.put(_useImageCache, useImageCache));
 
+    final useSqflite3 = options.useSqflite3;
+    if (useSqflite3 != null && await sqfliteBox != useSqflite3)
+      _f.add(setSqfliteBox(useSqflite3));
+
+    // final useMemoryImage = options.useMemoryImage;
+    // if (useMemoryImage != null && _box.get(_useMemoryImage) != useMemoryImage)
+    //   _f.add(_box.put(_useMemoryImage, useMemoryImage));
+
     final useTextCache = options.useTextCache;
     if (useTextCache != null && _box.get(_useTextCache) != useTextCache)
       _f.add(_box.put(_useTextCache, useTextCache));
@@ -211,7 +268,11 @@ class OptionsNotifier extends ChangeNotifier {
           Duration(milliseconds: resampleOffset);
       _f.add(_box.put(_resampleOffset, resampleOffset));
     }
-
+    final nopResample = options.nopResample;
+    if (nopResample != null && _box.get(_nopResample) != nopResample) {
+      NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
+      _f.add(_box.put(_nopResample, nopResample));
+    }
     await Future.wait(_f);
     assert(Log.i('$options'));
   }

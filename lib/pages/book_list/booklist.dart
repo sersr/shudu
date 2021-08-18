@@ -82,7 +82,7 @@ class _WrapWidgetState extends State<WrapWidget>
     super.initState();
     scrollController = ScrollController();
 
-    shudanProvider = ShudanCategProvider(widget.index, widget.urlKey);
+    shudanProvider = ShudanCategProvider(widget.urlKey);
   }
 
   @override
@@ -192,57 +192,48 @@ class _WrapWidgetState extends State<WrapWidget>
 }
 
 class ShudanCategProvider extends ChangeNotifier {
-  ShudanCategProvider(this.index, this.key);
+  ShudanCategProvider(this.key);
   Repository? repository;
 
   List<BookList>? list;
 
   var _listCounts = 0;
   bool get initialized => list != null;
-  int index;
+
   String key;
 
-  void reset(int newIndex, String newKey) {
-    if (newIndex != index || key != newKey) {
-      index = newIndex;
+  void reset(String newKey) {
+    if (key != newKey) {
       key = newKey;
     }
   }
 
   final _loop = EventQueue();
 
-  bool get onWork => _loop.runner == null;
+  bool get idle => _loop.runner == null;
 
-  /// 同一个对象在队列中只能有一个，[_load] 是一个函数对象
   void load() => _loop.addEventTask(_load);
 
   LoadingStatus state = LoadingStatus.success;
 
-  var _index = 0;
-  void loadNext(int index) async {
-    if (state == LoadingStatus.loading && onWork && _index == index) return;
+  void loadNext(int index) {
+    _loop.addOneEventTask(() => _loadNext(index));
+  }
+
+  void _loadNext(int index) async {
+    if (list != null && index < list!.length) return;
     state = LoadingStatus.loading;
-    _index = index;
 
     notifyListeners();
 
-    load();
-    await _loop.runner;
-    if (_index == index) {
-      state = list == null
-          ? LoadingStatus.error
-          : list?.length != index
-              ? LoadingStatus.success
-              : LoadingStatus.failed;
-      notifyListeners();
-    }
-  }
+    await _load();
 
-  @override
-  void notifyListeners() {
-    scheduleMicrotask(() {
-      super.notifyListeners();
-    });
+    state = list == null
+        ? LoadingStatus.error
+        : list?.length != index
+            ? LoadingStatus.success
+            : LoadingStatus.failed;
+    notifyListeners();
   }
 
   Future<void> _load() async {
@@ -259,9 +250,10 @@ class ShudanCategProvider extends ChangeNotifier {
     if (_list == null) {
       var data =
           await _repository.bookEvent.customEvent.getHiveShudanLists(key);
-      if (data != null && data.isNotEmpty) {
+      if (data?.isNotEmpty == true) {
         list = data;
         _listCounts = 1;
+        notifyListeners();
       }
       data = await _repository.bookEvent.customEvent.getShudanLists(key, 1);
       if (data != null && data.isNotEmpty) {
@@ -277,7 +269,6 @@ class ShudanCategProvider extends ChangeNotifier {
         _list.addAll(data);
       }
     }
-
 
     await release(const Duration(milliseconds: 100));
     list ??= const [];
@@ -311,6 +302,7 @@ class BarLayout extends StatelessWidget {
     return Material(
       color: Color.fromARGB(255, 240, 240, 240),
       child: SafeArea(
+        bottom: false,
         child: Column(children: [
           RepaintBoundary(
             child: CustomMultiChildLayout(

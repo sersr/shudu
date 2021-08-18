@@ -4,10 +4,20 @@ PODS:
   - device_info (0.0.1):
     - Flutter
   - Flutter (1.0.0)
+  - flutter_local_notifications (0.0.1):
+    - Flutter
+  - FMDB (2.7.5):
+    - FMDB/standard (= 2.7.5)
+  - FMDB/standard (2.7.5)
   - path_provider (0.0.1):
     - Flutter
   - "permission_handler (5.1.0+2)":
     - Flutter
+  - screen_brightness (0.0.1):
+    - Flutter
+  - sqflite (0.0.2):
+    - Flutter
+    - FMDB (>= 2.7.5)
   - sqlite3 (3.35.5):
     - sqlite3/common (= 3.35.5)
   - sqlite3/common (3.35.5)
@@ -26,26 +36,30 @@ PODS:
     - sqlite3/json1
     - sqlite3/perf-threadsafe
     - sqlite3/rtree
-  - text_to_speech (0.0.1):
-    - Flutter
   - url_launcher (0.0.1):
     - Flutter
   - video_player (0.0.1):
+    - Flutter
+  - wakelock (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - battery (from `.symlinks/plugins/battery/ios`)
   - device_info (from `.symlinks/plugins/device_info/ios`)
   - Flutter (from `Flutter`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+  - screen_brightness (from `.symlinks/plugins/screen_brightness/ios`)
+  - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - sqlite3_flutter_libs (from `.symlinks/plugins/sqlite3_flutter_libs/ios`)
-  - text_to_speech (from `.symlinks/plugins/text_to_speech/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
   - video_player (from `.symlinks/plugins/video_player/ios`)
+  - wakelock (from `.symlinks/plugins/wakelock/ios`)
 
 SPEC REPOS:
   trunk:
+    - FMDB
     - sqlite3
 
 EXTERNAL SOURCES:
@@ -55,31 +69,41 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/device_info/ios"
   Flutter:
     :path: Flutter
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
   permission_handler:
     :path: ".symlinks/plugins/permission_handler/ios"
+  screen_brightness:
+    :path: ".symlinks/plugins/screen_brightness/ios"
+  sqflite:
+    :path: ".symlinks/plugins/sqflite/ios"
   sqlite3_flutter_libs:
     :path: ".symlinks/plugins/sqlite3_flutter_libs/ios"
-  text_to_speech:
-    :path: ".symlinks/plugins/text_to_speech/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
   video_player:
     :path: ".symlinks/plugins/video_player/ios"
+  wakelock:
+    :path: ".symlinks/plugins/wakelock/ios"
 
 SPEC CHECKSUMS:
   battery: 6b19dafdbba590f03b1f0cd2f1224e3ffedadbe6
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743
+  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
+  screen_brightness: 994a74a8a983e319ff8a8e1e2380b1d7be899098
+  sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
   sqlite3: 75da32fd4e3574f6c38566a9f0114cfe792c8db5
   sqlite3_flutter_libs: aedb7b6ba191f9a052dcef77691cf5d37437431c
-  text_to_speech: 8669facdbd5b72d2939b810493defd991634f6f9
   url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
   video_player: 9cc823b1d9da7e8427ee591e8438bfbcde500e6e
+  wakelock: d0fc7c864128eac40eba1617cb5264d9c940b46f
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
-COCOAPODS: 1.10.1
+COCOAPODS: 1.10.2

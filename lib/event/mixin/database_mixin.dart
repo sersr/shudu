@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:nop_db/database/nop.dart';
 import 'package:path/path.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/database.dart';
 import '../base/book_event.dart';
@@ -13,6 +13,9 @@ mixin DatabaseMixin implements DatabaseEvent {
   String get name => 'nop_book_database.nopdb';
   int get version => 1;
 
+  bool get useFfi => false;
+  bool get useSqflite3 => false;
+
   late final bookCache = db.bookCache;
   late final bookContentDb = db.bookContentDb;
   late final bookIndex = db.bookIndex;
@@ -21,7 +24,9 @@ mixin DatabaseMixin implements DatabaseEvent {
       ? NopDatabase.memory
       : join(appPath, name);
 
-  late final db = BookDatabase(_url, version);
+  FutureOr<void> initDb() => db.initDb();
+
+  late final db = BookDatabase(_url, version, useFfi, useSqflite3);
 
   @override
   Stream<List<BookCache>> watchBookCacheCid(int id) {
@@ -33,21 +38,21 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
-  int updateBook(int id, BookCache book) {
+  FutureOr<int> updateBook(int id, BookCache book) {
     final update = bookCache.update..where.bookId.equalTo(id);
     bookCache.updateBookCache(update, book);
     return update.go;
   }
 
-  int insertOrUpdateContent(BookContentDb contentDb) {
+  FutureOr<int> insertOrUpdateContent(BookContentDb contentDb) async {
     var count = 0;
-    bookContentDb.query.where
+    final q = bookContentDb.query;
+    q.where
       ..select.count.all.push
       ..bookId.equalTo(contentDb.bookId!).and
-      ..cid.equalTo(contentDb.cid!)
-      ..whereEnd.let((s) {
-        count = s.go.first.columnAt(0) as int? ?? count;
-      });
+      ..cid.equalTo(contentDb.cid!);
+
+    count = await q.go.first.values.first as int? ?? count;
 
     if (count > 0) {
       final update = bookContentDb.update
@@ -70,48 +75,41 @@ mixin DatabaseMixin implements DatabaseEvent {
     }
   }
 
-  List<BookContentDb> getContentDb(int bookid, int contentid) {
-    late List<BookContentDb> c;
+  FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
+    late FutureOr<List<BookContentDb>> c;
 
     bookContentDb.query.where
       ..bookId.equalTo(bookid)
       ..and.cid.equalTo(contentid)
       ..whereEnd.let((s) => c = s.goToTable);
 
-    Log.i('${c.length}');
+    //  Log.i('${c.length}');
     return c;
   }
 
   @override
-  Set<int> getAllBookId() {
+  FutureOr<Set<int>> getAllBookId() {
     final query = bookCache.query.bookId;
-    return query.goToTable.map((e) => e.bookId).whereType<int>().toSet();
+    return query.goToTable
+        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
   }
 
   @override
-  int deleteCache(int bookId) {
+  FutureOr<int> deleteCache(int bookId) {
     final delete = bookContentDb.delete..where.bookId.equalTo(bookId);
     final d = delete.go;
     Log.i('delete: $d');
     return d;
   }
 
-  int insertOrUpdateIndexs(int id, String indexs) {
+  FutureOr<int> insertOrUpdateIndexs(int id, String indexs) async {
     var count = 0;
 
-    // assert(() {
-    //   final d = bookIndex.delete..where.bookId.isNull;
-    //   // return d.go == 0;
-    //   return true;
-    // }(), 'bookId == null');
-
-    bookIndex.query.where
+    final q = bookIndex.query;
+    q.where
       ..select.count.all.push
-      ..bookId.equalTo(id)
-      ..whereEnd.let((s) {
-        final q = s.go;
-        count = q.first.columnAt(0) as int? ?? count;
-      });
+      ..bookId.equalTo(id);
+    count = await q.go.first.values.first as int? ?? count;
 
     if (count > 0) {
       final update = bookIndex.update
@@ -125,18 +123,13 @@ mixin DatabaseMixin implements DatabaseEvent {
     }
   }
 
-  List<BookIndex> getIndexsDb(int bookid) {
-    late List<BookIndex> l;
-
-    bookIndex.query.bIndexs
-      ..where.bookId.equalTo(bookid)
-      ..let((s) => l = s.goToTable);
-
-    return l;
+  FutureOr<List<BookIndex>> getIndexsDb(int bookid) {
+    final q = bookIndex.query.bIndexs..where.bookId.equalTo(bookid);
+    return q.goToTable;
   }
 
-  List<BookIndex> getIndexsDbAll() {
-    late List<BookIndex> l;
+  FutureOr<List<BookIndex>> getIndexsDbAll() {
+    late FutureOr<List<BookIndex>> l;
 
     bookIndex.query
       ..select.all
@@ -157,8 +150,8 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
-  List<BookContentDb> getCacheContentsCidDb(int bookid) {
-    late List<BookContentDb> l;
+  FutureOr<List<BookContentDb>> getCacheContentsCidDb(int bookid) {
+    late FutureOr<List<BookContentDb>> l;
 
     bookContentDb.query.cid.cname
       ..where.bookId.equalTo(bookid)
@@ -168,27 +161,26 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
-  int insertBook(BookCache cache) {
+  FutureOr<int> insertBook(BookCache cache) async {
     // assert(cache.notNullIgnores(['id']));
-    var count = 0;
+    FutureOr<int> count = 0;
 
-    bookCache.query
+    final q = bookCache.query;
+    q
       ..select.count.all.push
-      ..where.bookId.equalTo(cache.bookId!)
-      ..let((s) {
-        final q = s.go;
-        final _count = q.first.values.first ?? 0;
+      ..where.bookId.equalTo(cache.bookId!);
+    final g = q.go;
+    final _count = await g.first.values.first ?? 0;
 
-        Log.i('insertBook: $count');
-        if (_count == 0) count = bookCache.insert.insertTable(cache).go;
-      });
+    Log.i('insertBook: $count');
+    if (_count == 0) count = bookCache.insert.insertTable(cache).go;
 
     return count;
   }
 
   @override
-  int deleteBook(int id) {
-    late int d;
+  FutureOr<int> deleteBook(int id) {
+    late FutureOr<int> d;
 
     bookCache.delete
       ..where.bookId.equalTo(id)
@@ -198,8 +190,9 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
-  List<BookCache> getMainBookListDb() => bookCache.query.goToTable;
-  List<BookCache> getBookCacheDb(int bookid) =>
+  FutureOr<List<BookCache>> getMainBookListDb() => bookCache.query.goToTable;
+  @override
+  FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>
       bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;
 
   @override

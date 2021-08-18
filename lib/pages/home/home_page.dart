@@ -51,7 +51,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _future ??= rep.initState.then((_) {
       painterBloc.metricsChange(data);
       return Future.wait([
-        opts.init(),
         search.init(),
         painterBloc.initConfigs(),
         cache.load(),
@@ -397,49 +396,60 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Consumer<OptionsNotifier>(
                     builder: (context, opt, _) {
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Center(child: Text('采样时间差:')),
-                              IconButton(
-                                  icon: Icon(Icons.remove),
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Center(child: Text('offset:')),
+                                IconButton(
+                                    icon: Icon(Icons.remove),
+                                    onPressed: () {
+                                      if (opt.options.resampleOffset != null) {
+                                        final offset =
+                                            opt.options.resampleOffset! - 1;
+                                        opt.options = ConfigOptions(
+                                            resampleOffset: offset);
+                                      }
+                                    }),
+                                Center(
+                                    child:
+                                        Text('${opt.options.resampleOffset}')),
+                                IconButton(
+                                  icon: Icon(Icons.add),
                                   onPressed: () {
                                     if (opt.options.resampleOffset != null) {
                                       final offset =
-                                          opt.options.resampleOffset! - 1;
+                                          opt.options.resampleOffset! + 1;
                                       opt.options =
                                           ConfigOptions(resampleOffset: offset);
                                     }
-                                  }),
-                              Center(
-                                  child: Text('${opt.options.resampleOffset}')),
-                              IconButton(
-                                icon: Icon(Icons.add),
-                                onPressed: () {
-                                  if (opt.options.resampleOffset != null) {
-                                    final offset =
-                                        opt.options.resampleOffset! + 1;
-                                    opt.options =
-                                        ConfigOptions(resampleOffset: offset);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                          // },
-                          // ),
-                          Center(child: Text('当前状态:')),
-                          Switch(
-                            value: opt.options.resample ?? true,
-                            onChanged: (v) {
-                              opts.options = ConfigOptions(resample: v);
-                            },
-                          ),
-                        ],
+                                  },
+                                ),
+                              ],
+                            ),
+                            // },
+                            // ),
+                            Center(child: Text('resample:')),
+                            Switch(
+                              value: opt.options.resample ?? true,
+                              onChanged: (v) {
+                                opts.options = ConfigOptions(resample: v);
+                              },
+                            ),
+                            Center(child: Text('nopResample:')),
+                            Switch(
+                              value: opt.options.nopResample ?? true,
+                              onChanged: (v) {
+                                opts.options = ConfigOptions(nopResample: v);
+                              },
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -481,6 +491,39 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               },
                             );
                           })
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Center(child: Text('useSqflite3:(重启生效)')),
+                      Selector<OptionsNotifier, bool>(
+                          selector: (_, opt) =>
+                              opt.options.useSqflite3 ?? false,
+                          builder: (context, useSqflite3, _) {
+                            return Switch(
+                              value: useSqflite3,
+                              onChanged: (v) {
+                                opts.options = ConfigOptions(useSqflite3: v);
+                              },
+                            );
+                          }),
+                      // Center(child: Text('useMemoryCache:')),
+                      // Selector<OptionsNotifier, bool>(
+                      //     selector: (_, opt) =>
+                      //         opt.options.useMemoryImage ?? false,
+                      //     builder: (context, useMemoryImage, _) {
+                      //       return Switch(
+                      //         value: useMemoryImage,
+                      //         onChanged: (v) {
+                      //           opts.options = ConfigOptions(useMemoryImage: v);
+                      //         },
+                      //       );
+                      //     }),
                     ],
                   ),
                 ),
@@ -563,7 +606,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       onRefresh: () => cache.load(update: true),
       child: NotificationListener<OverscrollIndicatorNotification>(
         onNotification: (OverscrollIndicatorNotification no) {
-          no.disallowGlow();
+          no.disallowIndicator();
           return false;
         },
         child: AnimatedBuilder(
@@ -756,7 +799,7 @@ class MySearchPage extends SearchDelegate<void> {
                               border: Border(
                                   bottom:
                                       BorderSide(color: Colors.grey.shade300))),
-                          child: Text(value.name ??''),
+                          child: Text(value.name ?? ''),
                         ),
                       ),
                 ],

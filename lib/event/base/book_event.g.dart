@@ -6,9 +6,27 @@ part of 'book_event.dart';
 // Generator: IsolateEventGeneratorForAnnotation
 // **************************************************************************
 
+enum BookEventMessage {
+  getSearchData,
+  getImagePath,
+  getImageBytes,
+  getHiveShudanLists,
+  getShudanLists,
+  getTopLists,
+  getCategLists,
+  getShudanDetail,
+  getCategoryData,
+  getCacheItem,
+  getContent,
+  getIndexs,
+  updateBookStatus,
+  getCacheItemAll,
+  getInfo
+}
 enum CustomEventMessage {
   getSearchData,
   getImagePath,
+  getImageBytes,
   getHiveShudanLists,
   getShudanLists,
   getTopLists,
@@ -18,6 +36,7 @@ enum CustomEventMessage {
 }
 enum BookCacheEventMessage {
   getMainBookListDb,
+  getBookCacheDb,
   updateBook,
   insertBook,
   deleteBook,
@@ -39,7 +58,7 @@ enum ComplexEventMessage {
   getInfo
 }
 
-abstract class BookEventResolve extends BookEvent
+abstract class BookEventResolveMain extends BookEvent
     with
         Resolve,
         CustomEventResolve,
@@ -55,7 +74,7 @@ abstract class BookEventResolve extends BookEvent
   }
 }
 
-abstract class BookEventMessager extends BookEvent
+abstract class BookEventMessagerMain extends BookEvent
     with
         CustomEventMessager,
         DatabaseEventMessager,
@@ -63,16 +82,22 @@ abstract class BookEventMessager extends BookEvent
         BookContentEventMessager,
         ComplexEventMessager {}
 
-mixin CustomEventResolve on Resolve, CustomEvent {
+/// implements [CustomEvent]
+abstract class CustomEventDynamic {
+  dynamic getImageBytesDynamic(String img);
+}
+
+mixin CustomEventResolve on Resolve, CustomEvent implements CustomEventDynamic {
   late final _customEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getSearchData_0,
     _getImagePath_1,
-    _getHiveShudanLists_2,
-    _getShudanLists_3,
-    _getTopLists_4,
-    _getCategLists_5,
-    _getShudanDetail_6,
-    _getCategoryData_7
+    _getImageBytes_2,
+    _getHiveShudanLists_3,
+    _getShudanLists_4,
+    _getTopLists_5,
+    _getCategLists_6,
+    _getShudanDetail_7,
+    _getCategoryData_8
   ]);
 
   @override
@@ -84,9 +109,9 @@ mixin CustomEventResolve on Resolve, CustomEvent {
         try {
           result = _customEventResolveFuncList
               .elementAt(type.index)(resolveMessage.args);
-          send(result, resolveMessage);
+          receipt(result, resolveMessage);
         } catch (e) {
-          send(result, resolveMessage, e);
+          receipt(result, resolveMessage, e);
         }
         return true;
       }
@@ -96,61 +121,61 @@ mixin CustomEventResolve on Resolve, CustomEvent {
 
   FutureOr<SearchList?> _getSearchData_0(args) => getSearchData(args);
   FutureOr<String?> _getImagePath_1(args) => getImagePath(args);
-  FutureOr<List<BookList>?> _getHiveShudanLists_2(args) =>
+  dynamic _getImageBytes_2(args) => getImageBytesDynamic(args);
+  FutureOr<List<BookList>?> _getHiveShudanLists_3(args) =>
       getHiveShudanLists(args);
-  FutureOr<List<BookList>?> _getShudanLists_3(args) =>
+  FutureOr<List<BookList>?> _getShudanLists_4(args) =>
       getShudanLists(args[0], args[1]);
-  FutureOr<BookTopData?> _getTopLists_4(args) =>
+  FutureOr<BookTopData?> _getTopLists_5(args) =>
       getTopLists(args[0], args[1], args[2]);
-  FutureOr<BookTopData?> _getCategLists_5(args) =>
+  FutureOr<BookTopData?> _getCategLists_6(args) =>
       getCategLists(args[0], args[1], args[2]);
-  FutureOr<BookListDetailData?> _getShudanDetail_6(args) =>
+  FutureOr<BookListDetailData?> _getShudanDetail_7(args) =>
       getShudanDetail(args);
-  FutureOr<List<BookCategoryData>?> _getCategoryData_7(args) =>
+  FutureOr<List<BookCategoryData>?> _getCategoryData_8(args) =>
       getCategoryData();
 }
 
-mixin CustomEventMessager implements CustomEvent {
-  SendEvent get send;
+/// implements [CustomEvent]
+mixin CustomEventMessager {
+  SendEvent get sendEvent;
 
-  @override
   FutureOr<SearchList?> getSearchData(String key) async {
-    return send.sendMessage(CustomEventMessage.getSearchData, key);
+    return sendEvent.sendMessage(CustomEventMessage.getSearchData, key);
   }
 
-  @override
   FutureOr<String?> getImagePath(String img) async {
-    return send.sendMessage(CustomEventMessage.getImagePath, img);
+    return sendEvent.sendMessage(CustomEventMessage.getImagePath, img);
   }
 
-  @override
+  dynamic getImageBytesDynamic(String img) async {
+    return sendEvent.sendMessage(CustomEventMessage.getImageBytes, img);
+  }
+
   FutureOr<List<BookList>?> getHiveShudanLists(String c) async {
-    return send.sendMessage(CustomEventMessage.getHiveShudanLists, c);
+    return sendEvent.sendMessage(CustomEventMessage.getHiveShudanLists, c);
   }
 
-  @override
   FutureOr<List<BookList>?> getShudanLists(String c, int index) async {
-    return send.sendMessage(CustomEventMessage.getShudanLists, [c, index]);
+    return sendEvent.sendMessage(CustomEventMessage.getShudanLists, [c, index]);
   }
 
-  @override
   FutureOr<BookTopData?> getTopLists(String c, String date, int index) async {
-    return send.sendMessage(CustomEventMessage.getTopLists, [c, date, index]);
+    return sendEvent
+        .sendMessage(CustomEventMessage.getTopLists, [c, date, index]);
   }
 
-  @override
   FutureOr<BookTopData?> getCategLists(int c, String date, int index) async {
-    return send.sendMessage(CustomEventMessage.getCategLists, [c, date, index]);
+    return sendEvent
+        .sendMessage(CustomEventMessage.getCategLists, [c, date, index]);
   }
 
-  @override
   FutureOr<BookListDetailData?> getShudanDetail(int index) async {
-    return send.sendMessage(CustomEventMessage.getShudanDetail, index);
+    return sendEvent.sendMessage(CustomEventMessage.getShudanDetail, index);
   }
 
-  @override
   FutureOr<List<BookCategoryData>?> getCategoryData() async {
-    return send.sendMessage(CustomEventMessage.getCategoryData, null);
+    return sendEvent.sendMessage(CustomEventMessage.getCategoryData, null);
   }
 }
 
@@ -158,12 +183,13 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
   late final _bookCacheEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
     _getMainBookListDb_0,
-    _updateBook_1,
-    _insertBook_2,
-    _deleteBook_3,
-    _getAllBookId_4,
-    _watchBookCacheCid_5,
-    _watchMainBookListDb_6
+    _getBookCacheDb_1,
+    _updateBook_2,
+    _insertBook_3,
+    _deleteBook_4,
+    _getAllBookId_5,
+    _watchBookCacheCid_6,
+    _watchMainBookListDb_7
   ]);
 
   @override
@@ -175,9 +201,9 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
         try {
           result = _bookCacheEventResolveFuncList
               .elementAt(type.index)(resolveMessage.args);
-          send(result, resolveMessage);
+          receipt(result, resolveMessage);
         } catch (e) {
-          send(result, resolveMessage, e);
+          receipt(result, resolveMessage, e);
         }
         return true;
       }
@@ -186,52 +212,52 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
   }
 
   FutureOr<List<BookCache>?> _getMainBookListDb_0(args) => getMainBookListDb();
-  FutureOr<int?> _updateBook_1(args) => updateBook(args[0], args[1]);
-  FutureOr<int?> _insertBook_2(args) => insertBook(args);
-  FutureOr<int?> _deleteBook_3(args) => deleteBook(args);
-  FutureOr<Set<int>?> _getAllBookId_4(args) => getAllBookId();
-  Stream<List<BookCache>?> _watchBookCacheCid_5(args) =>
+  FutureOr<List<BookCache>?> _getBookCacheDb_1(args) => getBookCacheDb(args);
+  FutureOr<int?> _updateBook_2(args) => updateBook(args[0], args[1]);
+  FutureOr<int?> _insertBook_3(args) => insertBook(args);
+  FutureOr<int?> _deleteBook_4(args) => deleteBook(args);
+  FutureOr<Set<int>?> _getAllBookId_5(args) => getAllBookId();
+  Stream<List<BookCache>?> _watchBookCacheCid_6(args) =>
       watchBookCacheCid(args);
-  Stream<List<BookCache>?> _watchMainBookListDb_6(args) =>
+  Stream<List<BookCache>?> _watchMainBookListDb_7(args) =>
       watchMainBookListDb();
 }
 
-mixin BookCacheEventMessager implements BookCacheEvent {
-  SendEvent get send;
+/// implements [BookCacheEvent]
+mixin BookCacheEventMessager {
+  SendEvent get sendEvent;
 
-  @override
   FutureOr<List<BookCache>?> getMainBookListDb() async {
-    return send.sendMessage(BookCacheEventMessage.getMainBookListDb, null);
+    return sendEvent.sendMessage(BookCacheEventMessage.getMainBookListDb, null);
   }
 
-  @override
+  FutureOr<List<BookCache>?> getBookCacheDb(int bookid) async {
+    return sendEvent.sendMessage(BookCacheEventMessage.getBookCacheDb, bookid);
+  }
+
   FutureOr<int?> updateBook(int id, BookCache book) async {
-    return send.sendMessage(BookCacheEventMessage.updateBook, [id, book]);
+    return sendEvent.sendMessage(BookCacheEventMessage.updateBook, [id, book]);
   }
 
-  @override
   FutureOr<int?> insertBook(BookCache bookCache) async {
-    return send.sendMessage(BookCacheEventMessage.insertBook, bookCache);
+    return sendEvent.sendMessage(BookCacheEventMessage.insertBook, bookCache);
   }
 
-  @override
   FutureOr<int?> deleteBook(int id) async {
-    return send.sendMessage(BookCacheEventMessage.deleteBook, id);
+    return sendEvent.sendMessage(BookCacheEventMessage.deleteBook, id);
   }
 
-  @override
   FutureOr<Set<int>?> getAllBookId() async {
-    return send.sendMessage(BookCacheEventMessage.getAllBookId, null);
+    return sendEvent.sendMessage(BookCacheEventMessage.getAllBookId, null);
   }
 
-  @override
   Stream<List<BookCache>?> watchBookCacheCid(int id) {
-    return send.sendMessageStream(BookCacheEventMessage.watchBookCacheCid, id);
+    return sendEvent.sendMessageStream(
+        BookCacheEventMessage.watchBookCacheCid, id);
   }
 
-  @override
   Stream<List<BookCache>?> watchMainBookListDb() {
-    return send.sendMessageStream(
+    return sendEvent.sendMessageStream(
         BookCacheEventMessage.watchMainBookListDb, null);
   }
 }
@@ -253,9 +279,9 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
         try {
           result = _bookContentEventResolveFuncList
               .elementAt(type.index)(resolveMessage.args);
-          send(result, resolveMessage);
+          receipt(result, resolveMessage);
         } catch (e) {
-          send(result, resolveMessage, e);
+          receipt(result, resolveMessage, e);
         }
         return true;
       }
@@ -270,32 +296,32 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
   FutureOr<int?> _deleteCache_2(args) => deleteCache(args);
 }
 
-mixin BookContentEventMessager implements BookContentEvent {
-  SendEvent get send;
+/// implements [BookContentEvent]
+mixin BookContentEventMessager {
+  SendEvent get sendEvent;
 
-  @override
   FutureOr<List<BookContentDb>?> getCacheContentsCidDb(int bookid) async {
-    return send.sendMessage(
+    return sendEvent.sendMessage(
         BookContentEventMessage.getCacheContentsCidDb, bookid);
   }
 
-  @override
   Stream<List<BookContentDb>?> watchCacheContentsCidDb(int bookid) {
-    return send.sendMessageStream(
+    return sendEvent.sendMessageStream(
         BookContentEventMessage.watchCacheContentsCidDb, bookid);
   }
 
-  @override
   FutureOr<int?> deleteCache(int bookId) async {
-    return send.sendMessage(BookContentEventMessage.deleteCache, bookId);
+    return sendEvent.sendMessage(BookContentEventMessage.deleteCache, bookId);
   }
 }
 
 mixin DatabaseEventResolve on Resolve, DatabaseEvent {}
 
-mixin DatabaseEventMessager implements DatabaseEvent {}
+/// implements [DatabaseEvent]
+mixin DatabaseEventMessager {}
 
-abstract class ComplexEventDynamic implements ComplexEvent {
+/// implements [ComplexEvent]
+abstract class ComplexEventDynamic {
   dynamic getContentDynamic(int bookid, int contentid, bool update);
 }
 
@@ -320,9 +346,9 @@ mixin ComplexEventResolve
         try {
           result = _complexEventResolveFuncList
               .elementAt(type.index)(resolveMessage.args);
-          send(result, resolveMessage);
+          receipt(result, resolveMessage);
         } catch (e) {
-          send(result, resolveMessage, e);
+          receipt(result, resolveMessage, e);
         }
         return true;
       }
@@ -338,36 +364,33 @@ mixin ComplexEventResolve
   FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
 }
 
-mixin ComplexEventMessager implements ComplexEvent {
-  SendEvent get send;
+/// implements [ComplexEvent]
+mixin ComplexEventMessager {
+  SendEvent get sendEvent;
 
-  @override
   FutureOr<CacheItem?> getCacheItem(int id) async {
-    return send.sendMessage(ComplexEventMessage.getCacheItem, id);
+    return sendEvent.sendMessage(ComplexEventMessage.getCacheItem, id);
   }
 
   dynamic getContentDynamic(int bookid, int contentid, bool update) async {
-    return send.sendMessage(
+    return sendEvent.sendMessage(
         ComplexEventMessage.getContent, [bookid, contentid, update]);
   }
 
-  @override
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update) async {
-    return send.sendMessage(ComplexEventMessage.getIndexs, [bookid, update]);
+    return sendEvent
+        .sendMessage(ComplexEventMessage.getIndexs, [bookid, update]);
   }
 
-  @override
   FutureOr<int?> updateBookStatus(int id) async {
-    return send.sendMessage(ComplexEventMessage.updateBookStatus, id);
+    return sendEvent.sendMessage(ComplexEventMessage.updateBookStatus, id);
   }
 
-  @override
   FutureOr<Map<int, CacheItem>?> getCacheItemAll() async {
-    return send.sendMessage(ComplexEventMessage.getCacheItemAll, null);
+    return sendEvent.sendMessage(ComplexEventMessage.getCacheItemAll, null);
   }
 
-  @override
   FutureOr<BookInfoRoot?> getInfo(int id) async {
-    return send.sendMessage(ComplexEventMessage.getInfo, id);
+    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id);
   }
 }
