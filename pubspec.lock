@@ -7,14 +7,14 @@ packages:
       name: _fe_analyzer_shared
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "23.0.0"
+    version: "24.0.0"
   analyzer:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: analyzer
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.0"
+    version: "2.1.0"
   args:
     dependency: transitive
     description:
@@ -28,15 +28,13 @@ packages:
       name: async
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.8.1"
+    version: "2.8.2"
   bangs:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: "0b74b0abd1aa75c0a3670e0fd4f6630a2d95ea96"
-      url: "https://github.com/sersr/bangs"
-    source: git
+      path: "../packages/bangs"
+      relative: true
+    source: path
     version: "0.0.1"
   battery:
     dependency: "direct main"
@@ -304,7 +302,7 @@ packages:
       name: frontend_server_client
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.2"
   get:
     dependency: "direct main"
     description:
@@ -354,6 +352,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.0.0"
+  infinite_listview:
+    dependency: "direct main"
+    description:
+      name: infinite_listview
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.1.0"
   infinite_scroll_pagination:
     dependency: "direct main"
     description:
@@ -409,7 +414,7 @@ packages:
       name: logger
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.0.0"
+    version: "1.1.0"
   logging:
     dependency: transitive
     description:
@@ -430,7 +435,7 @@ packages:
       name: matcher
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.12.10"
+    version: "0.12.11"
   meta:
     dependency: transitive
     description:
@@ -455,26 +460,38 @@ packages:
   nop_annotations:
     dependency: transitive
     description:
-      path: "."
-      ref: master
-      resolved-ref: e704d1da1c8697de7c4bb741ed5b37d825004285
-      url: "https://github.com/sersr/nop_annotations"
-    source: git
+      path: "../packages/nop_annotations"
+      relative: true
+    source: path
     version: "0.0.1"
   nop_db:
     dependency: "direct main"
     description:
-      path: "../nop_db"
+      path: "../packages/nop_db"
       relative: true
     source: path
     version: "0.0.4+6"
   nop_db_gen:
     dependency: "direct dev"
     description:
-      path: "../nop_db_gen"
+      path: "../packages/nop_db_gen"
       relative: true
     source: path
     version: "0.0.2+4"
+  nop_db_sqflite:
+    dependency: "direct main"
+    description:
+      path: "../packages/nop_db_sqflite"
+      relative: true
+    source: path
+    version: "0.0.1"
+  nop_db_sqlite:
+    dependency: "direct main"
+    description:
+      path: "../packages/nop_db_sqlite"
+      relative: true
+    source: path
+    version: "0.0.1"
   package_config:
     dependency: transitive
     description:
@@ -551,7 +568,7 @@ packages:
       name: platform
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "3.0.0"
+    version: "3.0.2"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -594,6 +611,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.0"
+  pull_to_refresh:
+    dependency: "direct main"
+    description:
+      name: pull_to_refresh
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.0"
   screen_brightness:
     dependency: "direct main"
     description:
@@ -633,7 +657,7 @@ packages:
       name: source_gen
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.0.5"
+    version: "1.1.0"
   source_helper:
     dependency: transitive
     description:
@@ -654,21 +678,21 @@ packages:
       name: sqflite
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.0+3"
+    version: "2.0.0+4"
   sqflite_common:
     dependency: transitive
     description:
       name: sqflite_common
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.0+2"
+    version: "2.0.1"
   sqflite_common_ffi:
     dependency: transitive
     description:
       name: sqflite_common_ffi
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.0+1"
+    version: "2.0.0+3"
   sqlite3:
     dependency: transitive
     description:
@@ -738,7 +762,7 @@ packages:
       name: test_api
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.4.2"
+    version: "0.4.3"
   timezone:
     dependency: transitive
     description:
@@ -794,18 +818,18 @@ packages:
       name: url_launcher_web
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.2"
+    version: "2.0.4"
   url_launcher_windows:
     dependency: transitive
     description:
       name: url_launcher_windows
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.1"
+    version: "2.0.2"
   useful_tools:
     dependency: "direct main"
     description:
-      path: "../useful_tools"
+      path: "../packages/useful_tools"
       relative: true
     source: path
     version: "0.0.1"
@@ -829,7 +853,7 @@ packages:
       name: video_player
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.1.13"
+    version: "2.1.14"
   video_player_platform_interface:
     dependency: transitive
     description:
@@ -843,7 +867,7 @@ packages:
       name: video_player_web
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.0.2"
+    version: "2.0.3"
   wakelock:
     dependency: "direct main"
     description:
@@ -899,7 +923,7 @@ packages:
       name: win32
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.2.5"
+    version: "2.2.7"
   xdg_directories:
     dependency: transitive
     description:

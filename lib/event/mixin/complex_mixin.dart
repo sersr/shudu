@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/common.dart';
+import 'package:useful_tools/event_queue.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
@@ -112,9 +113,6 @@ mixin ComplexMixin
         if (list != null && list.isNotEmpty) {
           var count = 0;
           for (var item in list) count += item.list?.length ?? 0;
-
-          // final _num = list.fold<int>(
-          //     0, (previousValue, element) => previousValue + element.list - 1);
           itemCounts = count;
         }
       }
@@ -123,6 +121,30 @@ mixin ComplexMixin
     itemCounts ??= cacheItemCounts;
 
     return CacheItem(id, itemCounts, cacheItemCounts);
+  }
+
+  @override
+  Stream<CacheItem> getMainBookListDbStream() {
+    final controller = StreamController<CacheItem>();
+    Timer.run(() async {
+      try {
+        final all = await getAllBookId();
+        // final fwait = FutureAny();
+        for (var a in all) {
+          try {
+            await getCacheItem(a).then(controller.add);
+            await releaseUI;
+          } catch (e) {
+            Log.w(e);
+          }
+        }
+        // await fwait.wait;
+      } finally {
+        controller.close();
+      }
+    });
+    Log.i('ss.s....');
+    return controller.stream;
   }
 
   @override

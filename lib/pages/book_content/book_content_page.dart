@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../database/database.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/painter_notifier.dart';
 import '../../widgets/page_animation.dart';
@@ -18,25 +17,34 @@ enum SettingView { indexs, setting, none }
 
 class BookContentPage extends StatefulWidget {
   const BookContentPage(
-      {Key? key, required this.bookId, required this.cid, required this.page})
+      {Key? key,
+      required this.bookId,
+      required this.cid,
+      required this.page,
+      required this.currentKey})
       : super(key: key);
   final int bookId;
   final int cid;
   final int page;
-
+  final Object currentKey;
   static Object? _wait;
   static Future push(
       BuildContext context, int newBookid, int cid, int page) async {
     if (_wait != null) return;
-    _wait = Object();
+    _wait = const Object();
     final bloc = context.read<ContentNotifier>();
-    bloc.touchBook(newBookid, cid, page);
-
+    final taskKey = Object();
+    bloc.touchBook(newBookid, cid, page, taskKey);
     await EventQueue.scheduler.endOfFrame;
     _wait = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookContentPage(bookId: newBookid, cid: cid, page: page);
+      return BookContentPage(
+        bookId: newBookid,
+        cid: cid,
+        page: page,
+        currentKey: taskKey,
+      );
     }));
   }
 
@@ -48,7 +56,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
-  late ChangeNotifierSelector<ContentViewConfig, Color?> notifyColor;
+  late ChangeNotifierSelector<Color?, ValueNotifier<ContentViewConfig>>
+      notifyColor;
   @override
   void initState() {
     super.initState();
@@ -60,18 +69,12 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
-    notifyColor = ChangeNotifierSelector<ContentViewConfig, Color?>(
-        parent: bloc.config, notifyValue: (config) => config.bgcolor);
+    notifyColor = bloc.config.selector((parent) => parent.value.bgcolor);
 
     if (Platform.isAndroid) {
       getExternalStorageDirectories().then((value) => Log.w(value));
       getApplicationDocumentsDirectory().then((value) => Log.w(value));
     }
-
-    _book =
-        bloc.repository.bookEvent.getBookCacheDb(widget.bookId).then((book) {
-      if (book?.isNotEmpty == true) return book!.last;
-    });
   }
 
   @override
@@ -80,21 +83,18 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.dispose();
   }
 
-  late FutureOr<BookCache?> _book;
-
   @override
   void initOnceTask() {
     super.initOnceTask();
+    // 当此任务为队列中的最后一个任务时，不忽略拥有相同key的任务
+    // 当要执行的任务与队列最后一个任务的key不同时，
+    // 会忽略所有相同key的任务（只影响onlyLastOne）
     bloc.addInitEventTask(() async {
-      final u = uiOverlay();
-      final book = await _book;
-      bloc.newBookOrCid(widget.bookId, book?.chapterId ?? widget.cid,
-          book?.page ?? widget.page);
-
-      await u;
+      if (!bloc.uiOverlayShow) await uiOverlay();
+      // 状态栏彻底隐藏之后才改变颜色
       await release(const Duration(milliseconds: 300));
       uiStyle(dark: false);
-    });
+    }, taskKey: widget.currentKey);
   }
 
   Timer? errorTimer;
@@ -110,16 +110,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       child: RepaintBoundary(
         child: Stack(
           children: [
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: AnimatedBuilder(
-                  animation: bloc,
-                  builder: (_, __) {
-                    return ContentPageView();
-                  },
-                ),
-              ),
-            ),
+            const Positioned.fill(
+                child: RepaintBoundary(child: ContentPageView())),
             Positioned.fill(
               child: RepaintBoundary(
                 child: AnimatedBuilder(

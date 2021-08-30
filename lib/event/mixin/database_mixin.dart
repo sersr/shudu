@@ -191,6 +191,8 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   @override
   FutureOr<List<BookCache>> getMainBookListDb() => bookCache.query.goToTable;
+
+
   @override
   FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>
       bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;

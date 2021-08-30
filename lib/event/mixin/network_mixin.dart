@@ -114,7 +114,7 @@ mixin NetworkMixin implements CustomEvent {
 }
 
 final iOTask = EventQueue.iOQueue;
-final imageNet = EventQueue(channels: 6);
+final imageNet = EventQueue.createEventQueue(NetworkMixin, channels: 8);
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
@@ -558,15 +558,20 @@ extension _NetworkImpl on NetworkMixin {
     final imgPath = join(imageLocalPath, imgName);
 
     final imgdateTime = imageUpdate.get(imgName.hashCode);
+
     final now = DateTime.now().millisecondsSinceEpoch;
-    final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
+    final shouldUpdate = imgdateTime == null || imgdateTime + oneDay < now;
+    final outOfDate = imgdateTime == null || imgdateTime + oneDay * 7 < now;
 
     final _bytes = await iOTask.addEventTask(() async {
       final f = File(imgPath);
       final exits = await f.exists();
-
-      if (exits && !shouldUpdate) {
-        return f.readAsBytes();
+      if (exits) {
+        if (!shouldUpdate) {
+          return f.readAsBytes();
+        } else if (outOfDate) {
+          await f.delete(recursive: true);
+        }
       }
     });
 
@@ -581,7 +586,6 @@ extension _NetworkImpl on NetworkMixin {
     final imgName = imgResolve[1];
 
     final imgPath = join(imageLocalPath, imgName);
-
     // 避免太过频繁访问网络
     if (_errorLoading.containsKey(imgName)) {
       final time = _errorLoading[imgName]!;

@@ -43,16 +43,20 @@ dependencies:
   stack_trace: ^1.10.0
   url_launcher: ^6.0.3
   useful_tools:
-    path: ../useful_tools
+    path: ../packages/useful_tools
   video_player: ^2.1.0
   wakelock: ^0.5.3+3
+  infinite_listview: ^1.1.0
+  pull_to_refresh: ^2.0.0
   # bitsdojo_window: ^0.1.1+1
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
   bangs:
-    git:
-      url: https://github.com/sersr/bangs
-      ref: master
+    path: ../packages/bangs
+  # bangs:
+  #   git:
+  #     url: https://github.com/sersr/bangs
+  #     ref: master
   # pull_to_refresh: ^2.0.0
 
   # shared_preferences: ^2.0.5
@@ -61,16 +65,19 @@ dependencies:
   #     url: https://github.com/sersr/nop_db
   #     ref: master
   nop_db:
-    path: ../nop_db
+    path: ../packages/nop_db
+  nop_db_sqflite:
+    path: ../packages/nop_db_sqflite
+  nop_db_sqlite:
+    path: ../packages/nop_db_sqlite
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.0.4
+  build_runner: any
   # hive_generator: any
-  analyzer: ^2.0.0
   json_serializable: ^5.0.0
   flutter_lints: ^1.0.0
   # nop_db_gen:
@@ -78,7 +85,7 @@ dev_dependencies:
   #     url: https://github.com/sersr/nop_db_gen
   #     ref: master
   nop_db_gen:
-    path: ../nop_db_gen
+    path: ../packages/nop_db_gen
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:
@@ -105,8 +112,3 @@ flutter:
     #     - asset: assets/fonts/SourceHanSansSC-Regular.otf
     #     - asset: assets/fonts/SourceHanSansSC-Bold.otf
     #       weight: 700
-# dependency_overrides:
-#   sky_engine:
-#     path: /Volumes/mbp/macos/engine/src/out/host_release/gen/dart-pkg/sky_engine
-  # sky_services:
-  #   path: /Volumes/mbp/macos/engine/src/out/host_release/gen/dart-pkg/sky_services

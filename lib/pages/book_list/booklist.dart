@@ -130,6 +130,7 @@ class _WrapWidgetState extends State<WrapWidget>
           scrollController: scrollController,
           itemCount: list.length + 1,
           cacheExtent: 200,
+          load: loadingIndicator(),
           finishLayout: (first, last) {
             final state = shudanProvider.state;
 
@@ -250,16 +251,18 @@ class ShudanCategProvider extends ChangeNotifier {
     if (_list == null) {
       var data =
           await _repository.bookEvent.customEvent.getHiveShudanLists(key);
+        Timer? timer;
       if (data?.isNotEmpty == true) {
         list = data;
         _listCounts = 1;
-        notifyListeners();
+        timer = Timer(const Duration(milliseconds: 300), notifyListeners);
       }
       data = await _repository.bookEvent.customEvent.getShudanLists(key, 1);
       if (data != null && data.isNotEmpty) {
         list = data;
         _listCounts = 1;
       }
+      timer?.cancel();
     } else {
       final data = await _repository.bookEvent.customEvent
           .getShudanLists(key, _listCounts + 1);
@@ -270,7 +273,7 @@ class ShudanCategProvider extends ChangeNotifier {
       }
     }
 
-    await release(const Duration(milliseconds: 100));
+    await release(const Duration(milliseconds: 300));
     list ??= const [];
 
     notifyListeners();

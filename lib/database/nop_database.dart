@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/database/gen_database.dart';
+import 'package:nop_db/database/nop.dart';
 import 'package:nop_db/database/table.dart';
 import 'package:nop_db/nop_db.dart';
-
+import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+import 'package:nop_db_sqlite/nop_db_sqlite.dart';
 import '../data/data.dart';
 
 part 'nop_database.g.dart';
@@ -96,12 +100,36 @@ class BookIndex extends Table {
 @Nop(tables: [BookCache, BookContentDb, BookIndex])
 class BookDatabase extends _GenBookDatabase {
   BookDatabase(this.path, this.version, this.useFfi, this.useSqfite3);
-  @override
+
   final bool useSqfite3;
-  @override
+
   final bool useFfi;
-  @override
+
   final String path;
-  @override
-  int version;
+
+  final int version;
+
+  FutureOr<void> initDb() {
+    if (useSqfite3) {
+      return _initSqfite3db().then(setDb);
+    } else {
+      setDb(_initffidb());
+    }
+  }
+
+  NopDatabase _initffidb() {
+    return NopDatabaseImpl.open(path,
+        version: version,
+        onCreate: onCreate,
+        onUpgrade: onUpgrade,
+        onDowngrade: onDowngrade);
+  }
+
+  Future<NopDatabase> _initSqfite3db() {
+    return NopDatabaseSqflite.openSqfite(path,
+        version: version,
+        onCreate: onCreate,
+        onUpgrade: onUpgrade,
+        onDowngrade: onDowngrade);
+  }
 }

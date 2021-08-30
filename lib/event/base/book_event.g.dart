@@ -17,6 +17,7 @@ enum BookEventMessage {
   getShudanDetail,
   getCategoryData,
   getCacheItem,
+  getMainBookListDbStream,
   getContent,
   getIndexs,
   updateBookStatus,
@@ -51,6 +52,7 @@ enum BookContentEventMessage {
 }
 enum ComplexEventMessage {
   getCacheItem,
+  getMainBookListDbStream,
   getContent,
   getIndexs,
   updateBookStatus,
@@ -330,11 +332,12 @@ mixin ComplexEventResolve
     implements ComplexEventDynamic {
   late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getCacheItem_0,
-    _getContent_1,
-    _getIndexs_2,
-    _updateBookStatus_3,
-    _getCacheItemAll_4,
-    _getInfo_5
+    _getMainBookListDbStream_1,
+    _getContent_2,
+    _getIndexs_3,
+    _updateBookStatus_4,
+    _getCacheItemAll_5,
+    _getInfo_6
   ]);
 
   @override
@@ -357,11 +360,13 @@ mixin ComplexEventResolve
   }
 
   FutureOr<CacheItem?> _getCacheItem_0(args) => getCacheItem(args);
-  dynamic _getContent_1(args) => getContentDynamic(args[0], args[1], args[2]);
-  FutureOr<NetBookIndex?> _getIndexs_2(args) => getIndexs(args[0], args[1]);
-  FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
-  FutureOr<Map<int, CacheItem>?> _getCacheItemAll_4(args) => getCacheItemAll();
-  FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
+  Stream<CacheItem> _getMainBookListDbStream_1(args) =>
+      getMainBookListDbStream();
+  dynamic _getContent_2(args) => getContentDynamic(args[0], args[1], args[2]);
+  FutureOr<NetBookIndex?> _getIndexs_3(args) => getIndexs(args[0], args[1]);
+  FutureOr<int?> _updateBookStatus_4(args) => updateBookStatus(args);
+  FutureOr<Map<int, CacheItem>?> _getCacheItemAll_5(args) => getCacheItemAll();
+  FutureOr<BookInfoRoot?> _getInfo_6(args) => getInfo(args);
 }
 
 /// implements [ComplexEvent]
@@ -370,6 +375,11 @@ mixin ComplexEventMessager {
 
   FutureOr<CacheItem?> getCacheItem(int id) async {
     return sendEvent.sendMessage(ComplexEventMessage.getCacheItem, id);
+  }
+
+  Stream<CacheItem> getMainBookListDbStream() {
+    return sendEvent.sendMessageStream(
+        ComplexEventMessage.getMainBookListDbStream, null);
   }
 
   dynamic getContentDynamic(int bookid, int contentid, bool update) async {

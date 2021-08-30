@@ -23,28 +23,22 @@ class BookInfoPage extends StatefulWidget {
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
-  static final ValueNotifier<int> _count = ValueNotifier(0);
-
-  static Future push(BuildContext context, int bookid,
-      {bool maintainState = true}) async {
-    _count.value += 1;
-    final local = _count.value;
-
-    final _ntf = ChangeNotifierSelector<int, bool>(
-        parent: _count, notifyValue: (count) => local < count - 3);
-
-    return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return AnimatedBuilder(
-          animation: _ntf,
-          builder: (context, child) {
-            // Log.w('${_count.value}: ${_ntf.value}', onlyDebug: false);
-            return TickerMode(
-                enabled: !_ntf.value,
-                child: Offstage(offstage: _ntf.value, child: child));
-          },
-          child: BookInfoPage(id: bookid));
-    }))
-      ..whenComplete(() => _count.value -= 1);
+  static Future push(BuildContext context, int bookid) async {
+    return pushRecoder(
+      key: 'navigator.push',
+      saveCount: 3,
+      callback: (pushNotifier) =>
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+        return AnimatedBuilder(
+            animation: pushNotifier,
+            builder: (context, child) {
+              return TickerMode(
+                  enabled: !pushNotifier.value,
+                  child: Offstage(offstage: pushNotifier.value, child: child));
+            },
+            child: RepaintBoundary(child: BookInfoPage(id: bookid)));
+      })),
+    );
   }
 }
 
@@ -395,9 +389,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         yield ListItem(
             height: 108,
             child: _BookInfoSameItemWidget(l: l, author: info.author),
-            onTap: () => l.id == null
-                ? null
-                : BookInfoPage.push(context, l.id!, maintainState: false));
+            onTap: () =>
+                l.id == null ? null : BookInfoPage.push(context, l.id!));
   }
 
   Widget header(

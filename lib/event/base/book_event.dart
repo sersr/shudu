@@ -17,9 +17,9 @@ part 'book_event.g.dart';
 abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
-  // BookIndexEvent get bookIndexEvent => this;
   CustomEvent get customEvent => this;
   DatabaseEvent get databaseEvent => this;
+  ComplexEvent get complexEvent => this;
 }
 
 @NopIsolateEventItem(separate: true)
@@ -35,6 +35,8 @@ abstract class BookContentEvent {
 
 abstract class ComplexEvent {
   FutureOr<CacheItem?> getCacheItem(int id);
+  Stream<CacheItem> getMainBookListDbStream();
+
   @NopIsolateMethod(isDynamic: true)
   FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
@@ -47,6 +49,7 @@ abstract class ComplexEvent {
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainBookListDb();
+
   FutureOr<List<BookCache>?> getBookCacheDb(int bookid);
 
   FutureOr<int?> updateBook(int id, BookCache book);
@@ -127,52 +130,55 @@ class RawContentLines {
     }
 
     final intData = Int32List.fromList(dataInt);
+    // 把dataString放在最后，不用处理字节对齐问题
     return TransferableTypedData.fromList(dataString..insert(0, intData));
   }
 
   static RawContentLines decode(ByteBuffer data) {
-    var start = 0;
+    var cursor = 0;
+    // dataInit 有6个元素，每个元素4个字节
     const six = 6;
-    const sixLengthBytes = six * 4;
+    const dataIntBytes = six * 4;
     var cname = '';
     final pages = <String>[];
-    var list = const <int>[];
+    var dataIntList = const <int>[];
+    final allBytes = data.lengthInBytes;
 
-    if (data.lengthInBytes >= start + sixLengthBytes) {
-      list = data.asInt32List(start, six);
-      start += sixLengthBytes;
+    if (allBytes >= cursor + dataIntBytes) {
+      dataIntList = data.asInt32List(cursor, six);
+      cursor += dataIntBytes;
     }
 
-    if (list.length >= six) {
-      final pageLength = list[5];
+    if (dataIntList.length >= six) {
+      final pageLength = dataIntList[5];
       final pagesLengthBytes = pageLength * 4;
 
       var pageListLength = const <int>[];
 
-      if (data.lengthInBytes >= start + pagesLengthBytes) {
-        pageListLength = data.asInt32List(start, pageLength);
+      if (allBytes >= cursor + pagesLengthBytes) {
+        pageListLength = data.asInt32List(cursor, pageLength);
 
-        start += pagesLengthBytes;
+        cursor += pagesLengthBytes;
       }
-      final cnameLength = list[4];
+      final cnameLength = dataIntList[4];
 
-      if (data.lengthInBytes >= start + cnameLength) {
-        final _c = data.asUint8List(start, cnameLength);
+      if (allBytes >= cursor + cnameLength) {
+        final _c = data.asUint8List(cursor, cnameLength);
         cname = utf8.decode(_c);
-        start += cnameLength;
+        cursor += cnameLength;
       }
 
       for (final length in pageListLength) {
-        final _p = data.asUint8List(start, length);
+        final _p = data.asUint8List(cursor, length);
         pages.add(utf8.decode(_p));
-        start += length;
+        cursor += length;
       }
 
       return RawContentLines(
-          cid: list[0],
-          pid: list[1],
-          nid: list[2],
-          hasContent: Table.intToBool(list[3]),
+          cid: dataIntList[0],
+          pid: dataIntList[1],
+          nid: dataIntList[2],
+          hasContent: Table.intToBool(dataIntList[3]),
           cname: cname,
           pages: pages);
     }

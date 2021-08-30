@@ -10,15 +10,15 @@ void main() async {
   // PaintingBinding.shaderWarmUp = const MyShaderWarmUp();
   // WidgetsFlutterBinding.ensureInitialized();
   NopWidgetsFlutterBinding.ensureInitialized();
+  RendererBinding.instance!.renderView.automaticSystemUiAdjustment = false;
   // 在app开始就初始化
   final appDir = await getApplicationDocumentsDirectory();
   hiveInit(join(appDir.path, 'shudu', 'hive'));
 
-  await uiOverlay(hide: false);
-  uiStyle();
   // debugProfilePaintsEnabled = true;
   // debugProfileBuildsEnabled = true;
   // debugProfileLayoutsEnabled = true;
-  RendererBinding.instance!.renderView.automaticSystemUiAdjustment = false;
   runApp(const MulProvider());
+  await uiOverlay(hide: false);
+  uiStyle();
 }

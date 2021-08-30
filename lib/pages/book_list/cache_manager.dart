@@ -183,7 +183,9 @@ class _CacheNotifier extends ChangeNotifier {
 
   void startLoad() async {
     if (repository == null) return;
+    _out = false;
     final _l = await repository!.bookEvent.bookCacheEvent.getAllBookId();
+    if (_out) return;
     _cacheSub?.cancel();
     _cacheSub = repository!.bookEvent.bookCacheEvent
         .watchMainBookListDb()
@@ -192,19 +194,20 @@ class _CacheNotifier extends ChangeNotifier {
     if (_l != null && _l.isNotEmpty) {
       _data.clear();
       _data.addAll(_l);
-      _auto();
       await release(const Duration(milliseconds: 100));
       notifyListeners();
     }
+    Timer.run(_auto);
   }
 
-  void _auto() async {
-    for (var item in _data) {
-      if (_items.containsKey(item)) continue;
-      final _i =
-          await repository!.bookEvent.getCacheItem(item) ?? CacheItem.none;
-      if (!_i.isEmpty) _items[item] = _i;
-    }
+  StreamSubscription? _subItem;
+  void _auto() {
+    if (_out) return;
+    _subItem?.cancel();
+
+    _subItem = repository!.bookEvent.getMainBookListDbStream().listen((event) {
+      if (!event.isEmpty) _items[event.id] = event;
+    });
   }
 
   final _items = <int, CacheItem>{};
@@ -230,6 +233,8 @@ class _CacheNotifier extends ChangeNotifier {
   void cancel() {
     _cacheSub?.cancel();
     _cacheSub = null;
+    _subItem?.cancel();
+    _subItem = null;
   }
 
   final _cacheList = <BookCache>[];
@@ -250,8 +255,10 @@ class _CacheNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _out = false;
   @override
   void dispose() {
+    _out = true;
     cancel();
     super.dispose();
   }

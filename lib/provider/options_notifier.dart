@@ -14,9 +14,8 @@ class ConfigOptions {
       this.resampleOffset,
       this.useImageCache,
       this.useTextCache,
-      // this.useMemoryImage,
       this.nopResample,
-      this.useSqflite3,
+      this.useSqflite,
       this.showPerformanceOverlay});
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
@@ -27,8 +26,7 @@ class ConfigOptions {
   bool? useImageCache;
 
   bool? useTextCache;
-  // bool? useMemoryImage;
-  bool? useSqflite3;
+  bool? useSqflite;
   bool? nopResample;
 
   ConfigOptions coveredWith(ConfigOptions o) {
@@ -38,9 +36,8 @@ class ConfigOptions {
       ..resample ??= resample
       ..useImageCache ??= useImageCache
       ..useTextCache ??= useTextCache
-      ..useSqflite3 ??= useSqflite3
+      ..useSqflite ??= useSqflite
       ..nopResample ??= nopResample
-      // ..useMemoryImage ??= useMemoryImage
       ..showPerformanceOverlay ??= showPerformanceOverlay
       ..resampleOffset ??= resampleOffset;
   }
@@ -55,8 +52,7 @@ class ConfigOptions {
             other.resampleOffset == resampleOffset &&
             other.useImageCache == useImageCache &&
             other.nopResample == nopResample &&
-            other.useSqflite3 == useSqflite3 &&
-            // other.useMemoryImage == useMemoryImage &&
+            other.useSqflite == useSqflite &&
             other.useTextCache == useTextCache &&
             other.showPerformanceOverlay == showPerformanceOverlay;
   }
@@ -75,7 +71,7 @@ class ConfigOptions {
       resampleOffset,
       useImageCache,
       // useMemoryImage,
-      useSqflite3,
+      useSqflite,
       useTextCache,
       showPerformanceOverlay);
 }
@@ -89,33 +85,6 @@ enum PageBuilder {
   fadeRightWards,
 }
 
-// class OptionsState extends Equatable {
-//   OptionsState({required this.options});
-
-//   final ConfigOptions options;
-
-//   static PageTransitionsBuilder create([PageBuilder? builder]) {
-//     switch (builder) {
-//       case PageBuilder.cupertino:
-//         return const CupertinoPageTransitionsBuilder();
-//       case PageBuilder.fadeThrough:
-//         return const FadeThroughPageTransitionsBuilder();
-//       case PageBuilder.openUpwards:
-//         return const OpenUpwardsPageTransitionsBuilder();
-//       case PageBuilder.fadeRightWards:
-//         return const ZoomTransition();
-//       case PageBuilder.zoom:
-//         return const ZoomPageTransitionsBuilder();
-//       case PageBuilder.fadeUpwards:
-//       default:
-//         return const FadeUpwardsPageTransitionsBuilder();
-//     }
-//   }
-
-//   @override
-//   List<Object?> get props => [options];
-// }
-
 class OptionsNotifier extends ChangeNotifier {
   OptionsNotifier();
 
@@ -127,7 +96,7 @@ class OptionsNotifier extends ChangeNotifier {
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    _event.addOneEventTask(() => saveOptions());
+    _event.addOneEventTask(saveOptions);
     notifyListeners();
   }
 
@@ -141,13 +110,12 @@ class OptionsNotifier extends ChangeNotifier {
   static const _resampleOffset = 'resampleOffset';
   static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
-  // static const _useMemoryImage = 'useMemoryImage';
 
   static Future<bool> get sqfliteBox async {
     final e = EventQueue.createEventQueue('_');
     return e.addEventTask(() async {
-      final box = await Hive.openBox('_sqlfiteBox');
-      final result = box.get('_useSqflite3', defaultValue: false);
+      final box = await Hive.openBox('_sqfliteBox');
+      final result = box.get('_useSqflite', defaultValue: false);
       await box.close();
       return result;
     });
@@ -156,12 +124,11 @@ class OptionsNotifier extends ChangeNotifier {
   static Future<void> setSqfliteBox(bool use) async {
     final e = EventQueue.createEventQueue('_');
     return e.addEventTask(() async {
-      final box = await Hive.openBox('_sqlfiteBox');
-      await box.put('_useSqflite3', use);
+      final box = await Hive.openBox('_sqfliteBox');
+      await box.put('_useSqflite', use);
       return box.close();
     });
   }
-
 
   Box? box;
   // 简洁
@@ -203,35 +170,32 @@ class OptionsNotifier extends ChangeNotifier {
     final PageBuilder pageBuilder =
         _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
 
-    final bool resample = _box.get(_resample, defaultValue: true);
+    final bool resample = _box.get(_resample, defaultValue: false);
     final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
     final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
     final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
-    // final bool useMemoryImage = _box.get(_useMemoryImage, defaultValue: false);
     final bool nopResample = _box.get(_nopResample, defaultValue: true);
 
     GestureBinding.instance!
       ..resamplingEnabled = resample
       ..samplingOffset = Duration(milliseconds: resampleOffset);
     NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
-    // resample = await listenRate();
 
     options = ConfigOptions(
         platform: platform,
         pageBuilder: pageBuilder,
         resample: resample,
         useImageCache: useImageCache,
-        // useMemoryImage: useMemoryImage,
         nopResample: nopResample,
-        useSqflite3: await sqfliteBox,
+        useSqflite: await sqfliteBox,
         useTextCache: useTextCache,
         resampleOffset: resampleOffset);
   }
 
   Future<void> saveOptions() async {
     assert(box != null);
-    final _f = <Future>[];
 
+    final _f = FutureAny();
     final platform = options.platform;
     if (platform != null && _box.get(_platform) != platform)
       _f.add(_box.put(_platform, platform));
@@ -244,13 +208,9 @@ class OptionsNotifier extends ChangeNotifier {
     if (useImageCache != null && _box.get(_useImageCache) != useImageCache)
       _f.add(_box.put(_useImageCache, useImageCache));
 
-    final useSqflite3 = options.useSqflite3;
+    final useSqflite3 = options.useSqflite;
     if (useSqflite3 != null && await sqfliteBox != useSqflite3)
       _f.add(setSqfliteBox(useSqflite3));
-
-    // final useMemoryImage = options.useMemoryImage;
-    // if (useMemoryImage != null && _box.get(_useMemoryImage) != useMemoryImage)
-    //   _f.add(_box.put(_useMemoryImage, useMemoryImage));
 
     final useTextCache = options.useTextCache;
     if (useTextCache != null && _box.get(_useTextCache) != useTextCache)
@@ -273,7 +233,8 @@ class OptionsNotifier extends ChangeNotifier {
       NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
       _f.add(_box.put(_nopResample, nopResample));
     }
-    await Future.wait(_f);
+    await _f.wait;
+    assert(_f.isEmpty);
     assert(Log.i('$options'));
   }
 }

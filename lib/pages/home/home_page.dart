@@ -396,60 +396,62 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Consumer<OptionsNotifier>(
                     builder: (context, opt, _) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Center(child: Text('offset:')),
-                                IconButton(
-                                    icon: Icon(Icons.remove),
-                                    onPressed: () {
-                                      if (opt.options.resampleOffset != null) {
-                                        final offset =
-                                            opt.options.resampleOffset! - 1;
-                                        opt.options = ConfigOptions(
-                                            resampleOffset: offset);
-                                      }
-                                    }),
-                                Center(
-                                    child:
-                                        Text('${opt.options.resampleOffset}')),
-                                IconButton(
-                                  icon: Icon(Icons.add),
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(child: Text('offset:')),
+                              IconButton(
+                                  icon: Icon(Icons.remove),
                                   onPressed: () {
                                     if (opt.options.resampleOffset != null) {
                                       final offset =
-                                          opt.options.resampleOffset! + 1;
+                                          opt.options.resampleOffset! - 1;
                                       opt.options =
                                           ConfigOptions(resampleOffset: offset);
                                     }
-                                  },
-                                ),
-                              ],
-                            ),
-                            // },
-                            // ),
-                            Center(child: Text('resample:')),
-                            Switch(
-                              value: opt.options.resample ?? true,
-                              onChanged: (v) {
-                                opts.options = ConfigOptions(resample: v);
-                              },
-                            ),
-                            Center(child: Text('nopResample:')),
-                            Switch(
-                              value: opt.options.nopResample ?? true,
-                              onChanged: (v) {
-                                opts.options = ConfigOptions(nopResample: v);
-                              },
-                            ),
-                          ],
-                        ),
+                                  }),
+                              Center(
+                                  child: Text('${opt.options.resampleOffset}')),
+                              IconButton(
+                                icon: Icon(Icons.add),
+                                onPressed: () {
+                                  if (opt.options.resampleOffset != null) {
+                                    final offset =
+                                        opt.options.resampleOffset! + 1;
+                                    opt.options =
+                                        ConfigOptions(resampleOffset: offset);
+                                  }
+                                },
+                              ),
+                              const Expanded(child: SizedBox()),
+                              Center(child: Text('resample:')),
+                              Switch(
+                                splashRadius: 0,
+                                value: opt.options.resample ?? true,
+                                onChanged: (v) {
+                                  opts.options = ConfigOptions(resample: v);
+                                },
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(child: Text('nopResample:')),
+                              Switch(
+                                splashRadius: 0,
+                                value: opt.options.nopResample ?? true,
+                                onChanged: (v) {
+                                  opts.options = ConfigOptions(nopResample: v);
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -503,12 +505,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       Center(child: Text('useSqflite3:(重启生效)')),
                       Selector<OptionsNotifier, bool>(
                           selector: (_, opt) =>
-                              opt.options.useSqflite3 ?? false,
+                              opt.options.useSqflite ?? false,
                           builder: (context, useSqflite3, _) {
                             return Switch(
                               value: useSqflite3,
                               onChanged: (v) {
-                                opts.options = ConfigOptions(useSqflite3: v);
+                                opts.options = ConfigOptions(useSqflite: v);
                               },
                             );
                           }),

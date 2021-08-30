@@ -22,12 +22,13 @@ import 'constansts.dart';
 enum Status { ignore, error, done }
 
 class TextData {
-  TextData(
+  const TextData(
       {List<ContentMetrics> content = const [],
       this.cid,
       this.pid,
       this.nid,
       this.cname,
+      this.rawContent,
       bool? hasContent})
       : _content = content,
         _hasContent = hasContent;
@@ -38,7 +39,7 @@ class TextData {
   final int? nid;
   final String? cname;
   final bool? _hasContent;
-  List<String> rawContent = const [];
+  final List<String>? rawContent;
   bool get hasContent => _hasContent ?? false;
   bool get isEmpty =>
       content.isEmpty ||
@@ -81,6 +82,8 @@ class ContentNotifier extends ChangeNotifier {
   int bookid = -1;
   int currentPage = 1;
   int _innerIndex = 0;
+  //状态栏显隐状态
+  bool uiOverlayShow = false;
 
   final config = ValueNotifier<ContentViewConfig>(ContentViewConfig());
   // 同步----
@@ -153,6 +156,7 @@ class ContentNotifier extends ChangeNotifier {
     if (data == _tData) return;
     assert(data.contentIsNotEmpty, '不该为 空');
     _tData = data;
+    dump();
     updateCaches(data);
     // if (config.value.audio == true) {
     //   _dataQueue.addOneEventTask(() => _tdataRun());
@@ -312,7 +316,7 @@ class ContentNotifier extends ChangeNotifier {
 extension ContentStatus on ContentNotifier {
   void out() {
     if (!inBook) return;
-
+    uiOverlayShow = false;
     _inBookView = false;
     _notifyCustom();
     if (_brightNess)
@@ -331,12 +335,6 @@ extension ContentStatus on ContentNotifier {
       final _old = _lastBrightness;
       if (_old != null) {
         setBrightness(_old);
-        // _brightness.addOneEventTask(() async {
-        //   final v = _old.clamp(0.0, 1.0);
-        //   brightness.value = v;
-
-        //   return ScreenBrightness.setScreenBrightness(v);
-        // });
       }
     }
   }
@@ -460,8 +458,8 @@ extension DataLoading on ContentNotifier {
         cid: lines.cid,
         hasContent: lines.hasContent,
         cname: lines.cname,
+        rawContent: lines.pages,
       );
-      _cnpid.rawContent = lines.pages;
       addCache(_cnpid);
     }
   }
@@ -485,7 +483,6 @@ extension Tasks on ContentNotifier {
         _currentText.contentIsNotEmpty &&
         _key == _currentText.cid) {
       tData = _currentText;
-      assert(Log.i('sssss: $_key'));
 
       if (currentPage > tData.content.length)
         currentPage = tData.content.length;
@@ -551,13 +548,13 @@ extension Tasks on ContentNotifier {
               tData = _tData;
               if (currentPage > tData.content.length) {
                 currentPage = tData.content.length;
+                if (config.value.axis == Axis.vertical) {
+                  final footv = '$currentPage/${tData.content.length}页';
+                  footer.value = footv;
+                  header.value = tData.cname!;
+                }
               }
               _notify();
-              if (config.value.axis == Axis.vertical) {
-                final footv = '$currentPage/${tData.content.length}页';
-                footer.value = footv;
-                header.value = tData.cname!;
-              }
               return true;
             }
           }
@@ -945,88 +942,88 @@ extension Event on ContentNotifier {
     showrect = !showrect;
     if (inBook && tData.cid != null) {
       if (initQueue.runner == null) {
-        addLoadEvent();
+        loadFirstEvent();
       } else {
-        initQueue.runner!.whenComplete(addLoadEvent);
+        initQueue.runner!.whenComplete(loadFirstEvent);
       }
       return initQueue.runner;
     }
   }
 
   /// 进入阅读页面前，必须调用的方法
-  void touchBook(int newBookid, int cid, int page) {
+  void touchBook(int newBookid, int cid, int page, Object taskKey) {
     if (!inBook) resetController();
     inbook();
-
+    footer.value = '';
+    header.value = '';
     setOrientation(config.value.orientation!);
 
-    if (tData.cid != cid || bookid != newBookid) {
-      assert(Log.i('new: $newBookid $cid'));
-      //不被忽略
-      initQueue.addEventTask(() {
-        footer.value = '';
-        header.value = '';
-        notifyState(notEmptyOrIgnore: true, loading: false);
-        currentPage = -1;
-        bookid = -1;
-        _tData = TextData();
-      });
-    }
+    newBookOrCid(newBookid, cid, page, taskKey: taskKey);
   }
 
-  bool _setNewBookOrCid(int newBookid, int cid, int page) {
+  bool _getStateOrSetBook(int newBookid, int cid, int page,
+      {bool only = false}) {
     if (tData.cid != cid || bookid != newBookid) {
-      assert(Log.i('new: $newBookid $cid'));
-      // footer.value = '';
-      // header.value = '';
-      notifyState(notEmptyOrIgnore: true, loading: false);
+      if (!only) {
+        assert(Log.i('new: $newBookid $cid'));
 
-      _tData = TextData(cid: cid);
-      currentPage = page;
-      bookid = newBookid;
+        notifyState(notEmptyOrIgnore: true, loading: false);
+
+        _tData = TextData(cid: cid);
+        currentPage = page;
+        bookid = newBookid;
+      }
       return true;
     }
     return false;
   }
 
-  Future<T?> addInitEventTask<T>(EventCallback<T> callback) {
-    return initQueue.addOneEventTask(callback);
+  Future<T?> addInitEventTask<T>(EventCallback<T> callback, {Object? taskKey}) {
+    return callback.pushOne(initQueue, taskKey: taskKey);
+    // return initQueue.addOneEventTask(callback, taskKey: taskKey);
   }
 
-  Future<void> addLoadEvent(
-      {bool zero = true,
-      void Function()? callback,
-      void Function()? resetDone,
-      void Function()? done}) {
-    return initQueue.addOneEventTask(() async {
+  Future<void> loadFirstEvent({
+    bool zero = true,
+    Object? taskKey,
+    void Function()? onStart,
+    void Function()? onResetDone,
+    void Function()? onDone,
+  }) {
+    return () async {
       autoRun.stopSave();
-
-      callback?.call();
+      onStart?.call();
       await reset(clearCache: zero);
-      resetDone?.call();
+
+      onResetDone?.call();
       await _loadFirst();
       _notify();
 
       /// 重置边界
       controller?.applyConentDimension(
           minExtent: double.negativeInfinity, maxExtent: double.infinity);
-      done?.call();
+      onDone?.call();
 
       scheduleMicrotask(autoRun.stopAutoRun);
-    });
+    }.pushOne(initQueue, taskKey: taskKey);
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page) async {
+  Future<void> newBookOrCid(int newBookid, int cid, int page,
+      {Object? taskKey}) async {
     if (!inBook) return;
 
     if (cid == -1) return;
-    final _reset = _setNewBookOrCid(newBookid, cid, page);
+    final _reset = _getStateOrSetBook(newBookid, cid, page, only: true);
     if (tData.contentIsEmpty || _reset) {
       final _t = Timer(
-          const Duration(milliseconds: 300), () => notifyState(loading: true));
-      await addLoadEvent(zero: false, done: resetController);
-      // await initQueue.runner;
-      // controller?.needLayout();
+          const Duration(milliseconds: 600), () => notifyState(loading: true));
+
+      await loadFirstEvent(
+          zero: false,
+          onStart: () => _getStateOrSetBook(newBookid, cid, page),
+          onDone: resetController,
+          taskKey: taskKey);
+
       _t.cancel();
     }
   }
@@ -1037,9 +1034,8 @@ extension Event on ContentNotifier {
       final changed = _modifiedSize(data);
       if (changed) {
         if (tData.cid != null) {
-          addLoadEvent(callback: () {
+          loadFirstEvent(onStart: () {
             resetController();
-            // _notify();
             notifyState(notEmptyOrIgnore: true);
           });
         }
@@ -1049,7 +1045,7 @@ extension Event on ContentNotifier {
 
   Future<void> reload() async {
     notifyState(loading: true, notEmptyOrIgnore: true);
-    addLoadEvent(zero: false);
+    loadFirstEvent(zero: false);
     return initQueue.runner;
   }
 
@@ -1064,11 +1060,12 @@ extension Event on ContentNotifier {
   }
 
   Future<void> _willGoPreOrNext({bool isPid = false}) async {
-    if (tData.contentIsEmpty) return;
+    /// 当前章节可能会发生变化
+    if (tData.contentIsEmpty || initQueue.runner != null) return;
     notifyState(error: NotifyMessage.hide);
 
     autoRun.stopSave();
-    final timer = Timer(const Duration(milliseconds: 100), () {
+    final timer = Timer(const Duration(milliseconds: 500), () {
       notifyState(loading: true);
     });
 
@@ -1241,7 +1238,7 @@ extension Configs on ContentNotifier {
           currentPage == tData.content.length || currentPage == 1 || align
               ? resetController
               : null;
-      addLoadEvent(resetDone: done);
+      loadFirstEvent(onResetDone: done);
     }
   }
 
@@ -1525,7 +1522,8 @@ class ContentViewConfig {
 
   @override
   String toString() {
-    return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor: $fontColor, lineTweenHeight: $lineTweenHeight,'
+    return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor:'
+        ' $fontColor, lineTweenHeight: $lineTweenHeight,'
         ' fontFamily: $fontFamily,  local: $locale, axis: $axis';
   }
 

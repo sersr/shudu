@@ -27,10 +27,15 @@ class ContentPageView extends StatefulWidget {
 class ContentPageViewState extends State<ContentPageView>
     with TickerProviderStateMixin {
   late NopPageViewController offsetPosition;
-  late ContentNotifier bloc;
+  ContentNotifier? _bloc;
+  ContentNotifier get bloc => _bloc!;
   late BookIndexNotifier indexBloc;
 
   PanSlideController? controller;
+
+  ///
+  ChangeNotifierSelector<Axis?, ValueNotifier<ContentViewConfig>>?
+      axisFromConfigs;
 
   @override
   void initState() {
@@ -107,45 +112,49 @@ class ContentPageViewState extends State<ContentPageView>
   Future<void> onshow() async {
     indexBloc.addRegisterKey(lKey);
 
-    if (bloc.config.value.orientation! && bloc.inBook)
+    if (bloc.config.value.orientation! && bloc.inBook) {
+      bloc.uiOverlayShow = true;
       return uiOverlay(hide: false);
+    }
   }
 
   Future<void> onhide() async {
     indexBloc.removeRegisterKey(lKey);
 
-    if (bloc.config.value.orientation! && bloc.inBook) return uiOverlay();
+    if (bloc.config.value.orientation! && bloc.inBook) {
+      bloc.uiOverlayShow = false;
+      return uiOverlay();
+    }
   }
 
-  Future? _f;
   void tigger() {
-    if (_f != null) return;
-    _f = _tigger()..whenComplete(() => _f = null);
-  }
-
-  Future<void> _tigger() async {
     getController().trigger(immediate: false);
-    await release(const Duration(milliseconds: 300));
-  }
-
-  @override
-  void didUpdateWidget(covariant ContentPageView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    updateAxis();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.read<ContentNotifier>()..controller = offsetPosition;
+    _bloc?.removeListener(update);
+    _bloc = context.read<ContentNotifier>()..controller = offsetPosition;
+    _bloc!.addListener(update);
     indexBloc = context.read<BookIndexNotifier>();
+    axisFromConfigs?.removeListener(updateAxis);
+    axisFromConfigs = bloc.config.selector((parent) => parent.value.axis);
+    axisFromConfigs!.addListener(updateAxis);
+    updateAxis();
   }
 
   void updateAxis() {
-    final axis = bloc.config.value.axis;
+    final axis = axisFromConfigs?.value;
+    assert(axis != null);
     if (axis != null) {
       offsetPosition.axis = axis;
     }
+    setState(() {});
+  }
+
+  void update() {
+    setState(() {});
   }
 
   int isBoundary() {
@@ -299,6 +308,8 @@ class ContentPageViewState extends State<ContentPageView>
   void dispose() {
     controller?.dispose();
     offsetPosition.dispose();
+    axisFromConfigs?.removeListener(updateAxis);
+    _bloc?.removeListener(update);
     bloc.controller = null;
     indexBloc.removeRegisterKey(lKey);
     super.dispose();
@@ -591,7 +602,7 @@ class _SlideRenderObject extends RenderBox {
     }
 
     final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
-    
+
     if (_footer != null) {
       _footer!.layout(_constraints);
       final parentdata = _footer!.parentData as BoxParentData;
