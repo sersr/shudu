@@ -194,7 +194,7 @@ class TopNotifier extends ChangeNotifier {
   final _event = EventQueue();
 
   Future<void> getNextData(String ctg, String date) {
-    return _event.addOneEventTask(() => _getNextData(ctg, date));
+    return _event.awaitOneEventTask(() => _getNextData(ctg, date));
   }
 
   Future<void> _getNextData(String ctg, String date) async {

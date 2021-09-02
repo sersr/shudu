@@ -1,20 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:ui';
 
-import 'package:bangs/bangs.dart';
+// import 'package:bangs/bangs.dart';
 import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../base/type_adapter.dart';
 import 'package:useful_tools/common.dart';
 import 'package:useful_tools/event_queue.dart';
 
@@ -25,27 +24,9 @@ import '../event.dart';
 
 abstract class BookRepositoryBase extends Repository implements SendEvent {
   Battery? _battery;
-  ViewInsets _viewInsets = ViewInsets.zero;
-  @override
-  ViewInsets get viewInsets => _viewInsets;
+
   @override
   late BookEvent bookEvent = BookEventMain(this);
-
-  var _bottomHeight = 0;
-  @override
-  int get bottomHeight => _bottomHeight;
-
-  @override
-  Future<ViewInsets> get getViewInsets async {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      final viewInsets = await Bangs.safePadding;
-      _viewInsets = viewInsets;
-      _bottomHeight = await Bangs.bottomHeight ~/ window.devicePixelRatio;
-
-      assert(Log.i('bottomHeight: $_bottomHeight'));
-    }
-    return _viewInsets;
-  }
 
   DeviceInfoPlugin? deviceInfo;
   @override
@@ -96,17 +77,9 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
   bool hasBottomNavbar = false;
   double height = 0;
 
-  final _safeBottom = ValueNotifier(0.0);
-  @override
-  ValueNotifier<double> get safeBottom => _safeBottom;
-
-  ///
-  /// Isolate
-  ///
-
   Isolate? _isolate;
 
-  Isolate? get isolate => _isolate;
+  // Isolate? get isolate => _isolate;
 
   set isolate(Isolate? n) {
     if (_isolate != n && _isolate != null) {
@@ -116,8 +89,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _init.value = _isolate != null;
   }
 
-  EventQueue get _initQueue => EventQueue.createEventQueue('app Init');
-  Future? get runner => _initQueue.runner;
+  final _initQueue = EventQueue();
 
   Future<void> onDone(ReceivePort rcPort);
   Future<void> onInit() async {
@@ -126,41 +98,53 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
       return;
     }
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
-    final _waits = <Future>{};
+    final _waits = FutureAny();
 
-    late Directory appDir;
     Directory? appDirExt;
-
     List<Directory>? cacheDirs;
 
+    _waits
+      ..add(setOrientation(true))
+      ..add(getBatteryLevel);
+
     if (Platform.isAndroid) {
-      Bangs.bangs.setNavigationChangeCallback(_changeCallback);
       // 存储在外部，避免重新安装时数据丢失
-      appDirExt = Directory('/storage/emulated/0/shudu');
-      _waits
-        ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
-        ..add(Permission.manageExternalStorage.status.then((status) {
-          if (status.isDenied) {
-            return Permission.manageExternalStorage.request().then((status) {
-              if (status.isDenied) appDirExt = null;
-            });
-          }
-        }));
+      _waits.add(getExternalStorageDirectories().then((f) {
+        if (f != null && f.isNotEmpty) {
+          appDirExt = Directory('/storage/emulated/0/shudu');
+          // final ff = f.first;
+          // Log.w('storage: ${await ff.list().toList()}', onlyDebug: false);
+        }
+
+        _waits
+          ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
+          ..add(Permission.manageExternalStorage.status.then((status) {
+            if (status.isDenied) {
+              return Permission.manageExternalStorage.request().then((status) {
+                if (status.isDenied) appDirExt = null;
+              });
+            }
+          }));
+      }));
     }
 
-    _waits
-      ..add(getApplicationDocumentsDirectory().then((dir) => appDir = dir))
-      ..add(setOrientation(true))
-      ..add(getBatteryLevel)
-      ..add(getViewInsets);
+    late Directory appDir;
+    bool useSqflite3 = false;
+    _waits.add(getApplicationDocumentsDirectory().then((dir) {
+      appDir = dir;
+      Log.i('init ....', onlyDebug: false);
+      hiveInit(join(appDir.path, 'shudu', 'hive'));
+      _waits
+          .add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
+    }));
 
-    await Future.wait(_waits);
+    await _waits.wait;
+    Log.i('init .... await', onlyDebug: false);
+
     final appPath = appDirExt?.path ?? appDir.path;
     final cachePath = cacheDirs?.isNotEmpty == true
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
-
-    // hiveInit(join(appPath, 'shudu', 'hive'));
 
     final rcPort = ReceivePort();
     bool useFfi = false;
@@ -171,7 +155,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
         break;
       default:
     }
-    bool useSqflite3 = await OptionsNotifier.sqfliteBox;
+
     Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
     if (!useFfi && useSqflite3) {
       SqfliteMainIsolate.initMainDb();
@@ -186,19 +170,9 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     isolate = newIsolate;
   }
 
-  void initBase() {
-    _initQueue.addOneEventTask(onInit);
-  }
-
-  void _changeCallback(bool isShow, int navHeight) {
-    hasBottomNavbar = isShow;
-    height = navHeight / window.devicePixelRatio;
-
-    if (hasBottomNavbar) {
-      safeBottom.value = height;
-    } else {
-      safeBottom.value = 0;
-    }
+  @override
+  Future<void> get initState async {
+    await _initQueue.awaitEventTask(onInit);
   }
 
   final ValueNotifier<bool> _init = ValueNotifier(false);
@@ -211,14 +185,12 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
   @mustCallSuper
   Future<void> onClose() async {
-    await Hive.close();
+    // await Hive.close();
     isolate = null;
   }
 
   @override
-  Future<void> close() {
-    final t = _initQueue.addOneEventTask(onClose);
-    assert(runner != null);
-    return runner ?? t;
+  Future<void> close() async {
+    return _initQueue.awaitOneEventTask(onClose);
   }
 }

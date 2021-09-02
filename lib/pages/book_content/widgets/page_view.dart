@@ -33,10 +33,6 @@ class ContentPageViewState extends State<ContentPageView>
 
   PanSlideController? controller;
 
-  ///
-  ChangeNotifierSelector<Axis?, ValueNotifier<ContentViewConfig>>?
-      axisFromConfigs;
-
   @override
   void initState() {
     super.initState();
@@ -138,22 +134,15 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc = context.read<ContentNotifier>()..controller = offsetPosition;
     _bloc!.addListener(update);
     indexBloc = context.read<BookIndexNotifier>();
-    axisFromConfigs?.removeListener(updateAxis);
-    axisFromConfigs = bloc.config.selector((parent) => parent.value.axis);
-    axisFromConfigs!.addListener(updateAxis);
-    updateAxis();
+    update();
   }
 
-  void updateAxis() {
-    final axis = axisFromConfigs?.value;
+  void update() {
+    final axis = bloc.config.value.axis;
     assert(axis != null);
     if (axis != null) {
       offsetPosition.axis = axis;
     }
-    setState(() {});
-  }
-
-  void update() {
     setState(() {});
   }
 
@@ -308,7 +297,6 @@ class ContentPageViewState extends State<ContentPageView>
   void dispose() {
     controller?.dispose();
     offsetPosition.dispose();
-    axisFromConfigs?.removeListener(updateAxis);
     _bloc?.removeListener(update);
     bloc.controller = null;
     indexBloc.removeRegisterKey(lKey);

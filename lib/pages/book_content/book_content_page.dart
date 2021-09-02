@@ -26,6 +26,8 @@ class BookContentPage extends StatefulWidget {
   final int bookId;
   final int cid;
   final int page;
+
+  // 任务队列中的任务相同的 key 不会被抛弃
   final Object currentKey;
   static Object? _wait;
   static Future push(
@@ -86,9 +88,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   @override
   void initOnceTask() {
     super.initOnceTask();
-    // 当此任务为队列中的最后一个任务时，不忽略拥有相同key的任务
-    // 当要执行的任务与队列最后一个任务的key不同时，
-    // 会忽略所有相同key的任务（只影响onlyLastOne）
     bloc.addInitEventTask(() async {
       if (!bloc.uiOverlayShow) await uiOverlay();
       // 状态栏彻底隐藏之后才改变颜色

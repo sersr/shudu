@@ -1,4 +1,4 @@
-import 'package:bangs/bangs.dart';
+// import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
 
 // ignore: unused_import
@@ -23,16 +23,16 @@ abstract class Repository {
 
     return _instance!;
   }
-  ValueNotifier<double> get safeBottom;
+  // ValueNotifier<double> get safeBottom;
   @visibleForTesting
   static void repositoryTest(Repository repository) {
     _instance ??= repository;
   }
 
   // default
-  ViewInsets get viewInsets => ViewInsets.zero;
-  Future<ViewInsets> get getViewInsets async => viewInsets;
-  int get bottomHeight => 0;
+  // ViewInsets get viewInsets => ViewInsets.zero;
+  // Future<ViewInsets> get getViewInsets async => viewInsets;
+  // int get bottomHeight => 0;
 
   int level = 50;
   Future<int> get getBatteryLevel async => level;

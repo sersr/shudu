@@ -112,8 +112,7 @@ class OptionsNotifier extends ChangeNotifier {
   static const _useTextCache = 'useTextCache';
 
   static Future<bool> get sqfliteBox async {
-    final e = EventQueue.createEventQueue('_');
-    return e.addEventTask(() async {
+    return EventQueue.runTaskOnQueue('sqfliteBox', () async {
       final box = await Hive.openBox('_sqfliteBox');
       final result = box.get('_useSqflite', defaultValue: false);
       await box.close();
@@ -122,8 +121,7 @@ class OptionsNotifier extends ChangeNotifier {
   }
 
   static Future<void> setSqfliteBox(bool use) async {
-    final e = EventQueue.createEventQueue('_');
-    return e.addEventTask(() async {
+    return EventQueue.runTaskOnQueue('sqfliteBox', () async {
       final box = await Hive.openBox('_sqfliteBox');
       await box.put('_useSqflite', use);
       return box.close();

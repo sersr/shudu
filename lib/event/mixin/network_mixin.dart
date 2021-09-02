@@ -114,7 +114,7 @@ mixin NetworkMixin implements CustomEvent {
 }
 
 final iOTask = EventQueue.iOQueue;
-final imageNet = EventQueue.createEventQueue(NetworkMixin, channels: 8);
+final imageNet = EventQueue();
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
@@ -176,7 +176,7 @@ extension _NetworkImpl on NetworkMixin {
     //     }));
     //   }
     // }
-    // iOTask.addEventTask(() => Future.wait(tasks));
+    // iOTask.awaitEventTask(() => Future.wait(tasks));
   }
 
   Future<T> _decode<T>(dynamic url,
@@ -503,7 +503,7 @@ extension _NetworkImpl on NetworkMixin {
     var success = false;
 
     List<Uint8List>? imgData;
-    await imageNet.addEventTask(() async {
+    await imageNet.awaitEventTask(() async {
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
@@ -521,7 +521,7 @@ extension _NetworkImpl on NetworkMixin {
     final data = imgData;
     if (data != null && success) {
       try {
-        await iOTask.addEventTask(() async {
+        await iOTask.awaitEventTask(() async {
           final f = File(imgPath);
           await f.create(recursive: true);
           final o = await f.open(mode: FileMode.writeOnly);
@@ -563,7 +563,7 @@ extension _NetworkImpl on NetworkMixin {
     final shouldUpdate = imgdateTime == null || imgdateTime + oneDay < now;
     final outOfDate = imgdateTime == null || imgdateTime + oneDay * 7 < now;
 
-    final _bytes = await iOTask.addEventTask(() async {
+    final _bytes = await iOTask.awaitEventTask(() async {
       final f = File(imgPath);
       final exits = await f.exists();
       if (exits) {
@@ -601,7 +601,7 @@ extension _NetworkImpl on NetworkMixin {
 
     List<int> dataBytes = <int>[];
 
-    await imageNet.addEventTask(() async {
+    await imageNet.awaitEventTask(() async {
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
@@ -628,7 +628,7 @@ extension _NetworkImpl on NetworkMixin {
 
     if (success && dataBytes.isNotEmpty) {
       final f = File(imgPath);
-      iOTask.addEventTask(() async {
+      iOTask.awaitEventTask(() async {
         try {
           await f.create(recursive: true);
           final o = await f.open(mode: FileMode.writeOnly);

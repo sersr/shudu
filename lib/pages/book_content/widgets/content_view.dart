@@ -94,13 +94,12 @@ class RenderContentView extends RenderBox
     canvas.drawPicture(_pictureRefInfo.pictureRef.picture);
 
     final left = contentMetrics.left;
-    final bottom = contentMetrics.bottom;
 
     if (child != null) {
       final height = bottomLeft.size.height;
       final width = child!.size.width;
       final dx = left + offset.dx;
-      final dy = size.height - contentBotttomPad - height - bottom + offset.dy;
+      final dy = size.height - contentBotttomPad - height + offset.dy;
       bottomLeft.paint(canvas, Offset(dx + width, dy));
       context.paintChild(
           child!, Offset(dx, dy - (child!.size.height - height) / 2));

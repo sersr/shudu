@@ -458,15 +458,9 @@ class _BottomEndState extends State<BottomEnd> {
 
   @override
   Widget build(BuildContext context) {
-
     return RepaintBoundary(
-        child: AnimatedBuilder(
-      animation: bloc.safeBottom,
-      builder: (context, child) {
-        return Padding(
-            padding: const EdgeInsets.only(top: 6.0, bottom: 10.0),
-            child: child);
-      },
+        child: Padding(
+      padding: const EdgeInsets.only(top: 6.0, bottom: 6.0),
       child: Row(
         children: [
           Expanded(

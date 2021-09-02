@@ -383,7 +383,7 @@ void main() async {
 
     final list = [];
     for (var i = 0; i < 10; i++) {
-      list.add(loop.addOneEventTask(_print));
+      list.add(loop.awaitOneEventTask(_print));
     }
     for (final i in list) {
       print(i.hashCode);

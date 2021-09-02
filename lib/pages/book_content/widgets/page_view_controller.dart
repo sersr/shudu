@@ -247,6 +247,11 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     setPixels(pixels - delta);
   }
 
+  void resetContentDimension() {
+    _minExtent = double.negativeInfinity;
+    _maxExtent = double.infinity;
+  }
+
   PreNextDragController? _currentDrag;
 
   PreNextDragController? drag(

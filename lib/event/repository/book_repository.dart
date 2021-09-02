@@ -12,12 +12,6 @@ class BookRepository extends BookRepositoryBase with SendEventMixin {
   SendPort? _clientSP;
 
   @override
-  Future<void> get initState async {
-    initBase();
-    return runner;
-  }
-
-  @override
   Future<void> onDone(ReceivePort rcPort) async {
     _getClientSP ??= Completer<void>();
 

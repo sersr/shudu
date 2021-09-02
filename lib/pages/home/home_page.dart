@@ -47,10 +47,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
     final data = MediaQuery.of(context);
+
     final rep = cache.repository;
     _future ??= rep.initState.then((_) {
       painterBloc.metricsChange(data);
       return Future.wait([
+        opts.init(),
         search.init(),
         painterBloc.initConfigs(),
         cache.load(),
@@ -504,8 +506,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     children: [
                       Center(child: Text('useSqflite3:(重启生效)')),
                       Selector<OptionsNotifier, bool>(
-                          selector: (_, opt) =>
-                              opt.options.useSqflite ?? false,
+                          selector: (_, opt) => opt.options.useSqflite ?? false,
                           builder: (context, useSqflite3, _) {
                             return Switch(
                               value: useSqflite3,

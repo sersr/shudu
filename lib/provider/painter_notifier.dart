@@ -8,15 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:screen_brightness/screen_brightness.dart';
-import 'package:wakelock/wakelock.dart';
 import 'package:hive/hive.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 import 'package:useful_tools/useful_tools.dart';
+import 'package:wakelock/wakelock.dart';
 
+import '../api/api.dart';
 import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content/widgets/page_view_controller.dart';
-
 import 'constansts.dart';
 
 enum Status { ignore, error, done }
@@ -116,8 +116,6 @@ class ContentNotifier extends ChangeNotifier {
 
   var paddingRect = EdgeInsets.zero;
 
-  ValueNotifier<double> get safeBottom => repository.safeBottom;
-
   TextStyle _getStyle(ContentViewConfig config) {
     return TextStyle(
       locale: const Locale('zh', 'CN'),
@@ -133,17 +131,12 @@ class ContentNotifier extends ChangeNotifier {
   ///-------------------------
 
   // 所有异步任务
-  final _futures = <int, Future>{};
-  final _disposeFutures = <Future>[];
+  var _futures = <int, Future>{};
   // 缓存池
   final _caches = <int, TextData>{};
-  final _ids = <int?>[];
 
   // 记录重新下载的id，并延迟删除，避免频繁访问
   final _reloadIds = <int>{};
-
-  int get tasksLength => _futures.length;
-  Future get waitTasks => Future.wait(List.of(_futures.values));
 
   bool _inBookView = false;
   bool _scheduled = false;
@@ -183,8 +176,8 @@ class ContentNotifier extends ChangeNotifier {
   /// 当前章节无效，初始加载，设置更改，重新加载
   final initQueue = EventQueue();
 
-  final _taskEvent = EventQueue();
-  Future? get taskRunner => _taskEvent.runner;
+  // final _taskEvent = EventQueue();
+  // Future? get taskRunner => _taskEvent.runner;
 
   ///-------------------------
 
@@ -223,10 +216,7 @@ class ContentNotifier extends ChangeNotifier {
   // brightness
   final _brightness = EventQueue();
   final brightness = ValueNotifier(0.0);
-  // void updateBrightness() {
-  //   Log.w('updateBrightness', onlyDebug: false);
-  //   _brightness.addOneEventTask(() => _fo());
-  // }
+
   double? _lastBrightness;
 
   void setBrightness(double v) {
@@ -257,13 +247,6 @@ class ContentNotifier extends ChangeNotifier {
     });
   }
 
-  // void awaitReloadBrightness() {
-  //   _brightness.addEventTask(() async {
-  //     await release(const Duration(milliseconds: 300));
-  //     return _fo();
-  //   });
-  // }
-
   void reloadBrightness() {
     _brightness.addOneEventTask(() => _fo());
   }
@@ -272,6 +255,16 @@ class ContentNotifier extends ChangeNotifier {
     if (_brightNess) brightness.value = await ScreenBrightness.current;
   }
 
+  /// 管理整个章节是否载入[_caches]的标识码
+  var key = Object();
+  void increaseKey() {
+    key = Object();
+
+    /// [_futures]依赖于contentid
+    /// 当[key]自增时，意味着正在进行的任务将被抛弃
+    /// 由于[_futures]自动管理状态，创建一个新对象避免干扰
+    _futures = <int, Future>{};
+  }
   // late FlutterTts tts = FlutterTts()
   //   ..setLanguage('zh-CN')
   //   // ..setSpeechRate(0.8)
@@ -348,41 +341,6 @@ extension ContentStatus on ContentNotifier {
 }
 
 extension DataLoading on ContentNotifier {
-  Future<void> reset({bool clearCache = false}) async {
-    if (clearCache) {
-      if (_caches.isNotEmpty) {
-        var _c = List.of(_caches.values);
-        _caches.clear();
-        for (var t in _c) {
-          for (var p in t.content) {
-            p.picture.dispose();
-          }
-        }
-      }
-      //  _c.forEach((element) {element.content.forEach((element) {element.picture.dispose();})});
-
-      if (_futures.isNotEmpty) {
-        final _tasks = List.of(_futures.values);
-
-        _disposeFutures.addAll(_tasks);
-        final f = FutureAny()..addAll(_disposeFutures);
-        await f.wait;
-        // await Future.wait(_disposeFutures);
-      }
-      if (_caches.isNotEmpty) {
-        var _c = List.of(_caches.values);
-        _caches.clear();
-        for (var t in _c) {
-          for (var p in t.content) {
-            p.picture.dispose();
-          }
-        }
-      }
-    }
-    // _tData = TextData(cid: cid ?? tData.cid);
-    _getCurrentIds();
-  }
-
   Future<void> dump() async {
     final cid = tData.cid;
     final _bookid = bookid;
@@ -405,11 +363,6 @@ extension DataLoading on ContentNotifier {
   }
 
   /// 文本加载-----------------
-
-  void addCache(TextData _cnpid) {
-    assert(_cnpid.contentIsNotEmpty);
-    _caches[_cnpid.cid!] = _cnpid;
-  }
 
   TextData? _getTextData(int? key) => _caches[key];
 
@@ -434,23 +387,29 @@ extension DataLoading on ContentNotifier {
     }
   }
 
-  Future<void> loadData(int _contentKey, int _bookid) async {
-    if (_caches.containsKey(_contentKey)) return;
-    await load(_bookid, _contentKey);
+  Future<void> load(int _bookid, int contentid, {update = false}) {
+    return _load(_bookid, contentid, update);
   }
 
-  Future<void> load(int _bookid, int contentid, {bool update = false}) async {
-    EventQueue.currentTask?.value = contentid;
-    if (_ignoreTask(update: update) || _bookid == -1 || contentid == -1) return;
+  Future<void> _load(int _bookid, int contentid, bool update) async {
+    if (_bookid == -1 || contentid == -1) return;
 
     final lines =
         await repository.bookEvent.getContent(_bookid, contentid, update);
-    if (_ignoreTask(update: update)) return;
+    if (_bookid != bookid) return;
 
     if (lines != null && lines.contentIsNotEmpty) {
+      final _key = key;
       final pages = await _asyncLayout(lines.pages, lines.cname!);
-
-      if (pages.isEmpty || _ignoreTask(update: update)) return;
+      if (_key != key || _bookid != bookid) {
+        for (final p in pages) {
+          // 释放picture资源
+          p.picture.pictureRef.dispose();
+        }
+        assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
+        return;
+      }
+      if (pages.isEmpty) return;
       final _cnpid = TextData(
         content: pages,
         nid: lines.nid,
@@ -460,7 +419,7 @@ extension DataLoading on ContentNotifier {
         cname: lines.cname,
         rawContent: lines.pages,
       );
-      addCache(_cnpid);
+      _caches[_cnpid.cid!] = _cnpid;
     }
   }
 }
@@ -473,9 +432,9 @@ extension Tasks on ContentNotifier {
     final _bookid = bookid;
     final _key = tData.cid!;
     assert(Log.i('cid: $_key'));
-    _loadWithId(_key);
+    _loadTasks(_bookid, _key);
 
-    await _futures.awaitId(_key);
+    await _futures.awaitKey(_key);
 
     final _currentText = _getTextData(_key);
     if (_bookid == bookid &&
@@ -496,7 +455,7 @@ extension Tasks on ContentNotifier {
   }
 
   void _loadTasks(int _bookid, int? contentid) {
-    if (!inBook || _futures.length > 5) return;
+    if (!inBook) return;
 
     if (_bookid == bookid &&
         _bookid != -1 &&
@@ -504,18 +463,9 @@ extension Tasks on ContentNotifier {
         contentid != -1 &&
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
-      final _ntask =
-          _taskEvent.addEventTask(() => loadData(contentid, _bookid));
-
-      _futures.addTask(contentid, _ntask, solveTask: _onRemove);
+      _futures.addTask(contentid, load(_bookid, contentid));
     }
   }
-
-  void _onRemove(Future task) {
-    if (_disposeFutures.isNotEmpty) _disposeFutures.remove(task);
-  }
-
-  void _loadWithId(int? id) => _loadTasks(bookid, id);
 
   void scheduleTask() {
     if (_scheduled) return;
@@ -533,6 +483,8 @@ extension Tasks on ContentNotifier {
           .where((e) => !_caches.containsKey(e))
           .forEach(_loadWithId);
   }
+
+  void _loadWithId(int? id) => _loadTasks(bookid, id);
 
   // 处于最后一章节时，查看是否有更新
   Future<void> _loadResolve() async {
@@ -571,7 +523,7 @@ extension Tasks on ContentNotifier {
       _reloadIds.add(cid);
       Future.delayed(const Duration(seconds: 10), () => _reloadIds.remove(cid));
 
-      await _taskEvent.addEventTask(() => load(bookid, cid, update: true));
+      await load(bookid, cid, update: true);
       _getdata();
     }
   }
@@ -586,7 +538,7 @@ extension Tasks on ContentNotifier {
   }
 
   Future<void> _reload() async {
-    await _taskEvent.addEventTask(() => load(bookid, tData.cid!, update: true));
+    await load(bookid, tData.cid!, update: true);
     final _data = _getTextData(tData.cid);
     if (_data != null && _data.contentIsNotEmpty) {
       tData = _data;
@@ -604,7 +556,7 @@ extension Tasks on ContentNotifier {
     if (_data == null || _data.contentIsEmpty) {
       _loadAuto();
 
-      await _futures.awaitId(getid);
+      await _futures.awaitKey(getid);
 
       _data = _getTextData(getid);
       if (_data == null || _data.contentIsEmpty) return false;
@@ -629,62 +581,23 @@ extension Tasks on ContentNotifier {
 }
 
 extension Layout on ContentNotifier {
-  // ---------------------------------------
-
-  bool _ignoreTask({bool update = false}) {
-    final contentid = EventQueue.currentTask?.value;
-    assert(contentid is int);
-    if (_disposeFutures.remove(_futures[contentid])) return true;
-
-    if (!inBook) return true;
-    if (update) return false;
-    final _thatData = _getTextData(contentid);
-    if (_thatData != null && _thatData.contentIsNotEmpty) {
-      if (_thatData.nid == -1 || !_thatData.hasContent) {
-        return false;
-      }
-      return true;
-    }
-
-    return !_idSets.contains(contentid);
-  }
-
-  List<int?> get _idSets {
-    if (_ids.isEmpty) _getCurrentIds();
-    return _ids;
-  }
-
   // 根据当前章节更新存活章节
   // 任务顺序与添加顺序一致
-  //
   Iterable<int> _getCurrentIds() {
-    _ids.clear();
-    _ids.add(tData.cid);
+    final ids = <int?>{};
+    final cid = tData.cid;
 
     final current = _getTextData(tData.cid);
     final nid = current?.nid;
     final pid = current?.pid;
-
-    _ids
-      ..add(nid)
-      ..add(pid);
-
     final next = _getTextData(nid);
     final nnid = next?.nid;
-    _ids.add(nnid);
-    // if (nnid != null) {
-    //   final thirty = _getTextData(nnid);
-    //   _ids
-    //     ..add(nnid)
-    //     ..add(thirty?.nid);
-    // }
-
-    // final pre = _getTextData(pid);
-    // final prePid = pre?.pid;
-
-    // if (prePid != null) _ids.add(prePid);
-
-    return _ids.whereType<int>();
+    ids
+      ..add(cid)
+      ..add(nid)
+      ..add(pid)
+      ..add(nnid);
+    return ids.whereType<int>();
   }
 
   Future<void> get wait => releaseUI;
@@ -870,7 +783,6 @@ extension Layout on ContentNotifier {
         secstyle: secstyle,
         left: left,
         size: _size,
-        bottom: paddingRect.bottom,
       );
       textPages.add(met);
     }
@@ -942,9 +854,9 @@ extension Event on ContentNotifier {
     showrect = !showrect;
     if (inBook && tData.cid != null) {
       if (initQueue.runner == null) {
-        loadFirstEvent();
+        startFirstEvent();
       } else {
-        initQueue.runner!.whenComplete(loadFirstEvent);
+        initQueue.runner!.whenComplete(startFirstEvent);
       }
       return initQueue.runner;
     }
@@ -954,8 +866,7 @@ extension Event on ContentNotifier {
   void touchBook(int newBookid, int cid, int page, Object taskKey) {
     if (!inBook) resetController();
     inbook();
-    footer.value = '';
-    header.value = '';
+
     setOrientation(config.value.orientation!);
 
     newBookOrCid(newBookid, cid, page, taskKey: taskKey);
@@ -968,7 +879,6 @@ extension Event on ContentNotifier {
         assert(Log.i('new: $newBookid $cid'));
 
         notifyState(notEmptyOrIgnore: true, loading: false);
-
         _tData = TextData(cid: cid);
         currentPage = page;
         bookid = newBookid;
@@ -979,12 +889,27 @@ extension Event on ContentNotifier {
   }
 
   Future<T?> addInitEventTask<T>(EventCallback<T> callback, {Object? taskKey}) {
-    return callback.pushOne(initQueue, taskKey: taskKey);
+    return callback.pushOneAwait(initQueue, taskKey: taskKey);
     // return initQueue.addOneEventTask(callback, taskKey: taskKey);
   }
 
-  Future<void> loadFirstEvent({
-    bool zero = true,
+  void reset({bool clearCache = false}) {
+    if (clearCache) {
+      if (_caches.isNotEmpty) {
+        var _c = List.of(_caches.values);
+        _caches.clear();
+        for (var t in _c) {
+          for (var p in t.content) {
+            p.picture.dispose();
+          }
+        }
+      }
+      increaseKey();
+    }
+  }
+
+  Future<void> startFirstEvent({
+    bool clear = true,
     Object? taskKey,
     void Function()? onStart,
     void Function()? onResetDone,
@@ -993,19 +918,18 @@ extension Event on ContentNotifier {
     return () async {
       autoRun.stopSave();
       onStart?.call();
-      await reset(clearCache: zero);
+      reset(clearCache: clear);
 
       onResetDone?.call();
       await _loadFirst();
       _notify();
 
       /// 重置边界
-      controller?.applyConentDimension(
-          minExtent: double.negativeInfinity, maxExtent: double.infinity);
+      controller?.resetContentDimension();
       onDone?.call();
 
       scheduleMicrotask(autoRun.stopAutoRun);
-    }.pushOne(initQueue, taskKey: taskKey);
+    }.pushOneAwait(initQueue, taskKey: taskKey);
   }
 
   Future<void> newBookOrCid(int newBookid, int cid, int page,
@@ -1013,13 +937,18 @@ extension Event on ContentNotifier {
     if (!inBook) return;
 
     if (cid == -1) return;
+    final clear = bookid != newBookid;
+    if (clear) {
+      footer.value = '';
+      header.value = '';
+    }
     final _reset = _getStateOrSetBook(newBookid, cid, page, only: true);
-    if (tData.contentIsEmpty || _reset) {
+    if (_reset) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
 
-      await loadFirstEvent(
-          zero: false,
+      await startFirstEvent(
+          clear: clear,
           onStart: () => _getStateOrSetBook(newBookid, cid, page),
           onDone: resetController,
           taskKey: taskKey);
@@ -1028,24 +957,9 @@ extension Event on ContentNotifier {
     }
   }
 
-  void metricsChange(MediaQueryData data) {
-    if (inBook || size.isEmpty) {
-      if (size.isEmpty) size = data.size;
-      final changed = _modifiedSize(data);
-      if (changed) {
-        if (tData.cid != null) {
-          loadFirstEvent(onStart: () {
-            resetController();
-            notifyState(notEmptyOrIgnore: true);
-          });
-        }
-      }
-    }
-  }
-
   Future<void> reload() async {
     notifyState(loading: true, notEmptyOrIgnore: true);
-    loadFirstEvent(zero: false);
+    startFirstEvent(clear: false);
     return initQueue.runner;
   }
 
@@ -1089,6 +1003,21 @@ extension Event on ContentNotifier {
     scheduleMicrotask(autoRun.stopAutoRun);
   }
 
+  void metricsChange(MediaQueryData data) {
+    if (inBook || size.isEmpty) {
+      if (size.isEmpty) size = data.size;
+      final changed = _modifiedSize(data);
+      if (changed) {
+        if (tData.cid != null) {
+          startFirstEvent(onStart: () {
+            resetController();
+            notifyState(notEmptyOrIgnore: true);
+          });
+        }
+      }
+    }
+  }
+
   bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
@@ -1098,7 +1027,7 @@ extension Event on ContentNotifier {
       left: safePadding.left + 16,
       top: safePadding.top,
       right: safePadding.right + 16,
-      bottom: defaultTargetPlatform == TargetPlatform.iOS ? 10.0 : 4.0,
+      bottom: defaultTargetPlatform == TargetPlatform.iOS ? 6.0 : 2.0,
     );
 
     if (size != _size) {
@@ -1218,27 +1147,17 @@ extension Configs on ContentNotifier {
 
     final orientation = config.value.orientation;
 
-    if (_orientation != orientation) {
-      await setOrientation(_orientation);
-    }
-
     config.value = _config;
-
-    // if (config.value.audio == true) {
-    //   Log.e('audio: true');
-    //   _dataQueue.addOneEventTask(() => _tdataRun());
-    // } else if (config.value.audio == false) {
-    //   Log.e('audio: false');
-    //   // tts.awaitSpeakCompletion(false);
-    //   _dataQueue.addEventTask(() => tts.stop());
-    // }
 
     if (flush) {
       final done =
           currentPage == tData.content.length || currentPage == 1 || align
               ? resetController
               : null;
-      loadFirstEvent(onResetDone: done);
+      startFirstEvent(onResetDone: done);
+    }
+    if (_orientation != orientation) {
+      setOrientation(_orientation);
     }
   }
 
@@ -1282,20 +1201,17 @@ extension Configs on ContentNotifier {
     style = _getStyle(config.value);
     secstyle = style.copyWith(
       fontSize: contentFooterSize,
-      // version: ^2.2.0
       leadingDistribution: TextLeadingDistribution.even,
-      // height: 1.2,
     );
     config.addListener(configListen);
     autoValue.addListener(configListen);
   }
 
-  Future? configListen() async {
+  void configListen() async {
     style = _getStyle(config.value);
     secstyle = style.copyWith(
       fontSize: contentFooterSize,
       leadingDistribution: TextLeadingDistribution.even,
-      // height: 1.2,
     );
 
     await _configF;
@@ -1422,7 +1338,6 @@ class ContentMetrics {
     // required this.windowTopPadding,
     // required this.showrect,
     // required this.topExtraHeight,
-    required this.bottom,
     required this.picture,
   });
   // final List<TextPainter> painters;
@@ -1440,7 +1355,6 @@ class ContentMetrics {
   // final double windowTopPadding;
   // final bool showrect;
   // final double topExtraHeight;
-  final double bottom;
   final PictureRefInfo picture;
 }
 
@@ -1588,23 +1502,24 @@ class AutoRun {
 }
 
 extension FutureTasksMap<T, E> on Map<T, Future<E>> {
-  void addTask(T id, Future<E> f,
+  // 将一个异步任务添加到任务列表中，并在完成之后自动删除
+  void addTask(T key, Future<E> f,
       {void Function()? callback,
       void Function(T)? solve,
       void Function(Future<E>)? solveTask}) {
-    Log.i('addTask $id');
-    if (containsKey(id)) return;
-    this[id] = f;
+    Log.i('addTask $key');
+    if (containsKey(key)) return;
+    this[key] = f;
     f.whenComplete(() {
-      Log.i('task complete $id');
-      solve?.call(id);
+      assert(Log.i('task complete $key'));
+      solve?.call(key);
       solveTask?.call(f);
       callback?.call();
-      remove(id);
+      remove(key);
     });
   }
 
-  Future? awaitId(T? id) => this[id];
+  Future<E>? awaitKey(T? key) => this[key];
 
-  bool isLoading(T? id) => containsKey(id);
+  bool isLoading(T? key) => containsKey(key);
 }

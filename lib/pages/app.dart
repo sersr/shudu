@@ -18,7 +18,6 @@ class _ShuduAppState extends State<ShuduApp> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    context.read<OptionsNotifier>().init();
   }
 
   @override

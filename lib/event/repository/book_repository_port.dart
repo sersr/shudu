@@ -8,11 +8,7 @@ import './book_repository_base.dart';
 class BookRepositoryPort extends BookRepositoryBase with SendEventPortMixin {
   SendPort? _clientSP;
 
-  @override
-  Future<void> get initState async {
-    initBase();
-    await runner;
-  }
+
 
   @override
   Future<void> onDone(ReceivePort rcPort) async {
