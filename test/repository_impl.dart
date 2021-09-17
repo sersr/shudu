@@ -48,9 +48,6 @@ class RepositoryImplTest extends Repository with SendEventPortMixin {
   bool get systemOverlaysAreVisible => throw UnimplementedError();
 
   @override
-  ValueNotifier<double> get safeBottom => ValueNotifier(0);
-
-  @override
   ValueNotifier<bool> get init => throw UnimplementedError();
 
   @override

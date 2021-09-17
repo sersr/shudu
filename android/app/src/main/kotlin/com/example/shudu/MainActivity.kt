@@ -7,9 +7,10 @@ import android.os.Build
 import android.os.Bundle
 
 import io.flutter.embedding.android.FlutterActivity
+import com.example.hot_fix.HotFixActivity
 
 
-class MainActivity : FlutterActivity() {
+class MainActivity : HotFixActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

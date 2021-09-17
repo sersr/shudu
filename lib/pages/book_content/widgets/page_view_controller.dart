@@ -4,7 +4,7 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../../../provider/painter_notifier.dart';
+import '../../../provider/content_notifier.dart';
 import '../../../widgets/activity.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});

@@ -589,7 +589,7 @@ class _SlideRenderObject extends RenderBox {
       parentdata.offset = Offset(paddingRect.left, _height);
     }
 
-    final _bottomHeight = size.height - paddingRect.bottom - contentBotttomPad;
+    final _bottomHeight = size.height - contentBotttomPad;
 
     if (_footer != null) {
       _footer!.layout(_constraints);

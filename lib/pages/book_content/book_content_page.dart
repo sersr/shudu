@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/book_cache_notifier.dart';
-import '../../provider/painter_notifier.dart';
+import '../../provider/content_notifier.dart';
 import '../../widgets/page_animation.dart';
 import '../../widgets/pan_slide.dart';
 import 'widgets/page_view.dart';
@@ -36,16 +35,18 @@ class BookContentPage extends StatefulWidget {
     _wait = const Object();
     final bloc = context.read<ContentNotifier>();
     final taskKey = Object();
-    bloc.touchBook(newBookid, cid, page, taskKey);
-    await EventQueue.scheduler.endOfFrame;
+    bloc.touchBook(newBookid, cid, page);
+    await SchedulerBinding.instance!.endOfFrame;
     _wait = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return BookContentPage(
-        bookId: newBookid,
-        cid: cid,
-        page: page,
-        currentKey: taskKey,
+      return RepaintBoundary(
+        child: BookContentPage(
+          bookId: newBookid,
+          cid: cid,
+          page: page,
+          currentKey: taskKey,
+        ),
       );
     }));
   }
@@ -72,11 +73,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
     notifyColor = bloc.config.selector((parent) => parent.value.bgcolor);
-
-    if (Platform.isAndroid) {
-      getExternalStorageDirectories().then((value) => Log.w(value));
-      getApplicationDocumentsDirectory().then((value) => Log.w(value));
-    }
   }
 
   @override
@@ -88,12 +84,14 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   @override
   void initOnceTask() {
     super.initOnceTask();
-    bloc.addInitEventTask(() async {
-      if (!bloc.uiOverlayShow) await uiOverlay();
-      // 状态栏彻底隐藏之后才改变颜色
-      await release(const Duration(milliseconds: 300));
-      uiStyle(dark: false);
-    }, taskKey: widget.currentKey);
+    if (bloc.config.value.orientation!) {
+      EventQueue.runTaskOnQueue(runtimeType, () async {
+        if (!bloc.uiOverlayShow) await uiOverlay();
+        // 状态栏彻底隐藏之后才改变颜色
+        await release(const Duration(milliseconds: 300));
+        uiStyle(dark: false);
+      });
+    }
   }
 
   Timer? errorTimer;
@@ -168,8 +166,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       ),
     );
 
-    return WillPopScope(
-        onWillPop: onWillPop, child: RepaintBoundary(child: child));
+    return WillPopScope(onWillPop: onWillPop, child: child);
   }
 
   Future<bool> onWillPop() async {
@@ -186,13 +183,15 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
     await blocCache.load();
 
-    bloc.initQueue.addEventTask(() async {
+    EventQueue.runTaskOnQueue(runtimeType, () async {
       uiStyle();
       await uiOverlay(hide: false);
     });
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
-
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      await bloc.taskRunner();
+    }
     return true;
   }
 }

@@ -36,7 +36,7 @@ class _ImageResolveState extends State<ImageResolve> {
   Widget build(BuildContext context) {
     final child = _layoutBuilder();
 
-    return RepaintBoundary(child: Center(child: child));
+    return RepaintBoundary(child: child);
   }
 
   late Repository repository;
@@ -134,14 +134,9 @@ class _ImageResolveState extends State<ImageResolve> {
     if (hasImage) {
       if (widget.builder != null) child = widget.builder!(child);
       if (widget.shadow) child = ImageShadow(child: child);
-      // if (sync) return child;
-      // } else {
-      //   return widget.placeholder ?? child;
+      child = Center(child: child);
     }
-    // return child;
-    // return AnimatedSwitcher(
-    //     child: hasImage ? child : place,
-    //     duration: const Duration(milliseconds: 500));
+
     return AnimatedOpacity(
         opacity: hasImage ? 1 : 0,
         duration: const Duration(milliseconds: 300),

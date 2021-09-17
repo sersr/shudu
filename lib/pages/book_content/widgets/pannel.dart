@@ -460,7 +460,7 @@ class _BottomEndState extends State<BottomEnd> {
   Widget build(BuildContext context) {
     return RepaintBoundary(
         child: Padding(
-      padding: const EdgeInsets.only(top: 6.0, bottom: 6.0),
+      padding: const EdgeInsets.only(top: 6.0, bottom: 2.0),
       child: Row(
         children: [
           Expanded(
@@ -532,9 +532,7 @@ class _BottomEndState extends State<BottomEnd> {
             child: bottomButton(
               onTap: () {
                 getController().hide();
-                bloc.autoRun.stopTicked();
                 final portrait = !bloc.config.value.orientation!;
-                uiOverlay(hide: !portrait);
                 bloc.setPrefs(
                     bloc.config.value.copyWith(orientation: portrait));
               },
@@ -632,6 +630,8 @@ class _TopPannelState extends State<TopPannel> {
                                 contentNtf
                                   ..dump()
                                   ..out();
+                                setOrientation(true);
+                                uiOverlay(hide: false);
                                 uiStyle();
                                 final cache = context.read<BookCacheNotifier>();
                                 BookInfoPage.push(context, bookid)
@@ -644,8 +644,15 @@ class _TopPannelState extends State<TopPannel> {
                                       break;
                                     }
                                   }
-
-                                  contentNtf.newBookOrCid(bookid, cid, page);
+                                  contentNtf
+                                    ..inbook()
+                                    ..newBookOrCid(bookid, cid, page);
+                                  setOrientation(
+                                      contentNtf.config.value.orientation!);
+                                  uiOverlay(
+                                      hide: !contentNtf
+                                          .config.value.orientation!);
+                                  uiStyle(dark: false);
                                 });
                               },
                               text: '详情页',

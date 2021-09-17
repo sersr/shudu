@@ -133,7 +133,7 @@ class _WrapWidgetState extends State<WrapWidget>
           load: loadingIndicator(),
           finishLayout: (first, last) {
             final state = shudanProvider.state;
-
+            Log.w('first: $first ');
             if (last >= list.length - 3) {
               if (state == LoadingStatus.success) {
                 shudanProvider.loadNext(last);

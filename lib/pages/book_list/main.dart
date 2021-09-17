@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../provider/provider.dart';
 import 'book_history.dart';
 import 'booklist.dart';
 import 'cache_manager.dart';
@@ -135,6 +138,12 @@ class ListMainPage extends StatelessWidget {
                       )));
             }));
           }),
+          if (kDebugMode) const SizedBox(height: 5),
+          if (kDebugMode)
+            _builder('content clear(在调试控制台中观察是否正确释放Picture)', () {
+              // ignore: invalid_use_of_visible_for_testing_member
+              context.read<ContentNotifier>().clear();
+            }),
         ],
       ),
     );

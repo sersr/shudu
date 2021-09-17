@@ -2,7 +2,7 @@ name: shudu
 description: 小说阅读·仿
 
 publish_to: none
-version: 1.1.0
+version: 1.1.0+1
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -29,6 +29,8 @@ dependencies:
   get: ^4.3.6
   hive: ^2.0.4
   hive_flutter: ^1.0.0
+  hot_fix:
+    path: ../packages/hot_fix
   infinite_scroll_pagination: ^3.1.0
   intl: ^0.17.0
   json_annotation: ^4.0.1

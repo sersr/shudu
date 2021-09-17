@@ -139,7 +139,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     }));
 
     await _waits.wait;
-    Log.i('init .... await', onlyDebug: false);
 
     final appPath = appDirExt?.path ?? appDir.path;
     final cachePath = cacheDirs?.isNotEmpty == true

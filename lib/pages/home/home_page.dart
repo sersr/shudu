@@ -11,7 +11,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../database/nop_database.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/options_notifier.dart';
-import '../../provider/painter_notifier.dart';
+import '../../provider/content_notifier.dart';
 import '../../provider/provider.dart';
 import '../../provider/search_notifier.dart';
 import '../book_content/book_content_page.dart';
@@ -66,7 +66,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
-      // scheduleMicrotask(opts.changeRate);
     }
   }
 
@@ -97,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
               child: Text(
-                '再按一次退出',
+                '再按一次退出~',
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
               ),
             ),
@@ -633,8 +632,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           context, item.bookId!, item.chapterId!, item.page!);
                     },
                     onLongPress: () {
-                      /// 选择 this.context 的原因：
-                      /// 其他 context 的生命周期可能会不一致或过早无效
                       showModalBottomSheet(
                           context: context, builder: (_) => bottomSheet(item));
                     },

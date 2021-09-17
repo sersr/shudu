@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import '../../../provider/text_data.dart';
 import 'package:useful_tools/common.dart';
 
 import '../../../provider/constansts.dart';
-import '../../../provider/painter_notifier.dart';
 
 class ContentView extends SingleChildRenderObjectWidget {
   const ContentView({
@@ -91,7 +91,7 @@ class RenderContentView extends RenderBox
     // context.setIsComplexHint();
     final canvas = context.canvas;
 
-    canvas.drawPicture(_pictureRefInfo.pictureRef.picture);
+    canvas.drawPicture(_pictureRefInfo.picture);
 
     final left = contentMetrics.left;
 

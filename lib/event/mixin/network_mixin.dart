@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
@@ -49,7 +49,7 @@ mixin NetworkMixin implements CustomEvent {
       } else {
         timer.cancel();
         frequencyTimer = null;
-        Log.w('frequency: cancel');
+        assert(Log.w('frequency: cancel'));
       }
     });
 
@@ -111,10 +111,17 @@ mixin NetworkMixin implements CustomEvent {
 
   final _ei = RegExp('https?://');
   final _e2f = RegExp('/|%2F');
-}
+  
+  @pragma('vm:prefer-inline')
+  Future<T> imageTasks<T>(EventCallback<T> task) {
+    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 10);
+  }
 
-final iOTask = EventQueue.iOQueue;
-final imageNet = EventQueue();
+  @pragma('vm:prefer-inline')
+  Future<T> ioTasks<T>(EventCallback<T> task) {
+    return EventQueue.runTaskOnQueue(ioTasks, task);
+  }
+}
 
 /// 以扩展的形式实现
 extension _NetworkImpl on NetworkMixin {
@@ -472,7 +479,8 @@ extension _NetworkImpl on NetworkMixin {
     return getImagePathFromNet(img);
   }
 
-  bool _isVaild(Headers header) {
+  @pragma('vm:prefer-inline')
+  bool _isValid(Headers header) {
     final contentType = header.value(HttpHeaders.contentTypeHeader);
     if (contentType != null && contentType.contains(RegExp('image/*'))) {
       return true;
@@ -503,14 +511,14 @@ extension _NetworkImpl on NetworkMixin {
     var success = false;
 
     List<Uint8List>? imgData;
-    await imageNet.awaitEventTask(() async {
+    await imageTasks(() async {
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
 
         imgData = (await data.data?.stream.toList());
 
-        success = imgData != null && _isVaild(data.headers);
+        success = imgData != null && _isValid(data.headers);
       } catch (e) {
         success = false;
         _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
@@ -521,16 +529,17 @@ extension _NetworkImpl on NetworkMixin {
     final data = imgData;
     if (data != null && success) {
       try {
-        await iOTask.awaitEventTask(() async {
-          final f = File(imgPath);
-          await f.create(recursive: true);
-          final o = await f.open(mode: FileMode.writeOnly);
+        await ioTasks(() async {
+          final temp = File('$imgPath.temp');
+          await temp.create(recursive: true);
+          final o = await temp.open(mode: FileMode.writeOnly);
 
           for (final d in data) {
             await o.writeFrom(d);
           }
 
           await o.close();
+          await temp.rename(imgPath);
         });
 
         _errorLoading.remove(imgName);
@@ -563,17 +572,16 @@ extension _NetworkImpl on NetworkMixin {
     final shouldUpdate = imgdateTime == null || imgdateTime + oneDay < now;
     final outOfDate = imgdateTime == null || imgdateTime + oneDay * 7 < now;
 
-    final _bytes = await iOTask.awaitEventTask(() async {
-      final f = File(imgPath);
-      final exits = await f.exists();
-      if (exits) {
-        if (!shouldUpdate) {
-          return f.readAsBytes();
-        } else if (outOfDate) {
-          await f.delete(recursive: true);
-        }
+    Uint8List? _bytes;
+    final f = File(imgPath);
+    final exits = await f.exists();
+    if (exits) {
+      if (!shouldUpdate) {
+        _bytes = await f.readAsBytes();
+      } else if (outOfDate) {
+        await f.delete(recursive: true);
       }
-    });
+    }
 
     if (_bytes != null) return _bytes;
 
@@ -601,7 +609,7 @@ extension _NetworkImpl on NetworkMixin {
 
     List<int> dataBytes = <int>[];
 
-    await imageNet.awaitEventTask(() async {
+    await imageTasks(() async {
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
@@ -611,7 +619,7 @@ extension _NetworkImpl on NetworkMixin {
           await for (final data in stream) {
             dataBytes.addAll(data);
           }
-          success = _isVaild(data.headers);
+          success = _isValid(data.headers);
         } else {
           success = false;
         }
@@ -627,14 +635,24 @@ extension _NetworkImpl on NetworkMixin {
     });
 
     if (success && dataBytes.isNotEmpty) {
-      final f = File(imgPath);
-      iOTask.awaitEventTask(() async {
+      ioTasks(() async {
+        final temp = File('$imgPath.temp');
         try {
-          await f.create(recursive: true);
-          final o = await f.open(mode: FileMode.writeOnly);
+          await temp.create(recursive: true);
+          final o = await temp.open(mode: FileMode.writeOnly);
+          const sizes = 1024;
+          var start = 0;
+          var end = 0;
+          final max = dataBytes.length;
+          while (start < max) {
+            end = math.min(start + sizes, max);
+            await o.writeFrom(dataBytes, start, end);
+            await releaseUI;
+            start = end;
+          }
 
-          await o.writeFrom(dataBytes);
           await o.close();
+          await temp.rename(imgPath);
         } catch (e) {
           success = false;
         } finally {
@@ -643,7 +661,6 @@ extension _NetworkImpl on NetworkMixin {
                 imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
           } else {
             await imageUpdate.delete(imgName.hashCode);
-            await f.delete(recursive: true);
           }
         }
       });

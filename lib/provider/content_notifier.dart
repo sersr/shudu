@@ -18,62 +18,9 @@ import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content/widgets/page_view_controller.dart';
 import 'constansts.dart';
+import 'text_data.dart';
 
 enum Status { ignore, error, done }
-
-class TextData {
-  const TextData(
-      {List<ContentMetrics> content = const [],
-      this.cid,
-      this.pid,
-      this.nid,
-      this.cname,
-      this.rawContent,
-      bool? hasContent})
-      : _content = content,
-        _hasContent = hasContent;
-  List<ContentMetrics> get content => _content;
-  final List<ContentMetrics> _content;
-  final int? cid;
-  final int? pid;
-  final int? nid;
-  final String? cname;
-  final bool? _hasContent;
-  final List<String>? rawContent;
-  bool get hasContent => _hasContent ?? false;
-  bool get isEmpty =>
-      content.isEmpty ||
-      cid == null ||
-      pid == null ||
-      nid == null ||
-      cname == null ||
-      _hasContent == null;
-
-  bool get isNotEmpty => !isEmpty;
-
-  bool get contentIsNotEmpty => isNotEmpty;
-  bool get contentIsEmpty => isEmpty;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is TextData &&
-            cid == other.cid &&
-            pid == other.pid &&
-            nid == other.nid &&
-            content == other.content &&
-            cname == other.cname &&
-            hasContent == other.hasContent;
-  }
-
-  @override
-  int get hashCode => hashValues(cid, pid, nid, content, cname, hasContent);
-
-  @override
-  String toString() {
-    return 'cid: $cid, pid: $pid, nid: $nid, cname: $cname';
-  }
-}
 
 class ContentNotifier extends ChangeNotifier {
   ContentNotifier({required this.repository});
@@ -100,12 +47,17 @@ class ContentNotifier extends ChangeNotifier {
 
   bool showrect = false;
 
+  /// 文本布局信息
   Size size = Size.zero;
+  EdgeInsets get paddingRect => _paddingRect;
+
+  var _paddingRect = EdgeInsets.zero;
 
   final safePaddingNotifier = ValueNotifier<bool>(false);
 
   var _safePadding = EdgeInsets.zero;
 
+  /// 为外部UI提供padding
   EdgeInsets get safePadding => _safePadding;
 
   set safePadding(EdgeInsets e) {
@@ -113,8 +65,6 @@ class ContentNotifier extends ChangeNotifier {
     _safePadding = e;
     safePaddingNotifier.value = !safePaddingNotifier.value;
   }
-
-  var paddingRect = EdgeInsets.zero;
 
   TextStyle _getStyle(ContentViewConfig config) {
     return TextStyle(
@@ -148,12 +98,18 @@ class ContentNotifier extends ChangeNotifier {
   set tData(TextData data) {
     if (data == _tData) return;
     assert(data.contentIsNotEmpty, '不该为 空');
-    _tData = data;
+
+    _tData.dispose();
+    _tData = data.clone(); // 复制
     dump();
     updateCaches(data);
-    // if (config.value.audio == true) {
-    //   _dataQueue.addOneEventTask(() => _tdataRun());
-    // }
+  }
+
+  @visibleForTesting
+  void clear() {
+    reset(clearCache: true);
+    _tData.dispose();
+    _tData = TextData();
   }
 
   // final _dataQueue = EventQueue();
@@ -201,19 +157,7 @@ class ContentNotifier extends ChangeNotifier {
   final showCname = ValueNotifier(false);
   final mic = Duration.microsecondsPerMillisecond * 200.0;
 
-  void _notifyCustom() {
-    notifyState(
-        //                        notEmpty        ||  ignore
-        notEmptyOrIgnore: tData.contentIsNotEmpty || !inBook,
-        loading: false);
-  }
-
-  void _notify() {
-    _notifyCustom();
-    notifyListeners();
-  }
-
-  // brightness
+  /// --------- brightness
   final _brightness = EventQueue();
   final brightness = ValueNotifier(0.0);
 
@@ -255,9 +199,26 @@ class ContentNotifier extends ChangeNotifier {
     if (_brightNess) brightness.value = await ScreenBrightness.current;
   }
 
+  final bool _brightNess = Platform.isAndroid || Platform.isIOS;
+
+  /// ---------------
+  void _notifyCustom() {
+    notifyState(
+        //                        notEmpty        ||  ignore
+        notEmptyOrIgnore: tData.contentIsNotEmpty || !inBook,
+        loading: false);
+  }
+
+  void _notify() {
+    _notifyCustom();
+    notifyListeners();
+  }
+
   /// 管理整个章节是否载入[_caches]的标识码
+  ///
+  /// 决定文本布局之后是否有效
   var key = Object();
-  void increaseKey() {
+  void didChangeKey() {
     key = Object();
 
     /// [_futures]依赖于contentid
@@ -265,45 +226,8 @@ class ContentNotifier extends ChangeNotifier {
     /// 由于[_futures]自动管理状态，创建一个新对象避免干扰
     _futures = <int, Future>{};
   }
-  // late FlutterTts tts = FlutterTts()
-  //   ..setLanguage('zh-CN')
-  //   // ..setSpeechRate(0.8)
-  //   ..setProgressHandler(_ttsProgress);
 
-  // void _ttsProgress(String text, int start, int end, String word) {
-  //   ttsProgress.value = 'progress: $text: $start - $end, $word';
-  //   Log.w(ttsProgress.value, onlyDebug: false);
-  // }
-
-  // final ttsQueue = EventQueue();
-  // final ttsProgress = ValueNotifier('');
-
-  // void addTextToVoice(String text) {
-  //   if (config.value.audio == true) {
-  //     ttsQueue.addEventTask(() => tts.awaitSpeakCompletion(true));
-  //     ttsQueue.addEventTask(() => tts.speak(text));
-  //   }
-  // }
-
-  // Future addTextToVoiceAndAwait(String text) async {
-  //   if (config.value.audio == true) {
-  //     // ttsQueue.addEventTask(() => tts.awaitSpeakCompletion(true));
-  //     await tts.speak(text);
-  //     return tts.awaitSpeakCompletion(true);
-  //   }
-  // }
-
-  // void ttsStop() {
-  //   if (config.value.audio == true) {
-  //     ttsQueue.addEventTask(() => tts.stop());
-  //   }
-  // }
-
-  // void ttsStopAndStartCurrent() {
-  //   ttsStop();
-  // }
-
-  final bool _brightNess = Platform.isAndroid || Platform.isIOS;
+  Timer? _sizeChangedTimer;
 }
 
 extension ContentStatus on ContentNotifier {
@@ -370,25 +294,18 @@ extension DataLoading on ContentNotifier {
   void updateCaches(TextData data) {
     final _keys = _getCurrentIds();
 
-    if (_caches.length > _keys.length + 2) {
-      final _dirtys = <TextData>[];
+    if (_caches.length > _keys.length) {
       _caches.removeWhere((key, data) {
         final remove = !_keys.contains(key);
-        if (remove) _dirtys.add(data);
+        if (remove) data.dispose();
         return remove;
-      });
-      scheduleMicrotask(() {
-        for (var mes in _dirtys) {
-          for (var p in mes._content) {
-            p.picture.dispose();
-          }
-        }
       });
     }
   }
 
+  @pragma('vm:prefer-inline')
   Future<void> load(int _bookid, int contentid, {update = false}) {
-    return _load(_bookid, contentid, update);
+    return _run(() => _load(_bookid, contentid, update));
   }
 
   Future<void> _load(int _bookid, int contentid, bool update) async {
@@ -404,7 +321,7 @@ extension DataLoading on ContentNotifier {
       if (_key != key || _bookid != bookid) {
         for (final p in pages) {
           // 释放picture资源
-          p.picture.pictureRef.dispose();
+          p.dispose();
         }
         assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
         return;
@@ -417,9 +334,12 @@ extension DataLoading on ContentNotifier {
         cid: lines.cid,
         hasContent: lines.hasContent,
         cname: lines.cname,
-        rawContent: lines.pages,
+        // rawContent: lines.pages,
       );
-      _caches[_cnpid.cid!] = _cnpid;
+      final old = _caches.remove(_cnpid.cid);
+      old?.dispose();
+      _caches[_cnpid.cid!] = _cnpid.clone();
+      _cnpid.dispose();
     }
   }
 }
@@ -467,9 +387,18 @@ extension Tasks on ContentNotifier {
     }
   }
 
+  @pragma('vm:prefer-inline')
+  Future<T> _run<T>(EventCallback<T> callback) {
+    return EventQueue.runTaskOnQueue([runtimeType, key], callback);
+  }
+
+  Future<void>? taskRunner() {
+    return EventQueue.getQueueRunner([runtimeType, key]);
+  }
+
   void scheduleTask() {
     if (_scheduled) return;
-    scheduleMicrotask(() {
+    Timer.run(() {
       _scheduled = false;
       _loadResolve();
       _loadAuto();
@@ -496,7 +425,7 @@ extension Tasks on ContentNotifier {
           if (tData.contentIsNotEmpty &&
               (currentPage == tData.content.length || currentPage == 1)) {
             final _tData = _getTextData(tData.cid!)!;
-            if (tData != _tData) {
+            if (tData != _tData && _tData.nid != -1 && _tData.hasContent) {
               tData = _tData;
               if (currentPage > tData.content.length) {
                 currentPage = tData.content.length;
@@ -514,6 +443,7 @@ extension Tasks on ContentNotifier {
         return false;
       }
 
+      await releaseUI;
       if (_getdata()) return;
 
       final cid = tData.cid!;
@@ -590,17 +520,12 @@ extension Layout on ContentNotifier {
     final current = _getTextData(tData.cid);
     final nid = current?.nid;
     final pid = current?.pid;
-    final next = _getTextData(nid);
-    final nnid = next?.nid;
     ids
       ..add(cid)
       ..add(nid)
-      ..add(pid)
-      ..add(nnid);
+      ..add(pid);
     return ids.whereType<int>();
   }
-
-  Future<void> get wait => releaseUI;
 
   Future<List<ContentMetrics>> _asyncLayout(
       List<String> paragraphs, String cname) async {
@@ -612,12 +537,12 @@ extension Layout on ContentNotifier {
 
     final config = this.config.value.copyWith();
 
-    final words = (size.width - paddingRect.horizontal) ~/ fontSize;
+    final words = (size.width - _paddingRect.horizontal) ~/ fontSize;
 
-    final _size = paddingRect.deflateSize(size);
+    final _size = _paddingRect.deflateSize(size);
     final width = _size.width;
     final leftExtraPadding = (width % fontSize) / 2;
-    final left = paddingRect.left + leftExtraPadding;
+    final left = _paddingRect.left + leftExtraPadding;
 
     // 文本占用高度
     final contentHeight = _size.height - contentWhiteHeight;
@@ -635,8 +560,9 @@ extension Layout on ContentNotifier {
     final hl = _allExtraHeight / rows;
     // 实际行高
     final lineHeightAndExtra = hl + lineHeight;
+    final _key = key;
 
-    await wait;
+    await releaseUI;
     // 大标题
     final TextPainter _bigTitlePainter = TextPainter(
         text: TextSpan(
@@ -646,7 +572,7 @@ extension Layout on ContentNotifier {
         textDirection: TextDirection.ltr)
       ..layout(maxWidth: width);
 
-    await wait;
+    await releaseUI;
     // 小标题
     final TextPainter smallTitlePainter = TextPainter(
         text: TextSpan(text: cname, style: secstyle),
@@ -656,10 +582,10 @@ extension Layout on ContentNotifier {
 
     whiteRows = 150 ~/ lineHeightAndExtra + 1;
 
-    await wait;
     while (lineHeightAndExtra * whiteRows > 150) {
       whiteRows--;
       if (lineHeightAndExtra * whiteRows < 120) break;
+      await releaseUI;
     }
 
     final _oneHalf = fontSize * 1.6;
@@ -677,12 +603,11 @@ extension Layout on ContentNotifier {
 
       while (start < pc.length) {
         var end = math.min(start + words, pc.length);
+        await releaseUI;
 
         // 确定每一行的字数
         while (true) {
           if (end >= pc.length) break;
-
-          // await wait;
 
           end++;
           final s = pc.getRange(start, end).toString();
@@ -690,7 +615,7 @@ extension Layout on ContentNotifier {
             ..text = TextSpan(text: s, style: style)
             ..layout(maxWidth: width);
 
-          await wait;
+          await releaseUI;
 
           if (_t.height > _oneHalf) {
             final endOffset = _t.getPositionForOffset(_offset).offset;
@@ -717,7 +642,7 @@ extension Layout on ContentNotifier {
 
         final _s = pc.getRange(start, end);
 
-        await wait;
+        await releaseUI;
 
         final _text = TextPainter(
             text: TextSpan(text: _s.toString(), style: style),
@@ -729,7 +654,7 @@ extension Layout on ContentNotifier {
       }
     }
 
-    await wait;
+    await releaseUI;
     var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
 
     final pages = <List<TextPainter>>[];
@@ -746,19 +671,26 @@ extension Layout on ContentNotifier {
 
     var extraHeight = lineHeightAndExtra - fontSize;
     final isHorizontal = config.axis == Axis.horizontal;
-
+    await releaseUI;
+    if (_key != key) {
+      return const [];
+    }
+    bool error = false;
     // 添加页面信息
     for (var r = 0; r < pages.length; r++) {
-      await wait;
       final bottomRight = TextPainter(
           text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
           textDirection: TextDirection.ltr)
         ..layout(maxWidth: width);
 
       final right = width - bottomRight.width - leftExtraPadding * 2;
-
+      if (_key != key) {
+        error = true;
+        break;
+      }
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
+      await releaseUI;
 
       await paint(canvas,
           painters: pages[r],
@@ -772,9 +704,10 @@ extension Layout on ContentNotifier {
           left: left,
           index: r,
           size: _size,
-          windowTopPadding: safePadding.top,
+          windowTopPadding: _paddingRect.top,
           showrect: showrect,
           topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
+      await releaseUI;
 
       final picture = recorder.endRecording();
 
@@ -786,7 +719,12 @@ extension Layout on ContentNotifier {
       );
       textPages.add(met);
     }
-
+    if (error) {
+      for (var text in textPages) {
+        text.dispose();
+      }
+      return const [];
+    }
     return textPages;
   }
 
@@ -826,7 +764,7 @@ extension Layout on ContentNotifier {
         h += contentPadding;
       }
     }
-    await wait;
+    await releaseUI;
 
     if (isHorizontal) h += contentPadding;
 
@@ -836,6 +774,7 @@ extension Layout on ContentNotifier {
     for (var _tep in painters) {
       h += _e;
       _tep.paint(canvas, Offset(0.0, h));
+      await releaseUI;
       h += _end;
     }
     if (showrect) {
@@ -843,8 +782,11 @@ extension Layout on ContentNotifier {
           Paint()..color = Colors.black.withAlpha(100));
     }
     if (isHorizontal) {
-      bottomRight.paint(canvas,
-          Offset(right, _size.height - contentFooterSize - contentBotttomPad));
+      final bottom = _size.height +
+          _paddingRect.bottom -
+          contentFooterSize -
+          contentBotttomPad;
+      bottomRight.paint(canvas, Offset(right, bottom));
     }
   }
 }
@@ -863,13 +805,17 @@ extension Event on ContentNotifier {
   }
 
   /// 进入阅读页面前，必须调用的方法
-  void touchBook(int newBookid, int cid, int page, Object taskKey) {
+  void touchBook(int newBookid, int cid, int page) async {
     if (!inBook) resetController();
+
+    if (!config.value.orientation!) {
+      uiOverlay();
+      uiStyle(dark: false);
+    }
+    await setOrientation(config.value.orientation!);
+
     inbook();
-
-    setOrientation(config.value.orientation!);
-
-    newBookOrCid(newBookid, cid, page, taskKey: taskKey);
+    newBookOrCid(newBookid, cid, page);
   }
 
   bool _getStateOrSetBook(int newBookid, int cid, int page,
@@ -879,6 +825,7 @@ extension Event on ContentNotifier {
         assert(Log.i('new: $newBookid $cid'));
 
         notifyState(notEmptyOrIgnore: true, loading: false);
+        _tData.dispose();
         _tData = TextData(cid: cid);
         currentPage = page;
         bookid = newBookid;
@@ -899,12 +846,9 @@ extension Event on ContentNotifier {
         var _c = List.of(_caches.values);
         _caches.clear();
         for (var t in _c) {
-          for (var p in t.content) {
-            p.picture.dispose();
-          }
+          t.dispose();
         }
       }
-      increaseKey();
     }
   }
 
@@ -915,25 +859,30 @@ extension Event on ContentNotifier {
     void Function()? onResetDone,
     void Function()? onDone,
   }) {
+    didChangeKey();
+
     return () async {
       autoRun.stopSave();
       onStart?.call();
       reset(clearCache: clear);
 
       onResetDone?.call();
+      final _key = key;
       await _loadFirst();
-      _notify();
+      if (_key == key) {
+        _notify();
 
-      /// 重置边界
-      controller?.resetContentDimension();
+        /// 重置边界
+        controller?.resetContentDimension();
+      }
+
       onDone?.call();
 
       scheduleMicrotask(autoRun.stopAutoRun);
     }.pushOneAwait(initQueue, taskKey: taskKey);
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page,
-      {Object? taskKey}) async {
+  Future<void> newBookOrCid(int newBookid, int cid, int page) async {
     if (!inBook) return;
 
     if (cid == -1) return;
@@ -950,8 +899,7 @@ extension Event on ContentNotifier {
       await startFirstEvent(
           clear: clear,
           onStart: () => _getStateOrSetBook(newBookid, cid, page),
-          onDone: resetController,
-          taskKey: taskKey);
+          onDone: resetController);
 
       _t.cancel();
     }
@@ -1007,13 +955,15 @@ extension Event on ContentNotifier {
     if (inBook || size.isEmpty) {
       if (size.isEmpty) size = data.size;
       final changed = _modifiedSize(data);
-      if (changed) {
-        if (tData.cid != null) {
-          startFirstEvent(onStart: () {
+      if (changed && inBook) {
+        _sizeChangedTimer?.cancel();
+        _sizeChangedTimer = Timer(const Duration(milliseconds: 100), () {
+          startFirstEvent(onResetDone: () {
             resetController();
             notifyState(notEmptyOrIgnore: true);
           });
-        }
+          _sizeChangedTimer = null;
+        });
       }
     }
   }
@@ -1021,17 +971,18 @@ extension Event on ContentNotifier {
   bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
-
-    safePadding = _p;
-    paddingRect = EdgeInsets.only(
-      left: safePadding.left + 16,
-      top: safePadding.top,
-      right: safePadding.right + 16,
-      bottom: defaultTargetPlatform == TargetPlatform.iOS ? 6.0 : 2.0,
+    var _safePadding = _p;
+    final paddingRect = EdgeInsets.only(
+      left: _safePadding.left + 16,
+      top: _safePadding.top,
+      right: _safePadding.right + 16,
+      bottom: 0,
     );
-
-    if (size != _size) {
+    Log.w('size: $_size, $_safePadding', onlyDebug: false);
+    safePadding = _safePadding;
+    if (size != _size || paddingRect != _paddingRect) {
       size = _size;
+      _paddingRect = paddingRect;
       return true;
     } else {
       return false;
@@ -1144,7 +1095,6 @@ extension Configs on ContentNotifier {
         align) {
       flush = true;
     }
-
     final orientation = config.value.orientation;
 
     config.value = _config;
@@ -1156,7 +1106,8 @@ extension Configs on ContentNotifier {
               : null;
       startFirstEvent(onResetDone: done);
     }
-    if (_orientation != orientation) {
+    if (orientation != _orientation) {
+      await uiOverlay(hide: !_orientation);
       setOrientation(_orientation);
     }
   }
@@ -1261,19 +1212,19 @@ extension AutoR on ContentNotifier {
       _auto();
       return;
     }
-    setPrefs(config.value.copyWith(axis: Axis.vertical)).then((_) async {
+    setPrefs(config.value.copyWith(axis: Axis.vertical));
+    if (controller != null && controller!.axis == Axis.vertical) {
+      _auto();
+      return;
+    }
+    Timer.periodic(Duration(seconds: 1), (timer) {
       if (controller != null && controller!.axis == Axis.vertical) {
+        timer.cancel();
         _auto();
-        return;
       }
-      Timer.periodic(Duration(seconds: 1), (timer) {
-        if (controller != null && controller!.axis == Axis.vertical) {
-          timer.cancel();
-          _auto();
-        }
+      if (initQueue.runner != null) return;
 
-        if (timer.tick > 5) timer.cancel();
-      });
+      if (timer.tick > 5) timer.cancel();
     });
   }
 
@@ -1283,7 +1234,8 @@ extension AutoR on ContentNotifier {
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
       scheduleTask();
-      _autoF ??= EventQueue.scheduler.endOfFrame.then((_) => autoRun.start())
+      _autoF ??= SchedulerBinding.instance!.endOfFrame
+          .then((_) => autoRun.start())
         ..whenComplete(() => _autoF = null);
     } else {
       if (_autoF != null) {
@@ -1319,43 +1271,6 @@ extension AutoR on ContentNotifier {
 
     controller!.setPixels(_start + autoValue.value * alpha);
   }
-}
-
-class ContentMetrics {
-  const ContentMetrics({
-    // required this.painters,
-    // required this.extraHeightInLines,
-    // required this.isHorizontal,
-    required this.secstyle,
-    // required this.fontSize,
-    // required this.cPainter,
-    // required this.botRightPainter,
-    // required this.cBigPainter,
-    // required this.right,
-    required this.left,
-    // required this.index,
-    required this.size,
-    // required this.windowTopPadding,
-    // required this.showrect,
-    // required this.topExtraHeight,
-    required this.picture,
-  });
-  // final List<TextPainter> painters;
-  // final double extraHeightInLines;
-  final TextStyle secstyle;
-  // final double fontSize;
-  // final bool isHorizontal;
-  // final TextPainter cPainter;
-  // final TextPainter botRightPainter;
-  // final TextPainter cBigPainter;
-  // final double right;
-  final double left;
-  // final int index;
-  final Size size;
-  // final double windowTopPadding;
-  // final bool showrect;
-  // final double topExtraHeight;
-  final PictureRefInfo picture;
 }
 
 class ContentBoundary {
@@ -1465,22 +1380,20 @@ class AutoRun {
   final isActive = ValueNotifier(false);
 
   bool get value => isActive.value;
-  final _asyncQueue = EventQueue();
   set value(bool v) {
     isActive.value = v;
-    _asyncQueue
-        .addOneEventTask(() => v ? Wakelock.enable() : Wakelock.disable());
+    EventQueue.runTaskOnQueue('autoRun', () => Wakelock.toggle(enable: v));
   }
 
   Ticker? _ticker;
   void start() {
-    _ticker?.dispose();
     value = true;
     _ticker = Ticker(onTick, debugLabel: 'autoRun')..start();
   }
 
   void stopTicked() {
     _ticker?.dispose();
+    _ticker = null;
     reset();
     value = false;
   }

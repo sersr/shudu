@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  sqlite3_windows_dll
   url_launcher_windows
 )
 

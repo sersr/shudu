@@ -171,7 +171,7 @@ class _TitleWidgetState extends State<TitleWidget>
     return Container(
       height: 120,
       color: const Color.fromARGB(255, 250, 250, 250),
-      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0, left: 12.0),
+      padding: const EdgeInsets.all(12.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 80),
         children: [
