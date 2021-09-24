@@ -9,14 +9,17 @@ import 'versions_gen.dart';
 void main() async {
   NopWidgetsFlutterBinding.ensureInitialized();
   RendererBinding.instance!.renderView.automaticSystemUiAdjustment = false;
+  DeferredMain? hot;
   if (defaultTargetPlatform == TargetPlatform.android) {
-    final hot = DeferredMain(
+      hot = DeferredMain(
         versionName: versionName,
         versionNumber: versionNumber,
-        baseUrl: 'http://192.168.1.127:8080/shudu/');
+        baseUrl: 'https://sersr.github.io/shudu/');
+
+    /// test: 'http://192.168.1.127:8080/shudu/'
     await hot.initState();
   }
-  runApp(const MulProvider());
+  runApp(MulProvider(hotFix: hot));
   uiOverlay(hide: false);
   uiStyle();
 }

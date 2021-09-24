@@ -23,7 +23,21 @@ class BooklistDetailPage extends StatefulWidget {
 
 class _BooklistDetailPageState extends State<BooklistDetailPage> {
   final provider = ShudanProvider();
-
+  var refreshDelegate2 = RefreshDelegate(
+      maxExtent: 100,
+      onRefreshing: () {
+        return release(const Duration(seconds: 1));
+      },
+      builder: (context, offset, maxExtent, mode, refreshing) {
+        return Container(
+          height: offset,
+          color: Colors.blue,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Text('$mode $refreshing'),
+          ),
+        );
+      });
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -84,17 +98,49 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
           }
 
           final children = _getChildren(data, ts);
-          return Scrollbar(
-            interactive: true,
-            thickness: 8,
-            child: ListViewBuilder(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              cacheExtent: 100,
-              itemBuilder: (context, index) {
-                return children.elementAt(index);
-              },
-              itemCount: children.length,
-            ),
+
+          return Stack(
+            children: [
+              RepaintBoundary(
+                child: Scrollbar(
+                  interactive: true,
+                  thickness: 8,
+                  child: ListViewBuilder(
+                    refreshDelegate: refreshDelegate2,
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    // cacheExtent: 100,
+                    itemBuilder: (context, index) {
+                      return children.elementAt(index);
+                    },
+                    itemCount: children.length,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 10,
+                bottom: 20,
+                child: RepaintBoundary(
+                  child: ElevatedButton(
+                    child: const Text('show'),
+                    onPressed: () {
+                      refreshDelegate2.show();
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 10,
+                bottom: 20,
+                child: RepaintBoundary(
+                  child: ElevatedButton(
+                    child: const Text('hide'),
+                    onPressed: () {
+                      refreshDelegate2.hide();
+                    },
+                  ),
+                ),
+              )
+            ],
           );
         },
       ),

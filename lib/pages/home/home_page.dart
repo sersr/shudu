@@ -404,31 +404,30 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Center(child: Text('offset:')),
-                              IconButton(
-                                  icon: Icon(Icons.remove),
-                                  onPressed: () {
-                                    if (opt.options.resampleOffset != null) {
-                                      final offset =
-                                          opt.options.resampleOffset! - 1;
-                                      opt.options =
-                                          ConfigOptions(resampleOffset: offset);
-                                    }
-                                  }),
-                              Center(
-                                  child: Text('${opt.options.resampleOffset}')),
-                              IconButton(
-                                icon: Icon(Icons.add),
-                                onPressed: () {
-                                  if (opt.options.resampleOffset != null) {
-                                    final offset =
-                                        opt.options.resampleOffset! + 1;
-                                    opt.options =
-                                        ConfigOptions(resampleOffset: offset);
-                                  }
-                                },
-                              ),
-                              const Expanded(child: SizedBox()),
+                              // Center(child: Text('offset:')),
+                              // IconButton(
+                              //     icon: Icon(Icons.remove),
+                              //     onPressed: () {
+                              //       if (opt.options.resampleOffset != null) {
+                              //         final offset =
+                              //             opt.options.resampleOffset! - 1;
+                              //         opt.options =
+                              //             ConfigOptions(resampleOffset: offset);
+                              //       }
+                              //     }),
+                              // Center(
+                              //     child: Text('${opt.options.resampleOffset}')),
+                              // IconButton(
+                              //   icon: Icon(Icons.add),
+                              //   onPressed: () {
+                              //     if (opt.options.resampleOffset != null) {
+                              //       final offset =
+                              //           opt.options.resampleOffset! + 1;
+                              //       opt.options =
+                              //           ConfigOptions(resampleOffset: offset);
+                              //     }
+                              //   },
+                              // ),
                               Center(child: Text('resample:')),
                               Switch(
                                 splashRadius: 0,
@@ -437,11 +436,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   opts.options = ConfigOptions(resample: v);
                                 },
                               ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
                               Center(child: Text('nopResample:')),
                               Switch(
                                 splashRadius: 0,

@@ -130,7 +130,20 @@ class _WrapWidgetState extends State<WrapWidget>
           scrollController: scrollController,
           itemCount: list.length + 1,
           cacheExtent: 200,
-          load: loadingIndicator(),
+          refreshDelegate: RefreshDelegate(
+              maxExtent: 80,
+              onRefreshing: shudanProvider.refresh,
+              onDone: shudanProvider.refreshDone,
+              builder: (context, offset, maxExtent, mode, refreshing) {
+                return Container(
+                  height: offset,
+                  color: Colors.blue,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Text('$mode | $refreshing'),
+                  ),
+                );
+              }),
           finishLayout: (first, last) {
             final state = shudanProvider.state;
             Log.w('first: $first ');
@@ -237,6 +250,18 @@ class ShudanCategProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refresh() async {
+    return _loop.awaitOneEventTask(() async {
+      list = null;
+      _listCounts = 0;
+      await _load();
+    });
+  }
+
+  void refreshDone() {
+    notifyListeners();
+  }
+
   Future<void> _load() async {
     final _repository = repository;
     if (_repository == null) return;
@@ -251,7 +276,7 @@ class ShudanCategProvider extends ChangeNotifier {
     if (_list == null) {
       var data =
           await _repository.bookEvent.customEvent.getHiveShudanLists(key);
-        Timer? timer;
+      Timer? timer;
       if (data?.isNotEmpty == true) {
         list = data;
         _listCounts = 1;

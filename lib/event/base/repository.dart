@@ -1,5 +1,6 @@
 // import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hot_fix/hot_fix.dart';
 
 // ignore: unused_import
 import '../repository/book_repository_port.dart' show BookRepositoryPort;
@@ -9,7 +10,9 @@ abstract class Repository {
   Repository();
 
   Future<void> get initState;
-  
+
+  DeferredMain? _hotFix;
+  DeferredMain? get hotFix => _hotFix;
   void close();
   ValueNotifier<bool> get init;
 
@@ -17,8 +20,8 @@ abstract class Repository {
 
   static Repository? _instance;
 
-  factory Repository.create() {
-    _instance ??= BookRepositoryPort();
+  factory Repository.create([DeferredMain? hot]) {
+    _instance ??= BookRepositoryPort().._hotFix = hot;
     // _instance ??= BookRepository();
 
     return _instance!;

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/provider.dart';
+import '../settings/settings.dart';
 import 'book_history.dart';
 import 'booklist.dart';
 import 'cache_manager.dart';
@@ -136,6 +137,12 @@ class ListMainPage extends StatelessWidget {
                           ],
                         ),
                       )));
+            }));
+          }),
+          const SizedBox(height: 5),
+          _builder('设置', () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+              return Settings();
             }));
           }),
           if (kDebugMode) const SizedBox(height: 5),

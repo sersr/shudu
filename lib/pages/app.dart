@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hot_fix/hot_fix.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/common.dart';
 
@@ -58,13 +59,13 @@ class _ShuduAppState extends State<ShuduApp> {
 }
 
 class MulProvider extends StatelessWidget {
-  const MulProvider({Key? key}) : super(key: key);
-
+  const MulProvider({Key? key, required this.hotFix}) : super(key: key);
+  final DeferredMain? hotFix;
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(create: (_) => Repository.create()),
+        Provider(create: (_) => Repository.create(hotFix)),
         Provider(create: (_) => TextStyleConfig()),
         ChangeNotifierProvider(create: (_) => OptionsNotifier()),
         ChangeNotifierProvider(

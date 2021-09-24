@@ -11,7 +11,7 @@ class ConfigOptions {
       {this.pageBuilder,
       this.platform,
       this.resample,
-      this.resampleOffset,
+      // this.resampleOffset,
       this.useImageCache,
       this.useTextCache,
       this.nopResample,
@@ -20,7 +20,7 @@ class ConfigOptions {
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
   bool? resample;
-  int? resampleOffset;
+  // int? resampleOffset;
   bool? showPerformanceOverlay;
 
   bool? useImageCache;
@@ -38,8 +38,8 @@ class ConfigOptions {
       ..useTextCache ??= useTextCache
       ..useSqflite ??= useSqflite
       ..nopResample ??= nopResample
-      ..showPerformanceOverlay ??= showPerformanceOverlay
-      ..resampleOffset ??= resampleOffset;
+      ..showPerformanceOverlay ??= showPerformanceOverlay;
+    // ..resampleOffset ??= resampleOffset;
   }
 
   @override
@@ -49,7 +49,7 @@ class ConfigOptions {
             other.platform == platform &&
             other.pageBuilder == pageBuilder &&
             other.resample == resample &&
-            other.resampleOffset == resampleOffset &&
+            // other.resampleOffset == resampleOffset &&
             other.useImageCache == useImageCache &&
             other.nopResample == nopResample &&
             other.useSqflite == useSqflite &&
@@ -60,7 +60,7 @@ class ConfigOptions {
   @override
   String toString() {
     return '$runtimeType: $platform, $pageBuilder, '
-        'resample: $resample, resampleOffset: $resampleOffset, nopResample: $nopResample';
+        'resample: $resample, nopResample: $nopResample';
   }
 
   @override
@@ -68,7 +68,7 @@ class ConfigOptions {
       platform,
       pageBuilder,
       resample,
-      resampleOffset,
+      // resampleOffset,
       useImageCache,
       // useMemoryImage,
       useSqflite,
@@ -169,25 +169,25 @@ class OptionsNotifier extends ChangeNotifier {
         _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
 
     final bool resample = _box.get(_resample, defaultValue: false);
-    final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
+    // final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
     final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
     final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
     final bool nopResample = _box.get(_nopResample, defaultValue: true);
 
-    GestureBinding.instance!
-      ..resamplingEnabled = resample
-      ..samplingOffset = Duration(milliseconds: resampleOffset);
+    GestureBinding.instance!.resamplingEnabled = resample;
+    // ..samplingOffset = Duration(milliseconds: resampleOffset);
     NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
 
     options = ConfigOptions(
-        platform: platform,
-        pageBuilder: pageBuilder,
-        resample: resample,
-        useImageCache: useImageCache,
-        nopResample: nopResample,
-        useSqflite: await sqfliteBox,
-        useTextCache: useTextCache,
-        resampleOffset: resampleOffset);
+      platform: platform,
+      pageBuilder: pageBuilder,
+      resample: resample,
+      useImageCache: useImageCache,
+      nopResample: nopResample,
+      useSqflite: await sqfliteBox,
+      useTextCache: useTextCache,
+      // resampleOffset: resampleOffset
+    );
   }
 
   Future<void> saveOptions() async {
@@ -220,12 +220,12 @@ class OptionsNotifier extends ChangeNotifier {
       _f.add(_box.put(_resample, resample));
     }
 
-    final resampleOffset = options.resampleOffset;
-    if (resampleOffset != null && _box.get(_resampleOffset) != resampleOffset) {
-      GestureBinding.instance!.samplingOffset =
-          Duration(milliseconds: resampleOffset);
-      _f.add(_box.put(_resampleOffset, resampleOffset));
-    }
+    // final resampleOffset = options.resampleOffset;
+    // if (resampleOffset != null && _box.get(_resampleOffset) != resampleOffset) {
+    //   GestureBinding.instance!.samplingOffset =
+    //       Duration(milliseconds: resampleOffset);
+    //   _f.add(_box.put(_resampleOffset, resampleOffset));
+    // }
     final nopResample = options.nopResample;
     if (nopResample != null && _box.get(_nopResample) != nopResample) {
       NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
