@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -7,9 +6,9 @@ import '../../data/book_list_detail.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/images.dart';
 import '../../widgets/text_builder.dart';
 import '../book_info/info_page.dart';
-import '../../widgets/images.dart';
 
 /// 书单详情页面
 class BooklistDetailPage extends StatefulWidget {
@@ -23,17 +22,15 @@ class BooklistDetailPage extends StatefulWidget {
 
 class _BooklistDetailPageState extends State<BooklistDetailPage> {
   final provider = ShudanProvider();
-  var refreshDelegate2 = RefreshDelegate(
+  final refreshDelegate2 = RefreshDelegate(
       maxExtent: 100,
       onRefreshing: () {
         return release(const Duration(seconds: 1));
       },
-      builder: (context, offset, maxExtent, mode, refreshing) {
-        return Container(
-          height: offset,
+      builder: (context, currentHeight, maxExtent, mode, refreshing) {
+        return ColoredBox(
           color: Colors.blue,
-          child: Align(
-            alignment: Alignment.bottomCenter,
+          child: Center(
             child: Text('$mode $refreshing'),
           ),
         );

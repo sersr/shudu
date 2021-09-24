@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:nop_annotations/nop_annotations.dart';
-import 'package:nop_db/database/gen_database.dart';
 import 'package:nop_db/database/nop.dart';
-import 'package:nop_db/database/table.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';
+
 import '../data/data.dart';
 
 part 'nop_database.g.dart';

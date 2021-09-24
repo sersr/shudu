@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:nop_annotations/nop_annotations.dart';
-import 'package:nop_db/database/table.dart';
+
 import 'package:nop_db/nop_db.dart';
 
 import '../../data/data.dart';

@@ -1,19 +1,16 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/Material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/nop_database.dart';
-import '../../provider/book_cache_notifier.dart';
-import '../../provider/options_notifier.dart';
-import '../../provider/content_notifier.dart';
+
 import '../../provider/provider.dart';
-import '../../provider/search_notifier.dart';
+import '../../widgets/image_text.dart';
+import '../../widgets/images.dart';
+import '../../widgets/text_builder.dart';
 import '../book_content/book_content_page.dart';
 import '../book_info/info_page.dart';
 import '../book_list/main.dart';
@@ -131,7 +128,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     return InkWell(
                       borderRadius: BorderRadius.circular(height / 2),
                       onTap: () => showSearch(
-                          context: context, delegate: MySearchPage()),
+                          context: context,
+                          delegate: BookSearchPage(
+                              textStyle: context
+                                  .read<TextStyleConfig>()
+                                  .body2
+                                  .copyWith(
+                                      color: TextStyleConfig.blackColor9))),
                       child: SizedBox(
                         height: height,
                         width: height,
@@ -648,14 +651,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 }
 
-class MySearchPage extends SearchDelegate<void> {
-  MySearchPage({
+class BookSearchPage extends SearchDelegate<void> {
+  BookSearchPage({
     String? hintText,
+    TextStyle? textStyle,
   }) : super(
-          searchFieldLabel: '书名关键字',
-          keyboardType: TextInputType.multiline,
-          textInputAction: TextInputAction.search,
-        );
+            searchFieldLabel: '书名关键字',
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.search,
+            searchFieldStyle: textStyle);
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -663,7 +667,7 @@ class MySearchPage extends SearchDelegate<void> {
     return theme.copyWith(
       // primaryColor: Colors.white,
       // primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
-      primaryColorBrightness: Brightness.light,
+      // primaryColorBrightness: Brightness.light,
       primaryTextTheme: theme.textTheme,
       // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
     );
@@ -675,10 +679,7 @@ class MySearchPage extends SearchDelegate<void> {
           // color: Colors.cyan,
           height: 100,
           width: 100,
-          child: Icon(
-            Icons.ac_unit,
-            size: 30,
-          )));
+          child: Icon(Icons.ac_unit, size: 30)));
   @override
   Widget buildSuggestions(BuildContext context) {
     return wrap(context, suggestions(context));
@@ -697,7 +698,7 @@ class MySearchPage extends SearchDelegate<void> {
                   padding: const EdgeInsets.all(4.0),
                   child: Material(
                     borderRadius: BorderRadius.circular(3.0),
-                    color: Color.fromARGB(255, 240, 240, 240),
+                    color: Color.fromARGB(255, 220, 220, 220),
                     child: InkWell(
                       onLongPress: () {
                         bloc.delete(i);
@@ -715,7 +716,7 @@ class MySearchPage extends SearchDelegate<void> {
                           i,
                           style: context
                               .read<TextStyleConfig>()
-                              .body1
+                              .body2
                               .copyWith(color: Colors.grey.shade700),
                         ),
                       ),
@@ -775,30 +776,76 @@ class MySearchPage extends SearchDelegate<void> {
             if (data == null) {
               return loadingIndicator();
             }
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: ListView(
-                children: [
-                  suggestions(context),
-                  if (search.searchHistory.isNotEmpty) const Divider(height: 1),
-                  if (data.data != null)
-                    for (var value in data.data!)
-                      GestureDetector(
-                        onTap: () =>
-                            BookInfoPage.push(context, int.parse(value.id!)),
-                        child: Container(
-                          height: 40,
-                          alignment: Alignment.centerLeft,
-                          decoration: BoxDecoration(
-                              border: Border(
-                                  bottom:
-                                      BorderSide(color: Colors.grey.shade300))),
-                          child: Text(value.name ?? ''),
+
+            final searchResult = data.data;
+            final length = searchResult == null ? 1 : searchResult.length + 1;
+            return ListViewBuilder(
+                itemCount: length,
+                padding: const EdgeInsets.only(bottom: 60.0),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return suggestions(context);
+                  }
+                  final data = searchResult![index - 1];
+                  return ListItem(
+                      height: 108,
+                      onTap: () =>
+                          BookInfoPage.push(context, int.parse(data.id!)),
+                      child: Container(
+                        // height: 108,
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: CustomMultiChildLayout(
+                          delegate: ImageLayout(width: 72),
+                          children: [
+                            LayoutId(
+                              id: ImageLayout.image,
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6.0),
+                                child: ImageResolve(img: data.img),
+                              ),
+                            ),
+                            LayoutId(
+                              id: ImageLayout.text,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 14.0),
+                                child: TextAsyncLayout(
+                                    height: 108,
+                                    topRightScore: '${data.bookStatus}',
+                                    top: data.name ?? '',
+                                    center: '${data.cName} | ${data.author}',
+                                    bottom: data.desc ?? ''),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                ],
-              ),
-            );
+                      ));
+                });
+
+            // return Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            //   child: ListView(
+            //     children: [
+            //       suggestions(context),
+            //       if (search.searchHistory.isNotEmpty) const Divider(height: 1),
+            //       if (data.data != null)
+            //         for (var value in data.data!)
+            //           GestureDetector(
+            //             onTap: () =>
+            //                 BookInfoPage.push(context, int.parse(value.id!)),
+            //             child: Container(
+            //               height: 40,
+            //               alignment: Alignment.centerLeft,
+            //               decoration: BoxDecoration(
+            //                   border: Border(
+            //                       bottom:
+            //                           BorderSide(color: Colors.grey.shade300))),
+            //               child: Text(value.name ?? ''),
+            //             ),
+            //           ),
+            //     ],
+            //   ),
+            // );
           },
         ));
   }

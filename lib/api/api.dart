@@ -6,15 +6,21 @@ class Api {
   // pigqq, pysmei
   // static final _domains = Queue.of(const ['pigqq']);
   static final domains = Queue.of(const ['pigqq', 'pysmei']);
+  static final domainsSearch = Queue.of(const ['pigqq', 'leeyegy']);
 
   // 由于 api 解析几乎（都）相同，
   static void moveNext() {
     domains.addLast(domains.removeFirst());
   }
 
+  static void moveNextSearch() {
+    domainsSearch.addLast(domainsSearch.removeFirst());
+  }
+
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
-  static String imageUrl(String img) => 'https://imgapixs.${domains.first}.com/BookFiles/BookImages/$img';
+  static String imageUrl(String img) =>
+      'https://imgapixs.${domains.first}.com/BookFiles/BookImages/$img';
 
   static String contentUrl(int id, int? cid) {
     final sd = shortid(id);
@@ -41,6 +47,7 @@ class Api {
   }
 
   static String searchUrl(String key) {
+    moveNextSearch();
     return 'https://souxs.pigqq.com/search.aspx?key=$key&page=1&siteid=app2';
   }
 

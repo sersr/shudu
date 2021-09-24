@@ -1,18 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
 import '../../../widgets/indexs.dart';
+import '../../../widgets/pan_slide.dart';
 import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
 import 'color_picker.dart';
 import 'page_view_controller.dart';
-import '../../../widgets/pan_slide.dart';
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
@@ -724,8 +722,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
-    // _audioNotifier = ChangeNotifierSelector<ContentViewConfig, bool>(
-    //     parent: bloc.config, notifyValue: (config) => config.audio ?? false);
     update();
   }
 

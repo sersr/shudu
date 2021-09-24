@@ -2,24 +2,21 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
-// import 'package:bangs/bangs.dart';
 import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../base/type_adapter.dart';
 import 'package:useful_tools/common.dart';
 import 'package:useful_tools/event_queue.dart';
 
 import '../../provider/options_notifier.dart';
 import '../base/book_event.dart';
-import '../base/repository.dart';
+import '../base/type_adapter.dart';
 import '../event.dart';
 
 abstract class BookRepositoryBase extends Repository implements SendEvent {
@@ -88,8 +85,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _isolate = n;
     _init.value = _isolate != null;
   }
-
-  final _initQueue = EventQueue();
 
   Future<void> onDone(ReceivePort rcPort);
   Future<void> onInit() async {
@@ -170,8 +165,8 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
   }
 
   @override
-  Future<void> get initState async {
-    await _initQueue.awaitEventTask(onInit);
+  Future<void> get initState {
+    return EventQueue.runTaskOnQueue(runtimeType, onInit);
   }
 
   final ValueNotifier<bool> _init = ValueNotifier(false);
@@ -189,7 +184,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
   }
 
   @override
-  Future<void> close() async {
-    return _initQueue.awaitOneEventTask(onClose);
+  Future<void> close() {
+    return EventQueue.runOneTaskOnQueue(runtimeType, onClose);
   }
 }

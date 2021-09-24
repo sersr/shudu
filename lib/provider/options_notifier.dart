@@ -107,7 +107,6 @@ class OptionsNotifier extends ChangeNotifier {
   static const _pageBuilder = 'pageBuilder';
   static const _resample = 'resample';
   static const _nopResample = 'nopResample';
-  static const _resampleOffset = 'resampleOffset';
   static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
 

@@ -10,6 +10,7 @@ import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
 import 'package:useful_tools/common.dart';
+// ignore: unused_import
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class RepositoryImplTest extends Repository with SendEventPortMixin {

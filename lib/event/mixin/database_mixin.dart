@@ -29,15 +29,6 @@ mixin DatabaseMixin implements DatabaseEvent {
   late final db = BookDatabase(_url, version, useFfi, useSqflite3);
 
   @override
-  Stream<List<BookCache>> watchBookCacheCid(int id) {
-    final query = bookCache.query
-      ..chapterId.bookId
-      ..where.bookId.equalTo(id);
-
-    return query.watchToTable;
-  }
-
-  @override
   FutureOr<int> updateBook(int id, BookCache book) {
     final update = bookCache.update..where.bookId.equalTo(id);
     bookCache.updateBookCache(update, book);
@@ -139,6 +130,15 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
+  Stream<List<BookCache>> watchBookCacheCid(int id) {
+    final query = bookCache.query
+      ..chapterId.bookId
+      ..where.bookId.equalTo(id);
+
+    return query.watchToTable;
+  }
+
+  @override
   Stream<List<BookContentDb>> watchCacheContentsCidDb(int bookid) {
     late Stream<List<BookContentDb>> w;
 
@@ -191,7 +191,6 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   @override
   FutureOr<List<BookCache>> getMainBookListDb() => bookCache.query.goToTable;
-
 
   @override
   FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../../provider/content_notifier.dart';
 import '../../../widgets/activity.dart';
@@ -98,42 +97,25 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void nextPage() {
-    if (_lastActivityIsIdle && axis == Axis.horizontal) {
-      if (axis == Axis.horizontal) {
+    if (_lastActivityIsIdle && viewPortDimension != null) {
+      // if (axis == Axis.horizontal) {
         if (ContentBoundary.hasRight(getBounds())) {
           if (maxExtent.isFinite) {
             _maxExtent = double.infinity;
           }
           setPixels(viewPortDimension! * (page + 0.51).round());
         }
-        // } else {
-        //   if (getBounds() & ContentBoundary.addRight != 0) {
-        //     var _n = page;
-
-        //     if (maxExtent.isFinite) {
-        //       _maxExtent = double.infinity;
-        //     }
-
-        //     if (ContentBoundary.hasRight(getBounds())) {
-        //       _n += 1;
-        //     } else {
-        //       _n = (page + 0.5).roundToDouble();
-        //     }
-        //     setPixels(viewPortDimension! * _n);
-        //   } else {
-        //     setPixels(viewPortDimension! * (page + 0.5).round());
-        //   }
-      }
+      // }
       goIdle();
     }
   }
 
   void prePage() {
-    if (_activity is IdleActivity && ContentBoundary.hasLeft(getBounds())) {
+    if (_lastActivityIsIdle && ContentBoundary.hasLeft(getBounds())) {
       if (minExtent.isFinite) {
         _minExtent = double.negativeInfinity;
       }
-      setPixels(viewPortDimension! * (page - 0.6).round());
+      setPixels(viewPortDimension! * (page - 0.51).round());
     }
   }
 

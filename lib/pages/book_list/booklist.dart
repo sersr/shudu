@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -135,18 +133,15 @@ class _WrapWidgetState extends State<WrapWidget>
               onRefreshing: shudanProvider.refresh,
               onDone: shudanProvider.refreshDone,
               builder: (context, offset, maxExtent, mode, refreshing) {
-                return Container(
-                  height: offset,
+                return ColoredBox(
                   color: Colors.blue,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
+                  child: Center(
                     child: Text('$mode | $refreshing'),
                   ),
                 );
               }),
           finishLayout: (first, last) {
             final state = shudanProvider.state;
-            Log.w('first: $first ');
             if (last >= list.length - 3) {
               if (state == LoadingStatus.success) {
                 shudanProvider.loadNext(last);

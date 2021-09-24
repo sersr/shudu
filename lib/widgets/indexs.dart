@@ -96,8 +96,8 @@ class _IndexsState extends State<_Indexs> {
 
     indexBloc = context.read<BookIndexNotifier>();
 
-    indexBloc
-      ?..addRegisterKey(lKey)
+    indexBloc!
+      ..addRegisterKey(lKey)
       ..addListener(_listenOnUpdate);
     setController();
   }
@@ -144,7 +144,7 @@ class _IndexsState extends State<_Indexs> {
       final position = controller!.offset;
       if ((position - offset).abs() <= 100) {
         controller!.animateTo(offset,
-            duration: const Duration(milliseconds: 300), curve: Curves.ease);
+            duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       } else {
         controller!.jumpTo(offset);
       }

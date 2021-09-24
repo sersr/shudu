@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,10 +8,11 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/constansts.dart';
 import '../../../provider/provider.dart';
+import '../../../provider/text_data.dart';
+import '../../../widgets/pan_slide.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
 import 'page_view_controller.dart';
-import '../../../widgets/pan_slide.dart';
 import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {
@@ -105,7 +105,7 @@ class ContentPageViewState extends State<ContentPageView>
 
   final lKey = Object();
 
-  Future<void> onshow() async {
+  void onshow() async {
     indexBloc.addRegisterKey(lKey);
 
     if (bloc.config.value.orientation! && bloc.inBook) {
@@ -114,7 +114,7 @@ class ContentPageViewState extends State<ContentPageView>
     }
   }
 
-  Future<void> onhide() async {
+  void onhide() async {
     indexBloc.removeRegisterKey(lKey);
 
     if (bloc.config.value.orientation! && bloc.inBook) {
@@ -161,23 +161,47 @@ class ContentPageViewState extends State<ContentPageView>
   Widget? getChild(int index, {bool changeState = false}) {
     final mes = bloc.getContentMes(index, changeState: changeState);
     if (mes == null) return null;
-    final child = ContentView(
-      contentMetrics: mes,
-      battery: offsetPosition.axis == Axis.horizontal
-          ? FutureBuilder<int>(
-              future: bloc.repository.getBatteryLevel,
-              builder: (context, snaps) {
-                final v = snaps.hasData ? snaps.data! : bloc.repository.level;
-                return BatteryView(
-                  progress: (v / 100).clamp(0.0, 1.0),
-                  color: bloc.config.value.fontColor!,
-                );
-              },
-            )
-          : null,
-    );
-
-    return child;
+    final isHorizontal = offsetPosition.axis == Axis.horizontal;
+    final batteryChild = isHorizontal
+        ? FutureBuilder<int>(
+            future: bloc.repository.getBatteryLevel,
+            builder: (context, snaps) {
+              final v = snaps.hasData ? snaps.data! : bloc.repository.level;
+              return BatteryView(
+                progress: (v / 100).clamp(0.0, 1.0),
+                color: bloc.config.value.fontColor!,
+              );
+            },
+          )
+        : null;
+    if (mes is ContentMetricsText) {
+      return RepaintBoundary(
+        child: CustomMultiChildLayout(
+          delegate: ContentViewTextLayout(),
+          children: [
+            LayoutId(
+                id: ContentViewTextLayout.body,
+                child: RepaintBoundary(
+                  child: ContentViewTextBody(
+                      contentMetrics: mes,
+                      isHorizontal: isHorizontal,
+                      shadow: bloc.showrect),
+                )),
+            LayoutId(
+              id: ContentViewTextLayout.battery,
+              child: RepaintBoundary(
+                child: ContentViewText(
+                  contentMetrics: mes,
+                  battery: batteryChild,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ContentView(contentMetrics: mes, battery: batteryChild);
+    }
   }
 
   Widget straight(Widget child) {
@@ -268,13 +292,13 @@ class ContentPageViewState extends State<ContentPageView>
       builder: (context, child) {
         return bloc.notEmptyOrIgnore.value
             ? GestureDetector(
-                onTapUp: (d) {
+                onTapUp: (details) {
                   if (offsetPosition.page == 0 ||
                       offsetPosition.page % offsetPosition.page.toInt() == 0 ||
                       !offsetPosition.isScrolling) {
-                    if (onTap(size, d.globalPosition)) {
+                    if (onTap(size, details.globalPosition)) {
                       tigger();
-                    } else {
+                    } else if (!bloc.autoRun.value) {
                       offsetPosition.nextPage();
                     }
                   }
@@ -282,7 +306,7 @@ class ContentPageViewState extends State<ContentPageView>
                 child: wrapChild(),
               )
             : GestureDetector(
-                onTap: () => getController().trigger(immediate: false),
+                onTap: tigger,
                 child: Container(
                     color: Colors.transparent,
                     child: reloadBotton(bloc.reload)),

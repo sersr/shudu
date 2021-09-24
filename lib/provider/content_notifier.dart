@@ -5,8 +5,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hive/hive.dart';
 import 'package:screen_brightness/screen_brightness.dart';
@@ -36,7 +34,6 @@ class ContentNotifier extends ChangeNotifier {
   // 同步----
   Future? get enter => initQueue.runner;
   Future? _configF;
-  Future? _autoF;
   Future? _willGoF;
   // -------
   Duration? lastStamp;
@@ -294,7 +291,7 @@ extension DataLoading on ContentNotifier {
   void updateCaches(TextData data) {
     final _keys = _getCurrentIds();
 
-    if (_caches.length > _keys.length) {
+    if (_caches.length > _keys.length + 1) {
       _caches.removeWhere((key, data) {
         final remove = !_keys.contains(key);
         if (remove) data.dispose();
@@ -318,6 +315,7 @@ extension DataLoading on ContentNotifier {
     if (lines != null && lines.contentIsNotEmpty) {
       final _key = key;
       final pages = await _asyncLayout(lines.pages, lines.cname!);
+      // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
       if (_key != key || _bookid != bookid) {
         for (final p in pages) {
           // 释放picture资源
@@ -389,7 +387,7 @@ extension Tasks on ContentNotifier {
 
   @pragma('vm:prefer-inline')
   Future<T> _run<T>(EventCallback<T> callback) {
-    return EventQueue.runTaskOnQueue([runtimeType, key], callback);
+    return EventQueue.runTaskOnQueue(runtimeType, callback);
   }
 
   Future<void>? taskRunner() {
@@ -597,10 +595,11 @@ extension Layout on ContentNotifier {
     final _offset = Offset(width, 0.1);
     // 分行布局
     for (var i = 0; i < paragraphs.length; i++) {
+      if (_key != key) return const [];
+
       // character 版本
       final pc = paragraphs[i].characters;
       var start = 0;
-
       while (start < pc.length) {
         var end = math.min(start + words, pc.length);
         await releaseUI;
@@ -633,6 +632,7 @@ extension Layout on ContentNotifier {
           }
         }
 
+        await releaseUI;
         if (end == pc.length &&
             pc
                 .getRange(start, end)
@@ -641,8 +641,6 @@ extension Layout on ContentNotifier {
                 .isEmpty) break;
 
         final _s = pc.getRange(start, end);
-
-        await releaseUI;
 
         final _text = TextPainter(
             text: TextSpan(text: _s.toString(), style: style),
@@ -692,7 +690,7 @@ extension Layout on ContentNotifier {
       final canvas = Canvas(recorder);
       await releaseUI;
 
-      await paint(canvas,
+      paintText(canvas,
           painters: pages[r],
           extraHeight: extraHeight,
           isHorizontal: isHorizontal,
@@ -704,12 +702,13 @@ extension Layout on ContentNotifier {
           left: left,
           index: r,
           size: _size,
-          windowTopPadding: _paddingRect.top,
+          paddingRect: _paddingRect,
           showrect: showrect,
           topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
       await releaseUI;
 
       final picture = recorder.endRecording();
+      await releaseUI;
 
       final met = ContentMetrics(
         picture: PictureRefInfo(picture),
@@ -728,66 +727,186 @@ extension Layout on ContentNotifier {
     return textPages;
   }
 
-  Future<void> paint(Canvas canvas,
-      {required List<TextPainter> painters,
-      required double extraHeight,
-      required double fontSize,
-      required bool isHorizontal,
-      required TextPainter titlePainter,
-      required TextPainter bottomRight,
-      required TextPainter cBigPainter,
-      required double right,
-      required double left,
-      required int index,
-      required Size size,
-      required double windowTopPadding,
-      required bool showrect,
-      required double topExtraHeight}) async {
-    final _size = size;
-    final _windowTopPadding = isHorizontal ? windowTopPadding : 0.0;
+  // test
+  Future<List<ContentMetricsText>> _asyncLayoutText(
+      List<String> paragraphs, String cname) async {
+    var whiteRows = 0;
 
-    var h = 0.0;
-    canvas.translate(left, _windowTopPadding);
-    if (isHorizontal) {
-      h += contentTopPad;
-      titlePainter.paint(canvas, Offset(0.0, h));
-      // h += titlePainter.height;
-      h += contentFooterSize;
-    }
-    if (index == 0) {
-      if (!isHorizontal) {
-        h -= contentPadding;
-      }
-      h += topExtraHeight;
-      cBigPainter.paint(canvas, Offset(0.0, h - cBigPainter.height));
-      if (!isHorizontal) {
-        h += contentPadding;
-      }
-    }
+    final textPages = <ContentMetricsText>[];
+    final style = this.style;
+
+    final fontSize = style.fontSize!;
+
+    final config = this.config.value.copyWith();
+
+    final words = (size.width - _paddingRect.horizontal) ~/ fontSize;
+
+    final _size = _paddingRect.deflateSize(size);
+    final width = _size.width;
+    final leftExtraPadding = (width % fontSize) / 2;
+    final left = _paddingRect.left + leftExtraPadding;
+
+    // 文本占用高度
+    final contentHeight = _size.height - contentWhiteHeight;
+
+    // 配置行高
+    final lineHeight = config.lineTweenHeight! * fontSize;
+
+    final _allExtraHeight = contentHeight % lineHeight;
+
+    // lineCounts
+    final rows = contentHeight ~/ lineHeight;
+
+    if (rows <= 0 || words <= 0) return textPages;
+
+    final hl = _allExtraHeight / rows;
+    // 实际行高
+    final lineHeightAndExtra = hl + lineHeight;
+    final _key = key;
+    // 小标题
+    final TextPainter smallTitlePainter = TextPainter(
+        text: TextSpan(text: cname, style: secstyle),
+        textDirection: TextDirection.ltr,
+        maxLines: 1)
+      ..layout(maxWidth: width);
+    await releaseUI;
+    // 大标题
+    final TextPainter _bigTitlePainter = TextPainter(
+        text: TextSpan(
+            text: cname,
+            style: style.copyWith(
+                fontSize: 22, height: 1.2, fontWeight: FontWeight.bold)),
+        textDirection: TextDirection.ltr)
+      ..layout(maxWidth: width);
+
     await releaseUI;
 
-    if (isHorizontal) h += contentPadding;
+    whiteRows = 150 ~/ lineHeightAndExtra + 1;
 
-    final xh = h;
-    final _e = extraHeight / 2;
-    final _end = _e + fontSize;
-    for (var _tep in painters) {
-      h += _e;
-      _tep.paint(canvas, Offset(0.0, h));
+    while (lineHeightAndExtra * whiteRows > 150) {
+      whiteRows--;
+      if (lineHeightAndExtra * whiteRows < 120) break;
       await releaseUI;
-      h += _end;
     }
-    if (showrect) {
-      canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h - xh),
-          Paint()..color = Colors.black.withAlpha(100));
+
+    final _oneHalf = fontSize * 1.6;
+
+    final lines = <TextPainter>[];
+
+    final _t = TextPainter(textDirection: TextDirection.ltr);
+    // 只需要最小的位移，会自动计算位置
+    final _offset = Offset(width, 0.1);
+    // 分行布局
+    for (var i = 0; i < paragraphs.length; i++) {
+      // character 版本
+      final pc = paragraphs[i].characters;
+      var start = 0;
+
+      while (start < pc.length) {
+        var end = math.min(start + words, pc.length);
+        await releaseUI;
+
+        // 确定每一行的字数
+        while (true) {
+          if (end >= pc.length) break;
+
+          end++;
+          final s = pc.getRange(start, end).toString();
+          _t
+            ..text = TextSpan(text: s, style: style)
+            ..layout(maxWidth: width);
+
+          await releaseUI;
+
+          if (_t.height > _oneHalf) {
+            final endOffset = _t.getPositionForOffset(_offset).offset;
+
+            // 获得字符真正长度
+            final _s = s.substring(0, endOffset).characters;
+
+            assert(Log.i(
+                'no: $_s ${endOffset != _s.length} |$start, ${pc.length}'));
+            end = start + _s.length;
+            break;
+          }
+        }
+
+        await releaseUI;
+        final line = pc.getRange(start, end).toString();
+        if (end == pc.length && line.replaceAll(regexpEmpty, '').isEmpty) break;
+
+        final _text = TextPainter(
+            text: TextSpan(text: line, style: style),
+            textDirection: TextDirection.ltr)
+          ..layout(maxWidth: width);
+
+        start = end;
+        lines.add(_text);
+      }
     }
-    if (isHorizontal) {
-      final bottom = _size.height +
-          _paddingRect.bottom -
-          contentFooterSize -
-          contentBotttomPad;
-      bottomRight.paint(canvas, Offset(right, bottom));
+
+    await releaseUI;
+    var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
+
+    final pages = <List<TextPainter>>[];
+    // 首页留白和标题
+    final firstPages = math.max(0, rows - whiteRows - topExtraRows);
+    pages.add(lines.sublist(0, math.min(firstPages, lines.length)));
+
+    // 分页
+    final length = lines.length;
+    if (firstPages < length - 1)
+      for (var i = firstPages; i < length;) {
+        final end = math.min(i + rows, length);
+        pages.add(lines.sublist(i, end));
+        i += rows;
+      }
+
+    var extraHeight = lineHeightAndExtra - fontSize;
+
+    await releaseUI;
+    if (_key != key) {
+      return const [];
     }
+    bool error = false;
+    // 添加页面信息
+    for (var r = 0; r < pages.length; r++) {
+      final bottomRight = TextPainter(
+          text: TextSpan(text: '${r + 1}/${pages.length}页', style: secstyle),
+          textDirection: TextDirection.ltr)
+        ..layout(maxWidth: width);
+
+      final right = width - bottomRight.width - leftExtraPadding * 2;
+      if (_key != key) {
+        error = true;
+        break;
+      }
+
+      await releaseUI;
+
+      final met = ContentMetricsText(
+        lines: pages[r],
+        extraHeight: extraHeight,
+        fontSize: fontSize,
+        titleCname: smallTitlePainter,
+        bottomRight: bottomRight,
+        cBigPainter: _bigTitlePainter,
+        right: right,
+        left: left,
+        index: r,
+        size: _size,
+        paddingRect: _paddingRect,
+        topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows),
+        secStyle: secstyle,
+      );
+      await releaseUI;
+
+      textPages.add(met);
+    }
+    if (error) {
+      return const [];
+    }
+    return textPages;
   }
 }
 
@@ -1206,6 +1325,7 @@ extension Configs on ContentNotifier {
   }
 }
 
+/// 在长时间使用自动阅读（滚动）时，有可能出现无响应
 extension AutoR on ContentNotifier {
   void auto() {
     if (config.value.axis == Axis.vertical) {
@@ -1234,15 +1354,9 @@ extension AutoR on ContentNotifier {
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
       scheduleTask();
-      _autoF ??= SchedulerBinding.instance!.endOfFrame
-          .then((_) => autoRun.start())
-        ..whenComplete(() => _autoF = null);
+      EventQueue.runOneTaskOnQueue(_auto, autoRun.start);
     } else {
-      if (_autoF != null) {
-        _autoF!.then((_) => autoRun.stopTicked());
-        return;
-      }
-      autoRun.stopTicked();
+      EventQueue.runOneTaskOnQueue(_auto, autoRun.stopTicked);
     }
   }
 
@@ -1362,12 +1476,10 @@ class ContentViewConfig {
 }
 
 class NotifyMessage {
-  const NotifyMessage(this.error, {this.msg = network});
-  static const hide = NotifyMessage(false, msg: '');
-  static const netWorkError = NotifyMessage(true, msg: network);
-  static const noNextError = NotifyMessage(true, msg: noNext);
-  static const network = '网络错误';
-  static const noNext = '已经是最后一章了';
+  const NotifyMessage._(this.error, {this.msg = ''});
+  static const hide = NotifyMessage._(false, msg: '');
+  static const netWorkError = NotifyMessage._(true, msg: '网络错误');
+  static const noNextError = NotifyMessage._(true, msg: '已经是最后一章了');
   final bool error;
   final String msg;
 }
@@ -1386,9 +1498,20 @@ class AutoRun {
   }
 
   Ticker? _ticker;
+  bool _ignore = false;
   void start() {
+    assert(_ticker == null || !_ticker!.isActive);
+    stopTicked();
     value = true;
-    _ticker = Ticker(onTick, debugLabel: 'autoRun')..start();
+    _ticker = Ticker((timeStamp) {
+      if (_ignore) {
+        _ignore = false;
+        return;
+      }
+      _ignore = true;
+      onTick(timeStamp);
+    }, debugLabel: 'autoRun')
+      ..start();
   }
 
   void stopTicked() {
