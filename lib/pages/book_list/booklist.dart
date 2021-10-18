@@ -133,7 +133,7 @@ class _WrapWidgetState extends State<WrapWidget>
           scrollController: scrollController,
           itemCount: list.length + 1,
           cacheExtent: 200,
-          color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
           refreshDelegate: RefreshDelegate(
               maxExtent: 80,
               onRefreshing: shudanProvider.refresh,
@@ -176,10 +176,8 @@ class _WrapWidgetState extends State<WrapWidget>
             final bookList = list[index];
             return ListItem(
               height: 112,
-              bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-              splashColor: isLight
-                  ? const Color.fromRGBO(225, 225, 225, 1)
-                  : Color.fromRGBO(60, 60, 60, 1),
+              bgColor: isLight ? null : Colors.grey.shade900,
+              splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
               onTap: () {
                 final route = MaterialPageRoute(builder: (_) {
                   return BooklistDetailPage(

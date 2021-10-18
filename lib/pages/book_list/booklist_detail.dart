@@ -59,8 +59,8 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
     yield const SizedBox(height: 6);
 
     yield Container(
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-      // Color.fromARGB(255, 250, 250, 250),
+      color:
+          isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0),
       child: Text('书单列表',
           style: isLight
@@ -73,10 +73,8 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
     if (data.bookList != null)
       for (var l in data.bookList!)
         yield ListItem(
-          bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-          splashColor: isLight
-              ? const Color.fromRGBO(225, 225, 225, 1)
-              : Color.fromRGBO(60, 60, 60, 1),
+          bgColor: isLight ? null : Colors.grey.shade900,
+          splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
           height: 108,
           onTap: () => BookInfoPage.push(context, l.bookId!),
           child: ShudanListDetailItemWidget(l: l),
@@ -113,8 +111,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                   interactive: true,
                   thickness: 8,
                   child: ListViewBuilder(
-                    color:
-                        isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+                    color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
 
                     refreshDelegate: refreshDelegate2,
                     padding: const EdgeInsets.only(bottom: 12.0),
@@ -162,8 +159,8 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   Widget buildIntro(TextStyleConfig ts, String? description) {
     return Container(
       padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-      //  Color.fromARGB(255, 250, 250, 250),
+      color:
+          isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -232,8 +229,9 @@ class _TitleWidgetState extends State<TitleWidget>
     final data = widget.data;
     return Container(
       height: 120,
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-      // color: const Color.fromARGB(255, 250, 250, 250),
+      color: isLight
+          ? const Color.fromARGB(255, 250, 250, 250)
+          : Colors.grey.shade900,
       padding: const EdgeInsets.all(12.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 80),

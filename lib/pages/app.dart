@@ -9,62 +9,68 @@ import '../provider/provider.dart';
 import 'home/home_page.dart';
 
 class ShuduApp extends StatelessWidget {
-  const ShuduApp({Key? key}) : super(key: key);
+  const ShuduApp({Key? key, required this.mode}) : super(key: key);
+  final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
-    return Selector<OptionsNotifier, List>(selector: (context, opt) {
-      return [
-        opt.options.themeMode,
-        opt.options.platform,
-        opt.options.showPerformanceOverlay,
-      ];
-    }, builder: (context, list, _) {
-      //TODO: 主题配色，国际化...
+    return Selector<OptionsNotifier, List>(
+      selector: (context, opt) {
+        return [
+          opt.options.themeMode,
+          opt.options.platform,
+          opt.options.showPerformanceOverlay,
+        ];
+      },
+      builder: (context, list, _) {
+        //TODO: 国际化...
 
-      return MaterialApp(
-        themeMode: list[0] ?? ThemeMode.system,
-        title: 'shudu',
-        theme: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(
-            // primary: Colors.grey.shade100,
-            // primaryVariant: Colors.grey.shade200,
-            secondary: Colors.grey,
-            // onPrimary: Colors.grey.shade700,
-            // onSurface: Colors.blue,
-            // secondaryVariant: Colors.grey.shade400
+        return MaterialApp(
+          themeMode: list[0] ?? mode,
+          title: 'shudu',
+          theme: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              // primary: Colors.grey.shade100,
+              // primaryVariant: Colors.grey.shade200,
+              secondary: Colors.grey,
+              // onPrimary: Colors.grey.shade700,
+              // onSurface: Colors.blue,
+              // secondaryVariant: Colors.grey.shade400
+            ),
+            // primarySwatch: Colors.grey,
+            platform: list[1] ?? defaultTargetPlatform,
+            // brightness: Brightness.light,
+            // primaryColorBrightness: Brightness.light,
+            // primaryColor: Colors.grey.shade900,
+            // fontFamily: 'NotoSansSC',]
+
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.iOS: SlidePageTransition(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+            }),
           ),
-          // primarySwatch: Colors.grey,
-          platform: list[1] ?? defaultTargetPlatform,
-          // brightness: Brightness.light,
-          // primaryColorBrightness: Brightness.light,
-          // primaryColor: Colors.grey.shade900,
-          // fontFamily: 'NotoSansSC',]
-
-          pageTransitionsTheme: const PageTransitionsTheme(builders: {
-            TargetPlatform.iOS: SlidePageTransition(),
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
-          }),
-        ),
-        darkTheme: ThemeData.dark().copyWith(
-          platform: list[1] ?? defaultTargetPlatform,
-          colorScheme: const ColorScheme.dark(
-              secondary: Colors.grey, primary: Colors.blue),
-          pageTransitionsTheme: const PageTransitionsTheme(builders: {
-            TargetPlatform.iOS: SlidePageTransition(),
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
-          }),
-        ),
-        showPerformanceOverlay: list[2] ?? false,
-        home: const MyHomePage(),
-        navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
-      );
-    });
+          darkTheme: ThemeData.dark().copyWith(
+            platform: list[1] ?? defaultTargetPlatform,
+            colorScheme: const ColorScheme.dark(
+                secondary: Colors.grey, primary: Colors.blue),
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.iOS: SlidePageTransition(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+            }),
+          ),
+          showPerformanceOverlay: list[2] ?? false,
+          home: const MyHomePage(),
+          navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
+        );
+      },
+    );
   }
 }
 
 class MulProvider extends StatelessWidget {
-  const MulProvider({Key? key, required this.hotFix}) : super(key: key);
+  const MulProvider({Key? key, required this.hotFix, required this.mode})
+      : super(key: key);
   final DeferredMain? hotFix;
+  final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -86,7 +92,7 @@ class MulProvider extends StatelessWidget {
           create: (context) => BookCacheNotifier(context.read<Repository>()),
         )
       ],
-      child: const ShuduApp(),
+      child: ShuduApp(mode: mode),
     );
   }
 }

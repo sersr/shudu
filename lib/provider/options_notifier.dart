@@ -95,12 +95,11 @@ class OptionsNotifier extends ChangeNotifier {
   final routeObserver = RouteObserver<PageRoute>();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
-  final _event = EventQueue();
 
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    _event.addOneEventTask(saveOptions);
+    EventQueue.runOneTaskOnQueue(getThemeMode, saveOptions);
     notifyListeners();
   }
 
@@ -134,9 +133,18 @@ class OptionsNotifier extends ChangeNotifier {
     });
   }
 
+  static Future<ThemeMode> getThemeMode() async {
+    return EventQueue.runTaskOnQueue(getThemeMode, () async {
+      final box = await Hive.openBox(_options_);
+      final mode = box.get(_themeMode, defaultValue: ThemeMode.system);
+      await box.close();
+      return mode;
+    });
+  }
+
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.runTaskOnQueue(eventQueueKey, _init);
+  Future<void> init() => EventQueue.runTaskOnQueue(getThemeMode, _init);
 
   Future<void> _init() async {
     final box = await Hive.openBox(_options_);

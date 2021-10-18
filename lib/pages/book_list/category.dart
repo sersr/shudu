@@ -278,7 +278,7 @@ class _CategListViewState extends State<CategListView>
 
             return ListViewBuilder(
               cacheExtent: 100,
-              color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+              color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
               itemCount: _data.length + 1,
               finishLayout: (first, last) {
                 final length = _data.length;
@@ -297,11 +297,8 @@ class _CategListViewState extends State<CategListView>
                 }
                 final _item = _data[index];
                 return ListItem(
-                  bgColor:
-                      isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-                  splashColor: isLight
-                      ? const Color.fromRGBO(225, 225, 225, 1)
-                      : Color.fromRGBO(60, 60, 60, 1),
+                  bgColor: isLight ? null : Colors.grey.shade900,
+                  splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                   onTap: () => _item.id != null
                       ? BookInfoPage.push(context, _item.id!)
                       : null,

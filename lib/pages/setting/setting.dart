@@ -276,7 +276,7 @@ class _SettingState extends State<Setting> {
     final children = _buildChild(options).toList();
 
     final child = ListViewBuilder(
-      color: isLight ? Colors.white : const Color.fromRGBO(20, 20, 20, 1),
+      color: isLight ? null : const Color.fromRGBO(20, 20, 20, 1),
       itemBuilder: (BuildContext context, int index) {
         return children[index];
       },

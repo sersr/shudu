@@ -1009,13 +1009,16 @@ extension Event on ContentNotifier {
     }
     final _reset = _getStateOrSetBook(newBookid, cid, page, only: true);
     if (_reset) {
+      initQueue.addEventTask(() {
+        _getStateOrSetBook(newBookid, cid, page);
+        reset(clearCache: clear);
+      });
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
 
       await startFirstEvent(
           only: false,
-          clear: clear,
-          onStart: () => _getStateOrSetBook(newBookid, cid, page),
+          clear: false,
           onDone: resetController);
 
       _t.cancel();

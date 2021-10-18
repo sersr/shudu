@@ -137,10 +137,9 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _waits.add(getApplicationDocumentsDirectory().then((dir) {
       appDir = dir;
       Log.i('init ....', onlyDebug: false);
-      hiveInit(join(appDir.path, 'shudu', 'hive'));
-      _waits
-          .add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
+      // hiveInit(join(appDir.path, 'shudu', 'hive'));
     }));
+    _waits.add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
 
     await _waits.wait;
 

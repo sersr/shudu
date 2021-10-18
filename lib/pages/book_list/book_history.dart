@@ -36,6 +36,8 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -55,9 +57,13 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
                 cacheExtent: 100,
                 itemCount: data.length,
                 padding: const EdgeInsets.only(bottom: 12.0),
+                color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
                 itemBuilder: (context, index) {
                   final item = data[index];
                   return ListItem(
+                      bgColor: isLight ? null : Colors.grey.shade900,
+                      splashColor:
+                          isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                       onTap: () {
                         if (item.bookId != null)
                           BookInfoPage.push(context, item.bookId!);

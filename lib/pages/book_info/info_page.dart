@@ -102,9 +102,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                     children: [
                       Expanded(
                         child: ListViewBuilder(
-                          color: isLight
-                              ? Colors.white
-                              : Color.fromRGBO(25, 25, 25, 1),
+                          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
                           cacheExtent: 100,
                           itemBuilder: (context, index) {
                             return children[index];
@@ -269,9 +267,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     yield const SizedBox(height: 6);
     yield Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-
-      // color: const Color.fromRGBO(250, 250, 250, 1),
+      color: isLight
+          ? const Color.fromRGBO(250, 250, 250, 1)
+          : Colors.grey.shade900,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -310,9 +308,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     yield const SizedBox(height: 6);
 
     yield ColoredBox(
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-
-      // color: const Color.fromRGBO(250, 250, 250, 1),
+      color: isLight
+          ? const Color.fromRGBO(250, 250, 250, 1)
+          : Colors.grey.shade900,
       child: AnimatedBuilder(
         animation: cache,
         builder: (context, _) {
@@ -336,7 +334,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               context.read<BookIndexNotifier>().loadIndexs(bookid, _cid);
               showIndexs.value = !showIndexs.value;
             },
-            bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+            bgColor: isLight ? null : Colors.grey.shade900,
             splashColor: isLight
                 ? const Color.fromRGBO(225, 225, 225, 1)
                 : Color.fromRGBO(60, 60, 60, 1),
@@ -394,9 +392,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     yield const SizedBox(height: 6);
 
     yield Container(
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-
-      // color: const Color.fromRGBO(250, 250, 250, 1),
+      color: isLight
+          ? const Color.fromRGBO(250, 250, 250, 1)
+          : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
       child: Text('${info.author} 还写过'),
     );
@@ -407,10 +405,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       for (var l in info.sameUserBooks!)
         yield ListItem(
             height: 108,
-            bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-            splashColor: isLight
-                ? const Color.fromRGBO(225, 225, 225, 1)
-                : Color.fromRGBO(60, 60, 60, 1),
+            bgColor: isLight ? null : Colors.grey.shade900,
+            splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
             child: _BookInfoSameItemWidget(l: l, author: info.author),
             onTap: () =>
                 l.id == null ? null : BookInfoPage.push(context, l.id!));
@@ -429,8 +425,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       TextStyleConfig ts) {
     return Container(
       padding: const EdgeInsets.only(bottom: 5.0),
-      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-      // color: const Color.fromRGBO(250, 250, 250, 1),
+      color: isLight
+          ? const Color.fromRGBO(250, 250, 250, 1)
+          : Colors.grey.shade900,
       child: RepaintBoundary(
         child: Container(
           height: 130,

@@ -39,6 +39,8 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -57,6 +59,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             return ListViewBuilder(
               cacheExtent: 100,
               itemExtent: 60,
+              color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
               padding: const EdgeInsets.only(bottom: 12.0),
               itemBuilder: (_, index) => cacheItemBuilder(index),
               itemCount: data.length,
@@ -73,8 +76,11 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
     final progress =
         _e.isEmpty ? 0.0 : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return ListItem(
+      bgColor: isLight ? null : Colors.grey.shade900,
+      splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
       onTap: () {
         _cacheNotifier.exit = true;
         BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(

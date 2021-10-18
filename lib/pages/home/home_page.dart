@@ -223,321 +223,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       builder: (_) {
         return SizedBox(
             height: 100, child: Center(child: Text('hello,移动到设置页面')));
-        // return Container(
-        //   decoration: BoxDecoration(
-        //     color: Colors.grey[200]!.withAlpha(240),
-        //     borderRadius:
-        //         BorderRadiusDirectional.vertical(top: Radius.circular(6.0)),
-        //   ),
-        //   padding: const EdgeInsets.only(left: 12.0, right: 4.0, bottom: 4.0),
-        //   child: RepaintBoundary(
-        //     child: Column(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         Center(
-        //           child: Padding(
-        //             padding: const EdgeInsets.only(top: 8.0),
-        //             child: Text('选择平台样式'),
-        //           ),
-        //         ),
-        //         Padding(
-        //           padding: const EdgeInsets.symmetric(vertical: 4),
-        //           child: Row(
-        //             mainAxisAlignment: MainAxisAlignment.spaceAround,
-        //             children: [
-        //               btn1(
-        //                 child: Container(
-        //                   padding: const EdgeInsets.symmetric(
-        //                       horizontal: 10, vertical: 5),
-        //                   child: Text(
-        //                     'Android',
-        //                     style: TextStyle(color: Colors.grey.shade100),
-        //                   ),
-        //                 ),
-        //                 radius: 5,
-        //                 bgColor: Colors.cyan.shade600,
-        //                 splashColor: Colors.cyan.shade200,
-        //                 onTap: () {
-        //                   opts.options =
-        //                       ConfigOptions(platform: TargetPlatform.android);
-        //                   Future.delayed(Duration(milliseconds: 200), () {
-        //                     Navigator.of(context).pop();
-        //                   });
-        //                 },
-        //               ),
-        //               btn1(
-        //                 child: Container(
-        //                   padding: const EdgeInsets.symmetric(
-        //                       horizontal: 10, vertical: 5),
-        //                   child: Text(
-        //                     'IOS',
-        //                     style: TextStyle(color: Colors.grey.shade100),
-        //                   ),
-        //                 ),
-        //                 radius: 5,
-        //                 bgColor: Colors.cyan.shade600,
-        //                 splashColor: Colors.cyan.shade200,
-        //                 onTap: () {
-        //                   opts.options =
-        //                       ConfigOptions(platform: TargetPlatform.iOS);
-        //                   Future.delayed(Duration(milliseconds: 200), () {
-        //                     Navigator.of(context).pop();
-        //                   });
-        //                 },
-        //               )
-        //             ],
-        //           ),
-        //         ),
-
-        //         // Divider(height: 1),
-        //         // Center(
-        //         //   child: Padding(
-        //         //     padding: const EdgeInsets.only(top: 8.0),
-        //         //     child: Text('页面过度动画'),
-        //         //   ),
-        //         // ),
-        //         // Padding(
-        //         //   padding: const EdgeInsets.symmetric(vertical: 4),
-        //         //   child: Wrap(
-        //         //     spacing: 12.0,
-        //         //     runSpacing: 8.0,
-        //         //     children: [
-        //         //       btn1(
-        //         //         child: Container(
-        //         //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        //         //           child: Text(
-        //         //             'FadeUpwards',
-        //         //             style: TextStyle(color: Colors.grey.shade100),
-        //         //           ),
-        //         //         ),
-        //         //         radius: 5,
-        //         //         bgColor: Colors.lightBlue.shade700,
-        //         //         splashColor: Colors.lightBlue.shade400,
-        //         //         onTap: () {
-        //         //           opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.fadeUpwards)));
-        //         //           Future.delayed(Duration(milliseconds: 200), () {
-        //         //             Navigator.of(context).pop();
-        //         //           });
-        //         //         },
-        //         //       ),
-        //         //       btn1(
-        //         //         child: Container(
-        //         //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        //         //           child: Text(
-        //         //             'OpenUpwards',
-        //         //             style: TextStyle(color: Colors.grey.shade100),
-        //         //           ),
-        //         //         ),
-        //         //         radius: 5,
-        //         //         bgColor: Colors.lightBlue.shade700,
-        //         //         splashColor: Colors.lightBlue.shade400,
-        //         //         onTap: () {
-        //         //           opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.openUpwards)));
-        //         //           Future.delayed(Duration(milliseconds: 200), () {
-        //         //             Navigator.of(context).pop();
-        //         //           });
-        //         //         },
-        //         //       ),
-        //         //       btn1(
-        //         //         child: Container(
-        //         //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        //         //           child: Text(
-        //         //             'Cupertino',
-        //         //             style: TextStyle(color: Colors.grey.shade100),
-        //         //           ),
-        //         //         ),
-        //         //         radius: 5,
-        //         //         bgColor: Colors.lightBlue.shade700,
-        //         //         splashColor: Colors.lightBlue.shade400,
-        //         //         onTap: () {
-        //         //           opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.cupertino)));
-        //         //           Future.delayed(Duration(milliseconds: 200), () {
-        //         //             Navigator.of(context).pop();
-        //         //           });
-        //         //         },
-        //         //       ),
-        //         //       btn1(
-        //         //         child: Container(
-        //         //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        //         //           child: Text(
-        //         //             'FadeThrough',
-        //         //             style: TextStyle(color: Colors.grey.shade100),
-        //         //           ),
-        //         //         ),
-        //         //         radius: 5,
-        //         //         bgColor: Colors.lightBlue.shade700,
-        //         //         splashColor: Colors.lightBlue.shade400,
-        //         //         onTap: () {
-        //         //           opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.fadeThrough)));
-        //         //           Future.delayed(Duration(milliseconds: 200), () {
-        //         //             Navigator.of(context).pop();
-        //         //           });
-        //         //         },
-        //         //       ),
-        //         //       btn1(
-        //         //         child: Container(
-        //         //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        //         //           child: Text(
-        //         //             'Zoom',
-        //         //             style: TextStyle(color: Colors.grey.shade100),
-        //         //           ),
-        //         //         ),
-        //         //         radius: 5,
-        //         //         bgColor: Colors.lightBlue.shade700,
-        //         //         splashColor: Colors.lightBlue.shade400,
-        //         //         onTap: () {
-        //         //           opts.add(OptionsEvent(ConfigOptions(pageBuilder: PageBuilder.zoom)));
-        //         //           Future.delayed(Duration(milliseconds: 200), () {
-        //         //             Navigator.of(context).pop();
-        //         //           });
-        //         //         },
-        //         //       )
-        //         //     ],
-        //         //   ),
-        //         // ),
-
-        //         Divider(height: 1),
-        //         Center(
-        //           child: Padding(
-        //             padding: const EdgeInsets.only(top: 8.0),
-        //             child: Text('指针采样'),
-        //           ),
-        //         ),
-        //         Padding(
-        //           padding: const EdgeInsets.symmetric(vertical: 4),
-        //           child: Consumer<OptionsNotifier>(
-        //             builder: (context, opt, _) {
-        //               return Column(
-        //                 mainAxisSize: MainAxisSize.min,
-        //                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-        //                 children: [
-        //                   Row(
-        //                     mainAxisSize: MainAxisSize.min,
-        //                     children: [
-        //                       // Center(child: Text('offset:')),
-        //                       // IconButton(
-        //                       //     icon: Icon(Icons.remove),
-        //                       //     onPressed: () {
-        //                       //       if (opt.options.resampleOffset != null) {
-        //                       //         final offset =
-        //                       //             opt.options.resampleOffset! - 1;
-        //                       //         opt.options =
-        //                       //             ConfigOptions(resampleOffset: offset);
-        //                       //       }
-        //                       //     }),
-        //                       // Center(
-        //                       //     child: Text('${opt.options.resampleOffset}')),
-        //                       // IconButton(
-        //                       //   icon: Icon(Icons.add),
-        //                       //   onPressed: () {
-        //                       //     if (opt.options.resampleOffset != null) {
-        //                       //       final offset =
-        //                       //           opt.options.resampleOffset! + 1;
-        //                       //       opt.options =
-        //                       //           ConfigOptions(resampleOffset: offset);
-        //                       //     }
-        //                       //   },
-        //                       // ),
-        //                       Center(child: Text('resample:')),
-        //                       Switch(
-        //                         splashRadius: 0,
-        //                         value: opt.options.resample ?? true,
-        //                         onChanged: (v) {
-        //                           opts.options = ConfigOptions(resample: v);
-        //                         },
-        //                       ),
-        //                       Center(child: Text('nopResample:')),
-        //                       Switch(
-        //                         splashRadius: 0,
-        //                         value: opt.options.nopResample ?? true,
-        //                         onChanged: (v) {
-        //                           opts.options = ConfigOptions(nopResample: v);
-        //                         },
-        //                       ),
-        //                     ],
-        //                   ),
-        //                 ],
-        //               );
-        //             },
-        //           ),
-        //         ),
-        //         Divider(height: 1),
-        //         Center(
-        //           child: Padding(
-        //             padding: const EdgeInsets.only(top: 8.0),
-        //             child: Text('设置选项'),
-        //           ),
-        //         ),
-        //         Padding(
-        //           padding: const EdgeInsets.symmetric(vertical: 4),
-        //           child: Row(
-        //             mainAxisSize: MainAxisSize.min,
-        //             mainAxisAlignment: MainAxisAlignment.spaceAround,
-        //             children: [
-        //               Center(child: Text('useTextCache:')),
-        //               Selector<OptionsNotifier, bool>(
-        //                   selector: (_, opt) =>
-        //                       opt.options.useTextCache ?? false,
-        //                   builder: (context, useTextCache, _) {
-        //                     return Switch(
-        //                       value: useTextCache,
-        //                       onChanged: (v) {
-        //                         opts.options = ConfigOptions(useTextCache: v);
-        //                       },
-        //                     );
-        //                   }),
-        //               Center(child: Text('useImageCache:')),
-        //               Selector<OptionsNotifier, bool>(
-        //                   selector: (_, opt) =>
-        //                       opt.options.useImageCache ?? false,
-        //                   builder: (context, useImageCache, _) {
-        //                     return Switch(
-        //                       value: useImageCache,
-        //                       onChanged: (v) {
-        //                         opts.options = ConfigOptions(useImageCache: v);
-        //                       },
-        //                     );
-        //                   })
-        //             ],
-        //           ),
-        //         ),
-        //         Padding(
-        //           padding: const EdgeInsets.symmetric(vertical: 4),
-        //           child: Row(
-        //             mainAxisSize: MainAxisSize.min,
-        //             mainAxisAlignment: MainAxisAlignment.spaceAround,
-        //             children: [
-        //               Center(child: Text('useSqflite3:(重启生效)')),
-        //               Selector<OptionsNotifier, bool>(
-        //                   selector: (_, opt) => opt.options.useSqflite ?? false,
-        //                   builder: (context, useSqflite3, _) {
-        //                     return Switch(
-        //                       value: useSqflite3,
-        //                       onChanged: (v) {
-        //                         opts.options = ConfigOptions(useSqflite: v);
-        //                       },
-        //                     );
-        //                   }),
-        //               // Center(child: Text('useMemoryCache:')),
-        //               // Selector<OptionsNotifier, bool>(
-        //               //     selector: (_, opt) =>
-        //               //         opt.options.useMemoryImage ?? false,
-        //               //     builder: (context, useMemoryImage, _) {
-        //               //       return Switch(
-        //               //         value: useMemoryImage,
-        //               //         onChanged: (v) {
-        //               //           opts.options = ConfigOptions(useMemoryImage: v);
-        //               //         },
-        //               //       );
-        //               //     }),
-        //             ],
-        //           ),
-        //         ),
-        //         const SizedBox(height: 20),
-        //       ],
-        //     ),
-        //   ),
-        // );
       },
     );
   }
@@ -627,17 +312,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
             return Scrollbar(
               child: ListViewBuilder(
-                color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+                color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
                 cacheExtent: 100,
                 itemCount: children.length,
                 itemBuilder: (_, index) {
                   final item = children[index];
                   return ListItem(
-                    bgColor:
-                        isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-                    splashColor: isLight
-                        ? const Color.fromRGBO(225, 225, 225, 1)
-                        : Color.fromRGBO(60, 60, 60, 1),
+                    bgColor: isLight ? null : Colors.grey.shade900,
+                    splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                     onTap: () {
                       BookContentPage.push(
                           context, item.bookId!, item.chapterId!, item.page!);
@@ -800,7 +482,7 @@ class BookSearchPage extends SearchDelegate<void> {
             return ListViewBuilder(
                 itemCount: length,
                 padding: const EdgeInsets.only(bottom: 60.0),
-                color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+                color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return suggestions(context);
@@ -808,11 +490,9 @@ class BookSearchPage extends SearchDelegate<void> {
                   final data = searchResult![index - 1];
                   return ListItem(
                       height: 108,
-                      bgColor:
-                          isLight ? Colors.grey.shade100 : Colors.grey.shade900,
-                      splashColor: isLight
-                          ? const Color.fromRGBO(225, 225, 225, 1)
-                          : Color.fromRGBO(60, 60, 60, 1),
+                      bgColor: isLight ? null : Colors.grey.shade900,
+                      splashColor:
+                          isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                       onTap: () =>
                           BookInfoPage.push(context, int.parse(data.id!)),
                       child: Container(
@@ -845,31 +525,6 @@ class BookSearchPage extends SearchDelegate<void> {
                         ),
                       ));
                 });
-
-            // return Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            //   child: ListView(
-            //     children: [
-            //       suggestions(context),
-            //       if (search.searchHistory.isNotEmpty) const Divider(height: 1),
-            //       if (data.data != null)
-            //         for (var value in data.data!)
-            //           GestureDetector(
-            //             onTap: () =>
-            //                 BookInfoPage.push(context, int.parse(value.id!)),
-            //             child: Container(
-            //               height: 40,
-            //               alignment: Alignment.centerLeft,
-            //               decoration: BoxDecoration(
-            //                   border: Border(
-            //                       bottom:
-            //                           BorderSide(color: Colors.grey.shade300))),
-            //               child: Text(value.name ?? ''),
-            //             ),
-            //           ),
-            //     ],
-            //   ),
-            // );
           },
         ));
   }
