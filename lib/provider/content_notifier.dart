@@ -32,15 +32,14 @@ class ContentNotifier extends ChangeNotifier {
 
   final config = ValueNotifier<ContentViewConfig>(ContentViewConfig());
   // 同步----
-  Future? get enter => initQueue.runner;
   Future? _configF;
   Future? _willGoF;
   // -------
-  Duration? lastStamp;
+  Duration lastStamp = Duration.zero;
+  bool _autoRunWait = true;
+  late final autoRun = AutoRun(_autoTick, () => lastStamp = Duration.zero);
 
-  late final autoRun = AutoRun(_autoTick, () => lastStamp = null);
-
-  late final autoValue = ValueNotifier<double>(6.0);
+  late final autoValue = ValueNotifier<double>(1.12);
 
   bool showrect = false;
 
@@ -424,16 +423,9 @@ extension Tasks on ContentNotifier {
               (currentPage == tData.content.length || currentPage == 1)) {
             final _tData = _getTextData(tData.cid!)!;
             if (tData != _tData && _tData.nid != -1 && _tData.hasContent) {
-              tData = _tData;
-              if (currentPage > tData.content.length) {
-                currentPage = tData.content.length;
-                if (config.value.axis == Axis.vertical) {
-                  final footv = '$currentPage/${tData.content.length}页';
-                  footer.value = footv;
-                  header.value = tData.cname!;
-                }
-              }
-              _notify();
+              // if (tData.nid == -1)
+              //   repository.bookEvent.complexEvent.updateBookStatus(bookid);
+              startFirstEvent(clear: false);
               return true;
             }
           }
@@ -914,12 +906,10 @@ extension Event on ContentNotifier {
   Future<void> showdow() async {
     showrect = !showrect;
     if (inBook && tData.cid != null) {
-      if (initQueue.runner == null) {
-        startFirstEvent();
-      } else {
-        initQueue.runner!.whenComplete(startFirstEvent);
-      }
-      return initQueue.runner;
+      final runner = initQueue.runner;
+      return runner == null
+          ? startFirstEvent()
+          : runner.whenComplete(startFirstEvent);
     }
   }
 
@@ -974,13 +964,14 @@ extension Event on ContentNotifier {
   Future<void> startFirstEvent({
     bool clear = true,
     Object? taskKey,
+    bool only = true,
     void Function()? onStart,
     void Function()? onResetDone,
     void Function()? onDone,
   }) {
     didChangeKey();
 
-    return () async {
+    void event() async {
       autoRun.stopSave();
       onStart?.call();
       reset(clearCache: clear);
@@ -988,17 +979,23 @@ extension Event on ContentNotifier {
       onResetDone?.call();
       final _key = key;
       await _loadFirst();
-      if (_key == key) {
-        _notify();
-
-        /// 重置边界
-        controller?.resetContentDimension();
-      }
+      if (_key == key) _currentTextWasChanged();
 
       onDone?.call();
 
       scheduleMicrotask(autoRun.stopAutoRun);
-    }.pushOneAwait(initQueue, taskKey: taskKey);
+    }
+
+    return only
+        ? event.pushOneAwait(initQueue, taskKey: taskKey)
+        : event.pushAwait(initQueue, taskKey: taskKey);
+  }
+
+  void _currentTextWasChanged() {
+    _notify();
+
+    /// 重置边界
+    controller?.resetContentDimension();
   }
 
   Future<void> newBookOrCid(int newBookid, int cid, int page) async {
@@ -1016,6 +1013,7 @@ extension Event on ContentNotifier {
           const Duration(milliseconds: 600), () => notifyState(loading: true));
 
       await startFirstEvent(
+          only: false,
           clear: clear,
           onStart: () => _getStateOrSetBook(newBookid, cid, page),
           onDone: resetController);
@@ -1024,10 +1022,9 @@ extension Event on ContentNotifier {
     }
   }
 
-  Future<void> reload() async {
+  Future<void> reload() {
     notifyState(loading: true, notEmptyOrIgnore: true);
-    startFirstEvent(clear: false);
-    return initQueue.runner;
+    return startFirstEvent(clear: false);
   }
 
   Future goNext() {
@@ -1042,7 +1039,7 @@ extension Event on ContentNotifier {
 
   Future<void> _willGoPreOrNext({bool isPid = false}) async {
     /// 当前章节可能会发生变化
-    if (tData.contentIsEmpty || initQueue.runner != null) return;
+    if (tData.contentIsEmpty || initQueue.actived) return;
     notifyState(error: NotifyMessage.hide);
 
     autoRun.stopSave();
@@ -1241,7 +1238,7 @@ extension Configs on ContentNotifier {
     final _fontFamily = box.get('fontFamily', defaultValue: '');
 
     final _portrait = box.get('portrait', defaultValue: true);
-    final _autoValue = box.get('autoValue', defaultValue: 6.0);
+    final _autoValue = box.get('autoValue', defaultValue: 1.12);
 
     // 适配
     if (_bgcolor is int) {
@@ -1325,7 +1322,6 @@ extension Configs on ContentNotifier {
   }
 }
 
-/// 在长时间使用自动阅读（滚动）时，有可能出现无响应
 extension AutoR on ContentNotifier {
   void auto() {
     if (config.value.axis == Axis.vertical) {
@@ -1342,7 +1338,7 @@ extension AutoR on ContentNotifier {
         timer.cancel();
         _auto();
       }
-      if (initQueue.runner != null) return;
+      if (initQueue.actived) return;
 
       if (timer.tick > 5) timer.cancel();
     });
@@ -1365,7 +1361,7 @@ extension AutoR on ContentNotifier {
         controller!.pixels == controller!.maxExtent ||
         !inBook ||
         !autoRun.value ||
-        enter != null ||
+        initQueue.actived ||
         config.value.axis == Axis.horizontal) {
       autoRun.stopTicked();
       return;
@@ -1373,17 +1369,20 @@ extension AutoR on ContentNotifier {
 
     final _start = controller!.pixels;
 
-    if (lastStamp == null) {
-      lastStamp = timeStamp;
-
-      return;
-    }
-    final _e = timeStamp - lastStamp!;
+    final _e = timeStamp - lastStamp;
     lastStamp = timeStamp;
 
     final alpha = (_e.inMicroseconds / mic);
 
     controller!.setPixels(_start + autoValue.value * alpha);
+    if (_autoRunWait) {
+      if (timeStamp > const Duration(minutes: 1) && !autoRun._wait) {
+        final wait = autoRun.wait();
+        if (wait) {
+          Timer(const Duration(milliseconds: 100), autoRun.waitRun);
+        }
+      }
+    }
   }
 }
 
@@ -1494,7 +1493,7 @@ class AutoRun {
   bool get value => isActive.value;
   set value(bool v) {
     isActive.value = v;
-    EventQueue.runTaskOnQueue('autoRun', () => Wakelock.toggle(enable: v));
+    EventQueue.runTaskOnQueue('autoRun_wake', () => Wakelock.toggle(enable: v));
   }
 
   Ticker? _ticker;
@@ -1518,7 +1517,29 @@ class AutoRun {
     _ticker?.dispose();
     _ticker = null;
     reset();
+    _wait = false;
     value = false;
+  }
+
+  bool get _running => _ticker?.isActive == true;
+  bool get _stop => _ticker?.isActive == false;
+
+  bool _wait = false;
+  bool wait() {
+    if (_running) {
+      _ticker?.stop();
+      reset();
+      _wait = true;
+      return true;
+    }
+    return false;
+  }
+
+  void waitRun() {
+    if (value && _wait && _stop) {
+      _ticker?.start();
+      _wait = false;
+    }
   }
 
   bool _lastActive = false;

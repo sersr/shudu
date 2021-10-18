@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/common.dart';
-import 'package:useful_tools/event_queue.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
@@ -111,7 +110,7 @@ mixin NetworkMixin implements CustomEvent {
 
   final _ei = RegExp('https?://');
   final _e2f = RegExp('/|%2F');
-  
+
   @pragma('vm:prefer-inline')
   Future<T> imageTasks<T>(EventCallback<T> task) {
     return EventQueue.runTaskOnQueue(imageTasks, task, channels: 10);

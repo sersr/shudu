@@ -13,7 +13,8 @@ abstract class Activity {
 }
 
 class DragActivity extends Activity {
-  DragActivity({required ActivityDelegate delegate, this.controller}) : super(delegate);
+  DragActivity({required ActivityDelegate delegate, this.controller})
+      : super(delegate);
   Drag? controller;
 
   @override
@@ -33,7 +34,8 @@ class IdleActivity extends Activity {
 }
 
 class HoldActivity extends Activity implements ScrollHoldController {
-  HoldActivity(ActivityDelegate delegate, {this.cancelCallback}) : super(delegate);
+  HoldActivity(ActivityDelegate delegate, {this.cancelCallback})
+      : super(delegate);
   VoidCallback? cancelCallback;
   @override
   void cancel() {
@@ -89,51 +91,44 @@ class BallisticActivity extends Activity {
     required TickerProvider vsync,
     required this.simulation,
     required this.end,
-    this.swipeDown,
+    this.isVerticalDown,
   }) : super(delegate) {
     _controller = AnimationController.unbounded(vsync: vsync)
       ..addListener(_tick)
       ..animateWith(simulation).whenComplete(done);
   }
-  bool? swipeDown;
-  double Function() end;
-  Simulation simulation;
+  final bool? isVerticalDown;
+  final double Function() end;
+  final Simulation simulation;
   late AnimationController _controller;
   void _tick() {
     final _end = end();
-
-    if (swipeDown != null) {
-      if (swipeDown!) {
-        if (_controller.value >= _end) {
-          delegate.setPixels(_controller.value);
-          done();
-          return;
-        }
+    var value = _controller.value;
+    if (isVerticalDown != null) {
+      bool stop = false;
+      if (isVerticalDown!) {
+        stop = value >= _end;
       } else {
-        if (_controller.value <= _end) {
-          delegate.setPixels(_controller.value);
-          done();
-          return;
-        }
+        stop = value <= _end;
       }
-      delegate.setPixels(_controller.value);
-    } else {
-      final p = (_controller.value - _end).abs();
-      if (p < 1 / ui.window.devicePixelRatio) {
-        delegate.setPixels(_end);
-        // 先渲染当前帧
+      if (stop) {
         done();
-        return;
       }
-      delegate.setPixels(_controller.value);
+    } else {
+      final p = (value - _end).abs();
+      if (p < 1 / ui.window.devicePixelRatio) {
+        done();
+      }
     }
+    delegate.setPixels(value);
   }
 
   @override
   double get velocity => _controller.velocity;
 
   void done() {
-    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) => delegate.goIdle());
+    SchedulerBinding.instance!
+        .addPostFrameCallback((timeStamp) => delegate.goIdle());
   }
 
   @override

@@ -8,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:useful_tools/common.dart';
-import 'package:useful_tools/event_queue.dart';
 
 void main() async {
   test('future', () {

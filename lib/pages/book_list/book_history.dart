@@ -79,9 +79,9 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
                                 splashColor: Colors.blue.shade200,
                                 onTap: () => notifier.deleteBook(item.id),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 6.0),
+                                    horizontal: 8.0, vertical: 6.0),
                                 child: Text(
-                                  '删除',
+                                  '删除记录',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey.shade300,

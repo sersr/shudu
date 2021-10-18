@@ -45,6 +45,8 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
     removeListener(complete);
   }
 
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,7 +97,11 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                             children: [
                               Expanded(child: ImageResolve(img: e.image)),
                               const SizedBox(height: 4),
-                              Text(e.name ?? '', style: ts.title2),
+                              Text(e.name ?? '',
+                                  style: isLight
+                                      ? ts.title2
+                                      : ts.title2.copyWith(
+                                          color: Colors.grey.shade400)),
                             ],
                           ),
                         ),
@@ -163,6 +169,7 @@ class Categories extends StatefulWidget {
 class _CategoriesState extends State<Categories> {
   final _titles = <String>['最热', '最新', '评分', '完结'];
   final _urlKeys = <String>['hot', 'new', 'vote', 'over'];
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   @override
   Widget build(BuildContext context) {
@@ -183,8 +190,10 @@ class _CategoriesState extends State<Categories> {
               ),
             ),
             bottom: TabBar(
-              labelColor: TextStyleConfig.blackColor7,
-              unselectedLabelColor: TextStyleConfig.blackColor2,
+              labelColor:
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+              unselectedLabelColor:
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
               tabs: _titles
                   .map((e) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -216,6 +225,7 @@ class _CategListViewState extends State<CategListView>
     with AutomaticKeepAliveClientMixin {
   final _categNotifier = TopNotifier();
   TabController? controller;
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   @override
   void didChangeDependencies() {
@@ -268,6 +278,7 @@ class _CategListViewState extends State<CategListView>
 
             return ListViewBuilder(
               cacheExtent: 100,
+              color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
               itemCount: _data.length + 1,
               finishLayout: (first, last) {
                 final length = _data.length;
@@ -286,6 +297,11 @@ class _CategListViewState extends State<CategListView>
                 }
                 final _item = _data[index];
                 return ListItem(
+                  bgColor:
+                      isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+                  splashColor: isLight
+                      ? const Color.fromRGBO(225, 225, 225, 1)
+                      : Color.fromRGBO(60, 60, 60, 1),
                   onTap: () => _item.id != null
                       ? BookInfoPage.push(context, _item.id!)
                       : null,

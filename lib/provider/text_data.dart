@@ -214,7 +214,7 @@ void paintText(Canvas canvas,
     h += _end;
   }
   if (showrect) {
-    canvas.drawRect(Rect.fromLTWH(0.0, xh, _size.width, h - xh),
+    canvas.drawRRect(RRect.fromLTRBXY(0.0, xh, _size.width, h, 5, 5),
         Paint()..color = Colors.black.withAlpha(100));
   }
   if (isHorizontal) {

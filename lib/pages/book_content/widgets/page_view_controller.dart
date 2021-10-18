@@ -46,6 +46,9 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   set axis(Axis v) {
     if (v == _axis) return;
     _axis = v;
+    if (_activity is! IdleActivity) {
+      goIdle();
+    }
     notifyListeners();
   }
 
@@ -99,12 +102,12 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   void nextPage() {
     if (_lastActivityIsIdle && viewPortDimension != null) {
       // if (axis == Axis.horizontal) {
-        if (ContentBoundary.hasRight(getBounds())) {
-          if (maxExtent.isFinite) {
-            _maxExtent = double.infinity;
-          }
-          setPixels(viewPortDimension! * (page + 0.51).round());
+      if (ContentBoundary.hasRight(getBounds())) {
+        if (maxExtent.isFinite) {
+          _maxExtent = double.infinity;
         }
+        setPixels(viewPortDimension! * (page + 0.51).round());
+      }
       // }
       goIdle();
     }
@@ -161,10 +164,8 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
     if (velocity < -150.0) {
       to = (page - f).round();
-      velocity = velocity < -500 ? velocity / 2 : velocity;
     } else if (velocity > 150.0) {
       to = (page + f).round();
-      velocity = velocity > 500 ? velocity / 2 : velocity;
     } else {
       to = page.round();
     }
@@ -174,7 +175,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     beginActivity(BallisticActivity(
       delegate: this,
       vsync: vsync,
-      end: () => end,
+      end: () => end.clamp(minExtent, maxExtent),
       simulation: getSpringSimulation(velocity, end),
     ));
   }
@@ -184,13 +185,13 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     if (axis == Axis.horizontal) {
       animateTo(velocity, f: 0.52);
     } else {
-      if (pixels == minExtent || pixels == maxExtent) notifyListeners();
+      // if (pixels == minExtent || pixels == maxExtent) notifyListeners();
       beginActivity(BallisticActivity(
         delegate: this,
         vsync: vsync,
         end: () => velocity >= 0.0 ? maxExtent : minExtent,
         simulation: getSimulation(velocity),
-        swipeDown: velocity >= 0,
+        isVerticalDown: velocity >= 0,
       ));
     }
   }

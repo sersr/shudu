@@ -9,26 +9,32 @@ import 'package:args/args.dart';
 void main(args) async {
   final parser = ArgParser();
   parser.addOption('path');
+  parser.addFlag('update');
+  parser.addOption('base');
   final result = parser.parse(args);
   final name = result['path'];
-  var fs = const LocalFileSystem();
+  final update = result['update'] == true;
+  final base = result['base'];
+
+  const fs = LocalFileSystem();
   final projectDir = name == null
       ? fs.currentDirectory
       : fs.currentDirectory.childDirectory(name);
 
-  const local = LocalProcessManager();
-  const git = 'git';
-  const clone = 'clone';
+  final _base = base as String? ?? 'https://github.com/sersr/';
+  final end = !_base.endsWith('/');
+  final githubBase = end ? _base : '$_base/';
 
-  const listUrl = [
-    'https://github.com/sersr/hot_fix',
-    'https://github.com/sersr/nop_annotations',
-    'https://github.com/sersr/nop_db',
-    'https://github.com/sersr/nop_db_gen',
-    'https://github.com/sersr/nop_db_sqflite',
-    'https://github.com/sersr/nop_db_sqlite',
-    'https://github.com/sersr/sqlite3_windows_dll',
-    'https://github.com/sersr/useful_tools',
+  const listPackage = [
+    'hot_fix',
+    'nop_annotations',
+    'nop_db',
+    'nop_db_gen',
+    'nop_db_sqflite',
+    'nop_db_sqlite',
+    'sqlite3_windows_dll',
+    'useful_tools',
+    'utils',
   ];
 
   if (!projectDir.existsSync()) {
@@ -43,16 +49,71 @@ void main(args) async {
   if (!packages.existsSync()) {
     packages.createSync(recursive: true);
   }
-  for (var url in listUrl) {
+  for (var name in listPackage) {
     if (any.length > 3) await any.any;
 
-    any.add(local
-        .start([git, clone, url], workingDirectory: packages.path).then((pro) {
-      pro.stdout.transform(utf8.decoder).listen((event) {
-        print(event);
-      });
-    }));
+    final cmd = <String>[];
+    cmd.add('git');
+
+    final syncPackage = packages.childDirectory(name);
+
+    if (syncPackage.existsSync()) {
+      if (!update) {
+        print('skip: $name');
+        continue;
+      }
+
+      print('update: $name');
+
+      cmd
+        ..add('pull')
+        ..add('origin')
+        ..add('master');
+    } else {
+      print('sync: $name');
+      cmd
+        ..add('clone')
+        ..add('$githubBase$name');
+    }
+
+    final work = run(cmd, packages.path);
+
+    any.add(work);
   }
+  await any.wait;
+  // test
+  // await local.start(['cmd', '/C', 'echo', 'hello'],
+  //     workingDirectory: packages.path).then((pro) {
+  //   final completer = Completer();
+  //   void _onDone() {
+  //     if (!completer.isCompleted) {
+  //       completer.complete();
+  //     }
+  //   }
+
+  //   pro.stdout.transform(utf8.decoder).listen((event) {
+  //     print('sync: $event');
+  //   }, onDone: _onDone, cancelOnError: true, onError: (e, s) => _onDone());
+  //   return completer.future;
+  // });
+}
+
+const local = LocalProcessManager();
+Future<void> run(List<Object> cmd, String? workingDirectory) {
+  return local.start(cmd, workingDirectory: workingDirectory).then((pro) {
+    final completer = Completer<void>();
+    void _onDone() {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    }
+
+    pro.stdout.transform(utf8.decoder).listen((event) {
+      print('sync: $event');
+    }, onDone: _onDone, cancelOnError: true, onError: (e, s) => _onDone());
+
+    return completer.future;
+  });
 }
 
 /// copy from `pakcage:useful_tools`

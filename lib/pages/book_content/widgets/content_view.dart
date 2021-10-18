@@ -196,12 +196,12 @@ class RenderContentViewText extends RenderBox
   @override
   void paint(PaintingContext context, Offset offset) {
     // final _size = contentMetrics.size;
-    context.setIsComplexHint();
+    // context.setIsComplexHint();
+
+    if (child != null) {
     final canvas = context.canvas;
 
     final left = contentMetrics.left;
-
-    if (child != null) {
       final height = bottomLeft.size.height;
       final width = child!.size.width;
       final dx = left + offset.dx;

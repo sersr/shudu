@@ -17,11 +17,10 @@ enum BookEventMessage {
   getShudanDetail,
   getCategoryData,
   getCacheItem,
-  getMainBookListDbStream,
+  getCacheItems,
   getContent,
   getIndexs,
   updateBookStatus,
-  getCacheItemAll,
   getInfo
 }
 enum CustomEventMessage {
@@ -52,11 +51,10 @@ enum BookContentEventMessage {
 }
 enum ComplexEventMessage {
   getCacheItem,
-  getMainBookListDbStream,
+  getCacheItems,
   getContent,
   getIndexs,
   updateBookStatus,
-  getCacheItemAll,
   getInfo
 }
 
@@ -291,8 +289,7 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<BookContentDb>?> _getCacheContentsCidDb_0(args) =>
-      getCacheContentsCidDb(args);
+  FutureOr<int?> _getCacheContentsCidDb_0(args) => getCacheContentsCidDb(args);
   Stream<List<BookContentDb>?> _watchCacheContentsCidDb_1(args) =>
       watchCacheContentsCidDb(args);
   FutureOr<int?> _deleteCache_2(args) => deleteCache(args);
@@ -302,7 +299,7 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
 mixin BookContentEventMessager {
   SendEvent get sendEvent;
 
-  FutureOr<List<BookContentDb>?> getCacheContentsCidDb(int bookid) async {
+  FutureOr<int?> getCacheContentsCidDb(int bookid) async {
     return sendEvent.sendMessage(
         BookContentEventMessage.getCacheContentsCidDb, bookid);
   }
@@ -332,12 +329,11 @@ mixin ComplexEventResolve
     implements ComplexEventDynamic {
   late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getCacheItem_0,
-    _getMainBookListDbStream_1,
+    _getCacheItems_1,
     _getContent_2,
     _getIndexs_3,
     _updateBookStatus_4,
-    _getCacheItemAll_5,
-    _getInfo_6
+    _getInfo_5
   ]);
 
   @override
@@ -360,13 +356,11 @@ mixin ComplexEventResolve
   }
 
   FutureOr<CacheItem?> _getCacheItem_0(args) => getCacheItem(args);
-  Stream<CacheItem> _getMainBookListDbStream_1(args) =>
-      getMainBookListDbStream();
+  FutureOr<List<CacheItem>?> _getCacheItems_1(args) => getCacheItems();
   dynamic _getContent_2(args) => getContentDynamic(args[0], args[1], args[2]);
   FutureOr<NetBookIndex?> _getIndexs_3(args) => getIndexs(args[0], args[1]);
   FutureOr<int?> _updateBookStatus_4(args) => updateBookStatus(args);
-  FutureOr<Map<int, CacheItem>?> _getCacheItemAll_5(args) => getCacheItemAll();
-  FutureOr<BookInfoRoot?> _getInfo_6(args) => getInfo(args);
+  FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
 }
 
 /// implements [ComplexEvent]
@@ -377,9 +371,8 @@ mixin ComplexEventMessager {
     return sendEvent.sendMessage(ComplexEventMessage.getCacheItem, id);
   }
 
-  Stream<CacheItem> getMainBookListDbStream() {
-    return sendEvent.sendMessageStream(
-        ComplexEventMessage.getMainBookListDbStream, null);
+  FutureOr<List<CacheItem>?> getCacheItems() async {
+    return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null);
   }
 
   dynamic getContentDynamic(int bookid, int contentid, bool update) async {
@@ -394,10 +387,6 @@ mixin ComplexEventMessager {
 
   FutureOr<int?> updateBookStatus(int id) async {
     return sendEvent.sendMessage(ComplexEventMessage.updateBookStatus, id);
-  }
-
-  FutureOr<Map<int, CacheItem>?> getCacheItemAll() async {
-    return sendEvent.sendMessage(ComplexEventMessage.getCacheItemAll, null);
   }
 
   FutureOr<BookInfoRoot?> getInfo(int id) async {

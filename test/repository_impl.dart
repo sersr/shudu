@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
+import 'package:memory_info_platform_interface/model/memory.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:shudu/event/base/book_event.dart';
@@ -53,6 +54,12 @@ class RepositoryImplTest extends Repository with SendEventPortMixin {
 
   @override
   void close() {}
+
+  @override
+  Future<Memory> getMemoryInfo() {
+    // TODO: implement getMemoryInfo
+    throw UnimplementedError();
+  }
 }
 
 class Client {

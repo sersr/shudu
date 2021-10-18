@@ -310,7 +310,13 @@ extension JoinItemBookContentDb<J extends JoinItem<_GenBookContentDb>> on J {
 }
 
 Map<String, dynamic> _BookIndex_toJson(BookIndex table) {
-  return {'id': table.id, 'bookId': table.bookId, 'bIndexs': table.bIndexs};
+  return {
+    'id': table.id,
+    'bookId': table.bookId,
+    'bIndexs': table.bIndexs,
+    'itemCounts': table.itemCounts,
+    'cacheItemCounts': table.cacheItemCounts
+  };
 }
 
 class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
@@ -321,6 +327,8 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
   final id = 'id';
   final bookId = 'bookId';
   final bIndexs = 'bIndexs';
+  final itemCounts = 'itemCounts';
+  final cacheItemCounts = 'cacheItemCounts';
 
   void updateBookIndex(
       UpdateStatement<BookIndex, _GenBookIndex> update, BookIndex bookIndex) {
@@ -329,18 +337,26 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
     if (bookIndex.bookId != null) update.bookId.set(bookIndex.bookId);
 
     if (bookIndex.bIndexs != null) update.bIndexs.set(bookIndex.bIndexs);
+
+    if (bookIndex.itemCounts != null)
+      update.itemCounts.set(bookIndex.itemCounts);
+
+    if (bookIndex.cacheItemCounts != null)
+      update.cacheItemCounts.set(bookIndex.cacheItemCounts);
   }
 
   @override
   String createTable() {
     return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$bIndexs TEXT)';
+        '$bIndexs TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
   }
 
   BookIndex _toTable(Map<String, dynamic> map) => BookIndex(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
-      bIndexs: map['bIndexs'] as String?);
+      bIndexs: map['bIndexs'] as String?,
+      itemCounts: map['itemCounts'] as int?,
+      cacheItemCounts: map['cacheItemCounts'] as int?);
 
   @override
   List<BookIndex> toTable(Iterable<Map<String, Object?>> query) =>
@@ -354,11 +370,19 @@ extension ItemExtensionBookIndex<T extends ItemExtension<_GenBookIndex>> on T {
 
   T get bIndexs => item(table.bIndexs) as T;
 
+  T get itemCounts => item(table.itemCounts) as T;
+
+  T get cacheItemCounts => item(table.cacheItemCounts) as T;
+
   T get bookIndex_id => id;
 
   T get bookIndex_bookId => bookId;
 
   T get bookIndex_bIndexs => bIndexs;
+
+  T get bookIndex_itemCounts => itemCounts;
+
+  T get bookIndex_cacheItemCounts => cacheItemCounts;
 }
 
 extension JoinItemBookIndex<J extends JoinItem<_GenBookIndex>> on J {
@@ -367,4 +391,8 @@ extension JoinItemBookIndex<J extends JoinItem<_GenBookIndex>> on J {
   J get bookIndex_bookId => joinItem(joinTable.bookId) as J;
 
   J get bookIndex_bIndexs => joinItem(joinTable.bIndexs) as J;
+
+  J get bookIndex_itemCounts => joinItem(joinTable.itemCounts) as J;
+
+  J get bookIndex_cacheItemCounts => joinItem(joinTable.cacheItemCounts) as J;
 }

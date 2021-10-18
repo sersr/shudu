@@ -48,7 +48,10 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   Future<void> _update() async {
-    final list = await getList;
+    if (showChildren.isEmpty) {
+      await _awaitData();
+    }
+    final list = showChildren;
     final futureAny = FutureAny();
     for (var item in list) {
       final f = updateBookStatus(item.bookId!);
@@ -62,16 +65,24 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   Future<void> load({bool update = false}) async {
+    final runner =
+        update ? EventQueue.runTaskOnQueue : EventQueue.runOneTaskOnQueue;
+    return runner(_load, () => _load(update: update));
+  }
+
+  Future<void> _load({bool update = false}) async {
     if (update) {
       await _update();
     }
-
-    final list = await getList;
-
-    _showChildren = _sortChildren = null;
-    _rawList = list;
+    await _awaitData();
 
     notifyListeners();
+  }
+
+  Future<void> _awaitData() async {
+    final list = await getList;
+    _showChildren = _sortChildren = null;
+    _rawList = list;
   }
 
   Future<void> addBook(BookCache bookCache) async {

@@ -18,6 +18,7 @@ class BooklistPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
       body: DefaultTabController(
         length: 3,
@@ -25,8 +26,10 @@ class BooklistPage extends StatelessWidget {
           title: Text('书单'),
           bottom: TabBar(
             // controller: controller,
-            labelColor: TextStyleConfig.blackColor7,
-            unselectedLabelColor: TextStyleConfig.blackColor2,
+            labelColor:
+                isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+            unselectedLabelColor:
+                isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
             indicatorColor: Colors.pink.shade200,
             tabs: [
               Container(
@@ -120,6 +123,8 @@ class _WrapWidgetState extends State<WrapWidget>
     );
   }
 
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
+
   Widget buildListView(List<BookList> list) {
     return Scrollbar(
       interactive: true,
@@ -128,6 +133,7 @@ class _WrapWidgetState extends State<WrapWidget>
           scrollController: scrollController,
           itemCount: list.length + 1,
           cacheExtent: 200,
+          color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
           refreshDelegate: RefreshDelegate(
               maxExtent: 80,
               onRefreshing: shudanProvider.refresh,
@@ -170,6 +176,10 @@ class _WrapWidgetState extends State<WrapWidget>
             final bookList = list[index];
             return ListItem(
               height: 112,
+              bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+              splashColor: isLight
+                  ? const Color.fromRGBO(225, 225, 225, 1)
+                  : Color.fromRGBO(60, 60, 60, 1),
               onTap: () {
                 final route = MaterialPageRoute(builder: (_) {
                   return BooklistDetailPage(
@@ -219,7 +229,7 @@ class ShudanCategProvider extends ChangeNotifier {
 
   final _loop = EventQueue();
 
-  bool get idle => _loop.runner == null;
+  bool get idle => !_loop.actived;
 
   void load() => _loop.addEventTask(_load);
 
@@ -320,10 +330,14 @@ class BarLayout extends StatelessWidget {
   final Widget body;
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     final size = MediaQuery.of(context).size;
     final ts = Provider.of<TextStyleConfig>(context);
     return Material(
-      color: Color.fromARGB(255, 240, 240, 240),
+      color: isLight
+          ? Color.fromARGB(255, 240, 240, 240)
+          : Color.fromRGBO(25, 25, 25, 1),
       child: SafeArea(
         bottom: false,
         child: Column(children: [
@@ -345,8 +359,11 @@ class BarLayout extends StatelessWidget {
                       )),
                   LayoutId(
                       id: 'title',
-                      child:
-                          DefaultTextStyle(style: ts.bigTitle1, child: title)),
+                      child: DefaultTextStyle(
+                          style: isLight
+                              ? ts.bigTitle1
+                              : ts.bigTitle1.copyWith(color: Colors.grey),
+                          child: title)),
                   LayoutId(id: 'bottom', child: bottom)
                 ]),
           ),

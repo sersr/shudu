@@ -45,106 +45,118 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
         title: Text('缓存管理'),
         elevation: 1.0,
       ),
-      body: AnimatedBuilder(
-        animation: _cacheNotifier,
-        builder: (context, child) {
-          final data = _cacheNotifier.data;
-          if (data.isEmpty) return const SizedBox();
+      body: Scrollbar(
+        interactive: true,
+        thickness: 6,
+        child: AnimatedBuilder(
+          animation: _cacheNotifier,
+          builder: (context, child) {
+            final data = _cacheNotifier.data;
+            if (data.isEmpty) return const SizedBox();
 
-          return ListViewBuilder(
-            cacheExtent: 100,
-            itemExtent: 60,
-            padding: const EdgeInsets.only(bottom: 12.0),
-            itemBuilder: (_, index) => cacheItemBuilder(index),
-            itemCount: data.length,
-          );
-        },
+            return ListViewBuilder(
+              cacheExtent: 100,
+              itemExtent: 60,
+              padding: const EdgeInsets.only(bottom: 12.0),
+              itemBuilder: (_, index) => cacheItemBuilder(index),
+              itemCount: data.length,
+            );
+          },
+        ),
       ),
     );
   }
 
 // 列表的行
-  FutureBuilder<CacheItem> cacheItemBuilder(int index) {
-    return FutureBuilder<CacheItem>(
-      future: _cacheNotifier.loadItem(index),
-      builder: (context, snap) {
-        if (!snap.hasData)
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
-            margin: const EdgeInsets.symmetric(vertical: 2.0),
-            decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 250, 250, 250),
-                borderRadius: BorderRadius.circular(6)),
-          );
-        final _e = snap.data!;
+  Widget cacheItemBuilder(int index) {
+    final _e = _cacheNotifier.getItem(index);
 
-        final progress = _e.isEmpty
-            ? 0.0
-            : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
+    final progress =
+        _e.isEmpty ? 0.0 : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
 
-        return ListItem(
-          onTap: () {
-            _cacheNotifier.exit = true;
-            BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(
-                const Duration(milliseconds: 300),
-                () => _cacheNotifier.exit = false));
-          },
-          child: Row(
-            children: [
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return ListItem(
+      onTap: () {
+        _cacheNotifier.exit = true;
+        BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(
+            const Duration(milliseconds: 300),
+            () => _cacheNotifier.exit = false));
+      },
+      child: Row(
+        children: [
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const SizedBox(height: 1),
+                Row(
                   children: [
-                    const SizedBox(height: 1),
-                    Row(
-                      children: [
-                        const SizedBox(height: 2),
-                        Expanded(
-                          child: Text(
-                            _cacheNotifier.getName(_e.id),
-                            maxLines: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${_e.cacheItemCounts}/${_e.itemCounts}',
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 1),
-                    Center(
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.blue.shade100,
-                        valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
+                    const SizedBox(height: 2),
+                    Expanded(
+                      child: Text(
+                        _cacheNotifier.getName(_e.id),
+                        maxLines: 1,
                       ),
                     ),
-                    const SizedBox(height: 1),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${_e.cacheItemCounts}/${_e.itemCounts}',
+                    )
                   ],
                 ),
-              ),
-              const SizedBox(width: 6),
+                const SizedBox(height: 1),
+                Center(
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.blue.shade100,
+                    valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
+                  ),
+                ),
+                const SizedBox(height: 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
               btn1(
                 radius: 6.0,
                 bgColor: Colors.blue.shade400,
                 splashColor: Colors.blue.shade200,
-                onTap: () => _cacheNotifier.deleteCache(_e.id),
+                onTap: () => _cacheNotifier.deleteCache(_e),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0),
                 child: Text(
                   '清除缓存',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Colors.grey.shade300,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(height: 3),
+              btn1(
+                radius: 6.0,
+                bgColor: Colors.red.shade400,
+                splashColor: Colors.red.shade200,
+                onTap: () => _cacheNotifier.deleteBook(_e),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0),
+                child: Text(
+                  '删除记录',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade300,
+                  ),
+                ),
+              ),
             ],
           ),
-        );
-      },
+          const SizedBox(width: 6),
+        ],
+      ),
     );
   }
 }
@@ -152,9 +164,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 class _CacheNotifier extends ChangeNotifier {
   _CacheNotifier();
 
-  final _data = <int>{};
-
-  List<int> get data => List.of(_data);
+  List<CacheItem> get data => List.of(_items);
 
   Repository? _repository;
 
@@ -162,7 +172,7 @@ class _CacheNotifier extends ChangeNotifier {
 
   bool _exit = false;
 
-  bool get initlized => _data.isEmpty;
+  bool get initlized => _items.isEmpty;
 
   set exit(bool v) {
     _exit = v;
@@ -170,9 +180,11 @@ class _CacheNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  StreamSubscription? _cacheSub;
+
   @override
   void notifyListeners() {
-    if (_exit) return;
+    if (_exit || _out) return;
     super.notifyListeners();
   }
 
@@ -184,57 +196,31 @@ class _CacheNotifier extends ChangeNotifier {
   void startLoad() async {
     if (repository == null) return;
     _out = false;
-    final _l = await repository!.bookEvent.bookCacheEvent.getAllBookId();
-    if (_out) return;
     _cacheSub?.cancel();
     _cacheSub = repository!.bookEvent.bookCacheEvent
         .watchMainBookListDb()
         .listen(_listen);
 
-    if (_l != null && _l.isNotEmpty) {
-      _data.clear();
-      _data.addAll(_l);
-      await release(const Duration(milliseconds: 100));
-      notifyListeners();
-    }
-    Timer.run(_auto);
-  }
-
-  StreamSubscription? _subItem;
-  void _auto() {
+    final remoteItems = await repository!.bookEvent.getCacheItems() ?? const [];
     if (_out) return;
-    _subItem?.cancel();
 
-    _subItem = repository!.bookEvent.getMainBookListDbStream().listen((event) {
-      if (!event.isEmpty) _items[event.id] = event;
-    });
-  }
-
-  final _items = <int, CacheItem>{};
-  Future<CacheItem> loadItem(int index) async {
-    if (index >= _data.length || repository == null) return CacheItem.none;
-    final id = _data.elementAt(index);
-    if (_items.containsKey(id)) return _items[id]!;
-    final _i = await repository!.bookEvent.getCacheItem(id) ?? CacheItem.none;
-    if (!_i.isEmpty) _items[id] = _i;
-    return _i;
-  }
-
-  Future<void> deleteCache(int id) async {
-    if (repository == null) return;
-    _items.remove(id);
-    await repository!.bookEvent.bookContentEvent.deleteCache(id);
-    await loadItem(id);
+    _items
+      ..clear()
+      ..addAll(remoteItems.reversed);
     notifyListeners();
   }
 
-  StreamSubscription? _cacheSub;
+  final _items = <CacheItem>{};
+  CacheItem getItem(int index) {
+    if (repository == null || _items.length < index) return CacheItem.none;
+    return _items.elementAt(index);
+  }
 
-  void cancel() {
-    _cacheSub?.cancel();
-    _cacheSub = null;
-    _subItem?.cancel();
-    _subItem = null;
+  Future<void> deleteCache(CacheItem item) async {
+    if (repository == null) return;
+    _items.remove(item);
+    await repository!.bookEvent.bookContentEvent.deleteCache(item.id);
+    notifyListeners();
   }
 
   final _cacheList = <BookCache>[];
@@ -245,7 +231,7 @@ class _CacheNotifier extends ChangeNotifier {
   }
 
   void _listen(List<BookCache>? data) {
-    Log.e('cache mangaer');
+    assert(Log.e('cache manager'));
     if (data == null) return;
 
     _cacheList
@@ -255,11 +241,18 @@ class _CacheNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteBook(CacheItem item) async {
+    if (repository == null) return;
+    deleteCache(item);
+    await repository!.bookEvent.bookCacheEvent.deleteBook(item.id);
+  }
+
   bool _out = false;
   @override
   void dispose() {
     _out = true;
-    cancel();
+    _cacheSub?.cancel();
+    _cacheSub = null;
     super.dispose();
   }
 }

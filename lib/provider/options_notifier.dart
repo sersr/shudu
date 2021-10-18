@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -11,23 +12,24 @@ class ConfigOptions {
       {this.pageBuilder,
       this.platform,
       this.resample,
-      // this.resampleOffset,
       this.useImageCache,
       this.useTextCache,
       this.nopResample,
       this.useSqflite,
+      this.updateOnStart,
+      this.themeMode,
       this.showPerformanceOverlay});
+
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
   bool? resample;
-  // int? resampleOffset;
   bool? showPerformanceOverlay;
-
   bool? useImageCache;
-
   bool? useTextCache;
   bool? useSqflite;
   bool? nopResample;
+  bool? updateOnStart;
+  ThemeMode? themeMode;
 
   ConfigOptions coveredWith(ConfigOptions o) {
     return o
@@ -38,8 +40,9 @@ class ConfigOptions {
       ..useTextCache ??= useTextCache
       ..useSqflite ??= useSqflite
       ..nopResample ??= nopResample
+      ..updateOnStart ??= updateOnStart
+      ..themeMode ??= themeMode
       ..showPerformanceOverlay ??= showPerformanceOverlay;
-    // ..resampleOffset ??= resampleOffset;
   }
 
   @override
@@ -49,7 +52,8 @@ class ConfigOptions {
             other.platform == platform &&
             other.pageBuilder == pageBuilder &&
             other.resample == resample &&
-            // other.resampleOffset == resampleOffset &&
+            other.updateOnStart == updateOnStart &&
+            other.themeMode == themeMode &&
             other.useImageCache == useImageCache &&
             other.nopResample == nopResample &&
             other.useSqflite == useSqflite &&
@@ -68,9 +72,9 @@ class ConfigOptions {
       platform,
       pageBuilder,
       resample,
-      // resampleOffset,
+      updateOnStart,
+      themeMode,
       useImageCache,
-      // useMemoryImage,
       useSqflite,
       useTextCache,
       showPerformanceOverlay);
@@ -109,9 +113,12 @@ class OptionsNotifier extends ChangeNotifier {
   static const _nopResample = 'nopResample';
   static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
+  static const _updateOnStart = 'updateOnStart';
+  // static const _followSystem = 'followSystem';
+  static const _themeMode = 'themeMode';
 
   static Future<bool> get sqfliteBox async {
-    return EventQueue.runTaskOnQueue('sqfliteBox', () async {
+    return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
       final box = await Hive.openBox('_sqfliteBox');
       final result = box.get('_useSqflite', defaultValue: false);
       await box.close();
@@ -120,61 +127,61 @@ class OptionsNotifier extends ChangeNotifier {
   }
 
   static Future<void> setSqfliteBox(bool use) async {
-    return EventQueue.runTaskOnQueue('sqfliteBox', () async {
+    return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
       final box = await Hive.openBox('_sqfliteBox');
       await box.put('_useSqflite', use);
       return box.close();
     });
   }
 
-  Box? box;
-  // 简洁
-  Box get _box => box!;
+  final eventQueueKey = Object();
 
-  Future<void> init() async {
-    if (box != null) return;
-    box ??= await Hive.openBox(_options_);
+  Future<void> init() => EventQueue.runTaskOnQueue(eventQueueKey, _init);
+
+  Future<void> _init() async {
+    final box = await Hive.openBox(_options_);
 
     // 版本适配
-    final _v = _box.get(_version, defaultValue: -1);
+    final _v = box.get(_version, defaultValue: -1);
 
     if (_v < _versionId) {
-      final _p = _box.get(_platform);
+      final _p = box.get(_platform);
 
       if (_p != null) {
         if (_p is int && _p < TargetPlatform.values.length) {
-          await _box.put(_platform, TargetPlatform.values[_p]);
+          await box.put(_platform, TargetPlatform.values[_p]);
         } else {
-          await _box.delete(_platform);
+          await box.delete(_platform);
         }
       }
 
-      final _page = _box.get(_pageBuilder);
+      final _page = box.get(_pageBuilder);
 
       if (_page != null) {
         if (_page is int && _page < PageBuilder.values.length) {
-          await _box.put(_pageBuilder, PageBuilder.values[_page]);
+          await box.put(_pageBuilder, PageBuilder.values[_page]);
         } else {
-          await _box.delete(_pageBuilder);
+          await box.delete(_pageBuilder);
         }
       }
-      await _box.put(_version, _versionId);
+      await box.put(_version, _versionId);
     }
 
     final TargetPlatform platform =
-        _box.get(_platform, defaultValue: defaultTargetPlatform);
+        box.get(_platform, defaultValue: defaultTargetPlatform);
 
     final PageBuilder pageBuilder =
-        _box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
+        box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
 
-    final bool resample = _box.get(_resample, defaultValue: false);
-    // final int resampleOffset = _box.get(_resampleOffset, defaultValue: 0);
-    final bool useImageCache = _box.get(_useImageCache, defaultValue: true);
-    final bool useTextCache = _box.get(_useTextCache, defaultValue: true);
-    final bool nopResample = _box.get(_nopResample, defaultValue: true);
-
+    final bool resample = box.get(_resample, defaultValue: false);
+    final bool useImageCache = box.get(_useImageCache, defaultValue: true);
+    final bool useTextCache = box.get(_useTextCache, defaultValue: true);
+    final bool nopResample = box.get(_nopResample, defaultValue: true);
+    final bool updateOnStart = box.get(_updateOnStart, defaultValue: true);
+    // final bool followSystem = box.get(_followSystem, defaultValue: true);
+    final ThemeMode themeMode =
+        box.get(_themeMode, defaultValue: ThemeMode.system);
     GestureBinding.instance!.resamplingEnabled = resample;
-    // ..samplingOffset = Duration(milliseconds: resampleOffset);
     NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
 
     options = ConfigOptions(
@@ -185,53 +192,49 @@ class OptionsNotifier extends ChangeNotifier {
       nopResample: nopResample,
       useSqflite: await sqfliteBox,
       useTextCache: useTextCache,
-      // resampleOffset: resampleOffset
+      updateOnStart: updateOnStart,
+      // followSystem: followSystem,
+      themeMode: themeMode,
     );
+    await box.close();
   }
 
   Future<void> saveOptions() async {
-    assert(box != null);
+    final box = await Hive.openBox(_options_);
 
-    final _f = FutureAny();
-    final platform = options.platform;
-    if (platform != null && _box.get(_platform) != platform)
-      _f.add(_box.put(_platform, platform));
-
-    final pageBuilder = options.pageBuilder;
-    if (pageBuilder != null && _box.get(_pageBuilder) != pageBuilder)
-      _f.add(_box.put(_pageBuilder, pageBuilder));
-
-    final useImageCache = options.useImageCache;
-    if (useImageCache != null && _box.get(_useImageCache) != useImageCache)
-      _f.add(_box.put(_useImageCache, useImageCache));
+    final any = FutureAny();
 
     final useSqflite3 = options.useSqflite;
     if (useSqflite3 != null && await sqfliteBox != useSqflite3)
-      _f.add(setSqfliteBox(useSqflite3));
+      any.add(setSqfliteBox(useSqflite3));
 
-    final useTextCache = options.useTextCache;
-    if (useTextCache != null && _box.get(_useTextCache) != useTextCache)
-      _f.add(_box.put(_useTextCache, useTextCache));
+    _updateOptions(box, any, _platform, options.platform);
+    _updateOptions(box, any, _pageBuilder, options.pageBuilder);
+    _updateOptions(box, any, _useTextCache, options.useTextCache);
+    _updateOptions(box, any, _useImageCache, options.useImageCache);
+    _updateOptions(box, any, _updateOnStart, options.updateOnStart);
 
-    final resample = options.resample;
-    if (resample != null && _box.get(_resample) != resample) {
-      GestureBinding.instance!.resamplingEnabled = resample;
-      _f.add(_box.put(_resample, resample));
-    }
+    // _updateOptions(box, any, _followSystem, options.followSystem);
+    _updateOptions(box, any, _themeMode, options.themeMode);
 
-    // final resampleOffset = options.resampleOffset;
-    // if (resampleOffset != null && _box.get(_resampleOffset) != resampleOffset) {
-    //   GestureBinding.instance!.samplingOffset =
-    //       Duration(milliseconds: resampleOffset);
-    //   _f.add(_box.put(_resampleOffset, resampleOffset));
-    // }
-    final nopResample = options.nopResample;
-    if (nopResample != null && _box.get(_nopResample) != nopResample) {
-      NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
-      _f.add(_box.put(_nopResample, nopResample));
-    }
-    await _f.wait;
-    assert(_f.isEmpty);
+    if (_updateOptions(box, any, _resample, options.resample))
+      GestureBinding.instance!.resamplingEnabled = options.resample!;
+
+    if (_updateOptions(box, any, _nopResample, options.nopResample))
+      NopGestureBinding.instance!.nopResamplingEnabled = options.nopResample!;
+
+    await any.wait;
+    await box.close();
+    assert(any.isEmpty);
     assert(Log.i('$options'));
+  }
+
+  bool _updateOptions(
+      Box box, FutureAny any, String updatItem, Object? updateValue) {
+    if (updateValue != null && box.get(updatItem) != updateValue) {
+      any.add(box.put(updatItem, updateValue));
+      return true;
+    }
+    return false;
   }
 }

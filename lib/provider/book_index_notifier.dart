@@ -228,10 +228,10 @@ class BookIndexNotifier extends ChangeNotifier {
   }
 
   final _queue = EventQueue();
-  Future? get taskRunner => _queue.runner;
+
 
   void loadIndexs([int? bookid, int? contentid, bool restore = false]) {
-    if (_queue.runner == null) {
+    if (!_queue.actived) {
       // 先执行在添加到队列中
       final f = _load(bookid, contentid, restore);
       _queue.addEventTask(() => f);
@@ -278,7 +278,7 @@ class BookIndexNotifier extends ChangeNotifier {
       final bookIndexShort =
           await repository.bookEvent.getIndexs(bookid, true) ??
               const NetBookIndex();
-      await releaseUI;
+
       setIndexData(bookid, contentid, bookIndexShort);
 
       if (_data != null &&

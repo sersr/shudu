@@ -2,32 +2,27 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hot_fix/hot_fix.dart';
 import 'package:provider/provider.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../event/event.dart';
 import '../provider/provider.dart';
 import 'home/home_page.dart';
 
-class ShuduApp extends StatefulWidget {
+class ShuduApp extends StatelessWidget {
   const ShuduApp({Key? key}) : super(key: key);
-
-  @override
-  State<ShuduApp> createState() => _ShuduAppState();
-}
-
-class _ShuduAppState extends State<ShuduApp> {
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Selector<OptionsNotifier, List>(selector: (context, opt) {
-      return [opt.options.platform, opt.options.showPerformanceOverlay];
+      return [
+        opt.options.themeMode,
+        opt.options.platform,
+        opt.options.showPerformanceOverlay,
+      ];
     }, builder: (context, list, _) {
+      //TODO: 主题配色，国际化...
+
       return MaterialApp(
-        // color: Colors.white,
+        themeMode: list[0] ?? ThemeMode.system,
         title: 'shudu',
         theme: ThemeData.light().copyWith(
           colorScheme: const ColorScheme.light(
@@ -39,7 +34,7 @@ class _ShuduAppState extends State<ShuduApp> {
             // secondaryVariant: Colors.grey.shade400
           ),
           // primarySwatch: Colors.grey,
-          platform: list[0] ?? defaultTargetPlatform,
+          platform: list[1] ?? defaultTargetPlatform,
           // brightness: Brightness.light,
           // primaryColorBrightness: Brightness.light,
           // primaryColor: Colors.grey.shade900,
@@ -50,7 +45,16 @@ class _ShuduAppState extends State<ShuduApp> {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
           }),
         ),
-        showPerformanceOverlay: list[1] ?? false,
+        darkTheme: ThemeData.dark().copyWith(
+          platform: list[1] ?? defaultTargetPlatform,
+          colorScheme: const ColorScheme.dark(
+              secondary: Colors.grey, primary: Colors.blue),
+          pageTransitionsTheme: const PageTransitionsTheme(builders: {
+            TargetPlatform.iOS: SlidePageTransition(),
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+          }),
+        ),
+        showPerformanceOverlay: list[2] ?? false,
         home: const MyHomePage(),
         navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
       );

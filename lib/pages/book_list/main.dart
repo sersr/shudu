@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/provider.dart';
-import '../settings/settings.dart';
+import '../setting/setting.dart';
 import 'book_history.dart';
 import 'booklist.dart';
 import 'cache_manager.dart';
@@ -15,21 +15,30 @@ import 'top.dart';
 class ListMainPage extends StatelessWidget {
   const ListMainPage({Key? key}) : super(key: key);
 
-  Widget _builder(String text, VoidCallback onTap) {
-    return btn1(
-      radius: 10.0,
-      bgColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Center(child: Text(text)),
-      onTap: onTap,
-    );
-  }
+  bool isLight(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light;
 
   @override
   Widget build(BuildContext context) {
+    final light = isLight(context);
+  Widget _builder(String text, VoidCallback onTap) {
+    return btn1(
+      radius: 10.0,
+      bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
+        splashColor: light ? null : Color.fromRGBO(60, 60, 60, 1),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Center(
+            child: Text(
+          text,
+          style: TextStyle(
+              color: light ? Colors.grey.shade700 : Colors.grey.shade400),
+        )),
+      onTap: onTap,
+    );
+  }
     var v = 0;
     return Container(
-      color: Colors.grey.shade100,
+      color: light ? Colors.grey.shade100 : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -98,53 +107,63 @@ class ListMainPage extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 5),
-          _builder('清除', () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return RepaintBoundary(
-                  child: Scaffold(
-                      appBar: AppBar(
-                        title: Text('清除'),
-                      ),
-                      body: Container(
-                        color: Colors.grey.shade100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Row(children: [
+            Expanded(
+              child: _builder('清除', () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return RepaintBoundary(
+                      child: Scaffold(
+                          appBar: AppBar(
+                            title: Text('清除'),
+                          ),
+                          body: Container(
+                            color: Colors.grey.shade100,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _builder(
-                                  '清除',
-                                  () {
-                                    imageCache?.clear();
-                                    imageRefCache?.clear();
-                                    textCache?.clear();
-                                  },
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _builder(
+                                      '清除',
+                                      () {
+                                        imageCache?.clear();
+                                        imageRefCache?.clear();
+                                        textCache?.clear();
+                                      },
+                                    ),
+                                    StatefulBuilder(
+                                        builder: (context, setstate) {
+                                      return _builder(
+                                        'count: !done: $v',
+                                        () {
+                                          setstate(() {
+                                            v = imageRefCache?.printDone() ?? 0;
+                                          });
+                                        },
+                                      );
+                                    }),
+                                    SelectableText('aa')
+                                  ],
                                 ),
-                                StatefulBuilder(builder: (context, setstate) {
-                                  return _builder(
-                                    'count: !done: $v',
-                                    () {
-                                      setstate(() {
-                                        v = imageRefCache?.printDone() ?? 0;
-                                      });
-                                    },
-                                  );
-                                }),
-                                SelectableText('aa')
                               ],
                             ),
-                          ],
-                        ),
-                      )));
-            }));
-          }),
-          const SizedBox(height: 5),
-          _builder('设置', () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return Settings();
-            }));
-          }),
+                          )));
+                }));
+              }),
+            ),
+            const SizedBox(width: 5),
+            Expanded(
+              child: _builder('设置', () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return Setting();
+                }));
+              }),
+            )
+          ]),
           if (kDebugMode) const SizedBox(height: 5),
           if (kDebugMode)
             _builder('content clear(在调试控制台中观察是否正确释放Picture)', () {

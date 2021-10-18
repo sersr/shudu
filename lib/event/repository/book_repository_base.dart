@@ -11,8 +11,9 @@ import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:useful_tools/binding.dart';
 import 'package:useful_tools/common.dart';
-import 'package:useful_tools/event_queue.dart';
+import 'package:memory_info/memory_info.dart';
 
 import '../../provider/options_notifier.dart';
 import '../base/book_event.dart';
@@ -44,6 +45,14 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     }
 
     return level;
+  }
+
+  MemoryInfoPlugin? memoryInfoPlugin;
+
+  @override
+  Future<Memory> getMemoryInfo() {
+    memoryInfoPlugin ??= MemoryInfoPlugin();
+    return memoryInfoPlugin!.memoryInfo;
   }
 
   bool _systemOverlaysAreVisible = false;
@@ -158,6 +167,17 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     /// Isolate event
     final newIsolate = await Isolate.spawn(isolateEvent,
         [rcPort.sendPort, appPath, cachePath, useFfi, useSqflite3]);
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      final memory = await getMemoryInfo();
+      // final totalMem = memory.totalMem;
+      final freeMem = memory.freeMem;
+      const size = 1.5 * 1024;
+      if (freeMem != null && freeMem < size) {
+        CacheBinding.instance!.imageRefCache!.length = 250;
+      }
+      Log.i(memory.freeMem, onlyDebug: false);
+    }
     await onDone(rcPort);
 
     /// 完成时再设置

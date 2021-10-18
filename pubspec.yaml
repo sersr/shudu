@@ -75,6 +75,7 @@ dependencies:
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2
+  memory_info: ^0.0.2
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

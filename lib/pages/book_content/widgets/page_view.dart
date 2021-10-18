@@ -45,7 +45,7 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   bool canDrag() {
-    return bloc.initQueue.runner == null;
+    return !bloc.initQueue.actived;
   }
 
   PanSlideController getController() {
@@ -399,7 +399,7 @@ class _NopPageViewState extends State<NopPageView> {
               ..onUpdate = onUpdate
               ..onEnd = onEnd
               ..onCancel = onCancel
-              // ..minFlingDistance = 8.0
+              ..minFlingDistance = 2.0
               // ..minFlingVelocity = kMinFlingVelocity
               // ..maxFlingVelocity = kMaxFlingVelocity
               ..dragStartBehavior = dragStartBehavior;

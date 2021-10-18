@@ -23,6 +23,8 @@ class _TopPageState extends State<TopPage> {
     ts = context.read<TextStyleConfig>();
   }
 
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -32,8 +34,10 @@ class _TopPageState extends State<TopPage> {
           body: BarLayout(
         title: Text('榜单'),
         bottom: TabBar(
-          labelColor: TextStyleConfig.blackColor7,
-          unselectedLabelColor: TextStyleConfig.blackColor2,
+          labelColor:
+              isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+          unselectedLabelColor:
+              isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
           labelStyle: TextStyle(fontSize: 15),
           tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
         ),
@@ -57,6 +61,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
   final _urlKeys = <String>['hot', 'over', 'commend', 'new', 'vote', 'collect'];
   final _urlDates = <String>['week', 'month', 'total'];
   var _currentIndex = 0;
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +76,9 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
               itemBuilder: (context, index) {
                 return Material(
                   color: _currentIndex == index
-                      ? const Color.fromARGB(255, 210, 210, 210)
+                      ? isLight
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600
                       : null,
                   child: InkWell(
                     onTap: () {

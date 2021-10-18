@@ -656,18 +656,6 @@ class _TopPannelState extends State<TopPannel> {
                               text: '详情页',
                             ),
                             _topButton(
-                                text: '性能图层',
-                                onTap: () {
-                                  final opt = context.read<OptionsNotifier>();
-                                  opt.options = ConfigOptions(
-                                    showPerformanceOverlay: opt.options
-                                                .showPerformanceOverlay !=
-                                            null
-                                        ? !opt.options.showPerformanceOverlay!
-                                        : true,
-                                  );
-                                }),
-                            _topButton(
                                 text: '重新下载',
                                 onTap: () => contentNtf.updateCurrent()),
                             _topButton(
@@ -745,7 +733,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void onChangev(HSVColor c) {
     bgColor.value = c;
   }
-
+  //TODO: 添加配色保存功能
   Widget settings() {
     if (_setting != null) return _setting!;
     var fontSlider = Row(
@@ -1055,39 +1043,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       ],
                     ),
                   )),
-                  // RepaintBoundary(
-                  //     child: Padding(
-                  //   padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-                  //   child: Row(
-                  //     children: [
-                  //       RepaintBoundary(
-                  //         child: AnimatedBuilder(
-                  //             animation: _audioNotifier,
-                  //             builder: (context, _) {
-                  //               return Switch(
-                  //                   value: _audioNotifier.value,
-                  //                   onChanged: (audio) => bloc.setPrefs(bloc
-                  //                       .config.value
-                  //                       .copyWith(audio: audio)));
-                  //             }),
-                  //       ),
-                  //       Expanded(
-                  //         child: RepaintBoundary(
-                  //           child: AnimatedBuilder(
-                  //               animation: bloc.ttsProgress,
-                  //               builder: (context, _) {
-                  //                 return Row(
-                  //                   children: [
-                  //                     Expanded(child: const SizedBox()),
-                  //                     Text(bloc.ttsProgress.value),
-                  //                   ],
-                  //                 );
-                  //               }),
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // )),
                 ],
               ),
             ),
@@ -1171,12 +1126,8 @@ class PannelSlide extends StatefulWidget {
 
 class _PannelSlideState extends State<PannelSlide> {
   late PanSlideController panSlideController;
-  late Animation<Offset> botPositions;
-  late Animation<Offset> topPositions;
-  late Animation<Offset> leftPositions;
-  late Animation<Offset> rightPositions;
-  late Animation<double> modalAnimation;
-  late Animation<Color?> colorsAnimation;
+  CurvedAnimation? curvedAnimation;
+
   final _topInOffset =
       Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
   final _botInOffset =
@@ -1203,18 +1154,8 @@ class _PannelSlideState extends State<PannelSlide> {
     final controller = panSlideController.controller;
     // final _curve = CurvedAnimation(parent: controller, curve: Curves.ease);
     // final _curveAnimation = _curve;
-    botPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
-        .drive(_botInOffset);
-    topPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
-        .drive(_topInOffset);
-    leftPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
-        .drive(_leftInOffset);
-    rightPositions = CurvedAnimation(parent: controller, curve: Curves.ease)
-        .drive(_rightInOffset);
-    modalAnimation = CurvedAnimation(parent: controller, curve: Curves.ease)
-        .drive(modalTween);
-
-    colorsAnimation = debx.animate(modalAnimation);
+    curvedAnimation?.dispose();
+    curvedAnimation = CurvedAnimation(parent: controller, curve: Curves.ease);
 
     controller.removeStatusListener(statusListen);
     controller.addStatusListener(statusListen);
@@ -1243,6 +1184,13 @@ class _PannelSlideState extends State<PannelSlide> {
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
+    final botPositions = curvedAnimation!.drive(_botInOffset);
+    final topPositions = curvedAnimation!.drive(_topInOffset);
+    final leftPositions = curvedAnimation!.drive(_leftInOffset);
+    final rightPositions = curvedAnimation!.drive(_rightInOffset);
+    final modalAnimation = curvedAnimation!.drive(modalTween);
+    final colorsAnimation = debx.animate(modalAnimation);
+
     if (widget.modal) {
       children.add(Positioned.fill(
         child: RepaintBoundary(

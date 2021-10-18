@@ -49,11 +49,8 @@ class BookRepository extends BookRepositoryBase with SendEventMixin {
       return;
     }
 
-    /// [SenderStreamController] 在本地取消时，隔离端可能未及时关闭
-    /// 由于异步的各种原因，还可能通过此端口接受数据，但本地以关闭，无法确认接受
-    /// 此端口是共享端口
-    ///
-    /// [BookRepositoryPort]: 提供独立端口
+    // 所有的消息共用一个端口
+    // `Stream`也是，
     assert(Log.e('messager error : $r'));
   }
 

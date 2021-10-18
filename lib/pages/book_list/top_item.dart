@@ -115,6 +115,8 @@ class _TopListViewState extends State<TopListView> {
     super.dispose();
   }
 
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -131,6 +133,7 @@ class _TopListViewState extends State<TopListView> {
 
           return ListViewBuilder(
             cacheExtent: 100,
+            color: isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
             finishLayout: (first, last) {
               final state = _topNotifier.state;
 
@@ -155,6 +158,7 @@ class _TopListViewState extends State<TopListView> {
                       () => _topNotifier.getNextData(widget.ctg, widget.date));
                 }
                 return Container(
+                  color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   height: 60,
                   child: child,
@@ -163,6 +167,11 @@ class _TopListViewState extends State<TopListView> {
 
               final _item = _data[index];
               return ListItem(
+                  bgColor:
+                      isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+                  splashColor: isLight
+                      ? const Color.fromRGBO(225, 225, 225, 1)
+                      : Color.fromRGBO(60, 60, 60, 1),
                   onTap: () {
                     if (_item.id != null) BookInfoPage.push(context, _item.id!);
                   },

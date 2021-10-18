@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:nop_db/database/nop.dart';
+import 'package:nop_db/database/statement.dart';
+import 'package:nop_db/database/table.dart';
+import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../data/book_index.dart';
 import '../../database/database.dart';
 import '../base/book_event.dart';
 
@@ -11,7 +16,6 @@ import '../base/book_event.dart';
 mixin DatabaseMixin implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
-  int get version => 1;
 
   bool get useFfi => false;
   bool get useSqflite3 => false;
@@ -26,7 +30,7 @@ mixin DatabaseMixin implements DatabaseEvent {
 
   FutureOr<void> initDb() => db.initDb();
 
-  late final db = BookDatabase(_url, version, useFfi, useSqflite3);
+  late final db = BookDatabase(_url, useFfi, useSqflite3);
 
   @override
   FutureOr<int> updateBook(int id, BookCache book) {
@@ -55,15 +59,25 @@ mixin DatabaseMixin implements DatabaseEvent {
         ..cid.equalTo(contentDb.cid!);
 
       final x = update.go;
-      Log.i('update: $x, ${update.updateItems}');
+      assert(Log.i('update: $x, ${update.updateItems}'));
       return x;
     } else {
-      bookContentDb.pid;
       final insert = bookContentDb.insert.insertTable(contentDb);
       final x = insert.go;
-      Log.i('insert: $x , ${insert.updateItems}, ${contentDb.bookId}');
+      assert(Log.i('insert: $x , ${insert.updateItems}, ${contentDb.bookId}'));
+
+      /// update Index cacheItemCounts
+      updateIndexCacheLength(contentDb.bookId!);
+
       return x;
     }
+  }
+
+  Future<void> updateIndexCacheLength(int bookId) async {
+    final cacheLength = await getCacheContentsCidDb(bookId) ?? 0;
+    final update = bookIndex.update.cacheItemCounts.set(cacheLength)
+      ..where.bookId.equalTo(bookId);
+    await update.go;
   }
 
   FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
@@ -101,21 +115,67 @@ mixin DatabaseMixin implements DatabaseEvent {
       ..select.count.all.push
       ..bookId.equalTo(id);
     count = await q.go.first.values.first as int? ?? count;
+    final bIndexs = indexs;
+
+    var itemCounts = _computeIndexLength(bIndexs);
 
     if (count > 0) {
       final update = bookIndex.update
         ..bIndexs.set(indexs)
+        ..itemCounts.set(itemCounts)
         ..where.bookId.equalTo(id);
       return update.go;
     } else {
-      final insert =
-          bookIndex.insert.insertTable(BookIndex(bookId: id, bIndexs: indexs));
+      final insert = bookIndex.insert.insertTable(
+          BookIndex(bookId: id, bIndexs: indexs, itemCounts: itemCounts));
+
       return insert.go;
+      // ..whenComplete(() => updateIndexCacheLength(id));
     }
+  }
+
+  int _computeIndexLength(String rawIndexs) {
+    var itemCounts = 0;
+    final decodeIndexs = BookIndexRoot.fromJson(jsonDecode(rawIndexs)).data ??
+        const NetBookIndex();
+    final list = decodeIndexs.list;
+    var length = 0;
+    if (list != null && list.isNotEmpty) {
+      for (var item in list) length += item.list?.length ?? 0;
+
+      itemCounts = length;
+    }
+    return itemCounts;
+  }
+
+  FutureOr<List<BookContentDb>> getCacheContentsCidDbAll() {
+    return bookContentDb.query.bookId.goToTable;
   }
 
   FutureOr<List<BookIndex>> getIndexsDb(int bookid) {
     final q = bookIndex.query.bIndexs..where.bookId.equalTo(bookid);
+    return q.goToTable;
+  }
+
+  FutureOr<List<BookIndex>> getIndexsDbCacheItemBookid(int bookid) async {
+    final q = bookIndex.query.itemCounts.cacheItemCounts
+      ..where.bookId.equalTo(bookid);
+    var data = await q.goToTable;
+    final shouldUpdate = data.isNotEmpty && data.last.itemCounts == null;
+    if (shouldUpdate) {
+      final index = await getIndexsDb(bookid);
+      // Log.i('itemCounts index: $index', onlyDebug: false);
+
+      if (index.isNotEmpty) {
+        await insertOrUpdateIndexs(bookid, index.last.bIndexs!);
+        data = await q.goToTable;
+      }
+    }
+    return data;
+  }
+
+  FutureOr<List<BookIndex>> getIndexsDbCacheItem() {
+    final q = bookIndex.query.itemCounts.cacheItemCounts.bookId;
     return q.goToTable;
   }
 
@@ -150,14 +210,18 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   @override
-  FutureOr<List<BookContentDb>> getCacheContentsCidDb(int bookid) {
-    late FutureOr<List<BookContentDb>> l;
+  FutureOr<int?> getCacheContentsCidDb(int bookid) {
+    final q = bookContentDb.query
+      ..select.count.all.push
+      ..where.bookId.equalTo(bookid);
+    return (q.go.first.values.first) as FutureOr<int?>;
+  }
 
-    bookContentDb.query.cid.cname
-      ..where.bookId.equalTo(bookid)
-      ..let((s) => l = s.goToTable);
-
-    return l;
+  QueryStatement getCacheContentsCidDbStatement(int bookid) {
+    final q = bookContentDb.query
+      ..select.count.all.push
+      ..where.bookId.equalTo(bookid);
+    return q;
   }
 
   @override

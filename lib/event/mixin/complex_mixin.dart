@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:lpinyin/lpinyin.dart';
+import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:useful_tools/common.dart';
-import 'package:useful_tools/event_queue.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
@@ -42,10 +42,11 @@ mixin ComplexMixin
 
   @override
   Future<BookInfoRoot> getInfo(int id) async {
-    final rawData = await getInfoNet(id);
+    final _getInfoNet = getInfoNet(id);
 
-    final data = rawData.data;
     final mainBook = await getBookCacheDb(id);
+    final rawData = await _getInfoNet;
+    final data = rawData.data;
 
     if (data != null) {
       BookCache? book;
@@ -98,89 +99,72 @@ mixin ComplexMixin
 
   @override
   Future<CacheItem> getCacheItem(int id) async {
-    var cacheListRaw = await getCacheContentsCidDb(id);
-    final cacheItemCounts = cacheListRaw.length;
+    // int? cacheItemCounts;
+    // = await getCacheContentsCidDb(id) ?? 0;
 
-    int? itemCounts;
-    var queryList = await getIndexsDb(id);
+    var queryList = await getIndexsDbCacheItemBookid(id);
 
     if (queryList.isNotEmpty) {
-      final restr = queryList.last.bIndexs;
-
-      if (restr != null) {
-        final indexs = getIndexsDecodeLists(restr);
-        final list = indexs.list;
-        if (list != null && list.isNotEmpty) {
-          var count = 0;
-          for (var item in list) count += item.list?.length ?? 0;
-          itemCounts = count;
-        }
+      final restr = queryList.last;
+      final itemCounts = restr.itemCounts;
+      final cacheItemCounts = restr.cacheItemCounts ?? 0;
+      if (itemCounts != null) {
+        return CacheItem(id, itemCounts, cacheItemCounts);
       }
     }
-
-    itemCounts ??= cacheItemCounts;
-
-    return CacheItem(id, itemCounts, cacheItemCounts);
+    return CacheItem(id, 0, 0);
   }
 
   @override
-  Stream<CacheItem> getMainBookListDbStream() {
-    final controller = StreamController<CacheItem>();
-    Timer.run(() async {
-      try {
-        final all = await getAllBookId();
-        // final fwait = FutureAny();
-        for (var a in all) {
-          try {
-            await getCacheItem(a).then(controller.add);
-            await releaseUI;
-          } catch (e) {
-            Log.w(e);
-          }
-        }
-        // await fwait.wait;
-      } finally {
-        controller.close();
-      }
-    });
-    Log.i('ss.s....');
-    return controller.stream;
-  }
+  Future<List<CacheItem>> getCacheItems() async {
+    final list = <CacheItem>[];
+    // var allCacheItems = await getIndexsDbCacheItem();
+    final stop = Stopwatch()..start();
+    var queryList = await getIndexsDbCacheItem();
+    var map =
+        queryList.asMap().map((key, value) => MapEntry(value.bookId, value));
 
-  @override
-  Future<Map<int, CacheItem>> getCacheItemAll() async {
-    var cacheListRaw = getCacheContentsCidDbAll();
+    var allBookids = await getAllBookId();
+    for (var a in allBookids) {
+      // Log.w('count: $a', onlyDebug: false);
 
-    var queryList = (await getIndexsDbAll()).reversed.toList();
-    final _map = <int, CacheItem>{};
-
-    for (var index in queryList) {
-      final bookId = index.bookId;
-      final bIndexs = index.bIndexs;
-      if (bookId != null && bIndexs != null) {
-        final cacheItemCounts = (await cacheListRaw)
-            .where((element) => element.bookId == bookId)
-            .length;
-        var itemCounts = cacheItemCounts;
-
-        final indexs = getIndexsDecodeLists(bIndexs);
-        final list = indexs.list;
-        var count = 0;
-        if (list != null && list.isNotEmpty) {
-          for (var item in list) count += item.list?.length ?? 0;
-
-          itemCounts = count;
-        }
-        _map.putIfAbsent(
-            bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
+      final index = map[a];
+      // final item = await getCacheItem(bookid);
+      // var cacheItemCounts = await getCacheContentsCidDb(a.bookId!);
+      // final itemCounts = a.itemCounts ?? cacheItemCounts ?? 0;
+      // cacheItemCounts ??= itemCounts;
+      // final item = CacheItem(a.bookId!, itemCounts, cacheItemCounts);
+      final itemCounts = index?.itemCounts;
+      if (itemCounts != null) {
+        final item = CacheItem(a, itemCounts, index?.cacheItemCounts ?? 0);
+        list.add(item);
+      } else {
+        list.add(CacheItem(a, 0, 0));
       }
     }
-    return _map;
+    stop.stop();
+    Log.w('use time: ${stop.elapsedMilliseconds} ms', onlyDebug: false);
+    return list;
   }
 
-  FutureOr<List<BookContentDb>> getCacheContentsCidDbAll() {
-    return bookContentDb.query.bookId.goToTable;
-  }
+  // @override
+  // Future<Map<int, CacheItem>> getCacheItemAll() async {
+  //   var cacheListRaw = await getCacheContentsCidDb(id);
+
+  //   var queryList = (await getIndexsDbAll()).reversed.toList();
+  //   final _map = <int, CacheItem>{};
+
+  //   for (var index in queryList) {
+  //     final bookId = index.bookId;
+  //     final itemCounts = index.itemCounts;
+  //     final cacheItemCounts = await cacheListRaw.cacheItemCounts;
+  //     if (bookId != null && cacheItemCounts != null && itemCounts != null) {
+  //       _map.putIfAbsent(
+  //           bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
+  //     }
+  //   }
+  //   return _map;
+  // }
 
   @override
   Future<RawContentLines> getContent(
@@ -193,11 +177,9 @@ mixin ComplexMixin
           await _getContentDb(bookid, contentid) ??
           const RawContentLines();
     } else {
-      final a = await _getContentDb(bookid, contentid) ??
+      return await _getContentDb(bookid, contentid) ??
           await _getContentNet(bookid, contentid) ??
           const RawContentLines();
-
-      return a;
     }
   }
 

@@ -85,20 +85,27 @@ class BookContentDb extends Table {
 }
 
 class BookIndex extends Table {
-  BookIndex({this.id, this.bookId, this.bIndexs});
+  BookIndex({
+    this.id,
+    this.bookId,
+    this.bIndexs,
+    this.itemCounts,
+    this.cacheItemCounts,
+  });
 
   @NopItem(primaryKey: true)
   int? id;
   int? bookId;
   String? bIndexs;
-
+  int? itemCounts;
+  int? cacheItemCounts;
   @override
   Map<String, dynamic> toJson() => _BookIndex_toJson(this);
 }
 
 @Nop(tables: [BookCache, BookContentDb, BookIndex])
 class BookDatabase extends _GenBookDatabase {
-  BookDatabase(this.path, this.version, this.useFfi, this.useSqfite3);
+  BookDatabase(this.path, this.useFfi, this.useSqfite3);
 
   final bool useSqfite3;
 
@@ -106,7 +113,7 @@ class BookDatabase extends _GenBookDatabase {
 
   final String path;
 
-  final int version;
+  final int version = 2;
 
   FutureOr<void> initDb() {
     if (useSqfite3) {
@@ -130,5 +137,17 @@ class BookDatabase extends _GenBookDatabase {
         onCreate: onCreate,
         onUpgrade: onUpgrade,
         onDowngrade: onDowngrade);
+  }
+
+  @override
+  FutureOr<void> onUpgrade(
+      NopDatabase db, int oldVersion, int newVersion) async {
+    if (oldVersion == 1 && newVersion == 2) {
+      final indexTable = bookIndex.table;
+      await db.execute(
+          'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.itemCounts} INTEGER');
+      await db.execute(
+          'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.cacheItemCounts} INTEGER');
+    }
   }
 }

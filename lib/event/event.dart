@@ -13,8 +13,7 @@ import 'mixin/network_mixin.dart';
 export 'base/constants.dart';
 export 'base/repository.dart';
 
-// 以数据库为基类
-// 网络任务 mixin
+// mixin: 数据库、网络任务
 class BookEventIsolate extends BookEventResolveMain
     with DatabaseMixin, NetworkMixin, ComplexMixin {
   BookEventIsolate(

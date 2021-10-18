@@ -2,10 +2,10 @@
 
 ## 介绍
 
-    编写一个小说阅读app，开发有趣的工具
+    小说阅读项目app
 
 
-## 其中使用到的包：
+## 使用到的包：
  - nop_db: 数据库工具包，代码生成，`Isolate`通信协议，动态传输
  - nop_db_sqlite: 使用 sqlite3 作为 nop_db 数据库底层实现
  - nop_db_sqflite: 使用 sqflite 作为 nop_db 数据库底层实现

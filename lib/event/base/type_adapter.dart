@@ -20,12 +20,12 @@ Dio dioCreater() => Dio(
       ),
     );
 
-
 void hiveInit(String path) {
   Hive
     ..registerAdapter(ColorAdapter())
     ..registerAdapter(AxisAdapter())
     ..registerAdapter(TargetPlatformAdapter())
+    ..registerAdapter(ThemeModeAdapter())
     ..registerAdapter(PageBuilderAdapter());
 
   Hive.init(path);
@@ -93,4 +93,20 @@ class PageBuilderAdapter extends TypeAdapter<PageBuilder> {
 
   @override
   int get typeId => 3;
+}
+
+class ThemeModeAdapter extends TypeAdapter<ThemeMode> {
+  @override
+  ThemeMode read(BinaryReader reader) {
+    final value = reader.readInt();
+    return ThemeMode.values[value];
+  }
+
+  @override
+  void write(BinaryWriter writer, ThemeMode obj) {
+    writer.writeInt(obj.index);
+  }
+
+  @override
+  int get typeId => 4;
 }

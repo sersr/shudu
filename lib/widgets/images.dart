@@ -131,7 +131,8 @@ class _ImageResolveState extends State<ImageResolve> {
   Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
     if (hasImage) {
       if (widget.builder != null) child = widget.builder!(child);
-      if (widget.shadow) child = ImageShadow(child: child);
+      if (widget.shadow && Theme.of(context).brightness == Brightness.light)
+        child = ImageShadow(child: child);
       child = Center(child: child);
     }
 

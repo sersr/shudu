@@ -27,7 +27,7 @@ abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
 
 @NopIsolateEventItem()
 abstract class BookContentEvent {
-  FutureOr<List<BookContentDb>?> getCacheContentsCidDb(int bookid);
+  FutureOr<int?> getCacheContentsCidDb(int bookid);
   Stream<List<BookContentDb>?> watchCacheContentsCidDb(int bookid);
 
   FutureOr<int?> deleteCache(int bookId);
@@ -35,14 +35,14 @@ abstract class BookContentEvent {
 
 abstract class ComplexEvent {
   FutureOr<CacheItem?> getCacheItem(int id);
-  Stream<CacheItem> getMainBookListDbStream();
+  FutureOr<List<CacheItem>?> getCacheItems();
 
   @NopIsolateMethod(isDynamic: true)
   FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
   FutureOr<int?> updateBookStatus(int id);
 
-  FutureOr<Map<int, CacheItem>?> getCacheItemAll();
+  // FutureOr<Map<int, CacheItem>?> getCacheItemAll();
   FutureOr<BookInfoRoot?> getInfo(int id);
 }
 

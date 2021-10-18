@@ -1,8 +1,8 @@
 // import 'package:bangs/bangs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hot_fix/hot_fix.dart';
+import 'package:memory_info/memory_info.dart';
 
-// ignore: unused_import
 import '../repository/book_repository_port.dart' show BookRepositoryPort;
 import 'book_event.dart';
 
@@ -42,6 +42,7 @@ abstract class Repository {
   bool get systemOverlaysAreVisible;
   void addSystemOverlaysListener(BoolCallback callback);
   void removeSystemOverlaysListener(BoolCallback callback);
+  Future<Memory> getMemoryInfo();
 }
 
 typedef BoolCallback = void Function(bool visible);

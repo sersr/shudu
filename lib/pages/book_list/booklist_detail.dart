@@ -59,9 +59,13 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
     yield const SizedBox(height: 6);
 
     yield Container(
-      color: Color.fromARGB(255, 250, 250, 250),
+      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+      // Color.fromARGB(255, 250, 250, 250),
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0),
-      child: Text('书单列表', style: ts.title2),
+      child: Text('书单列表',
+          style: isLight
+              ? ts.title2
+              : ts.title2.copyWith(color: Colors.grey.shade400)),
     );
 
     yield const SizedBox(height: 3);
@@ -69,15 +73,21 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
     if (data.bookList != null)
       for (var l in data.bookList!)
         yield ListItem(
+          bgColor: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+          splashColor: isLight
+              ? const Color.fromRGBO(225, 225, 225, 1)
+              : Color.fromRGBO(60, 60, 60, 1),
           height: 108,
           onTap: () => BookInfoPage.push(context, l.bookId!),
           child: ShudanListDetailItemWidget(l: l),
         );
   }
 
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
   @override
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>();
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -103,6 +113,9 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                   interactive: true,
                   thickness: 8,
                   child: ListViewBuilder(
+                    color:
+                        isLight ? Colors.white : Color.fromRGBO(25, 25, 25, 1),
+
                     refreshDelegate: refreshDelegate2,
                     padding: const EdgeInsets.only(bottom: 12.0),
                     // cacheExtent: 100,
@@ -149,11 +162,15 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   Widget buildIntro(TextStyleConfig ts, String? description) {
     return Container(
       padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-      color: Color.fromARGB(255, 250, 250, 250),
+      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+      //  Color.fromARGB(255, 250, 250, 250),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('简介', style: ts.title2),
+          Text('简介',
+              style: isLight
+                  ? ts.title2
+                  : ts.title2.copyWith(color: Colors.grey.shade400)),
           Padding(
             padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
             child: AnimatedBuilder(
@@ -206,6 +223,8 @@ class TitleWidget extends StatefulWidget {
 
 class _TitleWidgetState extends State<TitleWidget>
     with AutomaticKeepAliveClientMixin {
+  bool get isLight => Theme.of(context).brightness == Brightness.light;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -213,7 +232,8 @@ class _TitleWidgetState extends State<TitleWidget>
     final data = widget.data;
     return Container(
       height: 120,
-      color: const Color.fromARGB(255, 250, 250, 250),
+      color: isLight ? Colors.grey.shade100 : Colors.grey.shade900,
+      // color: const Color.fromARGB(255, 250, 250, 250),
       padding: const EdgeInsets.all(12.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 80),
@@ -234,8 +254,12 @@ class _TitleWidgetState extends State<TitleWidget>
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child:
-                          Text(data.title ?? '', maxLines: 2, style: ts.title2),
+                      child: Text(data.title ?? '',
+                          maxLines: 2,
+                          style: isLight
+                              ? ts.title2
+                              : ts.title2
+                                  .copyWith(color: Colors.grey.shade400)),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),

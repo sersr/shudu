@@ -3,8 +3,7 @@ import 'dart:typed_data';
 
 import '../base/book_event.dart';
 
-/// 通过 mixin 对特定函数进行重写
-///
+/// `Dynamic`方法需要实现原方法
 mixin SaveImageMessager on CustomEventMessager implements CustomEvent {
   @override
   Future<String> getImagePath(String img) async {
@@ -15,7 +14,7 @@ mixin SaveImageMessager on CustomEventMessager implements CustomEvent {
 
   @override
   Future<Uint8List?> getImageBytes(String img) async {
-    final _img = await super.getImageBytesDynamic(img);
+    final _img = await getImageBytesDynamic(img);
 
     if (_img is ByteBuffer) {
       return _img.asUint8List();
@@ -35,6 +34,7 @@ mixin ComplexMessager on ComplexEventMessager implements ComplexEvent {
       return RawContentLines.decode(result);
     }
 
+    assert(result is RawContentLines?);
     return result;
   }
 }
