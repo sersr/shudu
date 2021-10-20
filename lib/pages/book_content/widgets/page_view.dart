@@ -16,9 +16,7 @@ import 'page_view_controller.dart';
 import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {
-  const ContentPageView({
-    Key? key,
-  }) : super(key: key);
+  const ContentPageView({Key? key}) : super(key: key);
 
   @override
   ContentPageViewState createState() => ContentPageViewState();
@@ -123,7 +121,7 @@ class ContentPageViewState extends State<ContentPageView>
     }
   }
 
-  void tigger() {
+  void toggle() {
     getController().trigger(immediate: false);
   }
 
@@ -134,6 +132,7 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc = context.read<ContentNotifier>()..controller = offsetPosition;
     _bloc!.addListener(update);
     indexBloc = context.read<BookIndexNotifier>();
+    Log.w('$runtimeType update', onlyDebug: false);
     update();
   }
 
@@ -154,6 +153,7 @@ class ContentPageViewState extends State<ContentPageView>
     if (isScrolling) {
       bloc.autoRun.stopSave();
     } else {
+      bloc.reduceController();
       bloc.autoRun.stopAutoRun();
     }
   }
@@ -297,7 +297,7 @@ class ContentPageViewState extends State<ContentPageView>
                       offsetPosition.page % offsetPosition.page.toInt() == 0 ||
                       !offsetPosition.isScrolling) {
                     if (onTap(size, details.globalPosition)) {
-                      tigger();
+                      toggle();
                     } else if (!bloc.autoRun.value) {
                       offsetPosition.nextPage();
                     }
@@ -306,8 +306,8 @@ class ContentPageViewState extends State<ContentPageView>
                 child: wrapChild(),
               )
             : GestureDetector(
-                onTap: tigger,
-                child: Container(
+                onTap: toggle,
+                child: ColoredBox(
                     color: Colors.transparent,
                     child: reloadBotton(bloc.reload)),
               );

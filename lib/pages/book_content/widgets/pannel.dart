@@ -659,7 +659,7 @@ class _TopPannelState extends State<TopPannel> {
                                 text: '重新下载',
                                 onTap: () => contentNtf.updateCurrent()),
                             _topButton(
-                                text: '阴影', onTap: () => contentNtf.showdow()),
+                                text: '阴影', onTap: () => contentNtf.shadow()),
                           ],
                         ),
                       ),

@@ -112,11 +112,13 @@ class BallisticActivity extends Activity {
         stop = value <= _end;
       }
       if (stop) {
+        value = _end;
         done();
       }
     } else {
       final p = (value - _end).abs();
       if (p < 1 / ui.window.devicePixelRatio) {
+        value = _end;
         done();
       }
     }

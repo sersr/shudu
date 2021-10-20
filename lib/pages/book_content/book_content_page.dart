@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -14,39 +14,19 @@ import 'widgets/page_view.dart';
 enum SettingView { indexs, setting, none }
 
 class BookContentPage extends StatefulWidget {
-  const BookContentPage(
-      {Key? key,
-      required this.bookId,
-      required this.cid,
-      required this.page,
-      required this.currentKey})
-      : super(key: key);
-  final int bookId;
-  final int cid;
-  final int page;
+  const BookContentPage({Key? key}) : super(key: key);
 
-  // 任务队列中的任务相同的 key 不会被抛弃
-  final Object currentKey;
-  static Object? _wait;
+  static Object? _lock;
   static Future push(
       BuildContext context, int newBookid, int cid, int page) async {
-    if (_wait != null) return;
-    _wait = const Object();
+    if (_lock != null) return;
+    _lock = const Object();
     final bloc = context.read<ContentNotifier>();
-    final taskKey = Object();
     bloc.touchBook(newBookid, cid, page);
-    await SchedulerBinding.instance!.endOfFrame;
-    _wait = null;
+    _lock = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return RepaintBoundary(
-        child: BookContentPage(
-          bookId: newBookid,
-          cid: cid,
-          page: page,
-          currentKey: taskKey,
-        ),
-      );
+      return const RepaintBoundary(child: BookContentPage());
     }));
   }
 
@@ -58,8 +38,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
-  late ChangeNotifierSelector<Color?, ValueNotifier<ContentViewConfig>>
-      notifyColor;
+  late ValueListenable<Color?> notifyColor;
   @override
   void initState() {
     super.initState();
@@ -105,6 +84,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       },
       child: RepaintBoundary(
         child: Stack(
+          fit: StackFit.expand,
           children: [
             const Positioned.fill(
                 child: RepaintBoundary(child: ContentPageView())),
@@ -147,7 +127,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
                             builder: (context, child) {
                               if (bloc.loading.value) return child!;
 
-                              return const SizedBox();
+                              return const SizedBox.shrink();
                             },
                             child: loadingIndicator(),
                           ),

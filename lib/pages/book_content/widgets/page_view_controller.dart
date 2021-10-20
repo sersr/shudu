@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
+import 'package:useful_tools/common.dart';
 
 import '../../../provider/content_notifier.dart';
 import '../../../widgets/activity.dart';
@@ -129,13 +130,14 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goIdle() {
+    Log.i('go idle', onlyDebug: false);
     scrollingnotifier(false);
     beginActivity(IdleActivity(this));
   }
 
   @override
   void setPixels(double v) {
-    if (v == _pixels || !canDrag()) return;
+    if (v == _pixels) return;
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
@@ -201,16 +203,21 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     _pixels = v.clamp(minExtent, maxExtent);
   }
 
+  void correctBy(double v) {
+    correct(_pixels + v);
+  }
+
   double _minExtent;
   double _maxExtent;
 
   double get minExtent => _minExtent;
   double get maxExtent => _maxExtent;
 
-  void applyConentDimension(
-      {required double minExtent, required double maxExtent}) {
-    if (_minExtent != minExtent || _maxExtent != maxExtent) {
+  void applyConentDimension({double? minExtent, double? maxExtent}) {
+    if (minExtent != null && _minExtent != minExtent) {
       _minExtent = minExtent;
+    }
+    if (maxExtent != null && _maxExtent != maxExtent) {
       _maxExtent = maxExtent;
     }
   }
@@ -230,15 +237,11 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     setPixels(pixels - delta);
   }
 
-  void resetContentDimension() {
-    _minExtent = double.negativeInfinity;
-    _maxExtent = double.infinity;
-  }
-
   PreNextDragController? _currentDrag;
 
   PreNextDragController? drag(
       DragStartDetails details, VoidCallback cancelCallback) {
+    // if (!canDrag()) return null;
     final _drag =
         PreNextDragController(delegate: this, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
@@ -447,8 +450,6 @@ class ContentPreNextRenderObject extends RenderBox {
     if (attached) {
       _nopController.removeListener(markNeedsLayout);
       _nopController = v;
-    }
-    if (attached) {
       _nopController.addListener(markNeedsLayout);
     }
     markNeedsLayout();
