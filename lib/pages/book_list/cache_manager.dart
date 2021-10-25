@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/database.dart';
 import '../../event/event.dart';
+import '../../provider/provider.dart';
 import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';
 
@@ -83,7 +85,8 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
       splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
       onTap: () {
         _cacheNotifier.exit = true;
-        BookInfoPage.push(context, _e.id).whenComplete(() => Future.delayed(
+        BookInfoPage.push(context, _e.id, ApiType.biquge).whenComplete(() =>
+            Future.delayed(
             const Duration(milliseconds: 300),
             () => _cacheNotifier.exit = false));
       },
@@ -204,7 +207,7 @@ class _CacheNotifier extends ChangeNotifier {
     _out = false;
     _cacheSub?.cancel();
     _cacheSub = repository!.bookEvent.bookCacheEvent
-        .watchMainBookListDb()
+        .watchMainList()
         .listen(_listen);
 
     final remoteItems = await repository!.bookEvent.getCacheItems() ?? const [];

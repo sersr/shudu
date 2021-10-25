@@ -32,14 +32,14 @@ void main() async {
 
     expect(x, 1);
 
-    var c1 = bookEvent.watchBookCacheCid(bookid).listen((event) {
+    var c1 = bookEvent.watchCurrentCid(bookid).listen((event) {
       print('watchBookCacheCid: ${event.hashCode}| $event');
     });
-    var c2 = bookEvent.watchBookCacheCid(bookid).listen((event) {
+    var c2 = bookEvent.watchCurrentCid(bookid).listen((event) {
       print('watchBookCacheCid_2: ${event.hashCode}| $event');
     });
 
-    var m1 = bookEvent.watchMainBookListDb().listen((event) {
+    var m1 = bookEvent.watchMainList().listen((event) {
       print('watchMainBookListDb: $event');
     });
     print('first send');
@@ -70,7 +70,7 @@ void main() async {
     /// `watchBookCacheCid` 已取消监听
     expect(watcher.listeners.length, 1);
 
-    final m2 = bookEvent.watchMainBookListDb().listen((event) {
+    final m2 = bookEvent.watchMainList().listen((event) {
       print('watchMainBookListDb22131: $event');
     });
 
@@ -79,7 +79,7 @@ void main() async {
     await m1.cancel();
     expect(watcher.listeners.length, 1);
 
-    final m3 = bookEvent.watchMainBookListDb().listen((event) {
+    final m3 = bookEvent.watchMainList().listen((event) {
       print('watchMainBookListDdadadb: $event');
     });
 

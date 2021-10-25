@@ -6,6 +6,7 @@ import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:memory_info/memory_info.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
@@ -13,15 +14,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/binding.dart';
 import 'package:useful_tools/common.dart';
-import 'package:memory_info/memory_info.dart';
 
 import '../../provider/options_notifier.dart';
 import '../base/book_event.dart';
-import '../base/type_adapter.dart';
 import '../event.dart';
 
 abstract class BookRepositoryBase extends Repository implements SendEvent {
   Battery? _battery;
+
+  @override
+  final extenalStorage = ValueNotifier(true);
 
   @override
   late BookEvent bookEvent = BookEventMain(this);
@@ -119,13 +121,23 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
           // final ff = f.first;
           // Log.w('storage: ${await ff.list().toList()}', onlyDebug: false);
         }
-
         _waits
           ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
           ..add(Permission.manageExternalStorage.status.then((status) {
             if (status.isDenied) {
-              return Permission.manageExternalStorage.request().then((status) {
-                if (status.isDenied) appDirExt = null;
+              return OptionsNotifier.extenalStorage.then((request) {
+                return OptionsNotifier.setextenalStorage(false)
+                    .whenComplete(() {
+                  if (request) {
+                    return Permission.manageExternalStorage
+                        .request()
+                        .then((status) {
+                      if (status.isDenied) appDirExt = null;
+                    });
+                  } else {
+                    appDirExt = null;
+                  }
+                });
               });
             }
           }));
@@ -137,7 +149,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     _waits.add(getApplicationDocumentsDirectory().then((dir) {
       appDir = dir;
       Log.i('init ....', onlyDebug: false);
-      // hiveInit(join(appDir.path, 'shudu', 'hive'));
     }));
     _waits.add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
 

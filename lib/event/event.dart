@@ -9,13 +9,14 @@ import 'mixin/complex_mixin.dart';
 import 'mixin/database_mixin.dart';
 import 'mixin/event_messager_mixin.dart';
 import 'mixin/network_mixin.dart';
+import 'mixin/zhangdu_mixin.dart';
 
 export 'base/constants.dart';
 export 'base/repository.dart';
 
 // mixin: 数据库、网络任务
 class BookEventIsolate extends BookEventResolveMain
-    with DatabaseMixin, NetworkMixin, ComplexMixin {
+    with DatabaseMixin, NetworkMixin, ComplexMixin, ZhangduEventMixin {
   BookEventIsolate(
       this.sp, this.appPath, this.cachePath, this.useFfi, this.useSqflite3);
 

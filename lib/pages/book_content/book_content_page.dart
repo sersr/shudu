@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_import
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -7,6 +9,8 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/content_notifier.dart';
+import '../../provider/options_notifier.dart';
+import '../../provider/provider.dart';
 import '../../widgets/page_animation.dart';
 import '../../widgets/pan_slide.dart';
 import 'widgets/page_view.dart';
@@ -17,12 +21,12 @@ class BookContentPage extends StatefulWidget {
   const BookContentPage({Key? key}) : super(key: key);
 
   static Object? _lock;
-  static Future push(
-      BuildContext context, int newBookid, int cid, int page) async {
+  static Future push(BuildContext context, int newBookid, int cid, int page,
+      ApiType api) async {
     if (_lock != null) return;
     _lock = const Object();
     final bloc = context.read<ContentNotifier>();
-    bloc.touchBook(newBookid, cid, page);
+    bloc.touchBook(newBookid, cid, page, api: api);
     _lock = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
@@ -39,6 +43,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
+  late OptionsNotifier notifier;
   @override
   void initState() {
     super.initState();
@@ -50,6 +55,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     super.didChangeDependencies();
     bloc = context.read<ContentNotifier>();
     blocCache = context.read<BookCacheNotifier>();
+    notifier = context.read();
     notifyColor = bloc.config.selector((parent) => parent.value.bgcolor);
   }
 
@@ -67,7 +73,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
         if (!bloc.uiOverlayShow) await uiOverlay();
         // 状态栏彻底隐藏之后才改变颜色
         await release(const Duration(milliseconds: 300));
-        uiStyle(dark: false);
+        uiStyle(dark: true);
       });
     }
   }
@@ -163,7 +169,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await blocCache.load();
 
     EventQueue.runTaskOnQueue(runtimeType, () async {
-      uiStyle();
+      OptionsNotifier.autoSetStatus(context);
       await uiOverlay(hide: false);
     });
     bloc.addInitEventTask(() => null);

@@ -11,7 +11,7 @@ void main() async {
   db.watcher.sync = true;
   final table = db.bookCache;
   test('bookContent test', () async {
-    db.watchMainBookListDb().listen((event) {
+    db.watchMainList().listen((event) {
       print('1: ${event.length}');
     });
 

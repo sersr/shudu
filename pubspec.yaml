@@ -76,6 +76,8 @@ dependencies:
   args: ^2.3.0
   file: ^6.1.2
   memory_info: ^0.0.2
+  crypto: ^3.0.1
+  archive: ^3.1.6
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

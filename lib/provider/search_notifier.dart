@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-import '../data/search_data.dart';
+import '../data/biquge/search_data.dart';
+import '../data/zhangdu/zhangdu_search.dart';
 import '../event/event.dart';
 
 class SearchNotifier extends ChangeNotifier {
@@ -11,11 +12,15 @@ class SearchNotifier extends ChangeNotifier {
 
   late Box box;
   SearchList? list;
+  ZhangduSearchData? data;
   Future<void> load(String key) async {
     if (key.isEmpty) return;
     list = null;
     notifyListeners();
     list = await repository.bookEvent.customEvent.getSearchData(key);
+    data = await repository.bookEvent.zhangduEvent
+        .getZhangduSearchData(key, 1, 20);
+
     searchHistory
       ..remove(key)
       ..add(key);

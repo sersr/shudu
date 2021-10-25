@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../data/book_list_detail.dart';
+import '../../data/data.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
@@ -76,7 +76,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
           bgColor: isLight ? null : Colors.grey.shade900,
           splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
           height: 108,
-          onTap: () => BookInfoPage.push(context, l.bookId!),
+          onTap: () => BookInfoPage.push(context, l.bookId!, ApiType.biquge),
           child: ShudanListDetailItemWidget(l: l),
         );
   }

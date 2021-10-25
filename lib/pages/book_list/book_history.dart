@@ -66,7 +66,8 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
                           isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                       onTap: () {
                         if (item.bookId != null)
-                          BookInfoPage.push(context, item.bookId!);
+                          BookInfoPage.push(
+                              context, item.bookId!, ApiType.biquge);
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 6.0),

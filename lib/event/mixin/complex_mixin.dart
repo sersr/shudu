@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:lpinyin/lpinyin.dart';
-import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:useful_tools/common.dart';
 
 import '../../api/api.dart';
@@ -44,13 +43,13 @@ mixin ComplexMixin
   Future<BookInfoRoot> getInfo(int id) async {
     final _getInfoNet = getInfoNet(id);
 
-    final mainBook = await getBookCacheDb(id);
+    final bookInfo = await getBookCacheDb(id);
     final rawData = await _getInfoNet;
     final data = rawData.data;
 
     if (data != null) {
       BookCache? book;
-      mainBook.any((e) {
+      bookInfo.any((e) {
         final equal = e.bookId == id;
         if (equal) book = e;
         return equal;
@@ -97,28 +96,10 @@ mixin ComplexMixin
     return rawData;
   }
 
-  @override
-  Future<CacheItem> getCacheItem(int id) async {
-    // int? cacheItemCounts;
-    // = await getCacheContentsCidDb(id) ?? 0;
-
-    var queryList = await getIndexsDbCacheItemBookid(id);
-
-    if (queryList.isNotEmpty) {
-      final restr = queryList.last;
-      final itemCounts = restr.itemCounts;
-      final cacheItemCounts = restr.cacheItemCounts ?? 0;
-      if (itemCounts != null) {
-        return CacheItem(id, itemCounts, cacheItemCounts);
-      }
-    }
-    return CacheItem(id, 0, 0);
-  }
 
   @override
   Future<List<CacheItem>> getCacheItems() async {
     final list = <CacheItem>[];
-    // var allCacheItems = await getIndexsDbCacheItem();
     final stop = Stopwatch()..start();
     var queryList = await getIndexsDbCacheItem();
     var map =
@@ -126,14 +107,7 @@ mixin ComplexMixin
 
     var allBookids = await getAllBookId();
     for (var a in allBookids) {
-      // Log.w('count: $a', onlyDebug: false);
-
       final index = map[a];
-      // final item = await getCacheItem(bookid);
-      // var cacheItemCounts = await getCacheContentsCidDb(a.bookId!);
-      // final itemCounts = a.itemCounts ?? cacheItemCounts ?? 0;
-      // cacheItemCounts ??= itemCounts;
-      // final item = CacheItem(a.bookId!, itemCounts, cacheItemCounts);
       final itemCounts = index?.itemCounts;
       if (itemCounts != null) {
         final item = CacheItem(a, itemCounts, index?.cacheItemCounts ?? 0);
@@ -146,25 +120,6 @@ mixin ComplexMixin
     Log.w('use time: ${stop.elapsedMilliseconds} ms', onlyDebug: false);
     return list;
   }
-
-  // @override
-  // Future<Map<int, CacheItem>> getCacheItemAll() async {
-  //   var cacheListRaw = await getCacheContentsCidDb(id);
-
-  //   var queryList = (await getIndexsDbAll()).reversed.toList();
-  //   final _map = <int, CacheItem>{};
-
-  //   for (var index in queryList) {
-  //     final bookId = index.bookId;
-  //     final itemCounts = index.itemCounts;
-  //     final cacheItemCounts = await cacheListRaw.cacheItemCounts;
-  //     if (bookId != null && cacheItemCounts != null && itemCounts != null) {
-  //       _map.putIfAbsent(
-  //           bookId, () => CacheItem(bookId, itemCounts, cacheItemCounts));
-  //     }
-  //   }
-  //   return _map;
-  // }
 
   @override
   Future<RawContentLines> getContent(

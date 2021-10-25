@@ -6,7 +6,8 @@ import 'package:lpinyin/lpinyin.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../data/book_info.dart';
+import '../../data/data.dart';
+import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
@@ -17,12 +18,14 @@ import '../../widgets/text_builder.dart';
 import '../book_content/book_content_page.dart';
 
 class BookInfoPage extends StatefulWidget {
-  const BookInfoPage({Key? key, required this.id}) : super(key: key);
+  const BookInfoPage({Key? key, required this.id, required this.api})
+      : super(key: key);
   final int id;
+  final ApiType api;
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
-  static Future push(BuildContext context, int bookid) async {
+  static Future push(BuildContext context, int bookid, ApiType api) async {
     return pushRecoder(
       key: 'navigator.push',
       saveCount: 3,
@@ -35,7 +38,7 @@ class BookInfoPage extends StatefulWidget {
                   enabled: !pushNotifier.value,
                   child: Offstage(offstage: pushNotifier.value, child: child));
             },
-            child: RepaintBoundary(child: BookInfoPage(id: bookid)));
+            child: RepaintBoundary(child: BookInfoPage(id: bookid, api: api)));
       })),
     );
   }
@@ -64,7 +67,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   void complete() {
-    info.getData(widget.id);
+    info.getData(widget.id, widget.api);
     removeListener(complete);
   }
 
@@ -85,17 +88,50 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               final infoData = info.get(widget.id);
               if (infoData == null) {
                 return loadingIndicator();
-              } else if (infoData.data == null || infoData.data?.id == null) {
-                return reloadBotton(() => info.reload(widget.id));
+                // } else {
+                //   if ((infoData.data == null || infoData.data?.id == null) ||
+                //       widget.api == ApiType.zhangdu &&
+                //           (infoData == null || infoData.data?.id == null)) {
+                //     return reloadBotton(() => info.reload(widget.id, widget.api));
+                //   }
+              }
+              var children = <Widget>[];
+              int? bookId = 0;
+              int? firstChapterId = -1;
+              if (widget.api == ApiType.biquge) {
+                final _infoData = infoData as BookInfoRoot;
+                if ((_infoData.data == null || _infoData.data?.id == null)) {
+                  return reloadBotton(() => info.reload(widget.id, widget.api));
+                }
+                final infos = _infoData.data!;
+                bookId = infos.id;
+                firstChapterId = infos.firstChapterId;
+                children.add(header(infos.author, infos.bookStatus, infos.name,
+                    infos.bookVote?.scroe, infos.cName, infos.img, ts));
+
+                children.addAll(desc(
+                    infos.id,
+                    infos.author,
+                    infos.desc,
+                    infos.firstChapterId,
+                    infos.lastChapter,
+                    infos.lastTime,
+                    infos.sameUserBooks,
+                    ts));
+              } else if (widget.api == ApiType.zhangdu) {
+                final data = infoData as ZhangduDetailData?;
+
+                if (data == null || data.id == null) {
+                  return reloadBotton(() => info.reload(widget.id, widget.api));
+                }
+                bookId = data.id;
+                firstChapterId = info.firstCid;
+                children.add(header(data.author, data.bookStatus, data.name,
+                    data.score, data.chapterName, data.picture, ts));
+                children.addAll(desc(data.id, data.author, data.intro, null,
+                    data.chapterName, data.updatedTime, null, ts));
               }
 
-              var children = <Widget>[];
-              final infos = infoData.data!;
-
-              children.add(header(infos.author, infos.bookStatus, infos.name,
-                  infos.bookVote, infos.cName, infos.desc, infos.img, ts));
-
-              children.addAll(desc(infos, ts));
               return Stack(
                 children: [
                   Column(
@@ -115,23 +151,22 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                         child: AnimatedBuilder(
                           animation: cache,
                           builder: (context, _) {
-                            final bookid = infos.id!;
-
                             var show = false;
 
                             int? cid;
                             int? currentPage;
+                            if (widget.api == ApiType.biquge) {
+                              final list = cache.sortChildren;
 
-                            final list = cache.sortChildren;
-
-                            for (var l in list) {
-                              if (l.bookId == bookid) {
-                                if (l.isShow ?? false) {
-                                  show = true;
-                                  cid = l.chapterId;
-                                  currentPage = l.page;
+                              for (var l in list) {
+                                if (l.bookId == bookId) {
+                                  if (l.isShow ?? false) {
+                                    show = true;
+                                    cid = l.chapterId;
+                                    currentPage = l.page;
+                                  }
+                                  break;
                                 }
-                                break;
                               }
                             }
 
@@ -159,16 +194,21 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                       final _list = await cache.getList;
                                       int? _cid, _page;
                                       for (final bookCache in _list) {
-                                        if (bookCache.bookId == bookid) {
+                                        if (bookCache.bookId == bookId) {
                                           _cid = bookCache.chapterId;
                                           _page = bookCache.page;
                                           break;
                                         }
                                       }
-                                      _cid ??= cid ?? infos.firstChapterId!;
-                                      _page ??= currentPage ?? 1;
-                                      BookContentPage.push(
-                                          context, bookid, _cid, _page);
+                                      if (widget.api == ApiType.biquge) {
+                                        _cid ??= cid ?? firstChapterId!;
+                                        _page ??= currentPage ?? 1;
+                                      } else {
+                                        _cid = firstChapterId!;
+                                        _page = 1;
+                                      }
+                                      BookContentPage.push(context, bookId!,
+                                          _cid, _page, widget.api);
                                     },
                                     background: false,
                                   ),
@@ -177,7 +217,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                   child: btn1(
                                     background: false,
                                     onTap: () =>
-                                        cache.updateShow(bookid, !show),
+                                        cache.updateShow(bookId!, !show),
                                     child: Padding(
                                       padding: EdgeInsets.only(
                                           bottom: bottom > 0.0 &&
@@ -217,7 +257,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                     child: IndexsWidget(
                                       onTap: (_, id, cid) {
                                         BookContentPage.push(
-                                            context, id, cid, 1);
+                                            context, id, cid, 1, widget.api);
                                         showIndexs.value = false;
                                       },
                                     ),
@@ -263,7 +303,15 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   var hide = true;
-  Iterable<Widget> desc(BookInfo info, TextStyleConfig ts) sync* {
+  Iterable<Widget> desc(
+      int? bookid,
+      String? author,
+      String? desc,
+      int? firstChapterId,
+      String? lastChapter,
+      String? lastTime,
+      List<SameUserBook>? sameUserBooks,
+      TextStyleConfig ts) sync* {
     yield const SizedBox(height: 6);
     yield Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -286,7 +334,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      info.desc ?? '',
+                      desc ?? '',
                       style: ts.body3,
                       maxLines: hide ? 2 : null,
                     ),
@@ -314,8 +362,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       child: AnimatedBuilder(
         animation: cache,
         builder: (context, _) {
-          final bookid = info.id;
-
           int? cid;
           final list = cache.sortChildren;
 
@@ -329,7 +375,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
           return btn1(
             onTap: () {
-              final _cid = cid ?? info.firstChapterId;
+              final _cid = cid ?? firstChapterId;
 
               context.read<BookIndexNotifier>().loadIndexs(bookid, _cid);
               showIndexs.value = !showIndexs.value;
@@ -361,7 +407,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                info.lastTime ?? '',
+                                lastTime ?? '',
                                 softWrap: false,
                                 style: ts.body3,
                                 overflow: TextOverflow.ellipsis,
@@ -373,7 +419,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                       Container(
                         padding: const EdgeInsets.only(top: 6.0),
                         child: Text(
-                          info.lastChapter ?? '',
+                          lastChapter ?? '',
                           style: ts.body2,
                           overflow: TextOverflow.ellipsis,
                           softWrap: false,
@@ -396,33 +442,27 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
           ? const Color.fromRGBO(250, 250, 250, 1)
           : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-      child: Text('${info.author} 还写过'),
+      child: Text('$author 还写过'),
     );
 
     yield const SizedBox(height: 3);
 
-    if (info.sameUserBooks != null)
-      for (var l in info.sameUserBooks!)
+    if (sameUserBooks != null)
+      for (var l in sameUserBooks)
         yield ListItem(
             height: 108,
             bgColor: isLight ? null : Colors.grey.shade900,
             splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-            child: _BookInfoSameItemWidget(l: l, author: info.author),
-            onTap: () =>
-                l.id == null ? null : BookInfoPage.push(context, l.id!));
+            child: _BookInfoSameItemWidget(l: l, author: author),
+            onTap: () => l.id == null
+                ? null
+                : BookInfoPage.push(context, l.id!, widget.api));
   }
 
   bool get isLight => Theme.of(context).brightness == Brightness.light;
 
-  Widget header(
-      String? author,
-      String? bookStatus,
-      String? name,
-      BookVote? bookvote,
-      String? cName,
-      String? desc,
-      String? img,
-      TextStyleConfig ts) {
+  Widget header(String? author, String? bookStatus, String? name, double? scroe,
+      String? cName, String? img, TextStyleConfig ts) {
     return Container(
       padding: const EdgeInsets.only(bottom: 5.0),
       color: isLight
@@ -475,7 +515,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                 _wrapText('状态：$bookStatus'),
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 2.0),
-                                  child: _wrapText('评分：${bookvote?.scroe}分'),
+                                  child: _wrapText('评分：$scroe分'),
                                 ),
                               ],
                             ),

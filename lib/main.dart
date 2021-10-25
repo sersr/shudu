@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -23,11 +25,14 @@ void main() async {
     /// test: 'http://192.168.1.127:8080/shudu/'
     await hot.initState();
   }
+
   /// 为了获得更好的体验，在开始第一帧渲染之前先获得[ThemeMode]
   final appDir = await getApplicationDocumentsDirectory();
   hiveInit(join(appDir.path, 'shudu', 'hive'));
   final mode = await OptionsNotifier.getThemeMode();
   runApp(MulProvider(hotFix: hot, mode: mode));
   uiOverlay(hide: false);
-  uiStyle();
+
+  final dark = OptionsNotifier.isDarkMode(mode);
+  uiStyle(dark: dark);
 }

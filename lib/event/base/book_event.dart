@@ -4,22 +4,27 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:nop_annotations/nop_annotations.dart';
-
 import 'package:nop_db/nop_db.dart';
+import '../../data/zhangdu/zhangdu_chapter.dart';
+import '../../data/zhangdu/zhangdu_detail.dart';
 
 import '../../data/data.dart';
+import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
+import 'zhangdu_event.dart';
 
 part 'book_event.g.dart';
 
 @NopIsolateEvent()
-abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
+abstract class BookEvent
+    implements CustomEvent, DatabaseEvent, ComplexEvent, ZhangduEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
   CustomEvent get customEvent => this;
   DatabaseEvent get databaseEvent => this;
   ComplexEvent get complexEvent => this;
+  ZhangduEvent get zhangduEvent => this;
 }
 
 @NopIsolateEventItem(separate: true)
@@ -27,14 +32,12 @@ abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
 
 @NopIsolateEventItem()
 abstract class BookContentEvent {
-  FutureOr<int?> getCacheContentsCidDb(int bookid);
-  Stream<List<BookContentDb>?> watchCacheContentsCidDb(int bookid);
+  Stream<List<BookContentDb>?> watchBookContentCid(int bookid);
 
   FutureOr<int?> deleteCache(int bookId);
 }
 
 abstract class ComplexEvent {
-  FutureOr<CacheItem?> getCacheItem(int id);
   FutureOr<List<CacheItem>?> getCacheItems();
 
   @NopIsolateMethod(isDynamic: true)
@@ -42,26 +45,19 @@ abstract class ComplexEvent {
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
   FutureOr<int?> updateBookStatus(int id);
 
-  // FutureOr<Map<int, CacheItem>?> getCacheItemAll();
   FutureOr<BookInfoRoot?> getInfo(int id);
 }
 
 @NopIsolateEventItem()
 abstract class BookCacheEvent {
-  FutureOr<List<BookCache>?> getMainBookListDb();
-
-  FutureOr<List<BookCache>?> getBookCacheDb(int bookid);
+  FutureOr<List<BookCache>?> getMainList();
+  Stream<List<BookCache>?> watchMainList();
 
   FutureOr<int?> updateBook(int id, BookCache book);
-
   FutureOr<int?> insertBook(BookCache bookCache);
-
   FutureOr<int?> deleteBook(int id);
 
-  FutureOr<Set<int>?> getAllBookId();
-
-  Stream<List<BookCache>?> watchBookCacheCid(int id);
-  Stream<List<BookCache>?> watchMainBookListDb();
+  Stream<List<BookCache>?> watchCurrentCid(int id);
 }
 
 abstract class CustomEvent {

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/common.dart';
 import 'package:useful_tools/src/change_notifier/change_notifier_select.dart';
 import 'package:useful_tools/widgets.dart';
 
@@ -48,6 +50,13 @@ class _SettingState extends State<Setting> {
     yield line;
     final mode = optionsNotifier
         .selector((parent) => parent.options.themeMode ?? ThemeMode.system);
+    void _onChanged(ThemeMode? updateValue) {
+      optionsNotifier.options = ConfigOptions(themeMode: updateValue);
+      final isDark = OptionsNotifier.isDarkMode(updateValue);
+      uiStyle(dark: isDark);
+      Navigator.maybePop(context);
+    }
+
     yield titleMenu(
         title: '主题配色',
         select: (_, opt) => opt.options.themeMode ?? ThemeMode.system,
@@ -74,11 +83,7 @@ class _SettingState extends State<Setting> {
                     title: Text('亮色'),
                     value: ThemeMode.light,
                     groupValue: mode.value,
-                    onChanged: (ThemeMode? updateValue) {
-                      optionsNotifier.options =
-                          ConfigOptions(themeMode: updateValue);
-                      Navigator.maybePop(context);
-                    });
+                    onChanged: _onChanged);
               }),
           AnimatedBuilder(
               animation: mode,
@@ -87,11 +92,7 @@ class _SettingState extends State<Setting> {
                     title: Text('暗色'),
                     value: ThemeMode.dark,
                     groupValue: mode.value,
-                    onChanged: (ThemeMode? updateValue) {
-                      optionsNotifier.options =
-                          ConfigOptions(themeMode: updateValue);
-                      Navigator.maybePop(context);
-                    });
+                    onChanged: _onChanged);
               }),
           AnimatedBuilder(
               animation: mode,
@@ -100,11 +101,7 @@ class _SettingState extends State<Setting> {
                     title: Text('跟随系统'),
                     value: ThemeMode.system,
                     groupValue: mode.value,
-                    onChanged: (ThemeMode? updateValue) {
-                      optionsNotifier.options =
-                          ConfigOptions(themeMode: updateValue);
-                      Navigator.maybePop(context);
-                    });
+                    onChanged: _onChanged);
               })
         ]);
 
@@ -201,7 +198,43 @@ class _SettingState extends State<Setting> {
               }),
         ]);
     yield line;
+    yield ColoredBox(
+      color: Theme.of(context).brightness == Brightness.light
+          ? Colors.white
+          : Colors.grey.shade900,
+      child: ListTile(
+        title: Text('外部存储权限请求',
+            style: TextStyle(fontSize: 15, color: Colors.grey.shade700)),
+        trailing: Icon(Icons.keyboard_arrow_right_outlined),
+        onTap: () {
+          Permission.manageExternalStorage.status.then((status) {
+            if (status.isDenied) {
+              Log.w('status denied', onlyDebug: false);
+              Permission.manageExternalStorage.request().then((status) {
+                if (status.isDenied) {
+                  Log.w('request denied', onlyDebug: false);
+                } else if (status.isGranted && mounted) {
+                  ScaffoldMessenger.maybeOf(context)
+                      ?.showSnackBar(SnackBar(content: Text('请求成功！')));
+                }
+              });
+              return;
+            }
+            if (mounted) {
+              _snackBarController ??= ScaffoldMessenger.maybeOf(context)
+                  ?.showSnackBar(SnackBar(content: Text('权限已请求成功！')))
+                ?..closed.whenComplete(() => _snackBarController = null);
+            }
+          });
+        },
+      ),
+    );
+
+    yield line;
   }
+
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
+      _snackBarController;
 
   ColoredBox titleMenu<T>(
       {required String title,

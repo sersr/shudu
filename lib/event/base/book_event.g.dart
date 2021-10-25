@@ -16,12 +16,25 @@ enum BookEventMessage {
   getCategLists,
   getShudanDetail,
   getCategoryData,
-  getCacheItem,
   getCacheItems,
   getContent,
   getIndexs,
   updateBookStatus,
-  getInfo
+  getInfo,
+  getZhangduContent,
+  deleteZhangduContentCache,
+  watchZhangduContentCid,
+  getZhangduSearchData,
+  updateZhangduMainStatus,
+  getZhangduMainList,
+  watchZhangduMainList,
+  updateZhangduBook,
+  insertZhangduBook,
+  deleteZhangduBook,
+  watchZhangduCurrentCid,
+  getZhangduDetail,
+  getZhangduIndexDb,
+  getZhangduIndex
 }
 enum CustomEventMessage {
   getSearchData,
@@ -35,27 +48,36 @@ enum CustomEventMessage {
   getCategoryData
 }
 enum BookCacheEventMessage {
-  getMainBookListDb,
-  getBookCacheDb,
+  getMainList,
+  watchMainList,
   updateBook,
   insertBook,
   deleteBook,
-  getAllBookId,
-  watchBookCacheCid,
-  watchMainBookListDb
+  watchCurrentCid
 }
-enum BookContentEventMessage {
-  getCacheContentsCidDb,
-  watchCacheContentsCidDb,
-  deleteCache
-}
+enum BookContentEventMessage { watchBookContentCid, deleteCache }
 enum ComplexEventMessage {
-  getCacheItem,
   getCacheItems,
   getContent,
   getIndexs,
   updateBookStatus,
   getInfo
+}
+enum ZhangduEventMessage {
+  getZhangduContent,
+  deleteZhangduContentCache,
+  watchZhangduContentCid,
+  getZhangduSearchData,
+  updateZhangduMainStatus,
+  getZhangduMainList,
+  watchZhangduMainList,
+  updateZhangduBook,
+  insertZhangduBook,
+  deleteZhangduBook,
+  watchZhangduCurrentCid,
+  getZhangduDetail,
+  getZhangduIndexDb,
+  getZhangduIndex
 }
 
 abstract class BookEventResolveMain extends BookEvent
@@ -65,7 +87,8 @@ abstract class BookEventResolveMain extends BookEvent
         DatabaseEventResolve,
         BookCacheEventResolve,
         BookContentEventResolve,
-        ComplexEventResolve {
+        ComplexEventResolve,
+        ZhangduEventResolve {
   @override
   bool resolve(resolveMessage) {
     if (remove(resolveMessage)) return true;
@@ -80,7 +103,8 @@ abstract class BookEventMessagerMain extends BookEvent
         DatabaseEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
-        ComplexEventMessager {}
+        ComplexEventMessager,
+        ZhangduEventMessager {}
 
 /// implements [CustomEvent]
 abstract class CustomEventDynamic {
@@ -182,14 +206,12 @@ mixin CustomEventMessager {
 mixin BookCacheEventResolve on Resolve, BookCacheEvent {
   late final _bookCacheEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
-    _getMainBookListDb_0,
-    _getBookCacheDb_1,
+    _getMainList_0,
+    _watchMainList_1,
     _updateBook_2,
     _insertBook_3,
     _deleteBook_4,
-    _getAllBookId_5,
-    _watchBookCacheCid_6,
-    _watchMainBookListDb_7
+    _watchCurrentCid_5
   ]);
 
   @override
@@ -211,28 +233,25 @@ mixin BookCacheEventResolve on Resolve, BookCacheEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<BookCache>?> _getMainBookListDb_0(args) => getMainBookListDb();
-  FutureOr<List<BookCache>?> _getBookCacheDb_1(args) => getBookCacheDb(args);
+  FutureOr<List<BookCache>?> _getMainList_0(args) => getMainList();
+  Stream<List<BookCache>?> _watchMainList_1(args) => watchMainList();
   FutureOr<int?> _updateBook_2(args) => updateBook(args[0], args[1]);
   FutureOr<int?> _insertBook_3(args) => insertBook(args);
   FutureOr<int?> _deleteBook_4(args) => deleteBook(args);
-  FutureOr<Set<int>?> _getAllBookId_5(args) => getAllBookId();
-  Stream<List<BookCache>?> _watchBookCacheCid_6(args) =>
-      watchBookCacheCid(args);
-  Stream<List<BookCache>?> _watchMainBookListDb_7(args) =>
-      watchMainBookListDb();
+  Stream<List<BookCache>?> _watchCurrentCid_5(args) => watchCurrentCid(args);
 }
 
 /// implements [BookCacheEvent]
 mixin BookCacheEventMessager {
   SendEvent get sendEvent;
 
-  FutureOr<List<BookCache>?> getMainBookListDb() async {
-    return sendEvent.sendMessage(BookCacheEventMessage.getMainBookListDb, null);
+  FutureOr<List<BookCache>?> getMainList() async {
+    return sendEvent.sendMessage(BookCacheEventMessage.getMainList, null);
   }
 
-  FutureOr<List<BookCache>?> getBookCacheDb(int bookid) async {
-    return sendEvent.sendMessage(BookCacheEventMessage.getBookCacheDb, bookid);
+  Stream<List<BookCache>?> watchMainList() {
+    return sendEvent.sendMessageStream(
+        BookCacheEventMessage.watchMainList, null);
   }
 
   FutureOr<int?> updateBook(int id, BookCache book) async {
@@ -247,28 +266,16 @@ mixin BookCacheEventMessager {
     return sendEvent.sendMessage(BookCacheEventMessage.deleteBook, id);
   }
 
-  FutureOr<Set<int>?> getAllBookId() async {
-    return sendEvent.sendMessage(BookCacheEventMessage.getAllBookId, null);
-  }
-
-  Stream<List<BookCache>?> watchBookCacheCid(int id) {
+  Stream<List<BookCache>?> watchCurrentCid(int id) {
     return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchBookCacheCid, id);
-  }
-
-  Stream<List<BookCache>?> watchMainBookListDb() {
-    return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchMainBookListDb, null);
+        BookCacheEventMessage.watchCurrentCid, id);
   }
 }
 
 mixin BookContentEventResolve on Resolve, BookContentEvent {
   late final _bookContentEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable([
-    _getCacheContentsCidDb_0,
-    _watchCacheContentsCidDb_1,
-    _deleteCache_2
-  ]);
+      List<DynamicCallback>.unmodifiable(
+          [_watchBookContentCid_0, _deleteCache_1]);
 
   @override
   bool resolve(resolveMessage) {
@@ -289,24 +296,18 @@ mixin BookContentEventResolve on Resolve, BookContentEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<int?> _getCacheContentsCidDb_0(args) => getCacheContentsCidDb(args);
-  Stream<List<BookContentDb>?> _watchCacheContentsCidDb_1(args) =>
-      watchCacheContentsCidDb(args);
-  FutureOr<int?> _deleteCache_2(args) => deleteCache(args);
+  Stream<List<BookContentDb>?> _watchBookContentCid_0(args) =>
+      watchBookContentCid(args);
+  FutureOr<int?> _deleteCache_1(args) => deleteCache(args);
 }
 
 /// implements [BookContentEvent]
 mixin BookContentEventMessager {
   SendEvent get sendEvent;
 
-  FutureOr<int?> getCacheContentsCidDb(int bookid) async {
-    return sendEvent.sendMessage(
-        BookContentEventMessage.getCacheContentsCidDb, bookid);
-  }
-
-  Stream<List<BookContentDb>?> watchCacheContentsCidDb(int bookid) {
+  Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
     return sendEvent.sendMessageStream(
-        BookContentEventMessage.watchCacheContentsCidDb, bookid);
+        BookContentEventMessage.watchBookContentCid, bookid);
   }
 
   FutureOr<int?> deleteCache(int bookId) async {
@@ -328,12 +329,11 @@ mixin ComplexEventResolve
     on Resolve, ComplexEvent
     implements ComplexEventDynamic {
   late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
-    _getCacheItem_0,
-    _getCacheItems_1,
-    _getContent_2,
-    _getIndexs_3,
-    _updateBookStatus_4,
-    _getInfo_5
+    _getCacheItems_0,
+    _getContent_1,
+    _getIndexs_2,
+    _updateBookStatus_3,
+    _getInfo_4
   ]);
 
   @override
@@ -355,21 +355,16 @@ mixin ComplexEventResolve
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<CacheItem?> _getCacheItem_0(args) => getCacheItem(args);
-  FutureOr<List<CacheItem>?> _getCacheItems_1(args) => getCacheItems();
-  dynamic _getContent_2(args) => getContentDynamic(args[0], args[1], args[2]);
-  FutureOr<NetBookIndex?> _getIndexs_3(args) => getIndexs(args[0], args[1]);
-  FutureOr<int?> _updateBookStatus_4(args) => updateBookStatus(args);
-  FutureOr<BookInfoRoot?> _getInfo_5(args) => getInfo(args);
+  FutureOr<List<CacheItem>?> _getCacheItems_0(args) => getCacheItems();
+  dynamic _getContent_1(args) => getContentDynamic(args[0], args[1], args[2]);
+  FutureOr<NetBookIndex?> _getIndexs_2(args) => getIndexs(args[0], args[1]);
+  FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
+  FutureOr<BookInfoRoot?> _getInfo_4(args) => getInfo(args);
 }
 
 /// implements [ComplexEvent]
 mixin ComplexEventMessager {
   SendEvent get sendEvent;
-
-  FutureOr<CacheItem?> getCacheItem(int id) async {
-    return sendEvent.sendMessage(ComplexEventMessage.getCacheItem, id);
-  }
 
   FutureOr<List<CacheItem>?> getCacheItems() async {
     return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null);
@@ -391,5 +386,141 @@ mixin ComplexEventMessager {
 
   FutureOr<BookInfoRoot?> getInfo(int id) async {
     return sendEvent.sendMessage(ComplexEventMessage.getInfo, id);
+  }
+}
+
+mixin ZhangduEventResolve on Resolve, ZhangduEvent {
+  late final _zhangduEventResolveFuncList = List<DynamicCallback>.unmodifiable([
+    _getZhangduContent_0,
+    _deleteZhangduContentCache_1,
+    _watchZhangduContentCid_2,
+    _getZhangduSearchData_3,
+    _updateZhangduMainStatus_4,
+    _getZhangduMainList_5,
+    _watchZhangduMainList_6,
+    _updateZhangduBook_7,
+    _insertZhangduBook_8,
+    _deleteZhangduBook_9,
+    _watchZhangduCurrentCid_10,
+    _getZhangduDetail_11,
+    _getZhangduIndexDb_12,
+    _getZhangduIndex_13
+  ]);
+
+  @override
+  bool resolve(resolveMessage) {
+    if (resolveMessage is IsolateSendMessage) {
+      final type = resolveMessage.type;
+      if (type is ZhangduEventMessage) {
+        dynamic result;
+        try {
+          result = _zhangduEventResolveFuncList
+              .elementAt(type.index)(resolveMessage.args);
+          receipt(result, resolveMessage);
+        } catch (e) {
+          receipt(result, resolveMessage, e);
+        }
+        return true;
+      }
+    }
+    return super.resolve(resolveMessage);
+  }
+
+  FutureOr<List<String>?> _getZhangduContent_0(args) =>
+      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
+  FutureOr<int?> _deleteZhangduContentCache_1(args) =>
+      deleteZhangduContentCache(args);
+  Stream<List<int>?> _watchZhangduContentCid_2(args) =>
+      watchZhangduContentCid(args);
+  FutureOr<ZhangduSearchData?> _getZhangduSearchData_3(args) =>
+      getZhangduSearchData(args[0], args[1], args[2]);
+  FutureOr<int?> _updateZhangduMainStatus_4(args) =>
+      updateZhangduMainStatus(args);
+  FutureOr<List<ZhangduCache>?> _getZhangduMainList_5(args) =>
+      getZhangduMainList();
+  Stream<List<ZhangduCache>?> _watchZhangduMainList_6(args) =>
+      watchZhangduMainList();
+  FutureOr<int?> _updateZhangduBook_7(args) =>
+      updateZhangduBook(args[0], args[1]);
+  FutureOr<int?> _insertZhangduBook_8(args) => insertZhangduBook(args);
+  FutureOr<int?> _deleteZhangduBook_9(args) => deleteZhangduBook(args);
+  Stream<List<ZhangduCache>?> _watchZhangduCurrentCid_10(args) =>
+      watchZhangduCurrentCid(args);
+  FutureOr<ZhangduDetailData?> _getZhangduDetail_11(args) =>
+      getZhangduDetail(args);
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_12(args) =>
+      getZhangduIndexDb(args);
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_13(args) =>
+      getZhangduIndex(args);
+}
+
+/// implements [ZhangduEvent]
+mixin ZhangduEventMessager {
+  SendEvent get sendEvent;
+
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduContent,
+        [bookId, contentId, contentUrl, name, sort, update]);
+  }
+
+  FutureOr<int?> deleteZhangduContentCache(int bookId) async {
+    return sendEvent.sendMessage(
+        ZhangduEventMessage.deleteZhangduContentCache, bookId);
+  }
+
+  Stream<List<int>?> watchZhangduContentCid(int bookId) {
+    return sendEvent.sendMessageStream(
+        ZhangduEventMessage.watchZhangduContentCid, bookId);
+  }
+
+  FutureOr<ZhangduSearchData?> getZhangduSearchData(
+      String query, int pageIndex, int pageSize) async {
+    return sendEvent.sendMessage(
+        ZhangduEventMessage.getZhangduSearchData, [query, pageIndex, pageSize]);
+  }
+
+  FutureOr<int?> updateZhangduMainStatus(int bookId) async {
+    return sendEvent.sendMessage(
+        ZhangduEventMessage.updateZhangduMainStatus, bookId);
+  }
+
+  FutureOr<List<ZhangduCache>?> getZhangduMainList() async {
+    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduMainList, null);
+  }
+
+  Stream<List<ZhangduCache>?> watchZhangduMainList() {
+    return sendEvent.sendMessageStream(
+        ZhangduEventMessage.watchZhangduMainList, null);
+  }
+
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) async {
+    return sendEvent
+        .sendMessage(ZhangduEventMessage.updateZhangduBook, [bookId, book]);
+  }
+
+  FutureOr<int?> insertZhangduBook(ZhangduCache book) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.insertZhangduBook, book);
+  }
+
+  FutureOr<int?> deleteZhangduBook(int bookId) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.deleteZhangduBook, bookId);
+  }
+
+  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
+    return sendEvent.sendMessageStream(
+        ZhangduEventMessage.watchZhangduCurrentCid, bookId);
+  }
+
+  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduDetail, bookId);
+  }
+
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduIndexDb, bookId);
+  }
+
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId) async {
+    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduIndex, bookId);
   }
 }

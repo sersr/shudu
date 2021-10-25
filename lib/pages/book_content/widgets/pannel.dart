@@ -199,7 +199,7 @@ class CnamePan extends StatelessWidget {
               if (data == null) {
                 return loadingIndicator();
               } else if (data.isValid != true) {
-                return reloadBotton(indexBloc.loadIndexs);
+                return reloadBotton(indexBloc.reloadIndexs);
               }
               final indexs = data.allChapters!;
 
@@ -445,7 +445,8 @@ class _BottomEndState extends State<BottomEnd> {
   void onhideEnd() => showSettings.value = SettingView.none;
   void onshowEnd() {
     bloc.reloadBrightness();
-    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, true);
+    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid,
+        api: bloc.api, restore: true);
   }
 
   @override
@@ -485,7 +486,8 @@ class _BottomEndState extends State<BottomEnd> {
                   bloc.showCname.value = false;
                   indexBloc
                     ..bookUpDateTime.remove(bloc.bookid)
-                    ..loadIndexs(bloc.bookid, bloc.tData.cid, true);
+                    ..loadIndexs(bloc.bookid, bloc.tData.cid,
+                        api: bloc.api, restore: true);
                   showSettings.value = SettingView.indexs;
                 } else {
                   getController().trigger();
@@ -630,9 +632,10 @@ class _TopPannelState extends State<TopPannel> {
                                   ..out();
                                 setOrientation(true);
                                 uiOverlay(hide: false);
-                                uiStyle();
+                                OptionsNotifier.autoSetStatus(context);
                                 final cache = context.read<BookCacheNotifier>();
-                                BookInfoPage.push(context, bookid)
+                                BookInfoPage.push(
+                                        context, bookid, contentNtf.api)
                                     .then((_) async {
                                   final list = await cache.getList;
                                   for (final bookCache in list) {
@@ -650,7 +653,7 @@ class _TopPannelState extends State<TopPannel> {
                                   uiOverlay(
                                       hide: !contentNtf
                                           .config.value.orientation!);
-                                  uiStyle(dark: false);
+                                  uiStyle(dark: true);
                                 });
                               },
                               text: '详情页',
@@ -733,6 +736,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void onChangev(HSVColor c) {
     bgColor.value = c;
   }
+
   //TODO: 添加配色保存功能
   Widget settings() {
     if (_setting != null) return _setting!;

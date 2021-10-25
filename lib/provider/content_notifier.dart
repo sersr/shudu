@@ -12,19 +12,26 @@ import 'package:useful_tools/useful_tools.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../api/api.dart';
+import '../data/zhangdu/zhangdu_chapter.dart';
 import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content/widgets/page_view_controller.dart';
+import 'book_index_notifier.dart';
 import 'constansts.dart';
 import 'text_data.dart';
 
 enum Status { ignore, error, done }
 
 class ContentNotifier extends ChangeNotifier {
-  ContentNotifier({required this.repository});
+  ContentNotifier({required this.repository, required this.indexNotifier});
 
   final Repository repository;
+  final BookIndexNotifier indexNotifier;
   int bookid = -1;
+  ApiType api = ApiType.biquge;
+  Map<int?, ZhangduChapterData> indexData = {};
+  List<ZhangduChapterData> rawIndexData = [];
+
   int currentPage = 1;
   int _innerIndex = 0;
   //状态栏显隐状态
@@ -294,7 +301,7 @@ extension DataLoading on ContentNotifier {
 
   TextData? _getTextData(int? key) {
     final data = _caches[key];
-    assert(data == null || data.hasContent && data.contentIsNotEmpty);
+    assert(data == null || data.contentIsNotEmpty);
     return data;
   }
 
@@ -318,37 +325,87 @@ extension DataLoading on ContentNotifier {
 
   Future<void> _load(int _bookid, int contentid, bool update) async {
     if (_bookid == -1 || contentid == -1) return;
-
-    final lines =
-        await repository.bookEvent.getContent(_bookid, contentid, update);
-    if (_bookid != bookid) return;
-
-    if (lines != null && lines.contentIsNotEmpty) {
-      final _key = key;
-      final pages = await _asyncLayout(lines.pages, lines.cname!);
-      // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
-      if (_key != key || _bookid != bookid) {
-        for (final p in pages) {
-          // 释放picture资源
-          p.dispose();
-        }
-        assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
-        return;
+    if (api == ApiType.zhangdu) {
+      final current = indexData[contentid];
+      if (current == null) return;
+      Log.i('${current.contentUrl} | ${current.name}');
+      final _index = rawIndexData.lastIndexOf(current);
+      var pid = -1;
+      if (_index > 0) {
+        final p = rawIndexData.elementAt(_index - 1);
+        if (p.bookId != null) pid = p.bookId!;
       }
-      if (pages.isEmpty) return;
-      final _cnpid = TextData(
-        content: pages,
-        nid: lines.nid,
-        pid: lines.pid,
-        cid: lines.cid,
-        hasContent: lines.hasContent,
-        cname: lines.cname,
-        // rawContent: lines.pages,
-      );
-      final old = _caches.remove(_cnpid.cid);
-      old?.dispose();
-      _caches[_cnpid.cid!] = _cnpid.clone();
-      _cnpid.dispose();
+      var nid = -1;
+      if (_index < rawIndexData.length - 1) {
+        final n = rawIndexData.elementAt(_index + 1);
+        if (n.bookId != null) nid = n.bookId!;
+      }
+      final url = current.contentUrl;
+      final name = current.name;
+      final sort = current.sort;
+      if (url != null && name != null && sort != null) {
+        final lines = await repository.bookEvent.zhangduEvent
+            .getZhangduContent(_bookid, contentid, url, name, sort, update);
+        if (_bookid != bookid) return;
+        if (lines != null) {
+          final _key = key;
+          final pages = await _asyncLayout(lines, name);
+          // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
+          if (_key != key || _bookid != bookid) {
+            for (final p in pages) {
+              // 释放picture资源
+              p.dispose();
+            }
+            assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
+            return;
+          }
+          if (pages.isEmpty) return;
+          final _cnpid = TextData(
+            cid: contentid,
+            nid: nid,
+            pid: pid,
+            content: pages,
+            hasContent: true,
+            cname: name,
+          );
+          final old = _caches.remove(_cnpid.cid);
+          old?.dispose();
+          _caches[_cnpid.cid!] = _cnpid.clone();
+          _cnpid.dispose();
+        }
+      }
+    } else {
+      final lines =
+          await repository.bookEvent.getContent(_bookid, contentid, update);
+      if (_bookid != bookid) return;
+
+      if (lines != null && lines.contentIsNotEmpty) {
+        final _key = key;
+        final pages = await _asyncLayout(lines.pages, lines.cname!);
+        // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
+        if (_key != key || _bookid != bookid) {
+          for (final p in pages) {
+            // 释放picture资源
+            p.dispose();
+          }
+          assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
+          return;
+        }
+        if (pages.isEmpty) return;
+        final _cnpid = TextData(
+          content: pages,
+          nid: lines.nid,
+          pid: lines.pid,
+          cid: lines.cid,
+          hasContent: lines.hasContent,
+          cname: lines.cname,
+          // rawContent: lines.pages,
+        );
+        final old = _caches.remove(_cnpid.cid);
+        old?.dispose();
+        _caches[_cnpid.cid!] = _cnpid.clone();
+        _cnpid.dispose();
+      }
     }
   }
 }
@@ -402,6 +459,16 @@ extension Tasks on ContentNotifier {
   Future<void> _loadResolve() async {
     final updateCid = tData.cid;
     if (updateCid == null || initQueue.actived) return;
+    if (api == ApiType.zhangdu) {
+      if (_reloadIds.contains(updateCid)) return;
+      assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
+
+      _reloadIds.add(updateCid);
+
+      Future.delayed(
+          const Duration(seconds: 10), () => _reloadIds.remove(updateCid));
+      return;
+    }
     if (tData.nid == -1 || !tData.hasContent || debugTest) {
       if (tData.contentIsEmpty) return;
 
@@ -914,35 +981,56 @@ extension Event on ContentNotifier {
   }
 
   /// 进入阅读页面前，必须调用的方法
-  void touchBook(int newBookid, int cid, int page) async {
+  Future<void> touchBook(int newBookid, int cid, int page,
+      {ApiType api = ApiType.biquge}) async {
     if (!inBook) resetController();
 
     if (!config.value.orientation!) {
       uiOverlay();
-      uiStyle(dark: false);
+      uiStyle(dark: true);
     }
     await setOrientation(config.value.orientation!);
 
     inbook();
-    newBookOrCid(newBookid, cid, page);
+    newBookOrCid(newBookid, cid, page, api: api);
   }
 
-  bool _getStateOrSetBook(int newBookid, int cid, int page,
-      {bool only = false}) {
-    if (tData.cid != cid || bookid != newBookid) {
-      if (!only) {
-        assert(Log.i('new: $newBookid $cid') &&
-            EventQueue.currentTask?.isCurrentQueue(initQueue) == null);
-        _notify();
-        notifyState(notEmptyOrIgnore: true, loading: false);
-        _tData.dispose();
-        _tData = TextData(cid: cid);
-        currentPage = page;
-        bookid = newBookid;
+  bool _shouldUpdate(int newBookid, int cid, int page, ApiType api) {
+    return tData.cid != cid || bookid != newBookid || this.api != api;
+  }
+
+  Future<void> _getStateOrSetBook(int newBookid, int cid, int page,
+      {ApiType api = ApiType.biquge}) async {
+    if (_shouldUpdate(newBookid, cid, page, api)) {
+      // assert(Log.i('new: $newBookid $cid') &&
+      //     EventQueue.currentTask?.isCurrentQueue(initQueue) == null);
+      _notify();
+      notifyState(notEmptyOrIgnore: true, loading: false);
+
+      _tData.dispose();
+      _tData = TextData(cid: cid, api: api);
+      this.api = api;
+      currentPage = page;
+      bookid = newBookid;
+      indexData.clear();
+      if (api == ApiType.zhangdu) {
+        rawIndexData =
+            await repository.bookEvent.zhangduEvent.getZhangduIndexDb(bookid) ??
+                [];
+        if (rawIndexData.isEmpty)
+          rawIndexData =
+              await repository.bookEvent.zhangduEvent.getZhangduIndex(bookid) ??
+                  [];
+        final d =
+            rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
+        indexData.clear();
+        indexData.addAll(d);
+        // if (cid == -1000 && rawIndexData.isNotEmpty) {
+        //   cid = rawIndexData.first.id!;
+        //   Log.i('.....$cid');
+        // }
       }
-      return true;
     }
-    return false;
   }
 
   Future<T?> addInitEventTask<T>(EventCallback<T> callback, {Object? taskKey}) {
@@ -968,7 +1056,7 @@ extension Event on ContentNotifier {
   Future<void> startFirstEvent({
     bool clear = true,
     bool only = true,
-    void Function()? onStart,
+    FutureOr<void> Function()? onStart,
     void Function()? onDone,
   }) {
     didChangeKey();
@@ -977,7 +1065,7 @@ extension Event on ContentNotifier {
       autoRun.stopSave();
       if (clear) reset();
 
-      onStart?.call();
+      await onStart?.call();
       final _key = key;
 
       final _bookid = bookid;
@@ -1047,7 +1135,8 @@ extension Event on ContentNotifier {
     }
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page) async {
+  Future<void> newBookOrCid(int newBookid, int cid, int page,
+      {ApiType api = ApiType.biquge}) async {
     if (!inBook) return;
 
     if (cid == -1) return;
@@ -1056,7 +1145,9 @@ extension Event on ContentNotifier {
       footer.value = '';
       header.value = '';
     }
-    final _reset = _getStateOrSetBook(newBookid, cid, page, only: true);
+    Log.i('api: $api');
+    final _reset = _shouldUpdate(newBookid, cid, page, api);
+    // assert(_reset || _tData.contentIsNotEmpty);
     if (_reset) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
@@ -1064,7 +1155,7 @@ extension Event on ContentNotifier {
       await startFirstEvent(
           only: false,
           clear: clear,
-          onStart: () => _getStateOrSetBook(newBookid, cid, page),
+          onStart: () => _getStateOrSetBook(newBookid, cid, page, api: api),
           onDone: resetController);
 
       _t.cancel();

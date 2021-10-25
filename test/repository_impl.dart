@@ -8,11 +8,13 @@ import 'package:flutter/foundation.dart';
 import 'package:memory_info_platform_interface/model/memory.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+// ignore: unused_import
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
+import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
 import 'package:useful_tools/common.dart';
-// ignore: unused_import
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class RepositoryImplTest extends Repository with SendEventPortMixin {
   @override
@@ -131,4 +133,77 @@ class BookEventIsolateTest extends BookEventIsolate {
   final String appPath = Directory.current.path;
   @override
   String get name => '';
+
+  @override
+  FutureOr<int?> deleteZhangduBook(int bookId) {
+    // TODO: implement deleteZhangduBook
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> deleteZhangduContentCache(int bookId) {
+    // TODO: implement deleteZhangduContentCache
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update) {
+    // TODO: implement getZhangduContent
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
+    // TODO: implement getZhangduDetail
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<ZhangduIndex?> getZhangduIndexs(int bookId) {
+    // TODO: implement getZhangduIndexs
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
+    // TODO: implement getZhangduMainList
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
+    // TODO: implement insertZhangduBook
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
+    // TODO: implement updateZhangduBook
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> updateZhangduMainStatus(int bookId) {
+    // TODO: implement updateZhangduMainStatus
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<int>?> watchZhangduContentCid(int bookId) {
+    // TODO: implement watchZhangduContentCid
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
+    // TODO: implement watchZhangduCurrentCid
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduMainList() {
+    // TODO: implement watchZhangduMainList
+    throw UnimplementedError();
+  }
 }

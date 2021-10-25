@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/src/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 class ConfigOptions {
@@ -18,6 +19,7 @@ class ConfigOptions {
       this.useSqflite,
       this.updateOnStart,
       this.themeMode,
+      this.extenalStorage,
       this.showPerformanceOverlay});
 
   TargetPlatform? platform;
@@ -30,6 +32,7 @@ class ConfigOptions {
   bool? nopResample;
   bool? updateOnStart;
   ThemeMode? themeMode;
+  bool? extenalStorage;
 
   ConfigOptions coveredWith(ConfigOptions o) {
     return o
@@ -42,6 +45,7 @@ class ConfigOptions {
       ..nopResample ??= nopResample
       ..updateOnStart ??= updateOnStart
       ..themeMode ??= themeMode
+      ..extenalStorage ??= extenalStorage
       ..showPerformanceOverlay ??= showPerformanceOverlay;
   }
 
@@ -54,6 +58,7 @@ class ConfigOptions {
             other.resample == resample &&
             other.updateOnStart == updateOnStart &&
             other.themeMode == themeMode &&
+            other.extenalStorage == extenalStorage &&
             other.useImageCache == useImageCache &&
             other.nopResample == nopResample &&
             other.useSqflite == useSqflite &&
@@ -74,6 +79,7 @@ class ConfigOptions {
       resample,
       updateOnStart,
       themeMode,
+      extenalStorage,
       useImageCache,
       useSqflite,
       useTextCache,
@@ -99,7 +105,7 @@ class OptionsNotifier extends ChangeNotifier {
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    EventQueue.runOneTaskOnQueue(getThemeMode, saveOptions);
+    EventQueue.runOneTaskOnQueue(OptionsNotifier, saveOptions);
     notifyListeners();
   }
 
@@ -115,6 +121,39 @@ class OptionsNotifier extends ChangeNotifier {
   static const _updateOnStart = 'updateOnStart';
   // static const _followSystem = 'followSystem';
   static const _themeMode = 'themeMode';
+
+  static void autoSetStatus(BuildContext context) {
+    final mode = context.read<OptionsNotifier>().options.themeMode;
+
+    uiStyle(dark: isDarkMode(mode));
+  }
+
+  static bool isDarkMode(ThemeMode? mode) {
+    var dark = false;
+    if (mode == ThemeMode.system) {
+      dark = window.platformBrightness == Brightness.dark;
+    } else {
+      dark = mode == ThemeMode.dark;
+    }
+    return dark;
+  }
+
+  static Future<bool> get extenalStorage async {
+    return EventQueue.runTaskOnQueue(setextenalStorage, () async {
+      final box = await Hive.openBox('setextenalStorage');
+      final result = box.get('extenalStorage', defaultValue: true);
+      await box.close();
+      return result;
+    });
+  }
+
+  static Future<void> setextenalStorage(bool use) async {
+    return EventQueue.runTaskOnQueue(setextenalStorage, () async {
+      final box = await Hive.openBox('setextenalStorage');
+      await box.put('extenalStorage', use);
+      return box.close();
+    });
+  }
 
   static Future<bool> get sqfliteBox async {
     return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
@@ -201,8 +240,8 @@ class OptionsNotifier extends ChangeNotifier {
       useSqflite: await sqfliteBox,
       useTextCache: useTextCache,
       updateOnStart: updateOnStart,
-      // followSystem: followSystem,
       themeMode: themeMode,
+      extenalStorage: await extenalStorage,
     );
     await box.close();
   }
@@ -213,8 +252,10 @@ class OptionsNotifier extends ChangeNotifier {
     final any = FutureAny();
 
     final useSqflite3 = options.useSqflite;
-    if (useSqflite3 != null && await sqfliteBox != useSqflite3)
-      any.add(setSqfliteBox(useSqflite3));
+    final extenalStorage = options.extenalStorage;
+
+    if (useSqflite3 != null) any.add(setSqfliteBox(useSqflite3));
+    if (extenalStorage != null) any.add(setextenalStorage(extenalStorage));
 
     _updateOptions(box, any, _platform, options.platform);
     _updateOptions(box, any, _pageBuilder, options.pageBuilder);

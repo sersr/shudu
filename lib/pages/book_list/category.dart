@@ -300,7 +300,7 @@ class _CategListViewState extends State<CategListView>
                   bgColor: isLight ? null : Colors.grey.shade900,
                   splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                   onTap: () => _item.id != null
-                      ? BookInfoPage.push(context, _item.id!)
+                      ? BookInfoPage.push(context, _item.id!, ApiType.biquge)
                       : null,
                   child: TopItem(item: _item),
                 );

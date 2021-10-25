@@ -1,0 +1,32 @@
+import 'dart:async';
+
+import '../../data/zhangdu/zhangdu_chapter.dart';
+
+import '../../data/zhangdu/zhangdu_detail.dart';
+
+import '../../data/zhangdu/zhangdu_search.dart';
+import '../../database/database.dart';
+
+abstract class ZhangduEvent {
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update);
+  FutureOr<int?> deleteZhangduContentCache(int bookId);
+
+  Stream<List<int>?> watchZhangduContentCid(int bookId);
+
+  FutureOr<ZhangduSearchData?> getZhangduSearchData(
+      String query, int pageIndex, int pageSize);
+
+  FutureOr<int?> updateZhangduMainStatus(int bookId);
+
+  FutureOr<List<ZhangduCache>?> getZhangduMainList();
+  Stream<List<ZhangduCache>?> watchZhangduMainList();
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book);
+  FutureOr<int?> insertZhangduBook(ZhangduCache book);
+  FutureOr<int?> deleteZhangduBook(int bookId);
+  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId);
+
+  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId);
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId);
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId);
+}

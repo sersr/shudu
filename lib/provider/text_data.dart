@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:useful_tools/common.dart';
 
+import 'book_index_notifier.dart';
 import 'constansts.dart';
 
 class TextData {
@@ -12,10 +13,11 @@ class TextData {
       this.nid,
       this.cname,
       this.rawContent,
+      this.api = ApiType.biquge,
       bool? hasContent})
       : _content = content,
         _hasContent = hasContent;
-
+  final ApiType api;
   List<ContentMetrics> get content => _content;
   final List<ContentMetrics> _content;
   final int? cid;

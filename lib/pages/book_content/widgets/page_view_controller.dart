@@ -130,7 +130,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goIdle() {
-    Log.i('go idle', onlyDebug: false);
     scrollingnotifier(false);
     beginActivity(IdleActivity(this));
   }

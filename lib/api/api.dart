@@ -56,7 +56,6 @@ class Api {
     return 'https://scxs.${domains.first}.com/top/man/top/$catg/$date/$index.html';
   }
 
-  /// -- 未实现
   // 分类
   static String bookCategory() {
     return 'https://scxs.${domains.first}.com/Categories/BookCategory.html';
@@ -68,4 +67,25 @@ class Api {
 
   ///API------------------------------------------------ end
 
+}
+
+class ZhangduApi {
+  static const domains = 'rungean.com';
+  static int shortId(int id) {
+    return (id / 2000 + 1).toInt();
+  }
+
+  static String getBookIndexDetail(int id) {
+    return 'http://statics.rungean.com/static/book/zip/${shortId(id)}/$id.zip';
+  }
+
+  // search
+  static String hotSearchUrl() {
+    return ' http://statics.rungean.com/static/book/heat/14/heat.json';
+  }
+
+  static String searchUrl(String query, int pageIndex, int pageSize) {
+    return 'https://api.zhangduxs.com/api/v1/novelsearch?content=$query'
+        '&pageIndex=$pageIndex&pageSize=$pageSize&type=2';
+  }
 }

@@ -227,7 +227,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget bottomSheet(BookCache item) {
+  Widget bottomSheet(BookCache item, ApiType api) {
     return Container(
       decoration: BoxDecoration(
         // color: Colors.grey[200].withAlpha(240),
@@ -247,11 +247,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
+                BookInfoPage.push(context, item.bookId!, api);
                 // Navigator.of(context).pop();
-                Navigator.of(context)
-                    .pushReplacement(MaterialPageRoute(builder: (context) {
-                  return BookInfoPage(id: item.bookId!);
-                }));
+                // Navigator.of(context)
+                //     .pushReplacement(MaterialPageRoute(builder: (context) {
+                //   return BookInfoPage(id: item.bookId!, api: ApiType.biquge);
+                // }));
                 // BookInfoPage.push(context, item.bookId!);
               }),
           Selector<BookCacheNotifier, bool>(
@@ -321,12 +322,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     bgColor: isLight ? null : Colors.grey.shade900,
                     splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                     onTap: () {
-                      BookContentPage.push(
-                          context, item.bookId!, item.chapterId!, item.page!);
+                      BookContentPage.push(context, item.bookId!,
+                          item.chapterId!, item.page!, ApiType.biquge);
                     },
                     onLongPress: () {
                       showModalBottomSheet(
-                          context: context, builder: (_) => bottomSheet(item));
+                          context: context,
+                          builder: (_) => bottomSheet(item, ApiType.biquge));
                     },
                     child: BookItem(
                       img: item.img,
@@ -472,59 +474,114 @@ class BookSearchPage extends SearchDelegate<void> {
         AnimatedBuilder(
           animation: search,
           builder: (context, _) {
-            final data = search.list;
-            if (data == null) {
+            final searchResult = search.list?.data;
+            final zhangduData = search.data?.list;
+            if (searchResult == null && zhangduData == null) {
               return loadingIndicator();
             }
-
-            final searchResult = data.data;
-            final length = searchResult == null ? 1 : searchResult.length + 1;
-            return ListViewBuilder(
-                itemCount: length,
-                padding: const EdgeInsets.only(bottom: 60.0),
-                color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return suggestions(context);
-                  }
-                  final data = searchResult![index - 1];
-                  return ListItem(
-                      height: 108,
-                      bgColor: isLight ? null : Colors.grey.shade900,
-                      splashColor:
-                          isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-                      onTap: () =>
-                          BookInfoPage.push(context, int.parse(data.id!)),
-                      child: Container(
-                        // height: 108,
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: CustomMultiChildLayout(
-                          delegate: ImageLayout(width: 72),
-                          children: [
-                            LayoutId(
-                              id: ImageLayout.image,
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6.0),
-                                child: ImageResolve(img: data.img),
-                              ),
+            final searchLength = searchResult?.length ?? 0;
+            final zhangduLength = zhangduData?.length ?? 0;
+            final length = searchLength + zhangduLength + 1;
+            return Scrollbar(
+              interactive: true,
+              thickness: 8,
+              child: ListViewBuilder(
+                  itemCount: length,
+                  padding: const EdgeInsets.only(bottom: 60.0),
+                  color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+                  itemBuilder: (context, index) {
+                    var _currentIndex = index;
+                    if (_currentIndex == 0) {
+                      return suggestions(context);
+                    }
+                    _currentIndex = _currentIndex - 1;
+                    if (searchLength > 0 && _currentIndex < searchLength) {
+                      final data = searchResult![_currentIndex];
+                      return ListItem(
+                          height: 108,
+                          bgColor: isLight ? null : Colors.grey.shade900,
+                          splashColor:
+                              isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+                          onTap: () => BookInfoPage.push(
+                              context, int.parse(data.id!), ApiType.biquge),
+                          child: Container(
+                            // height: 108,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: CustomMultiChildLayout(
+                              delegate: ImageLayout(width: 72),
+                              children: [
+                                LayoutId(
+                                  id: ImageLayout.image,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6.0),
+                                    child: ImageResolve(img: data.img),
+                                  ),
+                                ),
+                                LayoutId(
+                                  id: ImageLayout.text,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 14.0),
+                                    child: TextAsyncLayout(
+                                        height: 108,
+                                        topRightScore: '${data.bookStatus}',
+                                        top: data.name ?? '',
+                                        center:
+                                            '${data.cName} | ${data.author}',
+                                        bottom: data.desc ?? ''),
+                                  ),
+                                ),
+                              ],
                             ),
-                            LayoutId(
-                              id: ImageLayout.text,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 14.0),
-                                child: TextAsyncLayout(
-                                    height: 108,
-                                    topRightScore: '${data.bookStatus}',
-                                    top: data.name ?? '',
-                                    center: '${data.cName} | ${data.author}',
-                                    bottom: data.desc ?? ''),
+                          ));
+                    }
+                    _currentIndex = _currentIndex - searchLength;
+                    assert(_currentIndex >= 0);
+                    final data = zhangduData![_currentIndex];
+                    return ListItem(
+                        height: 108,
+                        bgColor: isLight ? null : Colors.grey.shade900,
+                        splashColor:
+                            isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+                        onTap: () {
+                          if (data.bookId != null)
+                            BookInfoPage.push(
+                                context, data.bookId!, ApiType.zhangdu);
+                        },
+                        child: Container(
+                          // height: 108,
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: CustomMultiChildLayout(
+                            delegate: ImageLayout(width: 72),
+                            children: [
+                              LayoutId(
+                                id: ImageLayout.image,
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6.0),
+                                  child: ImageResolve(img: data.picture),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ));
-                });
+                              LayoutId(
+                                id: ImageLayout.text,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 14.0),
+                                  child: TextAsyncLayout(
+                                      height: 108,
+                                      topRightScore:
+                                          'zhangdu | ${data.bookStatus}',
+                                      top: data.name ?? '',
+                                      center:
+                                          '${data.categoryName} | ${data.author}',
+                                      bottom: data.intro ?? ''),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ));
+                  }),
+            );
           },
         ));
   }

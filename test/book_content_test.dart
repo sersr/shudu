@@ -8,7 +8,7 @@ void main() {
   final db = Database();
 
   test('query_watch', () async {
-    final query = db.watchCacheContentsCidDb(12);
+    final query = db.watchBookContentCid(12);
     query.listen((event) {
       print('event: $event');
     });

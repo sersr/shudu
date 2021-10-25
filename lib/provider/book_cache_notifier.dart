@@ -42,7 +42,7 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   FutureOr<List<BookCache>> get getList async {
-    return await repository.bookEvent.bookCacheEvent.getMainBookListDb() ??
+    return await repository.bookEvent.bookCacheEvent.getMainList() ??
         _rawList ??
         const [];
   }

@@ -9,6 +9,7 @@ import 'package:nop_db_sqlite/nop_db_sqlite.dart';
 import '../data/data.dart';
 
 part 'nop_database.g.dart';
+part 'zhangdu_database.dart';
 
 class BookCache extends Table {
   BookCache({
@@ -103,7 +104,14 @@ class BookIndex extends Table {
   Map<String, dynamic> toJson() => _BookIndex_toJson(this);
 }
 
-@Nop(tables: [BookCache, BookContentDb, BookIndex])
+@Nop(tables: [
+  BookCache,
+  BookContentDb,
+  BookIndex,
+  ZhangduCache,
+  ZhangduContent,
+  ZhangduIndex,
+])
 class BookDatabase extends _GenBookDatabase {
   BookDatabase(this.path, this.useFfi, this.useSqfite3);
 
@@ -113,11 +121,11 @@ class BookDatabase extends _GenBookDatabase {
 
   final String path;
 
-  final int version = 2;
+  final int version = 3;
 
   FutureOr<void> initDb() {
     if (useSqfite3) {
-      return _initSqfite3db().then(setDb);
+      return _initSqflitedb().then(setDb);
     } else {
       setDb(_initffidb());
     }
@@ -131,8 +139,9 @@ class BookDatabase extends _GenBookDatabase {
         onDowngrade: onDowngrade);
   }
 
-  Future<NopDatabase> _initSqfite3db() {
+  Future<NopDatabase> _initSqflitedb() {
     return NopDatabaseSqflite.openSqfite(path,
+        useFfi: useFfi, // sqflite 桌面平台是FFI实现
         version: version,
         onCreate: onCreate,
         onUpgrade: onUpgrade,
@@ -142,12 +151,17 @@ class BookDatabase extends _GenBookDatabase {
   @override
   FutureOr<void> onUpgrade(
       NopDatabase db, int oldVersion, int newVersion) async {
-    if (oldVersion == 1 && newVersion == 2) {
+    if (oldVersion <= 1) {
       final indexTable = bookIndex.table;
       await db.execute(
           'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.itemCounts} INTEGER');
       await db.execute(
           'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.cacheItemCounts} INTEGER');
+    }
+    if (oldVersion <= 2) {
+      await db.execute(zhangduCache.createTable());
+      await db.execute(zhangduContent.createTable());
+      await db.execute(zhangduIndex.createTable());
     }
   }
 }

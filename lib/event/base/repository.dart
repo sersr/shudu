@@ -26,17 +26,12 @@ abstract class Repository {
 
     return _instance!;
   }
-  // ValueNotifier<double> get safeBottom;
+
   @visibleForTesting
   static void repositoryTest(Repository repository) {
     _instance ??= repository;
   }
-
-  // default
-  // ViewInsets get viewInsets => ViewInsets.zero;
-  // Future<ViewInsets> get getViewInsets async => viewInsets;
-  // int get bottomHeight => 0;
-
+  ValueListenable<bool> get extenalStorage => throw UnimplementedError('测试未实现');
   int level = 50;
   Future<int> get getBatteryLevel async => level;
   bool get systemOverlaysAreVisible;

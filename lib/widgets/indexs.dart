@@ -80,7 +80,7 @@ class _IndexsState extends State<_Indexs> {
     super.dispose();
   }
 
-  BookIndexNotifier? indexBloc;
+    BookIndexNotifier? indexBloc;
   final lKey = Object();
   @override
   void initState() {
@@ -103,14 +103,14 @@ class _IndexsState extends State<_Indexs> {
   }
 
   void setController() {
-    if (controller == null && indexBloc!.data?.isValid == true) {
+    if (controller == null && indexBloc?.data?.isValid == true) {
       final offset = _compute();
       controller = ScrollController(initialScrollOffset: offset);
     }
   }
 
   double _compute() {
-    final data = indexBloc!.data;
+    final data = indexBloc?.data;
 
     if (data == null || !data.isValid) {
       return 0;
@@ -161,41 +161,107 @@ class _IndexsState extends State<_Indexs> {
           if (data == null) {
             return loadingIndicator();
           } else if (!data.isValid) {
-            return reloadBotton(indexBloc!.loadIndexs);
+            return reloadBotton(indexBloc!.reloadIndexs);
           }
+          if (data.api == ApiType.biquge) {
+            final indexs = data.chapters!;
+            final vols = data.vols!;
 
-          final indexs = data.chapters!;
-          final vols = data.vols!;
-
-          return Scrollbar(
-            controller: controller,
-            interactive: true,
-            thickness: 8,
-            radius: const Radius.circular(5),
-            child: CustomScrollView(
+            return Scrollbar(
               controller: controller,
-              slivers: [
-                for (var i = 0; i < indexs.length; i++)
+              interactive: true,
+              thickness: 8,
+              radius: const Radius.circular(5),
+              child: CustomScrollView(
+                controller: controller,
+                slivers: [
+                  for (var i = 0; i < indexs.length; i++)
+                    SliverStickyHeader.builder(
+                      builder: (context, st) {
+                        return Container(
+                          height: widget.headerextent,
+                          color: const Color.fromRGBO(150, 180, 160, 1),
+
+                          child: Center(child: Text(vols[i])),
+                          // height: headerextent,
+                        );
+                      },
+                      sliver: _StickyBody(
+                          l: indexs[i],
+                          bookid: data.bookid!,
+                          indexBloc: indexBloc!,
+                          onTap: widget.onTap,
+                          extent: widget.extent),
+                    ),
+                ],
+              ),
+            );
+          } else if (data.api == ApiType.zhangdu) {
+            final indexs = data.data!;
+            return Scrollbar(
+              controller: controller,
+              interactive: true,
+              thickness: 8,
+              radius: const Radius.circular(5),
+              child: CustomScrollView(
+                controller: controller,
+                slivers: [
                   SliverStickyHeader.builder(
                     builder: (context, st) {
                       return Container(
                         height: widget.headerextent,
                         color: const Color.fromRGBO(150, 180, 160, 1),
 
-                        child: Center(child: Text(vols[i])),
+                        child: Center(child: Text('正文 | ${indexs.length}章')),
                         // height: headerextent,
                       );
                     },
-                    sliver: _StickyBody(
-                        l: indexs[i],
-                        bookid: data.bookid!,
-                        indexBloc: indexBloc!,
-                        onTap: widget.onTap,
-                        extent: widget.extent),
+                    sliver: SliverFixedExtentList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          return btn1(
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            radius: 6,
+                            child: Row(
+                              textBaseline: TextBaseline.ideographic,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    indexs[index].name ?? '',
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (indexBloc!.contains(indexs[index].id))
+                                  Text(
+                                    '已缓存',
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        context.read<TextStyleConfig>().body3,
+                                  )
+                              ],
+                            ),
+                            splashColor: Colors.grey[500],
+                            background: false,
+                            onTap: () {
+                              final id = indexs[index].id;
+                              if (id != null)
+                                widget.onTap(context, data.bookid!, id);
+                            },
+                          );
+                        },
+                        childCount: indexs.length,
+                      ),
+                      itemExtent: widget.extent,
+                    ),
                   ),
-              ],
-            ),
-          );
+                ],
+              ),
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
         });
   }
 }

@@ -36,7 +36,8 @@ class SearchData {
   @JsonKey(name: 'UpdateTime')
   final DateTime? updateTime;
 
-  factory SearchData.fromJson(Map<String, dynamic> json) => _$SearchDataFromJson(json);
+  factory SearchData.fromJson(Map<String, dynamic> json) =>
+      _$SearchDataFromJson(json);
   Map<String, dynamic> toJson() => _$SearchDataToJson(this);
 }
 
@@ -46,6 +47,7 @@ class SearchList {
   final List<SearchData>? data;
   final int? status;
   final String? info;
-  factory SearchList.fromJson(Map<String, dynamic> json) => _$SearchListFromJson(json);
+  factory SearchList.fromJson(Map<String, dynamic> json) =>
+      _$SearchListFromJson(json);
   Map<String, dynamic> toJson() => _$SearchListToJson(this);
 }

@@ -22,7 +22,7 @@ class ShuduApp extends StatelessWidget {
         ];
       },
       builder: (context, list, _) {
-        //TODO: 国际化...
+        //TODO: 国际化 状态栏颜色...
 
         return MaterialApp(
           themeMode: list[0] ?? mode,
@@ -50,8 +50,7 @@ class ShuduApp extends StatelessWidget {
           ),
           darkTheme: ThemeData.dark().copyWith(
             platform: list[1] ?? defaultTargetPlatform,
-            colorScheme: const ColorScheme.dark(
-                secondary: Colors.grey, primary: Colors.blue),
+            colorScheme: const ColorScheme.dark(secondary: Colors.grey),
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
               TargetPlatform.iOS: SlidePageTransition(),
               TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
@@ -79,17 +78,15 @@ class MulProvider extends StatelessWidget {
         Provider(create: (_) => TextStyleConfig()),
         ChangeNotifierProvider(create: (_) => OptionsNotifier()),
         ChangeNotifierProvider(
-          create: (context) =>
-              BookIndexNotifier(repository: context.read<Repository>()),
+          create: (context) => BookIndexNotifier(repository: context.read()),
         ),
         ChangeNotifierProvider(
-            create: (context) => SearchNotifier(context.read<Repository>())),
+            create: (context) => SearchNotifier(context.read())),
         ChangeNotifierProvider(
-          create: (context) =>
-              ContentNotifier(repository: context.read<Repository>()),
-        ),
+            create: (context) => ContentNotifier(
+                repository: context.read(), indexNotifier: context.read())),
         ChangeNotifierProvider(
-          create: (context) => BookCacheNotifier(context.read<Repository>()),
+          create: (context) => BookCacheNotifier(context.read()),
         )
       ],
       child: ShuduApp(mode: mode),

@@ -6,10 +6,11 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart' show BookTopList;
 import '../../event/event.dart' show Repository;
+import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
+import '../../widgets/images.dart' show ImageResolve;
 import '../../widgets/text_builder.dart';
 import '../book_info/info_page.dart' show BookInfoPage;
-import '../../widgets/images.dart' show ImageResolve;
 import 'booklist.dart';
 
 class TopItem extends StatelessWidget {
@@ -170,7 +171,8 @@ class _TopListViewState extends State<TopListView> {
                   bgColor: isLight ? null : Colors.grey.shade900,
                   splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
                   onTap: () {
-                    if (_item.id != null) BookInfoPage.push(context, _item.id!);
+                    if (_item.id != null)
+                      BookInfoPage.push(context, _item.id!, ApiType.biquge);
                   },
                   child: TopItem(item: _item));
             },
