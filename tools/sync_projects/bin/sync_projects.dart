@@ -56,7 +56,7 @@ void main(args) async {
     cmd.add('git');
 
     final syncPackage = packages.childDirectory(name);
-
+    
     if (syncPackage.existsSync()) {
       if (!update) {
         print('skip: $name');
@@ -68,17 +68,18 @@ void main(args) async {
       cmd
         ..add('pull')
         ..add('origin')
-        ..add('master');
+        ..add('master')
+        ..add('');
+      final work = run(cmd, syncPackage.path);
+      any.add(work);
     } else {
       print('sync: $name');
       cmd
         ..add('clone')
         ..add('$githubBase$name');
+      final work = run(cmd, packages.path);
+      any.add(work);
     }
-
-    final work = run(cmd, packages.path);
-
-    any.add(work);
   }
   await any.wait;
   // test
