@@ -201,8 +201,8 @@ class CnamePan extends StatelessWidget {
               } else if (data.isValid != true) {
                 return reloadBotton(indexBloc.reloadIndexs);
               }
-              final indexs = data.allChapters!;
-
+              final indexs = data.allChapters;
+              final _zduIndexs = data.data;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: AnimatedBuilder(
@@ -211,11 +211,18 @@ class CnamePan extends StatelessWidget {
                     var v = indexBloc.slide.value.toInt();
                     var text = '';
                     var cid = -1;
-
-                    if (v < indexs.length) {
-                      final chapter = indexs[v];
-                      text = chapter.name ?? text;
-                      cid = chapter.id ?? cid;
+                    if (data.api == ApiType.biquge) {
+                      if (v < indexs!.length) {
+                        final chapter = indexs[v];
+                        text = chapter.name ?? text;
+                        cid = chapter.id ?? cid;
+                      }
+                    } else {
+                      if (v < _zduIndexs!.length) {
+                        final chapter = _zduIndexs[v];
+                        text = chapter.name ?? text;
+                        cid = chapter.id ?? cid;
+                      }
                     }
 
                     return GestureDetector(
@@ -224,7 +231,8 @@ class CnamePan extends StatelessWidget {
                           getTimer()?.cancel();
                           bloc.showCname.value = false;
                           if (cid != -1)
-                            bloc.newBookOrCid(data.bookid!, cid, 1);
+                            bloc.newBookOrCid(data.bookid!, cid, 1,
+                                api: bloc.api);
                         }
                       },
                       child: Container(
@@ -647,7 +655,8 @@ class _TopPannelState extends State<TopPannel> {
                                   }
                                   contentNtf
                                     ..inbook()
-                                    ..newBookOrCid(bookid, cid, page);
+                                    ..newBookOrCid(bookid, cid, page,
+                                        api: contentNtf.api);
                                   setOrientation(
                                       contentNtf.config.value.orientation!);
                                   uiOverlay(
@@ -1068,8 +1077,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               final index = context.read<BookIndexNotifier>();
               // 先完成动画再调用
               widget.close(() {
-                index.loadIndexs(id, cid);
-                bloc.newBookOrCid(id, cid, 1);
+                index.loadIndexs(id, cid, api: bloc.api);
+                bloc.newBookOrCid(id, cid, 1, api: bloc.api);
               });
             },
           ),

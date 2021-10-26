@@ -18,7 +18,7 @@ dependencies:
   # collection: ^1.15.0
   cupertino_icons: ^1.0.0
   device_info: ^2.0.1
-  dio: ^4.0.0
+  dio: ^4.0.1
   equatable: ^2.0.2
   fake_async: ^1.2.0
   # flutter_bloc: ^7.0.0
@@ -78,6 +78,7 @@ dependencies:
   memory_info: ^0.0.2
   crypto: ^3.0.1
   archive: ^3.1.6
+  http: ^0.13.4
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

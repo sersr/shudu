@@ -1,10 +1,10 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'zhangdu_ranking.g.dart';
+part 'zhangdu_same_users_books.g.dart';
 
 @JsonSerializable()
-class ZhangduRanking {
-  const ZhangduRanking({
+class ZhangduSameUsersBooks {
+  const ZhangduSameUsersBooks({
     this.code,
     this.data,
     this.msg,
@@ -13,19 +13,19 @@ class ZhangduRanking {
   @JsonKey(name: 'code')
   final int? code;
   @JsonKey(name: 'data')
-  final List<ZhangduRankingData>? data;
+  final List<ZhangduSameUsersBooksData>? data;
   @JsonKey(name: 'msg')
   final String? msg;
   @JsonKey(name: 'time')
   final int? time;
 
-  factory ZhangduRanking.fromJson(Map<String,dynamic> json) => _$ZhangduRankingFromJson(json);
-  Map<String,dynamic> toJson() => _$ZhangduRankingToJson(this);
+  factory ZhangduSameUsersBooks.fromJson(Map<String,dynamic> json) => _$ZhangduSameUsersBooksFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSameUsersBooksToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
-class ZhangduRankingData {
-  const ZhangduRankingData({
+class ZhangduSameUsersBooksData {
+  const ZhangduSameUsersBooksData({
     this.id,
     this.name,
     this.picture,
@@ -67,7 +67,7 @@ class ZhangduRankingData {
   @JsonKey(name: 'zipurl')
   final String? zipurl;
 
-  factory ZhangduRankingData.fromJson(Map<String,dynamic> json) => _$ZhangduRankingDataFromJson(json);
-  Map<String,dynamic> toJson() => _$ZhangduRankingDataToJson(this);
+  factory ZhangduSameUsersBooksData.fromJson(Map<String,dynamic> json) => _$ZhangduSameUsersBooksDataFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSameUsersBooksDataToJson(this);
 }
 

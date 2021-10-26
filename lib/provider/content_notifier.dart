@@ -279,15 +279,23 @@ extension DataLoading on ContentNotifier {
   Future<void> dump() async {
     final cid = tData.cid;
     final _bookid = bookid;
+    final api = this.api;
     if (cid == null || _bookid == -1) return;
     final _currentPage = currentPage;
-    final u = BookCache(
-      page: _currentPage,
-      isNew: false,
-      chapterId: cid,
-      sortKey: sortKey,
-    );
-    await repository.bookEvent.bookCacheEvent.updateBook(_bookid, u);
+    if (api == ApiType.biquge) {
+      final u = BookCache(
+        page: _currentPage,
+        isNew: false,
+        chapterId: cid,
+        sortKey: sortKey,
+      );
+
+      await repository.bookEvent.bookCacheEvent.updateBook(_bookid, u);
+    } else {
+      final book = ZhangduCache(
+          page: _currentPage, isNew: false, chapterId: cid, sortKey: sortKey);
+      await repository.bookEvent.zhangduEvent.updateZhangduBook(_bookid, book);
+    }
   }
 
   void notifyState(
@@ -327,18 +335,21 @@ extension DataLoading on ContentNotifier {
     if (_bookid == -1 || contentid == -1) return;
     if (api == ApiType.zhangdu) {
       final current = indexData[contentid];
-      if (current == null) return;
+      if (current == null) {
+        Log.e('error.$indexData');
+        return;
+      }
       Log.i('${current.contentUrl} | ${current.name}');
       final _index = rawIndexData.lastIndexOf(current);
       var pid = -1;
       if (_index > 0) {
         final p = rawIndexData.elementAt(_index - 1);
-        if (p.bookId != null) pid = p.bookId!;
+        if (p.id != null) pid = p.id!;
       }
       var nid = -1;
-      if (_index < rawIndexData.length - 1) {
+      if (_index < rawIndexData.length - 2) {
         final n = rawIndexData.elementAt(_index + 1);
-        if (n.bookId != null) nid = n.bookId!;
+        if (n.id != null) nid = n.id!;
       }
       final url = current.contentUrl;
       final name = current.name;
@@ -347,6 +358,7 @@ extension DataLoading on ContentNotifier {
         final lines = await repository.bookEvent.zhangduEvent
             .getZhangduContent(_bookid, contentid, url, name, sort, update);
         if (_bookid != bookid) return;
+        /// 可能没有返回数据，并且不是网络错误
         if (lines != null) {
           final _key = key;
           final pages = await _asyncLayout(lines, name);
@@ -1002,33 +1014,24 @@ extension Event on ContentNotifier {
   Future<void> _getStateOrSetBook(int newBookid, int cid, int page,
       {ApiType api = ApiType.biquge}) async {
     if (_shouldUpdate(newBookid, cid, page, api)) {
-      // assert(Log.i('new: $newBookid $cid') &&
-      //     EventQueue.currentTask?.isCurrentQueue(initQueue) == null);
       _notify();
       notifyState(notEmptyOrIgnore: true, loading: false);
-
+      final update = bookid != newBookid;
       _tData.dispose();
       _tData = TextData(cid: cid, api: api);
       this.api = api;
       currentPage = page;
       bookid = newBookid;
-      indexData.clear();
-      if (api == ApiType.zhangdu) {
-        rawIndexData =
-            await repository.bookEvent.zhangduEvent.getZhangduIndexDb(bookid) ??
-                [];
-        if (rawIndexData.isEmpty)
-          rawIndexData =
-              await repository.bookEvent.zhangduEvent.getZhangduIndex(bookid) ??
-                  [];
+      // indexData.clear();
+      if ((rawIndexData.isEmpty || update) && api == ApiType.zhangdu) {
+        rawIndexData = await repository.bookEvent.zhangduEvent
+                .getZhangduIndex(bookid, false) ??
+            [];
+            Log.i(rawIndexData);
         final d =
             rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
         indexData.clear();
         indexData.addAll(d);
-        // if (cid == -1000 && rawIndexData.isNotEmpty) {
-        //   cid = rawIndexData.first.id!;
-        //   Log.i('.....$cid');
-        // }
       }
     }
   }

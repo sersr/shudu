@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:nop_db/database/nop.dart';
-import 'package:nop_db/database/statement.dart';
 import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';

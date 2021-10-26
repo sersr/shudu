@@ -16,6 +16,8 @@ class SearchNotifier extends ChangeNotifier {
   Future<void> load(String key) async {
     if (key.isEmpty) return;
     list = null;
+    data = null;
+
     notifyListeners();
     list = await repository.bookEvent.customEvent.getSearchData(key);
     data = await repository.bookEvent.zhangduEvent

@@ -125,11 +125,28 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                   return reloadBotton(() => info.reload(widget.id, widget.api));
                 }
                 bookId = data.id;
-                firstChapterId = info.firstCid;
+                firstChapterId = info.firstCid ?? firstChapterId;
                 children.add(header(data.author, data.bookStatus, data.name,
                     data.score, data.chapterName, data.picture, ts));
-                children.addAll(desc(data.id, data.author, data.intro, null,
-                    data.chapterName, data.updatedTime, null, ts));
+                children.addAll(desc(
+                  data.id,
+                  data.author,
+                  data.intro,
+                  firstChapterId,
+                  data.chapterName,
+                  data.updatedTime,
+                  info.sameUsers
+                      ?.map((e) => SameUserBook(
+                            id: e.id,
+                            img: e.picture,
+                            lastChapter: e.intro,
+                            name: e.name,
+                            score: e.score,
+                          ))
+                      .toList(),
+                  ts,
+                  api: ApiType.zhangdu,
+                ));
               }
 
               return Stack(
@@ -155,7 +172,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
                             int? cid;
                             int? currentPage;
-                            if (widget.api == ApiType.biquge) {
+                            // if (widget.api == ApiType.biquge) {
                               final list = cache.sortChildren;
 
                               for (var l in list) {
@@ -168,7 +185,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                   break;
                                 }
                               }
-                            }
 
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,6 +223,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                         _cid = firstChapterId!;
                                         _page = 1;
                                       }
+                                      Log.i('bookid:$bookId,  $_cid');
                                       BookContentPage.push(context, bookId!,
                                           _cid, _page, widget.api);
                                     },
@@ -216,8 +233,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                 Expanded(
                                   child: btn1(
                                     background: false,
-                                    onTap: () =>
-                                        cache.updateShow(bookId!, !show),
+                                    onTap: () => cache.updateShow(
+                                        bookId!, !show, widget.api),
                                     child: Padding(
                                       padding: EdgeInsets.only(
                                           bottom: bottom > 0.0 &&
@@ -311,7 +328,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       String? lastChapter,
       String? lastTime,
       List<SameUserBook>? sameUserBooks,
-      TextStyleConfig ts) sync* {
+      TextStyleConfig ts,
+      {ApiType api = ApiType.biquge}) sync* {
     yield const SizedBox(height: 6);
     yield Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -377,7 +395,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             onTap: () {
               final _cid = cid ?? firstChapterId;
 
-              context.read<BookIndexNotifier>().loadIndexs(bookid, _cid);
+              context
+                  .read<BookIndexNotifier>()
+                  .loadIndexs(bookid, _cid, api: widget.api);
               showIndexs.value = !showIndexs.value;
             },
             bgColor: isLight ? null : Colors.grey.shade900,
@@ -453,7 +473,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             height: 108,
             bgColor: isLight ? null : Colors.grey.shade900,
             splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-            child: _BookInfoSameItemWidget(l: l, author: author),
+            child: _BookInfoSameItemWidget(l: l, author: author, api: api),
             onTap: () => l.id == null
                 ? null
                 : BookInfoPage.push(context, l.id!, widget.api));
@@ -547,12 +567,15 @@ class _BookInfoSameItemWidget extends StatelessWidget {
     Key? key,
     required this.author,
     required this.l,
+    required this.api,
   }) : super(key: key);
 
   final SameUserBook l;
   final String? author;
+  final ApiType api;
   @override
   Widget build(BuildContext context) {
+    final nText = api == ApiType.biquge ? '最新: ' : '';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       height: 108,
@@ -577,7 +600,7 @@ class _BookInfoSameItemWidget extends StatelessWidget {
                   height: 108,
                   top: l.name ?? '',
                   center: '作者：$author',
-                  bottom: '最新: ${l.lastChapter}',
+                  bottom: '$nText${l.lastChapter}',
                 ),
               ),
             ),

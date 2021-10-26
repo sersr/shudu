@@ -5,10 +5,11 @@ import 'dart:typed_data';
 
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
-import '../../data/zhangdu/zhangdu_chapter.dart';
-import '../../data/zhangdu/zhangdu_detail.dart';
 
 import '../../data/data.dart';
+import '../../data/zhangdu/zhangdu_chapter.dart';
+import '../../data/zhangdu/zhangdu_detail.dart';
+import '../../data/zhangdu/zhangdu_same_users_books.dart';
 import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';

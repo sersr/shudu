@@ -38,8 +38,22 @@ class BookIndexsData {
   int? get index => _index;
 
   int? get volIndex => _volIndex;
-
-  int? get currentIndex => _currentIndex;
+  int? _zuIndex;
+  int? get currentIndex {
+    if (api == ApiType.biquge) {
+      return _currentIndex;
+    } else {
+      if (_zuIndex != null || data == null) return _zuIndex;
+      var current = data!.length;
+      for (var i = 0; i < data!.length; i++) {
+        if (data![i].id == contentid) {
+          current = i;
+          break;
+        }
+      }
+      return _zuIndex ??= current;
+    }
+  }
 
   List<BookIndexChapter>? get allChapters {
     final _all = _allChapters;
@@ -101,18 +115,19 @@ class BookIndexsData {
           (indexs?.list == null || _index == null || _volIndex == null) ||
       this.api == ApiType.zhangdu && data?.isNotEmpty != true;
 
-  bool get isValid =>
-      (api == ApiType.biquge &&
-          bookid != null &&
-          contentid != null &&
-          indexs != null &&
-          _index != null &&
-          _volIndex != null) ||
-      (api == ApiType.zhangdu &&
-          bookid != null &&
-          contentid != null &&
-          data?.isNotEmpty == true);
-
+  bool get isValid => isValidBqg || isValidZd;
+  bool get isValidBqg =>
+      api == ApiType.biquge &&
+      bookid != null &&
+      contentid != null &&
+      indexs != null &&
+      _index != null &&
+      _volIndex != null;
+  bool get isValidZd =>
+      api == ApiType.zhangdu &&
+      bookid != null &&
+      contentid != null &&
+      data?.isNotEmpty == true;
   bool equalTo(Object? other) {
     if (identical(this, other)) return true;
     return runtimeType == other.runtimeType &&
@@ -204,7 +219,7 @@ class BookIndexNotifier extends ChangeNotifier {
         .listen((_bookCaches) {
       assert(Log.e('_bookCaches cache ids'));
 
-      if (_data?.isValid != true) return;
+      if (_data?.isValidZd != true) return;
       EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
         if (_bookCaches != null && _bookCaches.isNotEmpty) {
           final _cid = _bookCaches.last.chapterId;
@@ -225,7 +240,7 @@ class BookIndexNotifier extends ChangeNotifier {
 
       EventQueue.runOneTaskOnQueue(_cids, () {
         assert(Log.e('book cache ids'));
-        if (_data?.isValid != true) return;
+        if (_data?.isValidZd != true) return;
         Log.e('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
 
         if (_data?.bookid == bookid) {
@@ -247,7 +262,7 @@ class BookIndexNotifier extends ChangeNotifier {
         .listen((_bookCaches) {
       assert(Log.e('_bookCaches cache ids'));
 
-      if (_data?.isValid != true) return;
+      if (_data?.isValidBqg != true) return;
       EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
         if (_bookCaches != null && _bookCaches.isNotEmpty) {
           final _cid = _bookCaches.last.chapterId;
@@ -269,7 +284,7 @@ class BookIndexNotifier extends ChangeNotifier {
 
       EventQueue.runOneTaskOnQueue(_cids, () {
         assert(Log.e('book cache ids'));
-        if (_data?.isValid != true) return;
+        if (_data?.isValidBqg != true) return;
         Log.e('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
 
         if (_data?.bookid == bookid) {
@@ -359,19 +374,25 @@ class BookIndexNotifier extends ChangeNotifier {
 
         setIndexData(bookid, contentid, bookIndexShort);
       } else if (api == ApiType.zhangdu) {
-        final data =
-            await repository.bookEvent.zhangduEvent.getZhangduIndexDb(bookid) ??
-                const [];
+        final data = await repository.bookEvent.zhangduEvent
+                .getZhangduIndex(bookid, false) ??
+            const [];
         setZhangduIndexData(bookid, contentid, data);
       }
-    } else if (refresh && _data?.isValid == true) {
-      if (api == ApiType.biquge) {
-        setIndexData(bookid, contentid, _data!.indexs!);
-      } else if (api == ApiType.zhangdu) {
-        setZhangduIndexData(bookid, contentid, _data!.data!);
+    } else {
+      bool _done = true;
+      if (refresh) {
+        if (_data?.isValidBqg == true) {
+          setIndexData(bookid, contentid, _data!.indexs!);
+        } else if (_data?.isValidZd == true) {
+          setZhangduIndexData(bookid, contentid, _data!.data!);
+        } else {
+          _done = false;
+        }
       }
-    } else if (restore) {
-      notifyListeners();
+      if (!_done && restore) {
+        notifyListeners();
+      }
     }
 
     // data == null or data.bookid != bookid or data.contentid != contentid
@@ -396,9 +417,9 @@ class BookIndexNotifier extends ChangeNotifier {
           bookUpDateTime[bookid] = DateTime.now().millisecondsSinceEpoch;
         }
       } else if (api == ApiType.zhangdu) {
-        final d =
-            await repository.bookEvent.zhangduEvent.getZhangduIndex(bookid) ??
-                const [];
+        final d = await repository.bookEvent.zhangduEvent
+                .getZhangduIndex(bookid, true) ??
+            const [];
         setZhangduIndexData(bookid, contentid, d);
         if (_data != null &&
             _data!.isValid &&
@@ -426,17 +447,26 @@ class BookIndexNotifier extends ChangeNotifier {
   var sldvalue = SliderValue(index: 0, max: 200);
 
   void calculate(BookIndexsData data) {
-    final _list = data.allChapters;
-    final _current = data.currentIndex;
-    if (_list == null || _current == null) return;
+    int? max;
+    int? current;
+    if (data.api == ApiType.biquge) {
+      final list = data.allChapters;
+      final _current = data.currentIndex;
 
-    /// 数组 以 0 为起点
-    final _max = _list.length - 1;
+      if (list != null) max = list.length - 1;
+      current = _current;
+    } else {
+      final list = data.data;
+      final _current = data.currentIndex;
+      current = _current;
+      if (list != null) max = list.length - 1;
+    }
+    if (max == null || current == null) return;
 
     sldvalue
-      ..index = _current
-      ..max = _max;
-    slide.value = _current;
+      ..index = current
+      ..max = max;
+    slide.value = current;
   }
 }
 

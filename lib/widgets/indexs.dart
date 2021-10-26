@@ -80,7 +80,7 @@ class _IndexsState extends State<_Indexs> {
     super.dispose();
   }
 
-    BookIndexNotifier? indexBloc;
+  BookIndexNotifier? indexBloc;
   final lKey = Object();
   @override
   void initState() {
@@ -111,8 +111,18 @@ class _IndexsState extends State<_Indexs> {
 
   double _compute() {
     final data = indexBloc?.data;
+    if (data?.api == ApiType.zhangdu) {
+      final currentIndex = data?.currentIndex;
+      final length = data?.data?.length;
+      if (currentIndex != null && length != null) {
+        final offset = widget.extent * currentIndex - widget.halfHeight;
+        return math.max(
+            0.0, math.min(offset, length * widget.extent - widget.height));
+      }
+      return 0;
+    }
 
-    if (data == null || !data.isValid) {
+    if (data == null || !data.isValidBqg) {
       return 0;
     }
 

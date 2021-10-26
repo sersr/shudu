@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/common.dart';
-
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
@@ -481,10 +480,14 @@ extension _NetworkImpl on NetworkMixin {
   @pragma('vm:prefer-inline')
   bool _isValid(Headers header) {
     final contentType = header.value(HttpHeaders.contentTypeHeader);
+    return _isValidhttp(contentType);
+  }
+
+  bool _isValidhttp(String? contentType) {
     if (contentType != null && contentType.contains(RegExp('image/*'))) {
       return true;
     } else {
-      assert(Log.w('..无法识别..'));
+      assert(Log.w('..无法识别.. $contentType'));
       return false;
     }
   }
@@ -612,24 +615,23 @@ extension _NetworkImpl on NetworkMixin {
       try {
         final data = await dio.get<ResponseBody>(url,
             options: Options(responseType: ResponseType.stream));
-
         final stream = data.data?.stream;
         if (stream != null) {
           await for (final data in stream) {
             dataBytes.addAll(data);
           }
-          success = _isValid(data.headers);
-        } else {
-          success = false;
         }
+        success = _isValid(data.headers);
       } catch (e) {
         success = false;
-        assert(Log.w('error: $imgName | $url'));
+        assert(Log.w('error: $imgName | $url\n$e'));
       } finally {
         if (success)
           _errorLoading.remove(imgName);
-        else
+        else {
+          Log.i('image:$url');
           _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
+        }
       }
     });
 

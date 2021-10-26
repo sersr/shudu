@@ -5,6 +5,7 @@ import 'package:nop_db/database/nop.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';
+import 'package:useful_tools/common.dart';
 
 import '../data/data.dart';
 
@@ -151,6 +152,7 @@ class BookDatabase extends _GenBookDatabase {
   @override
   FutureOr<void> onUpgrade(
       NopDatabase db, int oldVersion, int newVersion) async {
+        Log.i('version: $oldVersion  | $newVersion');
     if (oldVersion <= 1) {
       final indexTable = bookIndex.table;
       await db.execute(

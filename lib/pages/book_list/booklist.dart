@@ -27,9 +27,9 @@ class BooklistPage extends StatelessWidget {
           bottom: TabBar(
             // controller: controller,
             labelColor:
-                isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
-            unselectedLabelColor:
                 isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
+            unselectedLabelColor:
+                isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
             indicatorColor: Colors.pink.shade200,
             tabs: [
               Container(

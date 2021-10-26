@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import '../../data/zhangdu/zhangdu_chapter.dart';
-
 import '../../data/zhangdu/zhangdu_detail.dart';
-
+import '../../data/zhangdu/zhangdu_same_users_books.dart';
 import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 
@@ -27,6 +26,8 @@ abstract class ZhangduEvent {
   Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId);
 
   FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId);
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId);
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId);
+
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update);
+  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
+      String author);
 }

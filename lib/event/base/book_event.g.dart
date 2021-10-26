@@ -33,8 +33,8 @@ enum BookEventMessage {
   deleteZhangduBook,
   watchZhangduCurrentCid,
   getZhangduDetail,
-  getZhangduIndexDb,
-  getZhangduIndex
+  getZhangduIndex,
+  getZhangduSameUsersBooks
 }
 enum CustomEventMessage {
   getSearchData,
@@ -76,8 +76,8 @@ enum ZhangduEventMessage {
   deleteZhangduBook,
   watchZhangduCurrentCid,
   getZhangduDetail,
-  getZhangduIndexDb,
-  getZhangduIndex
+  getZhangduIndex,
+  getZhangduSameUsersBooks
 }
 
 abstract class BookEventResolveMain extends BookEvent
@@ -403,8 +403,8 @@ mixin ZhangduEventResolve on Resolve, ZhangduEvent {
     _deleteZhangduBook_9,
     _watchZhangduCurrentCid_10,
     _getZhangduDetail_11,
-    _getZhangduIndexDb_12,
-    _getZhangduIndex_13
+    _getZhangduIndex_12,
+    _getZhangduSameUsersBooks_13
   ]);
 
   @override
@@ -448,10 +448,11 @@ mixin ZhangduEventResolve on Resolve, ZhangduEvent {
       watchZhangduCurrentCid(args);
   FutureOr<ZhangduDetailData?> _getZhangduDetail_11(args) =>
       getZhangduDetail(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_12(args) =>
-      getZhangduIndexDb(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_13(args) =>
-      getZhangduIndex(args);
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_12(args) =>
+      getZhangduIndex(args[0], args[1]);
+  FutureOr<List<ZhangduSameUsersBooksData>?> _getZhangduSameUsersBooks_13(
+          args) =>
+      getZhangduSameUsersBooks(args);
 }
 
 /// implements [ZhangduEvent]
@@ -516,11 +517,15 @@ mixin ZhangduEventMessager {
     return sendEvent.sendMessage(ZhangduEventMessage.getZhangduDetail, bookId);
   }
 
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) async {
-    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduIndexDb, bookId);
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(
+      int bookId, bool update) async {
+    return sendEvent
+        .sendMessage(ZhangduEventMessage.getZhangduIndex, [bookId, update]);
   }
 
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId) async {
-    return sendEvent.sendMessage(ZhangduEventMessage.getZhangduIndex, bookId);
+  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
+      String author) async {
+    return sendEvent.sendMessage(
+        ZhangduEventMessage.getZhangduSameUsersBooks, author);
   }
 }

@@ -4,7 +4,7 @@ part 'zhangdu_search.g.dart';
 
 @JsonSerializable()
 class ZhangduSearch {
-  ZhangduSearch({
+  const ZhangduSearch({
     this.code,
     this.data,
     this.msg,
@@ -19,9 +19,8 @@ class ZhangduSearch {
   @JsonKey(name: 'time')
   final String? time;
 
-  factory ZhangduSearch.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduSearchFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduSearchToJson(this);
+  factory ZhangduSearch.fromJson(Map<String,dynamic> json) => _$ZhangduSearchFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSearchToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -44,14 +43,13 @@ class ZhangduSearchData {
   @JsonKey(name: 'pageSize')
   final int? pageSize;
 
-  factory ZhangduSearchData.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduSearchDataFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduSearchDataToJson(this);
+  factory ZhangduSearchData.fromJson(Map<String,dynamic> json) => _$ZhangduSearchDataFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSearchDataToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
 class ZhangduSearchDataList {
-  ZhangduSearchDataList({
+  const ZhangduSearchDataList({
     this.bookId,
     this.name,
     this.aliasName,
@@ -108,20 +106,20 @@ class ZhangduSearchDataList {
   @JsonKey(name: 'chapterUpdateTime')
   final String? chapterUpdateTime;
 
-  factory ZhangduSearchDataList.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduSearchDataListFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduSearchDataListToJson(this);
+  factory ZhangduSearchDataList.fromJson(Map<String,dynamic> json) => _$ZhangduSearchDataListFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSearchDataListToJson(this);
 }
+
 
 @JsonSerializable(explicitToJson: true)
 class ZhangduSearchDataExtra {
-  ZhangduSearchDataExtra({
+  const ZhangduSearchDataExtra({
     this.weeknew,
   });
   @JsonKey(name: 'weeknew')
   final int? weeknew;
 
-  factory ZhangduSearchDataExtra.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduSearchDataExtraFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduSearchDataExtraToJson(this);
+  factory ZhangduSearchDataExtra.fromJson(Map<String,dynamic> json) => _$ZhangduSearchDataExtraFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduSearchDataExtraToJson(this);
 }
+

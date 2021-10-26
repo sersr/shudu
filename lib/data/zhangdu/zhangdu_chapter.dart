@@ -4,7 +4,7 @@ part 'zhangdu_chapter.g.dart';
 
 @JsonSerializable()
 class ZhangduChapter {
-  ZhangduChapter({
+  const ZhangduChapter({
     this.code,
     this.data,
     this.msg,
@@ -25,9 +25,8 @@ class ZhangduChapter {
   @JsonKey(name: 'book_id')
   final int? bookId;
 
-  factory ZhangduChapter.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduChapterFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduChapterToJson(this);
+  factory ZhangduChapter.fromJson(Map<String,dynamic> json) => _$ZhangduChapterFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduChapterToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -53,7 +52,7 @@ class ZhangduChapterData {
   @JsonKey(name: 'content_url')
   final String? contentUrl;
 
-  factory ZhangduChapterData.fromJson(Map<String, dynamic> json) =>
-      _$ZhangduChapterDataFromJson(json);
-  Map<String, dynamic> toJson() => _$ZhangduChapterDataToJson(this);
+  factory ZhangduChapterData.fromJson(Map<String,dynamic> json) => _$ZhangduChapterDataFromJson(json);
+  Map<String,dynamic> toJson() => _$ZhangduChapterDataToJson(this);
 }
+

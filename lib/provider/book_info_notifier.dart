@@ -4,6 +4,7 @@ import 'package:useful_tools/common.dart';
 import '../api/api.dart';
 import '../data/data.dart';
 import '../data/zhangdu/zhangdu_detail.dart';
+import '../data/zhangdu/zhangdu_same_users_books.dart';
 import '../event/event.dart';
 import 'book_index_notifier.dart';
 
@@ -13,7 +14,7 @@ class BookInfoProvider extends ChangeNotifier {
   BookInfoRoot? get data => _data;
   ZhangduDetailData? get zhangduData => _data;
   int? firstCid;
-
+  List<ZhangduSameUsersBooksData>? sameUsers;
   dynamic _data;
   Future<void> getData(int id, ApiType api) async {
     if (repository == null) return;
@@ -28,13 +29,16 @@ class BookInfoProvider extends ChangeNotifier {
       _data = await repository!.bookEvent.zhangduEvent.getZhangduDetail(id) ??
           const ZhangduDetailData();
       var rawIndexData =
-          await repository!.bookEvent.zhangduEvent.getZhangduIndexDb(id) ?? [];
-      if (rawIndexData.isEmpty)
-        rawIndexData =
-            await repository!.bookEvent.zhangduEvent.getZhangduIndex(id) ?? [];
+          await repository!.bookEvent.zhangduEvent.getZhangduIndex(id, false) ??
+              [];
+      if (zhangduData?.author != null) {
+        sameUsers = await repository!.bookEvent.zhangduEvent
+            .getZhangduSameUsersBooks(zhangduData!.author!);
+      }
+      Log.i(sameUsers);
       if (rawIndexData.isNotEmpty) {
         firstCid = rawIndexData.first.id;
-        Log.w('firstCid: $firstCid');
+        Log.w('firstCid: $firstCid', onlyDebug: false);
         Log.i(ZhangduApi.getBookIndexDetail(id));
       }
     }

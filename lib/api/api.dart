@@ -1,4 +1,7 @@
 import 'dart:collection';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:useful_tools/common.dart';
 
 class Api {
   ///API------------------------------------------------
@@ -87,5 +90,11 @@ class ZhangduApi {
   static String searchUrl(String query, int pageIndex, int pageSize) {
     return 'https://api.zhangduxs.com/api/v1/novelsearch?content=$query'
         '&pageIndex=$pageIndex&pageSize=$pageSize&type=2';
+  }
+
+  static String sameUsersBooks(String author) {
+    final m = md5.convert(utf8.encode(author));
+    Log.i(m);
+    return 'http://statics.rungean.com/static/book/author/$m.json';
   }
 }

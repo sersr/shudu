@@ -109,7 +109,7 @@ Future<void> run(List<Object> cmd, String? workingDirectory) {
     }
 
     pro.stdout.transform(utf8.decoder).listen((event) {
-      print('sync: $event');
+      print('sync:\n$event');
     }, onDone: _onDone, cancelOnError: true, onError: (e, s) => _onDone());
 
     return completer.future;
