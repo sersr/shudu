@@ -83,8 +83,7 @@ class MulProvider extends StatelessWidget {
         ChangeNotifierProvider(
             create: (context) => SearchNotifier(context.read())),
         ChangeNotifierProvider(
-            create: (context) => ContentNotifier(
-                repository: context.read(), indexNotifier: context.read())),
+            create: (context) => ContentNotifier(repository: context.read())),
         ChangeNotifierProvider(
           create: (context) => BookCacheNotifier(context.read()),
         )

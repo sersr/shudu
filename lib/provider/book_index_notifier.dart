@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -44,7 +45,7 @@ class BookIndexsData {
       return _currentIndex;
     } else {
       if (_zuIndex != null || data == null) return _zuIndex;
-      var current = data!.length;
+      var current = data!.length - 1;
       for (var i = 0; i < data!.length; i++) {
         if (data![i].id == contentid) {
           current = i;
@@ -111,9 +112,9 @@ class BookIndexsData {
       this.bookid != bookid ||
       this.contentid != contentid ||
       this.api != api ||
-      this.api == ApiType.biquge &&
-          (indexs?.list == null || _index == null || _volIndex == null) ||
-      this.api == ApiType.zhangdu && data?.isNotEmpty != true;
+      (this.api == ApiType.biquge &&
+          (indexs?.list == null || _index == null || _volIndex == null)) ||
+      (this.api == ApiType.zhangdu && data?.isNotEmpty != true);
 
   bool get isValid => isValidBqg || isValidZd;
   bool get isValidBqg =>
@@ -227,6 +228,7 @@ class BookIndexNotifier extends ChangeNotifier {
           final cid = _data!.contentid!;
 
           if (_bookid == bookid && _cid != cid) {
+            Log.i('update:.. $bookid $cid $_cid');
             loadIndexs(bookid, _cid, api: ApiType.zhangdu);
           }
         }
@@ -343,11 +345,12 @@ class BookIndexNotifier extends ChangeNotifier {
 
   Future<void> loadIndexs(int? bookid, int? contentid,
       {bool restore = false, ApiType api = ApiType.biquge}) async {
-    if (!_queue.actived) {
-      // 先执行在添加到队列中
-      final f = _load(bookid, contentid, restore: restore, api: api);
-      return _queue.addEventTask(() => f);
-    }
+    // if (!_queue.actived) {
+    //   // 先执行在添加到队列中
+    //   final f = _load(bookid, contentid, restore: restore, api: api);
+    //   return _queue.addEventTask(() => f);
+    // }
+    Log.i('update: $bookid | $contentid');
     return _queue.addOneEventTask(
         () => _load(bookid, contentid, restore: restore, api: api));
   }
@@ -462,7 +465,7 @@ class BookIndexNotifier extends ChangeNotifier {
       if (list != null) max = list.length - 1;
     }
     if (max == null || current == null) return;
-
+    max = math.max(max, current);
     sldvalue
       ..index = current
       ..max = max;

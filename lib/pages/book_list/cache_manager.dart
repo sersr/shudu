@@ -85,10 +85,9 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
       splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
       onTap: () {
         _cacheNotifier.exit = true;
-        BookInfoPage.push(context, _e.id, ApiType.biquge).whenComplete(() =>
-            Future.delayed(
-            const Duration(milliseconds: 300),
-            () => _cacheNotifier.exit = false));
+        BookInfoPage.push(context, _e.id, _e.api).whenComplete(() =>
+            Future.delayed(const Duration(milliseconds: 300),
+                () => _cacheNotifier.exit = false));
       },
       child: Row(
         children: [
@@ -103,7 +102,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
                     const SizedBox(height: 2),
                     Expanded(
                       child: Text(
-                        _cacheNotifier.getName(_e.id),
+                        '${_cacheNotifier.getName(_e.id, _e.api)}${_e.api == ApiType.zhangdu ? ' _' : ''}',
                         maxLines: 1,
                       ),
                     ),
@@ -185,11 +184,18 @@ class _CacheNotifier extends ChangeNotifier {
 
   set exit(bool v) {
     _exit = v;
-    _exit ? _cacheSub?.pause() : _cacheSub?.resume();
+    if (_exit) {
+      _cacheSub?.pause();
+      _cacheSubZd?.pause();
+    } else {
+      _cacheSub?.resume();
+      _cacheSubZd?.resume();
+    }
     notifyListeners();
   }
 
   StreamSubscription? _cacheSub;
+  StreamSubscription? _cacheSubZd;
 
   @override
   void notifyListeners() {
@@ -206,15 +212,22 @@ class _CacheNotifier extends ChangeNotifier {
     if (repository == null) return;
     _out = false;
     _cacheSub?.cancel();
-    _cacheSub = repository!.bookEvent.bookCacheEvent
-        .watchMainList()
-        .listen(_listen);
-
+    _cacheSub =
+        repository!.bookEvent.bookCacheEvent.watchMainList().listen(_listen);
+    _cacheSubZd?.cancel();
+    _cacheSubZd = _repository!.bookEvent.zhangduEvent
+        .watchZhangduMainList()
+        .listen(_listenZd);
     final remoteItems = await repository!.bookEvent.getCacheItems() ?? const [];
+    if (_out) return;
+    final zhangduItems =
+        await repository!.bookEvent.zhangduEvent.getZhangduCacheItems() ??
+            const [];
     if (_out) return;
 
     _items
       ..clear()
+      ..addAll(zhangduItems.reversed)
       ..addAll(remoteItems.reversed);
     notifyListeners();
   }
@@ -228,13 +241,25 @@ class _CacheNotifier extends ChangeNotifier {
   Future<void> deleteCache(CacheItem item) async {
     if (repository == null) return;
     _items.remove(item);
-    await repository!.bookEvent.bookContentEvent.deleteCache(item.id);
+    if (item.api == ApiType.zhangdu) {
+      await repository!.bookEvent.zhangduEvent
+          .deleteZhangduContentCache(item.id);
+    } else {
+      await repository!.bookEvent.bookContentEvent.deleteCache(item.id);
+    }
     notifyListeners();
   }
 
-  final _cacheList = <BookCache>[];
-  String getName(int bookid) {
-    final n = _cacheList.where((element) => element.bookId == bookid);
+  final _cacheList = <Cache>[];
+  final _cacheListZd = <Cache>[];
+  String getName(int bookid, ApiType api) {
+    late List<Cache> dataList;
+    if (api == ApiType.zhangdu) {
+      dataList = _cacheListZd;
+    } else {
+      dataList = _cacheList;
+    }
+    final n = dataList.where((element) => element.bookId == bookid);
     if (n.isNotEmpty && n.last.name != null) return n.last.name!;
     return '';
   }
@@ -245,15 +270,30 @@ class _CacheNotifier extends ChangeNotifier {
 
     _cacheList
       ..clear()
-      ..addAll(data);
+      ..addAll(data.map((e) => Cache.fromBookCache(e)));
+
+    notifyListeners();
+  }
+
+  void _listenZd(List<ZhangduCache>? data) {
+    assert(Log.e('cache manager'));
+    if (data == null) return;
+
+    _cacheListZd
+      ..clear()
+      ..addAll(data.map((e) => Cache.fromZdCache(e)));
 
     notifyListeners();
   }
 
   Future<void> deleteBook(CacheItem item) async {
     if (repository == null) return;
-    deleteCache(item);
-    await repository!.bookEvent.bookCacheEvent.deleteBook(item.id);
+    await deleteCache(item);
+    if (item.api == ApiType.zhangdu) {
+      await repository!.bookEvent.zhangduEvent.deleteZhangduBook(item.id);
+    } else {
+      await repository!.bookEvent.bookCacheEvent.deleteBook(item.id);
+    }
   }
 
   bool _out = false;
@@ -262,15 +302,19 @@ class _CacheNotifier extends ChangeNotifier {
     _out = true;
     _cacheSub?.cancel();
     _cacheSub = null;
+    _cacheSubZd?.cancel();
+    _cacheSubZd = null;
     super.dispose();
   }
 }
 
 class CacheItem {
-  const CacheItem(this.id, this.itemCounts, this.cacheItemCounts);
+  const CacheItem(this.id, this.itemCounts, this.cacheItemCounts,
+      {this.api = ApiType.biquge});
   static const none = CacheItem(0, 1, 1);
   final int id;
   final int itemCounts;
   final int cacheItemCounts;
+  final ApiType api;
   bool get isEmpty => this == none;
 }

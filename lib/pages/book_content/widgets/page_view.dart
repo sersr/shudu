@@ -48,7 +48,13 @@ class ContentPageViewState extends State<ContentPageView>
 
   PanSlideController getController() {
     if (controller != null && !controller!.close) return controller!;
-    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
+    if (bloc.initQueue.runner != null) {
+      bloc.initQueue.runner?.whenComplete(() {
+        indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
+      });
+    } else {
+      indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
+    }
     controller = PanSlideController.showPan(
       this,
       onhideEnd: onhide,

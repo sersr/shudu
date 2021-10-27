@@ -5,6 +5,7 @@ import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../data/zhangdu/zhangdu_same_users_books.dart';
 import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
+import '../../pages/book_list/cache_manager.dart';
 
 abstract class ZhangduEvent {
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
@@ -30,4 +31,5 @@ abstract class ZhangduEvent {
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update);
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author);
+  FutureOr<List<CacheItem>?> getZhangduCacheItems();
 }

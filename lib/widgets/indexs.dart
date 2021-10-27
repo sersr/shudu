@@ -117,7 +117,11 @@ class _IndexsState extends State<_Indexs> {
       if (currentIndex != null && length != null) {
         final offset = widget.extent * currentIndex - widget.halfHeight;
         return math.max(
-            0.0, math.min(offset, length * widget.extent - widget.height));
+            0.0,
+            math.min(
+                offset,
+                // 减去一个视口高度避免过度滚动
+                widget.headerextent + length * widget.extent - widget.height));
       }
       return 0;
     }

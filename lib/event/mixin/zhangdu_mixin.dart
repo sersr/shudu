@@ -13,6 +13,8 @@ import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../data/zhangdu/zhangdu_same_users_books.dart';
 import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/nop_database.dart';
+import '../../pages/book_list/cache_manager.dart';
+import '../../provider/book_index_notifier.dart';
 import '../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
@@ -45,6 +47,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
             .replaceAll('&nbsp;', ' ')
             .replaceAll(RegExp(r'<br\s*/>'), '\n');
         data = split(_raw);
+        if (data.isNotEmpty) Log.e(data.first);
         insertOrUpdateZhangduContent(ZhangduContent(
           bookId: bookId,
           contentId: contentId,
@@ -80,9 +83,10 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
         ..data.set(content.data)
         ..name.set(content.name)
         ..sort.set(content.sort)
-        ..where.bookId.equalTo(content.bookId!)
+        ..where.bookId.equalTo(content.bookId!).and
         ..where.contentId.equalTo(content.contentId!);
       final go = update.go;
+      Log.w('update: ${await go} $count', onlyDebug: false);
       return go;
     } else {
       final insert = zhangduContent.insert.insertTable(content);
@@ -186,11 +190,13 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
         final z = ZipDecoder().decodeBytes(data);
         ZhangduDetailData? detailData;
         List<ZhangduChapterData>? chapterData;
+        String? indexData;
         int errorCount = 0;
         for (var file in z) {
           if (file.isFile) {
             final bytes = file.content as List<int>;
-            final data = jsonDecode(utf8.decode(bytes));
+            final dataString = utf8.decode(bytes);
+            final data = jsonDecode(dataString);
             if (detailData == null) {
               try {
                 detailData = ZhangduDetail.fromJson(data).data;
@@ -202,10 +208,15 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
             }
             if (chapterData == null) {
               try {
+                Log.i(' a ...${file.name}');
+
                 chapterData = ZhangduChapter.fromJson(data).data;
+                if (chapterData != null) {
+                  indexData = dataString;
+                }
               } catch (e) {
                 errorCount++;
-                if (errorCount > 1) Log.w(e);
+                if (errorCount > 1) Log.w('errorCount: $errorCount\n$e');
               }
             }
           }
@@ -214,30 +225,35 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
           final _cache = _ZhangduDetailChapterCache(detailData, chapterData);
           addArchive(bookId, _cache);
           final chapterId = chapterData.isNotEmpty ? chapterData.first.id : -1;
-          final noExists = (await insertZhangduBook(ZhangduCache(
-                  name: detailData.name,
-                  picture: detailData.picture,
-                  chapterUpdateTime: detailData.chapterUpdateTime,
-                  chapterName: detailData.chapterName,
-                  chapterId: chapterId,
-                  bookId: detailData.id,
-                  sortKey: sortKey,
-                  page: 1,
-                  isTop: false,
-                  isNew: true,
-                  isShow: false))) ==
-              -1;
-          if (noExists) {
+          final data = ZhangduCache(
+            name: detailData.name,
+            picture: detailData.picture,
+            pinyin: detailData.pinyin,
+            chapterUpdateTime: detailData.chapterUpdateTime,
+            chapterName: detailData.chapterName,
+            chapterId: chapterId,
+            bookId: detailData.id,
+            sortKey: sortKey,
+            page: 1,
+            isTop: false,
+            isNew: true,
+            isShow: false,
+          );
+
+          final exists = (await insertZhangduBook(data)) == -1;
+
+          if (exists) {
             await _updateZhangduBook(
-                bookId,
+                detailData.id ?? bookId,
                 ZhangduCache(
                   chapterName: detailData.chapterName,
                   chapterUpdateTime: detailData.chapterUpdateTime,
                   name: detailData.name,
-                  chapterId: detailData.chapterId,
+                  // pinyin: detailData.pinyin,
                   picture: detailData.picture,
                 ));
           }
+          await insertOrUpdateZhangduIndex(detailData.id ?? bookId, indexData!);
           return _cache;
         }
       }
@@ -252,7 +268,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
     if (data != null) {
       return data.detailData;
     }
-    // return const ZhangduDetailData();
+    return const ZhangduDetailData();
   }
 
   @override
@@ -260,10 +276,10 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
       int bookId, bool update) async {
     if (update) {
       return await _getZhangduIndex(bookId) ??
-          getZhangduIndexDb(bookId) ??
+          _getZhangduIndexDb(bookId) ??
           const [];
     }
-    return await getZhangduIndexDb(bookId) ??
+    return await _getZhangduIndexDb(bookId) ??
         await _getZhangduIndex(bookId) ??
         const [];
   }
@@ -275,7 +291,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
     }
   }
 
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb(int bookId) {
     if (!shouldUpate(bookId)) {
       final data = getData(bookId);
       if (data != null) return data.chapterData;
@@ -301,7 +317,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   }
 
   @override
-  FutureOr<ZhangduSearchData?> getZhangduSearchData(
+  Future<ZhangduSearchData?> getZhangduSearchData(
       String query, int pageIndex, int pageSize) async {
     final url = ZhangduApi.searchUrl(query, pageIndex, pageSize);
     try {
@@ -342,19 +358,13 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
       var isNew = false;
       if (list?.isNotEmpty == true) {
         final cache = list!.last;
-        final bChapterId = book.chapterId;
         final bChapterName = book.chapterName;
-        isNew = cache.isNew == true ||
-            cache.chapterName != bChapterName ||
-            cache.chapterId != bChapterId;
+        isNew = cache.isNew == true || cache.chapterName != bChapterName;
 
-        Log.i('$isNew  ${cache.chapterName} | ${book.chapterName}',
-            onlyDebug: false);
+        // Log.i('$isNew  ${cache.toJson()} | ${book.toJson()}', onlyDebug: false);
       }
       book.isNew ??= isNew;
-      final update = zhangduCache.update..where.bookId.equalTo(bookId);
-      zhangduCache.updateZhangduCache(update, book);
-      return update.go;
+      return updateZhangduBook(bookId, book);
     });
   }
 
@@ -366,8 +376,8 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   }
 
   @override
-  FutureOr<int?> updateZhangduMainStatus(int bookId) async {
-    await getZhangduDetail(bookId);
+  FutureOr<int?> updateZhangduMainStatus(int bookId) {
+    return getZhangduDetail(bookId).then((_) => 0);
   }
 
   @override
@@ -414,6 +424,38 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
       Log.w(e);
     }
     return const [];
+  }
+
+  FutureOr<Set<int>> getZdAllBookId() async {
+    final query = zhangduCache.query.bookId;
+    return query.goToTable
+        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
+  }
+
+  FutureOr<List<ZhangduIndex>> getZdIndexsDbCacheItem() {
+    final q = zhangduIndex.query.itemCounts.cacheItemCounts.bookId;
+    return q.goToTable;
+  }
+
+  @override
+  FutureOr<List<CacheItem>?> getZhangduCacheItems() async {
+    final list = <CacheItem>[];
+    final queryData = await getZdIndexsDbCacheItem();
+    var map =
+        queryData.asMap().map((key, value) => MapEntry(value.bookId, value));
+    final allBookIds = await getZdAllBookId();
+    for (var id in allBookIds) {
+      final index = map[id];
+      final itemCounts = index?.itemCounts;
+      if (itemCounts != null) {
+        final item = CacheItem(id, itemCounts, index?.cacheItemCounts ?? 0,
+            api: ApiType.zhangdu);
+        list.add(item);
+      } else {
+        list.add(CacheItem(id, 0, 0, api: ApiType.zhangdu));
+      }
+    }
+    return list;
   }
 
   FutureOr<int> insertOrUpdateZhangduIndex(int bookId, String data) {

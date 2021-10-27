@@ -94,7 +94,6 @@ class ZhangduApi {
 
   static String sameUsersBooks(String author) {
     final m = md5.convert(utf8.encode(author));
-    Log.i(m);
     return 'http://statics.rungean.com/static/book/author/$m.json';
   }
 }

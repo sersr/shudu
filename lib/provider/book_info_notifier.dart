@@ -35,7 +35,6 @@ class BookInfoProvider extends ChangeNotifier {
         sameUsers = await repository!.bookEvent.zhangduEvent
             .getZhangduSameUsersBooks(zhangduData!.author!);
       }
-      Log.i(sameUsers);
       if (rawIndexData.isNotEmpty) {
         firstCid = rawIndexData.first.id;
         Log.w('firstCid: $firstCid', onlyDebug: false);

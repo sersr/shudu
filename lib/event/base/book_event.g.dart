@@ -34,7 +34,8 @@ enum BookEventMessage {
   watchZhangduCurrentCid,
   getZhangduDetail,
   getZhangduIndex,
-  getZhangduSameUsersBooks
+  getZhangduSameUsersBooks,
+  getZhangduCacheItems
 }
 enum CustomEventMessage {
   getSearchData,
@@ -77,7 +78,8 @@ enum ZhangduEventMessage {
   watchZhangduCurrentCid,
   getZhangduDetail,
   getZhangduIndex,
-  getZhangduSameUsersBooks
+  getZhangduSameUsersBooks,
+  getZhangduCacheItems
 }
 
 abstract class BookEventResolveMain extends BookEvent
@@ -404,7 +406,8 @@ mixin ZhangduEventResolve on Resolve, ZhangduEvent {
     _watchZhangduCurrentCid_10,
     _getZhangduDetail_11,
     _getZhangduIndex_12,
-    _getZhangduSameUsersBooks_13
+    _getZhangduSameUsersBooks_13,
+    _getZhangduCacheItems_14
   ]);
 
   @override
@@ -453,6 +456,8 @@ mixin ZhangduEventResolve on Resolve, ZhangduEvent {
   FutureOr<List<ZhangduSameUsersBooksData>?> _getZhangduSameUsersBooks_13(
           args) =>
       getZhangduSameUsersBooks(args);
+  FutureOr<List<CacheItem>?> _getZhangduCacheItems_14(args) =>
+      getZhangduCacheItems();
 }
 
 /// implements [ZhangduEvent]
@@ -527,5 +532,10 @@ mixin ZhangduEventMessager {
       String author) async {
     return sendEvent.sendMessage(
         ZhangduEventMessage.getZhangduSameUsersBooks, author);
+  }
+
+  FutureOr<List<CacheItem>?> getZhangduCacheItems() async {
+    return sendEvent.sendMessage(
+        ZhangduEventMessage.getZhangduCacheItems, null);
   }
 }

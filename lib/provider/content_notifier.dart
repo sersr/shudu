@@ -23,13 +23,16 @@ import 'text_data.dart';
 enum Status { ignore, error, done }
 
 class ContentNotifier extends ChangeNotifier {
-  ContentNotifier({required this.repository, required this.indexNotifier});
+  ContentNotifier({required this.repository});
 
   final Repository repository;
-  final BookIndexNotifier indexNotifier;
   int bookid = -1;
   ApiType api = ApiType.biquge;
+
+  /// {contentId: data}
   Map<int?, ZhangduChapterData> indexData = {};
+
+  /// 通过`lastIndexOf`找到index
   List<ZhangduChapterData> rawIndexData = [];
 
   int currentPage = 1;
@@ -354,19 +357,18 @@ extension DataLoading on ContentNotifier {
     if (api == ApiType.zhangdu) {
       final current = indexData[contentid];
       if (current == null) {
-        Log.e('error.$indexData', onlyDebug: false);
+        Log.e('error...', onlyDebug: false);
         return;
       }
-      assert(Log.i('${current.contentUrl} | ${current.name}'));
       final _index = rawIndexData.lastIndexOf(current);
-      
+
       var pid = -1;
       var nid = -1;
       if (_index > 0) {
         final p = rawIndexData.elementAt(_index - 1);
         if (p.id != null) pid = p.id!;
       }
-      if (_index < rawIndexData.length - 2) {
+      if (_index < rawIndexData.length - 1) {
         final n = rawIndexData.elementAt(_index + 1);
         if (n.id != null) nid = n.id!;
       }
@@ -374,6 +376,8 @@ extension DataLoading on ContentNotifier {
       final name = current.name;
       final sort = current.sort;
 
+      Log.i('${current.contentUrl} | ${current.name} | $nid, $pid',
+          onlyDebug: false);
       if (url != null && name != null && sort != null) {
         final lines = await repository.bookEvent.zhangduEvent
             .getZhangduContent(_bookid, contentid, url, name, sort, update);
@@ -384,6 +388,7 @@ extension DataLoading on ContentNotifier {
           final data = hasContent ? lines : const ['没有章节内容，稍后重试。'];
           final pages = await _genTextData(_bookid, data, name);
           if (pages.isEmpty) return;
+          Log.i(data.first);
           _cnpid = TextData(
             cid: contentid,
             nid: nid,
@@ -418,10 +423,10 @@ extension DataLoading on ContentNotifier {
       final old = _caches.remove(_cnpid.cid);
       old?.dispose();
       _caches[_cnpid.cid!] = _cnpid.clone();
-      _cnpid.dispose();
-      if (!_cnpid.hasContent) {
+      if (!_cnpid.hasContent && api == ApiType.zhangdu) {
         _autoAddReloadIds(contentid);
       }
+      _cnpid.dispose();
     }
   }
 }
@@ -486,9 +491,9 @@ extension Tasks on ContentNotifier {
   Future<void> _loadResolve() async {
     final updateCid = tData.cid;
     if (updateCid == null || initQueue.actived) return;
-    if (api == ApiType.zhangdu) {
-      return;
-    }
+    // if (api == ApiType.zhangdu) {
+    //   return;
+    // }
     if (tData.nid == -1 || !tData.hasContent || debugTest) {
       if (tData.contentIsEmpty) return;
 
@@ -501,18 +506,12 @@ extension Tasks on ContentNotifier {
               startFirstEvent(
                   only: false,
                   clear: false,
-                  onStart: () {
-                    if (inBook) {
-                      notifyState(loading: true);
-                    }
-                  },
                   onDone: () {
                     if (debugTest) {
                       debugTest = false;
                     }
-                    notifyState(loading: false);
                     Log.w(
-                        'update $updateCid \n url: ${Api.contentUrl(bookid, _tData.cid)}',
+                        'update $updateCid \n url: ${Api.contentUrl(bookid, updateCid)}',
                         onlyDebug: false);
                   });
               return true;
@@ -524,10 +523,8 @@ extension Tasks on ContentNotifier {
 
       if (_getdata()) return;
 
-      if (_reloadIds.contains(updateCid)) return;
-      assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
-
       if (_autoAddReloadIds(updateCid)) return;
+      await load(bookid, updateCid, update: true);
       _getdata();
     }
   }
@@ -656,7 +653,7 @@ extension Layout on ContentNotifier {
 
     whiteRows = 150 ~/ lineHeightAndExtra + 1;
 
-    while (lineHeightAndExtra * whiteRows > 150) {
+    while (lineHeightAndExtra * whiteRows > 140) {
       whiteRows--;
       if (lineHeightAndExtra * whiteRows < 120) break;
       await releaseUI;
@@ -730,7 +727,11 @@ extension Layout on ContentNotifier {
 
     await releaseUI;
     var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
-
+    if (topExtraRows > 1) {
+      if (whiteRows > 2) {
+        whiteRows--;
+      }
+    }
     final pages = <List<TextPainter>>[];
     // 首页留白和标题
     final firstPages = math.max(0, rows - whiteRows - topExtraRows);
@@ -1031,7 +1032,6 @@ extension Event on ContentNotifier {
         rawIndexData = await repository.bookEvent.zhangduEvent
                 .getZhangduIndex(bookid, false) ??
             [];
-        Log.i(rawIndexData);
         final d =
             rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
         indexData.clear();
