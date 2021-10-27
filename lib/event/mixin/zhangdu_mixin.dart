@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
@@ -24,37 +25,45 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) async {
-
     if (update) {
       return await _getContentNet(bookId, contentId, name, sort, contentUrl) ??
-          await _getContentDb(bookId, contentId) ??
-          const [];
+          await _getContentDb(bookId, contentId);
     } else {
       return await _getContentDb(bookId, contentId) ??
-          await _getContentNet(bookId, contentId, name, sort, contentUrl) ??
-          const [];
+          await _getContentNet(bookId, contentId, name, sort, contentUrl);
     }
   }
 
   Future<List<String>?> _getContentNet(int bookId, int contentId, String name,
       int sort, String contentUrl) async {
     List<String>? data;
-    final response = await dio.get<String>(contentUrl);
-    final result = response.data;
-    if (result != null) {
-      final _raw = result
-          .replaceAll('&nbsp;', ' ')
-          .replaceAll(RegExp(r'<br\s*/>'), '\n');
-      data = split(_raw);
-      insertOrUpdateZhangduContent(ZhangduContent(
-        bookId: bookId,
-        contentId: contentId,
-        name: name,
-        data: result,
-        sort: sort,
-      ));
+    try {
+      final response = await dio.get<String>(contentUrl);
+      final result = response.data;
+      if (result != null) {
+        final _raw = result
+            .replaceAll('&nbsp;', ' ')
+            .replaceAll(RegExp(r'<br\s*/>'), '\n');
+        data = split(_raw);
+        insertOrUpdateZhangduContent(ZhangduContent(
+          bookId: bookId,
+          contentId: contentId,
+          name: name,
+          data: result,
+          sort: sort,
+        ));
+      }
+    } catch (e) {
+      if (e is DioError) {
+        Log.e(e);
+        if (e.type == DioErrorType.response &&
+            e.response?.statusCode == HttpStatus.notFound) {
+          return const [];
+        }
+      } else {
+        Log.i(e);
+      }
     }
-    Log.w('done...');
     return data;
   }
 
@@ -225,6 +234,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
                   chapterName: detailData.chapterName,
                   chapterUpdateTime: detailData.chapterUpdateTime,
                   name: detailData.name,
+                  chapterId: detailData.chapterId,
                   picture: detailData.picture,
                 ));
           }
@@ -334,11 +344,11 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
         final cache = list!.last;
         final bChapterId = book.chapterId;
         final bChapterName = book.chapterName;
-        if (cache.chapterName != bChapterName ||
-            cache.chapterId != bChapterId) {
-          isNew = true;
-        }
-        Log.i('....${cache.chapterName} | ${book.chapterName}',
+        isNew = cache.isNew == true ||
+            cache.chapterName != bChapterName ||
+            cache.chapterId != bChapterId;
+
+        Log.i('$isNew  ${cache.chapterName} | ${book.chapterName}',
             onlyDebug: false);
       }
       book.isNew ??= isNew;

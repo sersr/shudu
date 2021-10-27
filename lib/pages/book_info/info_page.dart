@@ -88,23 +88,19 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               final infoData = info.get(widget.id);
               if (infoData == null) {
                 return loadingIndicator();
-                // } else {
-                //   if ((infoData.data == null || infoData.data?.id == null) ||
-                //       widget.api == ApiType.zhangdu &&
-                //           (infoData == null || infoData.data?.id == null)) {
-                //     return reloadBotton(() => info.reload(widget.id, widget.api));
-                //   }
               }
               var children = <Widget>[];
-              int? bookId = 0;
+              int bookId = 0;
               int? firstChapterId = -1;
               if (widget.api == ApiType.biquge) {
                 final _infoData = infoData as BookInfoRoot;
-                if ((_infoData.data == null || _infoData.data?.id == null)) {
+                final _bookId = _infoData.data?.id;
+
+                if ((_infoData.data == null || _bookId == null)) {
                   return reloadBotton(() => info.reload(widget.id, widget.api));
                 }
+                bookId = _bookId;
                 final infos = _infoData.data!;
-                bookId = infos.id;
                 firstChapterId = infos.firstChapterId;
                 children.add(header(infos.author, infos.bookStatus, infos.name,
                     infos.bookVote?.scroe, infos.cName, infos.img, ts));
@@ -120,14 +116,15 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                     ts));
               } else if (widget.api == ApiType.zhangdu) {
                 final data = infoData as ZhangduDetailData?;
-
-                if (data == null || data.id == null) {
+                final _bookId = data?.id;
+                if (data == null || _bookId == null) {
                   return reloadBotton(() => info.reload(widget.id, widget.api));
                 }
-                bookId = data.id;
-                firstChapterId = info.firstCid ?? firstChapterId;
+                bookId = _bookId;
+                firstChapterId =
+                    info.firstCid ?? data.chapterId ?? firstChapterId;
                 children.add(header(data.author, data.bookStatus, data.name,
-                    data.score, data.chapterName, data.picture, ts));
+                    data.score, data.categoryName, data.picture, ts));
                 children.addAll(desc(
                   data.id,
                   data.author,
@@ -172,19 +169,18 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
                             int? cid;
                             int? currentPage;
-                            // if (widget.api == ApiType.biquge) {
-                              final list = cache.sortChildren;
+                            final list = cache.sortChildren;
 
-                              for (var l in list) {
-                                if (l.bookId == bookId) {
-                                  if (l.isShow ?? false) {
-                                    show = true;
-                                    cid = l.chapterId;
-                                    currentPage = l.page;
-                                  }
-                                  break;
+                            for (var l in list) {
+                              if (l.bookId == bookId) {
+                                if (l.isShow ?? false) {
+                                  show = true;
+                                  cid = l.chapterId;
+                                  currentPage = l.page;
                                 }
+                                break;
                               }
+                            }
 
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -223,8 +219,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                         _cid = firstChapterId!;
                                         _page = 1;
                                       }
-                                      Log.i('bookid:$bookId,  $_cid');
-                                      BookContentPage.push(context, bookId!,
+                                      BookContentPage.push(context, bookId,
                                           _cid, _page, widget.api);
                                     },
                                     background: false,
@@ -234,7 +229,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                   child: btn1(
                                     background: false,
                                     onTap: () => cache.updateShow(
-                                        bookId!, !show, widget.api),
+                                        bookId, !show, widget.api),
                                     child: Padding(
                                       padding: EdgeInsets.only(
                                           bottom: bottom > 0.0 &&

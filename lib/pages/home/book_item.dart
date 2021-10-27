@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
 
+import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
-import '../../widgets/text_builder.dart';
 import '../../widgets/images.dart';
+import '../../widgets/text_builder.dart';
 
 class BookItem extends StatelessWidget {
   const BookItem(
@@ -15,6 +16,7 @@ class BookItem extends StatelessWidget {
       this.bookName,
       this.bookUdateItem,
       this.bookUpdateTime,
+      required this.api,
       required this.isNew,
       required this.isTop})
       : super(key: key);
@@ -25,6 +27,7 @@ class BookItem extends StatelessWidget {
   final String? img;
   final bool isNew;
   final bool isTop;
+  final ApiType api;
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +59,11 @@ class BookItem extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
                 child: TextAsyncLayout(
-                      height: 98,
-                      top: bookName ?? '',
-                      center: '最新：$bookUdateItem',
-                      bottom: bookUpdateTime ?? ''),
+                    height: 98,
+                    top: bookName ?? '',
+                    topRightScore: api == ApiType.zhangdu ? '_' : null,
+                    center: '最新：$bookUdateItem',
+                    bottom: bookUpdateTime ?? ''),
               ),
             ),
           ),

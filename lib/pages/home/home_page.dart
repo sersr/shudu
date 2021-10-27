@@ -333,6 +333,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     child: BookItem(
                       img: item.img,
                       bookName: item.name,
+                      api: item.api,
                       bookUdateItem: item.lastChapter,
                       bookUpdateTime: item.updateTime,
                       isTop: item.isTop ?? false,
@@ -620,7 +621,7 @@ class BookSearchPage extends SearchDelegate<void> {
                                             child: TextAsyncLayout(
                                                 height: 108,
                                                 topRightScore:
-                                                    'zhangdu | ${data.bookStatus}',
+                                                    '${data.bookStatus}',
                                                 top: data.name ?? '',
                                                 center:
                                                     '${data.categoryName} | ${data.author}',

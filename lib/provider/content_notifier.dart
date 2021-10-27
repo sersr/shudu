@@ -331,22 +331,41 @@ extension DataLoading on ContentNotifier {
     return _run(() => _load(_bookid, contentid, update));
   }
 
+  Future<List<ContentMetrics>> _genTextData(
+      int oldBookId, List<String> data, String cname) async {
+    final _key = key;
+
+    final pages = await _asyncLayout(data, cname);
+
+    if (_key != key || oldBookId != bookid) {
+      for (final p in pages) {
+        // 释放picture资源
+        p.dispose();
+      }
+      assert(Log.w('当前章节被抛弃'));
+      return const [];
+    }
+    return pages;
+  }
+
   Future<void> _load(int _bookid, int contentid, bool update) async {
     if (_bookid == -1 || contentid == -1) return;
+    TextData? _cnpid;
     if (api == ApiType.zhangdu) {
       final current = indexData[contentid];
       if (current == null) {
-        Log.e('error.$indexData');
+        Log.e('error.$indexData', onlyDebug: false);
         return;
       }
-      Log.i('${current.contentUrl} | ${current.name}');
+      assert(Log.i('${current.contentUrl} | ${current.name}'));
       final _index = rawIndexData.lastIndexOf(current);
+      
       var pid = -1;
+      var nid = -1;
       if (_index > 0) {
         final p = rawIndexData.elementAt(_index - 1);
         if (p.id != null) pid = p.id!;
       }
-      var nid = -1;
       if (_index < rawIndexData.length - 2) {
         final n = rawIndexData.elementAt(_index + 1);
         if (n.id != null) nid = n.id!;
@@ -354,36 +373,25 @@ extension DataLoading on ContentNotifier {
       final url = current.contentUrl;
       final name = current.name;
       final sort = current.sort;
+
       if (url != null && name != null && sort != null) {
         final lines = await repository.bookEvent.zhangduEvent
             .getZhangduContent(_bookid, contentid, url, name, sort, update);
         if (_bookid != bookid) return;
-        /// 可能没有返回数据，并且不是网络错误
+
         if (lines != null) {
-          final _key = key;
-          final pages = await _asyncLayout(lines, name);
-          // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
-          if (_key != key || _bookid != bookid) {
-            for (final p in pages) {
-              // 释放picture资源
-              p.dispose();
-            }
-            assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
-            return;
-          }
+          final hasContent = lines.isNotEmpty;
+          final data = hasContent ? lines : const ['没有章节内容，稍后重试。'];
+          final pages = await _genTextData(_bookid, data, name);
           if (pages.isEmpty) return;
-          final _cnpid = TextData(
+          _cnpid = TextData(
             cid: contentid,
             nid: nid,
             pid: pid,
             content: pages,
-            hasContent: true,
+            hasContent: hasContent,
             cname: name,
           );
-          final old = _caches.remove(_cnpid.cid);
-          old?.dispose();
-          _caches[_cnpid.cid!] = _cnpid.clone();
-          _cnpid.dispose();
         }
       }
     } else {
@@ -392,19 +400,10 @@ extension DataLoading on ContentNotifier {
       if (_bookid != bookid) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
-        final _key = key;
-        final pages = await _asyncLayout(lines.pages, lines.cname!);
-        // final pages = await _asyncLayoutText(lines.pages, lines.cname!);
-        if (_key != key || _bookid != bookid) {
-          for (final p in pages) {
-            // 释放picture资源
-            p.dispose();
-          }
-          assert(Log.w('当前章节被抛弃 ${Api.contentUrl(_bookid, contentid)}'));
-          return;
-        }
+        final pages = await _genTextData(_bookid, lines.pages, lines.cname!);
+
         if (pages.isEmpty) return;
-        final _cnpid = TextData(
+        _cnpid = TextData(
           content: pages,
           nid: lines.nid,
           pid: lines.pid,
@@ -413,10 +412,15 @@ extension DataLoading on ContentNotifier {
           cname: lines.cname,
           // rawContent: lines.pages,
         );
-        final old = _caches.remove(_cnpid.cid);
-        old?.dispose();
-        _caches[_cnpid.cid!] = _cnpid.clone();
-        _cnpid.dispose();
+      }
+    }
+    if (_cnpid != null) {
+      final old = _caches.remove(_cnpid.cid);
+      old?.dispose();
+      _caches[_cnpid.cid!] = _cnpid.clone();
+      _cnpid.dispose();
+      if (!_cnpid.hasContent) {
+        _autoAddReloadIds(contentid);
       }
     }
   }
@@ -467,18 +471,22 @@ extension Tasks on ContentNotifier {
 
   void _loadWithId(int? id) => _loadTasks(bookid, id);
 
+  bool _autoAddReloadIds(int contentId) {
+    if (_reloadIds.contains(contentId)) return true;
+    assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
+
+    _reloadIds.add(contentId);
+
+    Future.delayed(
+        const Duration(seconds: 10), () => _reloadIds.remove(contentId));
+    return false;
+  }
+
   // 处于最后一章节时，查看是否有更新
   Future<void> _loadResolve() async {
     final updateCid = tData.cid;
     if (updateCid == null || initQueue.actived) return;
     if (api == ApiType.zhangdu) {
-      if (_reloadIds.contains(updateCid)) return;
-      assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
-
-      _reloadIds.add(updateCid);
-
-      Future.delayed(
-          const Duration(seconds: 10), () => _reloadIds.remove(updateCid));
       return;
     }
     if (tData.nid == -1 || !tData.hasContent || debugTest) {
@@ -501,8 +509,8 @@ extension Tasks on ContentNotifier {
                   onDone: () {
                     if (debugTest) {
                       debugTest = false;
-                      notifyState(loading: false);
                     }
+                    notifyState(loading: false);
                     Log.w(
                         'update $updateCid \n url: ${Api.contentUrl(bookid, _tData.cid)}',
                         onlyDebug: false);
@@ -519,11 +527,7 @@ extension Tasks on ContentNotifier {
       if (_reloadIds.contains(updateCid)) return;
       assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
 
-      _reloadIds.add(updateCid);
-
-      await load(bookid, updateCid, update: true);
-      Future.delayed(
-          const Duration(seconds: 10), () => _reloadIds.remove(updateCid));
+      if (_autoAddReloadIds(updateCid)) return;
       _getdata();
     }
   }
@@ -1027,7 +1031,7 @@ extension Event on ContentNotifier {
         rawIndexData = await repository.bookEvent.zhangduEvent
                 .getZhangduIndex(bookid, false) ??
             [];
-            Log.i(rawIndexData);
+        Log.i(rawIndexData);
         final d =
             rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
         indexData.clear();
