@@ -376,8 +376,7 @@ extension DataLoading on ContentNotifier {
       final name = current.name;
       final sort = current.sort;
 
-      Log.i('${current.contentUrl} | ${current.name} | $nid, $pid',
-          onlyDebug: false);
+      assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
       if (url != null && name != null && sort != null) {
         final lines = await repository.bookEvent.zhangduEvent
             .getZhangduContent(_bookid, contentid, url, name, sort, update);
@@ -655,7 +654,7 @@ extension Layout on ContentNotifier {
 
     while (lineHeightAndExtra * whiteRows > 140) {
       whiteRows--;
-      if (lineHeightAndExtra * whiteRows < 120) break;
+      if (lineHeightAndExtra * whiteRows < 130) break;
       await releaseUI;
     }
 
@@ -727,7 +726,7 @@ extension Layout on ContentNotifier {
 
     await releaseUI;
     var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
-    if (topExtraRows > 1) {
+    if (topExtraRows > 2) {
       if (whiteRows > 2) {
         whiteRows--;
       }
@@ -1218,6 +1217,7 @@ extension Event on ContentNotifier {
     if (inBook || size.isEmpty) {
       if (size.isEmpty) size = data.size;
       final changed = _modifiedSize(data);
+      Log.e(changed);
       if (changed && inBook) {
         _sizeChangedTimer?.cancel();
         _sizeChangedTimer = Timer(const Duration(milliseconds: 100), () {

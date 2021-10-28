@@ -8,15 +8,15 @@ import '../../provider/provider.dart';
 
 Dio dioCreater() => Dio(
       BaseOptions(
-        connectTimeout: 5000,
-        sendTimeout: 5000,
-        receiveTimeout: 10000,
-        headers: {
-          HttpHeaders.connectionHeader: 'Keep-Alive',
-          HttpHeaders.userAgentHeader:
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                  ' (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36 Edg/90.0.818.56'
-        },
+        connectTimeout: 10000,
+        sendTimeout: 10000,
+        receiveTimeout: 30000,
+        // headers: {
+        // HttpHeaders.connectionHeader: 'Keep-Alive',
+        // HttpHeaders.userAgentHeader:
+        //     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        //         ' (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36 Edg/90.0.818.56'
+        // },
       ),
     );
 

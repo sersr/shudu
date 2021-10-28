@@ -26,7 +26,7 @@ class BookContentPage extends StatefulWidget {
     if (_lock != null) return;
     _lock = const Object();
     final bloc = context.read<ContentNotifier>();
-    bloc.touchBook(newBookid, cid, page, api: api);
+    await bloc.touchBook(newBookid, cid, page, api: api);
     _lock = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
@@ -82,8 +82,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   Timer? errorTimer;
   @override
   Widget wrapOverlay(context, overlay) {
+    Log.i('....${bloc.inBook}');
     bloc.metricsChange(MediaQuery.of(context));
-
     Widget child = AnimatedBuilder(
       animation: notifyColor,
       builder: (context, child) {

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-import 'package:useful_tools/common.dart';
 
 import '../../../provider/content_notifier.dart';
 import '../../../widgets/activity.dart';

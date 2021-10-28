@@ -14,7 +14,7 @@ abstract class Repository {
   DeferredMain? _hotFix;
   DeferredMain? get hotFix => _hotFix;
   void close();
-  ValueNotifier<bool> get init;
+  ValueListenable<bool> get init;
 
   BookEvent get bookEvent;
 

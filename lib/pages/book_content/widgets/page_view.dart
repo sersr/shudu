@@ -138,7 +138,6 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc = context.read<ContentNotifier>()..controller = offsetPosition;
     _bloc!.addListener(update);
     indexBloc = context.read<BookIndexNotifier>();
-    Log.w('$runtimeType update', onlyDebug: false);
     update();
   }
 

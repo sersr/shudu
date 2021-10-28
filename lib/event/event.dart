@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:file/file.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/common.dart';
 
@@ -18,7 +19,8 @@ export 'base/repository.dart';
 class BookEventIsolate extends BookEventResolveMain
     with DatabaseMixin, NetworkMixin, ComplexMixin, ZhangduEventMixin {
   BookEventIsolate(
-      this.sp, this.appPath, this.cachePath, this.useFfi, this.useSqflite3);
+      this.sp, this.appPath, this.cachePath,
+      this.sqfliteFfiEnabled, this.useSqflite3);
 
   @override
   final SendPort sp;
@@ -30,13 +32,12 @@ class BookEventIsolate extends BookEventResolveMain
   @override
   final bool useSqflite3;
   @override
-  final bool useFfi;
+  final bool sqfliteFfiEnabled;
 
   Future<void> initState() async {
     final d = initDb();
-    final n = netEventInit();
+    await netEventInit();
     await d;
-    await n;
   }
 
   @override
@@ -67,12 +68,19 @@ void isolateEvent(List args) async {
   final port = args[0];
   final appPath = args[1];
   final cachePath = args[2];
-  final useFfi = args[3];
+  final sqfliteFfiEnabled = args[3];
   final useSqflite3 = args[4];
   final receivePort = ReceivePort();
+  Log.i('$appPath | $cachePath | $sqfliteFfiEnabled | $useSqflite3',
+      onlyDebug: false);
 
-  final db = BookEventIsolate(port, appPath, cachePath, useFfi, useSqflite3);
-  await db.initState();
+  final db = BookEventIsolate(
+      port, appPath, cachePath, sqfliteFfiEnabled, useSqflite3);
+  try {
+    await db.initState();
+  } catch (e) {
+    Log.e('initState error: $e', onlyDebug: false);
+  }
 
   receivePort.listen((m) {
     if (db.resolve(m)) return;

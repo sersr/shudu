@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:file/local.dart';
 import 'package:nop_db/database/nop.dart';
 import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:path/path.dart';
@@ -15,7 +16,7 @@ mixin DatabaseMixin implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
-  bool get useFfi => false;
+  bool get sqfliteFfiEnabled => false;
   bool get useSqflite3 => false;
 
   late final bookCache = db.bookCache;
@@ -26,9 +27,18 @@ mixin DatabaseMixin implements DatabaseEvent {
       ? NopDatabase.memory
       : join(appPath, name);
 
-  FutureOr<void> initDb() => db.initDb();
+  FutureOr<void> initDb() {
+    if (_url != NopDatabase.memory) {
+      const fs = LocalFileSystem();
+      final dir = fs.currentDirectory.childDirectory(appPath);
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+    }
+    return db.initDb();
+  }
 
-  late final db = BookDatabase(_url, useFfi, useSqflite3);
+  late final db = BookDatabase(_url, sqfliteFfiEnabled, useSqflite3);
 
   @override
   FutureOr<int> updateBook(int id, BookCache book) {

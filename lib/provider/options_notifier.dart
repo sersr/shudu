@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/src/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 class ConfigOptions {
@@ -105,7 +105,7 @@ class OptionsNotifier extends ChangeNotifier {
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    EventQueue.runOneTaskOnQueue(OptionsNotifier, saveOptions);
+    if (_initDone) EventQueue.runOneTaskOnQueue(OptionsNotifier, saveOptions);
     notifyListeners();
   }
 
@@ -121,6 +121,7 @@ class OptionsNotifier extends ChangeNotifier {
   static const _updateOnStart = 'updateOnStart';
   // static const _followSystem = 'followSystem';
   static const _themeMode = 'themeMode';
+  static ThemeMode mode = ThemeMode.system;
 
   static void autoSetStatus(BuildContext context) {
     final mode = context.read<OptionsNotifier>().options.themeMode;
@@ -173,7 +174,7 @@ class OptionsNotifier extends ChangeNotifier {
   }
 
   static Future<ThemeMode> getThemeMode() async {
-    return EventQueue.runTaskOnQueue(getThemeMode, () async {
+    return EventQueue.runTaskOnQueue(OptionsNotifier, () async {
       final box = await Hive.openBox(_options_);
       final mode = box.get(_themeMode, defaultValue: ThemeMode.system);
       await box.close();
@@ -183,9 +184,10 @@ class OptionsNotifier extends ChangeNotifier {
 
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.runTaskOnQueue(getThemeMode, _init);
-
+  Future<void> init() => EventQueue.runTaskOnQueue(OptionsNotifier, _init);
+  bool _initDone = false;
   Future<void> _init() async {
+    if (_initDone) return;
     final box = await Hive.openBox(_options_);
 
     // 版本适配
@@ -230,6 +232,7 @@ class OptionsNotifier extends ChangeNotifier {
         box.get(_themeMode, defaultValue: ThemeMode.system);
     GestureBinding.instance!.resamplingEnabled = resample;
     NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
+    await box.close();
 
     options = ConfigOptions(
       platform: platform,
@@ -243,10 +246,12 @@ class OptionsNotifier extends ChangeNotifier {
       themeMode: themeMode,
       extenalStorage: await extenalStorage,
     );
-    await box.close();
+
+    _initDone = true;
   }
 
   Future<void> saveOptions() async {
+    assert(_initDone);
     final box = await Hive.openBox(_options_);
 
     final any = FutureAny();
@@ -263,7 +268,6 @@ class OptionsNotifier extends ChangeNotifier {
     _updateOptions(box, any, _useImageCache, options.useImageCache);
     _updateOptions(box, any, _updateOnStart, options.updateOnStart);
 
-    // _updateOptions(box, any, _followSystem, options.followSystem);
     _updateOptions(box, any, _themeMode, options.themeMode);
 
     if (_updateOptions(box, any, _resample, options.resample))

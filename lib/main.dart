@@ -1,4 +1,4 @@
-import 'dart:ui';
+
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +30,7 @@ void main() async {
   final appDir = await getApplicationDocumentsDirectory();
   hiveInit(join(appDir.path, 'shudu', 'hive'));
   final mode = await OptionsNotifier.getThemeMode();
+  Log.i('mode: $mode');
   runApp(MulProvider(hotFix: hot, mode: mode));
   uiOverlay(hide: false);
 

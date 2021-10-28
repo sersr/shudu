@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/change_notifier.dart';
 import 'package:useful_tools/common.dart';
-import 'package:useful_tools/src/change_notifier/change_notifier_select.dart';
 import 'package:useful_tools/widgets.dart';
 
 import '../../provider/options_notifier.dart';

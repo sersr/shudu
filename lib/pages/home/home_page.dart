@@ -5,8 +5,6 @@ import 'package:flutter/Material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../database/nop_database.dart';
-
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
@@ -52,20 +50,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final data = MediaQuery.of(context);
 
     final rep = cache.repository;
-    _future ??= rep.initState.then((_) {
+    if (_future == null) {
+      final any = FutureAny();
       painterBloc.metricsChange(data);
-      return Future.wait([
-        opts.init(),
-        cache.load(),
-        search.init(),
-        painterBloc.initConfigs(),
-      ]);
-    })
-      ..whenComplete(() {
-        if (opts.options.updateOnStart == true) {
+      any
+        ..add(opts.init())
+        ..add(painterBloc.initConfigs())
+        ..add(cache.load())
+        ..add(search.init());
+      _future = Future.value(any.wait);
+      rep.initState.whenComplete(() {
+        if (opts.options.updateOnStart == true && mounted) {
           _refreshKey.currentState!.show();
         }
       });
+    }
   }
 
   @override
@@ -205,6 +204,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         currentIndex: currentIndex,
       ),
     );
+
+    // return child;
 
     /// 安全地初始化
     return FutureBuilder<void>(

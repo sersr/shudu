@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:android_external_storage/android_external_storage.dart';
 import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
+import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:memory_info/memory_info.dart';
@@ -87,8 +89,6 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
   Isolate? _isolate;
 
-  // Isolate? get isolate => _isolate;
-
   set isolate(Isolate? n) {
     if (_isolate != n && _isolate != null) {
       _isolate!.kill(priority: Isolate.immediate);
@@ -106,7 +106,7 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     final _waits = FutureAny();
 
-    Directory? appDirExt;
+    String? appDirExt;
     List<Directory>? cacheDirs;
 
     _waits
@@ -115,11 +115,17 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
 
     if (Platform.isAndroid) {
       // 存储在外部，避免重新安装时数据丢失
-      _waits.add(getExternalStorageDirectories().then((f) {
+      _waits.add(getExternalStorageDirectories().then((f) async {
         if (f != null && f.isNotEmpty) {
-          appDirExt = Directory('/storage/emulated/0/shudu');
-          // final ff = f.first;
-          // Log.w('storage: ${await ff.list().toList()}', onlyDebug: false);
+          String? extPath;
+          try {
+            extPath =
+                await AndroidExternalStorage.getExternalStorageDirectory();
+          } catch (e) {
+            Log.i(e);
+          }
+          final appPath = extPath ?? '/storage/emulated/0';
+          appDirExt = '$appPath/shudu';
         }
         _waits
           ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
@@ -148,45 +154,48 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
     bool useSqflite3 = false;
     _waits.add(getApplicationDocumentsDirectory().then((dir) {
       appDir = dir;
-      Log.i('init ....', onlyDebug: false);
     }));
     _waits.add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
 
     await _waits.wait;
 
-    final appPath = appDirExt?.path ?? appDir.path;
+    final appPath = appDirExt ?? appDir.path;
+
+    const fs = LocalFileSystem();
+    final dir = fs.currentDirectory.childDirectory(appPath);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+
     final cachePath = cacheDirs?.isNotEmpty == true
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
     final rcPort = ReceivePort();
-    bool useFfi = false;
+    bool sqfliteFfiEnabled = false;
     switch (defaultTargetPlatform) {
       case TargetPlatform.linux:
       case TargetPlatform.windows:
-        useFfi = true;
+        sqfliteFfiEnabled = true;
         break;
       default:
     }
-
     Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
-    if (!useFfi && useSqflite3) {
+    if (!sqfliteFfiEnabled && useSqflite3) {
       SqfliteMainIsolate.initMainDb();
     }
 
     /// Isolate event
     final newIsolate = await Isolate.spawn(isolateEvent,
-        [rcPort.sendPort, appPath, cachePath, useFfi, useSqflite3]);
+        [rcPort.sendPort, appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {
       final memory = await getMemoryInfo();
-      // final totalMem = memory.totalMem;
       final freeMem = memory.freeMem;
       const size = 1.5 * 1024;
       if (freeMem != null && freeMem < size) {
         CacheBinding.instance!.imageRefCache!.length = 250;
       }
-      Log.i(memory.freeMem, onlyDebug: false);
     }
     await onDone(rcPort);
 
@@ -202,14 +211,13 @@ abstract class BookRepositoryBase extends Repository implements SendEvent {
   final ValueNotifier<bool> _init = ValueNotifier(false);
 
   @override
-  ValueNotifier<bool> get init {
+  ValueListenable<bool> get init {
     assert(_init.value == (_isolate != null));
     return _init;
   }
 
   @mustCallSuper
   Future<void> onClose() async {
-    // await Hive.close();
     isolate = null;
   }
 

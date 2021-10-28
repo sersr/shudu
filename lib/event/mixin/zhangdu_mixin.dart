@@ -36,6 +36,23 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
     }
   }
 
+  String _replaceAll(String source) {
+    return source
+        .replaceAll(RegExp(r'<br\s*/>'), '\n')
+        // .replaceAll('&nbsp;&nbsp;&nbsp;&nbsp;', '\u3000\u3000')
+        .replaceAll(RegExp('&nbsp;|<.*>'), '')
+        .replaceAll(RegExp('(&ldquo;)|(&rdquo;)'), '"');
+  }
+
+  List<String> _split(String source) {
+    return split(source).map((e) {
+      if (!e.startsWith('\u3000\u3000')) {
+        return '\u3000\u3000$e';
+      }
+      return e;
+    }).toList();
+  }
+
   Future<List<String>?> _getContentNet(int bookId, int contentId, String name,
       int sort, String contentUrl) async {
     List<String>? data;
@@ -43,10 +60,8 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
       final response = await dio.get<String>(contentUrl);
       final result = response.data;
       if (result != null) {
-        final _raw = result
-            .replaceAll('&nbsp;', ' ')
-            .replaceAll(RegExp(r'<br\s*/>'), '\n');
-        data = split(_raw);
+        final _raw = _replaceAll(result);
+        data = _split(_raw);
         if (data.isNotEmpty) Log.e(data.first);
         insertOrUpdateZhangduContent(ZhangduContent(
           bookId: bookId,
@@ -86,7 +101,6 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
         ..where.bookId.equalTo(content.bookId!).and
         ..where.contentId.equalTo(content.contentId!);
       final go = update.go;
-      Log.w('update: ${await go} $count', onlyDebug: false);
       return go;
     } else {
       final insert = zhangduContent.insert.insertTable(content);
@@ -120,10 +134,8 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
         assert(all.length > 1 || Log.e('content $bookId count: ${all.length}'));
         final raw = all.last.data;
         if (raw != null) {
-          final _raw = raw
-              .replaceAll('&nbsp;', ' ')
-              .replaceAll(RegExp(r'<br\s*/>'), '\n');
-          data = split(_raw);
+          final _raw = _replaceAll(raw);
+          data = _split(_raw);
         }
       }
       return data;
