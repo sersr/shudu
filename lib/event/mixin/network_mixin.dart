@@ -18,13 +18,17 @@ mixin NetworkMixin implements CustomEvent {
   var frequency = 0;
   late Dio dio;
 
-  late Box<int> imageUpdate;
+  late Box imageUpdate;
 
   String get appPath;
   String get cachePath;
 
   Future<void> netEventInit() => _init();
   Timer? frequencyTimer;
+  Future<void> closeNet() async {
+    dio.close(force: true);
+    await Hive.close();
+  }
 
   Future<String> getIndexsNet(int id) {
     return _loadIndexs(id);
@@ -130,13 +134,13 @@ extension _NetworkImpl on NetworkMixin {
     Hive.init(join(appPath, 'hive'));
     final d = Directory(imageLocalPath);
 
-    imageUpdate = await Hive.openBox<int>('imageUpdate');
+    imageUpdate = await Hive.openBox('imageUpdate');
     final exists = await d.exists();
 
     if (imageUpdate.get('_version_', defaultValue: -1) == -1) {
       await imageUpdate.deleteFromDisk();
 
-      imageUpdate = await Hive.openBox<int>('imageUpdate');
+      imageUpdate = await Hive.openBox('imageUpdate');
 
       await imageUpdate.put('_version_', 1);
       if (exists) {
@@ -148,40 +152,6 @@ extension _NetworkImpl on NetworkMixin {
     if (!exists) {
       d.createSync(recursive: true);
     }
-    // assert(Log.w((await d.list().toList()).join(' | img.\n')));
-
-    // final now = DateTime.now().millisecondsSinceEpoch;
-    // var map = imageUpdate.toMap();
-    // for (final m in map.entries) {
-    //   final key = m.key;
-    //   final value = m.value;
-    //   if (key == '_version_') continue;
-
-    //   if (value + oneDay / 2 < now) {
-    //     await imageUpdate.delete(key);
-    //   }
-    // }
-
-    // images = await Hive.openBox<String>('images');
-    // map = imageUpdate.toMap();
-
-    // final _img = images.toMap().entries;
-    // final tasks = <Future>[];
-    // for (final e in _img) {
-    //   final key = e.key;
-    //   final value = e.value;
-    //   if (key == '_version_') return;
-
-    //   if (!map.containsKey(key)) {
-    //     tasks.add(images.delete(key));
-
-    //     final f = File(join(imageLocalPath, value));
-    //     tasks.add(f.exists().then((exists) {
-    //       if (exists) return f.delete(recursive: true);
-    //     }));
-    //   }
-    // }
-    // iOTask.awaitEventTask(() => Future.wait(tasks));
   }
 
   Future<T> _decode<T>(dynamic url,

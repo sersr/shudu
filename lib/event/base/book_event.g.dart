@@ -6,40 +6,8 @@ part of 'book_event.dart';
 // Generator: IsolateEventGeneratorForAnnotation
 // **************************************************************************
 
-enum BookEventMessage {
-  getSearchData,
-  getImagePath,
-  getImageBytes,
-  getHiveShudanLists,
-  getShudanLists,
-  getTopLists,
-  getCategLists,
-  getShudanDetail,
-  getCategoryData,
-  getCacheItems,
-  getContent,
-  getIndexs,
-  updateBookStatus,
-  getInfo,
-  getZhangduContent,
-  deleteZhangduContentCache,
-  watchZhangduContentCid,
-  getZhangduSearchData,
-  updateZhangduMainStatus,
-  getZhangduMainList,
-  watchZhangduMainList,
-  updateZhangduBook,
-  insertZhangduBook,
-  deleteZhangduBook,
-  watchZhangduCurrentCid,
-  getZhangduDetail,
-  getZhangduIndex,
-  getZhangduSameUsersBooks,
-  getZhangduCacheItems
-}
 enum CustomEventMessage {
   getSearchData,
-  getImagePath,
   getImageBytes,
   getHiveShudanLists,
   getShudanLists,
@@ -86,7 +54,6 @@ abstract class BookEventResolveMain extends BookEvent
     with
         Resolve,
         CustomEventResolve,
-        DatabaseEventResolve,
         BookCacheEventResolve,
         BookContentEventResolve,
         ComplexEventResolve,
@@ -102,28 +69,25 @@ abstract class BookEventResolveMain extends BookEvent
 abstract class BookEventMessagerMain extends BookEvent
     with
         CustomEventMessager,
-        DatabaseEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
         ComplexEventMessager,
         ZhangduEventMessager {}
 
 /// implements [CustomEvent]
-abstract class CustomEventDynamic {
+mixin CustomEventDynamic {
   dynamic getImageBytesDynamic(String img);
 }
-
 mixin CustomEventResolve on Resolve, CustomEvent implements CustomEventDynamic {
   late final _customEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getSearchData_0,
-    _getImagePath_1,
-    _getImageBytes_2,
-    _getHiveShudanLists_3,
-    _getShudanLists_4,
-    _getTopLists_5,
-    _getCategLists_6,
-    _getShudanDetail_7,
-    _getCategoryData_8
+    _getImageBytes_1,
+    _getHiveShudanLists_2,
+    _getShudanLists_3,
+    _getTopLists_4,
+    _getCategLists_5,
+    _getShudanDetail_6,
+    _getCategoryData_7
   ]);
 
   @override
@@ -146,19 +110,18 @@ mixin CustomEventResolve on Resolve, CustomEvent implements CustomEventDynamic {
   }
 
   FutureOr<SearchList?> _getSearchData_0(args) => getSearchData(args);
-  FutureOr<String?> _getImagePath_1(args) => getImagePath(args);
-  dynamic _getImageBytes_2(args) => getImageBytesDynamic(args);
-  FutureOr<List<BookList>?> _getHiveShudanLists_3(args) =>
+  dynamic _getImageBytes_1(args) => getImageBytesDynamic(args);
+  FutureOr<List<BookList>?> _getHiveShudanLists_2(args) =>
       getHiveShudanLists(args);
-  FutureOr<List<BookList>?> _getShudanLists_4(args) =>
+  FutureOr<List<BookList>?> _getShudanLists_3(args) =>
       getShudanLists(args[0], args[1]);
-  FutureOr<BookTopData?> _getTopLists_5(args) =>
+  FutureOr<BookTopData?> _getTopLists_4(args) =>
       getTopLists(args[0], args[1], args[2]);
-  FutureOr<BookTopData?> _getCategLists_6(args) =>
+  FutureOr<BookTopData?> _getCategLists_5(args) =>
       getCategLists(args[0], args[1], args[2]);
-  FutureOr<BookListDetailData?> _getShudanDetail_7(args) =>
+  FutureOr<BookListDetailData?> _getShudanDetail_6(args) =>
       getShudanDetail(args);
-  FutureOr<List<BookCategoryData>?> _getCategoryData_8(args) =>
+  FutureOr<List<BookCategoryData>?> _getCategoryData_7(args) =>
       getCategoryData();
 }
 
@@ -168,10 +131,6 @@ mixin CustomEventMessager {
 
   FutureOr<SearchList?> getSearchData(String key) async {
     return sendEvent.sendMessage(CustomEventMessage.getSearchData, key);
-  }
-
-  FutureOr<String?> getImagePath(String img) async {
-    return sendEvent.sendMessage(CustomEventMessage.getImagePath, img);
   }
 
   dynamic getImageBytesDynamic(String img) async {
@@ -317,19 +276,7 @@ mixin BookContentEventMessager {
   }
 }
 
-mixin DatabaseEventResolve on Resolve, DatabaseEvent {}
-
-/// implements [DatabaseEvent]
-mixin DatabaseEventMessager {}
-
-/// implements [ComplexEvent]
-abstract class ComplexEventDynamic {
-  dynamic getContentDynamic(int bookid, int contentid, bool update);
-}
-
-mixin ComplexEventResolve
-    on Resolve, ComplexEvent
-    implements ComplexEventDynamic {
+mixin ComplexEventResolve on Resolve, ComplexEvent {
   late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getCacheItems_0,
     _getContent_1,
@@ -358,7 +305,8 @@ mixin ComplexEventResolve
   }
 
   FutureOr<List<CacheItem>?> _getCacheItems_0(args) => getCacheItems();
-  dynamic _getContent_1(args) => getContentDynamic(args[0], args[1], args[2]);
+  FutureOr<RawContentLines?> _getContent_1(args) =>
+      getContent(args[0], args[1], args[2]);
   FutureOr<NetBookIndex?> _getIndexs_2(args) => getIndexs(args[0], args[1]);
   FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
   FutureOr<BookInfoRoot?> _getInfo_4(args) => getInfo(args);
@@ -372,7 +320,8 @@ mixin ComplexEventMessager {
     return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null);
   }
 
-  dynamic getContentDynamic(int bookid, int contentid, bool update) async {
+  FutureOr<RawContentLines?> getContent(
+      int bookid, int contentid, bool update) async {
     return sendEvent.sendMessage(
         ComplexEventMessage.getContent, [bookid, contentid, update]);
   }

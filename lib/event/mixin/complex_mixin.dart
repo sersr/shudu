@@ -18,12 +18,12 @@ mixin ComplexMixin
     on DatabaseMixin, NetworkMixin
     implements
         ComplexEvent /*显示 override */,
-        ComplexEventDynamic,
+        // ComplexEventDynamic,
         CustomEventDynamic {
-  @override
-  Future getContentDynamic(int bookid, int contentid, bool update) {
-    return getContent(bookid, contentid, update).then(RawContentLines.encode);
-  }
+  // @override
+  // Future<RawContentLines> getContentDynamic(int bookid, int contentid, bool update) {
+  //   return getContent(bookid, contentid, update);
+  // }
 
   @override
   Future<dynamic> getImageBytesDynamic(String img) async {
@@ -96,7 +96,6 @@ mixin ComplexMixin
     return rawData;
   }
 
-
   @override
   Future<List<CacheItem>> getCacheItems() async {
     final list = <CacheItem>[];
@@ -130,11 +129,11 @@ mixin ComplexMixin
     if (update) {
       return await _getContentNet(bookid, contentid) ??
           await _getContentDb(bookid, contentid) ??
-          const RawContentLines();
+          RawContentLines.none;
     } else {
       return await _getContentDb(bookid, contentid) ??
           await _getContentNet(bookid, contentid) ??
-          const RawContentLines();
+          RawContentLines.none;
     }
   }
 

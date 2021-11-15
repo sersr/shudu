@@ -40,18 +40,6 @@ class TextData {
   bool get contentIsNotEmpty => isNotEmpty;
   bool get contentIsEmpty => isEmpty;
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is TextData &&
-            cid == other.cid &&
-            pid == other.pid &&
-            nid == other.nid &&
-            content == other.content &&
-            cname == other.cname &&
-            hasContent == other.hasContent;
-  }
-
   TextData clone() {
     return TextData(
         content: _content.map((e) => e.clone()).toList(),
@@ -69,9 +57,6 @@ class TextData {
   }
 
   @override
-  int get hashCode => hashValues(cid, pid, nid, content, cname, hasContent);
-
-  @override
   String toString() {
     return 'cid: $cid, pid: $pid, nid: $nid, cname: $cname';
   }
@@ -79,38 +64,15 @@ class TextData {
 
 class ContentMetrics {
   const ContentMetrics({
-    // required this.painters,
-    // required this.extraHeightInLines,
-    // required this.isHorizontal,
     required this.secstyle,
-    // required this.fontSize,
-    // required this.cPainter,
-    // required this.botRightPainter,
-    // required this.cBigPainter,
-    // required this.right,
     required this.left,
-    // required this.index,
     required this.size,
-    // required this.windowTopPadding,
-    // required this.showrect,
-    // required this.topExtraHeight,
     required this.picture,
   });
-  // final List<TextPainter> painters;
-  // final double extraHeightInLines;
+
   final TextStyle secstyle;
-  // final double fontSize;
-  // final bool isHorizontal;
-  // final TextPainter cPainter;
-  // final TextPainter botRightPainter;
-  // final TextPainter cBigPainter;
-  // final double right;
   final double left;
-  // final int index;
   final Size size;
-  // final double windowTopPadding;
-  // final bool showrect;
-  // final double topExtraHeight;
   final PictureRefInfo picture;
 
   ContentMetrics clone() {

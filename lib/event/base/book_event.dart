@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
+import 'package:useful_tools/common.dart';
 
 import '../../data/data.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
@@ -41,7 +42,7 @@ abstract class BookContentEvent {
 abstract class ComplexEvent {
   FutureOr<List<CacheItem>?> getCacheItems();
 
-  @NopIsolateMethod(isDynamic: true)
+  @NopIsolateMethod(useTransferType: true)
   FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
   FutureOr<int?> updateBookStatus(int id);
@@ -64,9 +65,6 @@ abstract class BookCacheEvent {
 abstract class CustomEvent {
   FutureOr<SearchList?> getSearchData(String key);
 
-  @Deprecated('use getImageBytes instead.')
-  FutureOr<String?> getImagePath(String img);
-
   @NopIsolateMethod(isDynamic: true)
   FutureOr<Uint8List?> getImageBytes(String img);
 
@@ -80,8 +78,8 @@ abstract class CustomEvent {
   FutureOr<List<BookCategoryData>?> getCategoryData();
 }
 
-class RawContentLines {
-  const RawContentLines(
+class RawContentLines with TransferType<RawContentLines> {
+  RawContentLines(
       {List<String> pages = const [],
       this.cid,
       this.pid,
@@ -91,12 +89,13 @@ class RawContentLines {
       : _pages = pages;
 
   List<String> get pages => _pages;
-  final List<String> _pages;
-  final int? cid;
-  final int? pid;
-  final int? nid;
-  final String? cname;
-  final bool? hasContent;
+  List<String> _pages;
+  int? cid;
+  int? pid;
+  int? nid;
+  String? cname;
+  bool? hasContent;
+
   bool get isEmpty =>
       pages.isEmpty ||
       cid == null ||
@@ -105,22 +104,26 @@ class RawContentLines {
       cname == null ||
       hasContent == null;
 
-  static TransferableTypedData encode(RawContentLines raw) {
+  TransferableTypedData? _typedData;
+
+  @override
+  void encode() {
+    if (_typedData != null) return;
     final dataInt = <int>[
-      raw.cid ?? 0,
-      raw.pid ?? 0,
-      raw.nid ?? 0,
-      Table.boolToInt(raw.hasContent) ?? 0,
+      cid ?? 0,
+      pid ?? 0,
+      nid ?? 0,
+      Table.boolToInt(hasContent) ?? 0,
     ];
     final dataString = <TypedData>[];
-    final cname = utf8.encode(raw.cname ?? '');
+    final cname = utf8.encode(this.cname ?? '');
 
     dataInt
       ..add(cname.length)
-      ..add(raw.pages.length);
+      ..add(pages.length);
     dataString.add(Uint8List.fromList(cname));
 
-    for (var page in raw.pages) {
+    for (var page in pages) {
       final _p = utf8.encode(page);
       dataInt.add(_p.length);
       dataString.add(Uint8List.fromList(_p));
@@ -128,16 +131,41 @@ class RawContentLines {
 
     final intData = Int32List.fromList(dataInt);
     // 把dataString放在最后，不用处理字节对齐问题
-    return TransferableTypedData.fromList(dataString..insert(0, intData));
+    _typedData = TransferableTypedData.fromList(dataString..insert(0, intData));
+    _dispose();
   }
 
-  static RawContentLines decode(ByteBuffer data) {
+  void _dispose() {
+    _pages = const [];
+    cid = null;
+    pid = null;
+    nid = null;
+    cname = null;
+    hasContent = null;
+  }
+
+  static RawContentLines none = RawContentLines();
+  bool _decoded = false;
+  bool get decoded => _decoded;
+  @override
+  RawContentLines decode() {
+    if (_typedData == null) {
+      if (!_decoded) {
+        Log.w('_typeData == null');
+      } else {
+        Log.w('decoded, return null');
+      }
+      return none;
+    }
+
+    _decoded = true;
+    final data = _typedData!.materialize();
     var cursor = 0;
     // dataInit 有6个元素，每个元素4个字节
     const six = 6;
     const dataIntBytes = six * 4;
-    var cname = '';
-    final pages = <String>[];
+    var newCname = '';
+    final newPages = <String>[];
     var dataIntList = const <int>[];
     final allBytes = data.lengthInBytes;
 
@@ -161,31 +189,34 @@ class RawContentLines {
 
       if (allBytes >= cursor + cnameLength) {
         final _c = data.asUint8List(cursor, cnameLength);
-        cname = utf8.decode(_c);
+        newCname = utf8.decode(_c);
         cursor += cnameLength;
       }
 
       for (final length in pageListLength) {
         final _p = data.asUint8List(cursor, length);
-        pages.add(utf8.decode(_p));
+        newPages.add(utf8.decode(_p));
         cursor += length;
       }
 
-      return RawContentLines(
-          cid: dataIntList[0],
-          pid: dataIntList[1],
-          nid: dataIntList[2],
-          hasContent: Table.intToBool(dataIntList[3]),
-          cname: cname,
-          pages: pages);
+      /// 赋值
+      cid = dataIntList[0];
+      pid = dataIntList[1];
+      nid = dataIntList[2];
+      hasContent = Table.intToBool(dataIntList[3]);
+      cname = newCname;
+      _pages = newPages;
+      _typedData = null;
+      return this;
     }
-    return const RawContentLines();
+    return none;
   }
 
   bool get isNotEmpty => !isEmpty;
 
   bool get contentIsNotEmpty => isNotEmpty;
   bool get contentIsEmpty => isEmpty;
+
   @override
   String toString() {
     return '$runtimeType: $cid, $pid, $nid, $hasContent, $cname, $pages';

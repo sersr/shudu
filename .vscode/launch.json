@@ -43,6 +43,16 @@
                 "--local-engine-src-path=/Volumes/mbp/macos/engine/src",
                 "--local-engine=host_release",
             ]
+        },{
+            "name": "release_host_win_engine",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "release",
+            "args": [
+                "--local-engine-src-path=F:/win/engine/src",
+                "--local-engine=host_release",
+            ]
         },
         {
             "name": "debug",

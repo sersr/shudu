@@ -8,14 +8,15 @@ import 'package:shudu/database/database.dart';
 import 'repository_impl.dart';
 
 void main() async {
-  final repository = RepositoryImplTest();
+  final repository = RepositoryImplTest(true);
   await repository.initState;
   final watcher = repository.server.bookEventIsolate.db.watcher;
   watcher.sync = true;
-  final bookEvent = repository.bookEvent;
+  final bookEvent = repository;
   test('event', () async {
     const bookid = 10111;
     await Future.delayed(Duration(milliseconds: 1000));
+
     /// insertBook
     var x = await bookEvent.insertBook(BookCache(
         bookId: bookid,

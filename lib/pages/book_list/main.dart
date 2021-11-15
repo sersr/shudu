@@ -21,21 +21,22 @@ class ListMainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final light = isLight(context);
-  Widget _builder(String text, VoidCallback onTap) {
-    return btn1(
-      radius: 10.0,
-      bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
+    Widget _builder(String text, VoidCallback onTap) {
+      return btn1(
+        radius: 10.0,
+        bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
         splashColor: light ? null : Color.fromRGBO(60, 60, 60, 1),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Center(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Center(
             child: Text(
           text,
           style: TextStyle(
               color: light ? Colors.grey.shade700 : Colors.grey.shade400),
         )),
-      onTap: onTap,
-    );
-  }
+        onTap: onTap,
+      );
+    }
+
     var v = 0;
     return Container(
       color: light ? Colors.grey.shade100 : Colors.grey.shade900,
@@ -65,28 +66,6 @@ class ListMainPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 5),
-          Row(
-            children: [
-              Expanded(
-                child: _builder('榜单', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: TopPage());
-                  }));
-                }),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: _builder('IM', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: ChatRoom());
-                  }));
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
           Row(children: [
             Expanded(
               child: _builder('缓存管理', () {
@@ -109,48 +88,10 @@ class ListMainPage extends StatelessWidget {
           const SizedBox(height: 5),
           Row(children: [
             Expanded(
-              child: _builder('清除', () {
+              child: _builder('榜单', () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) {
-                  return RepaintBoundary(
-                      child: Scaffold(
-                          appBar: AppBar(
-                            title: Text('清除'),
-                          ),
-                          body: Container(
-                            color: Colors.grey.shade100,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _builder(
-                                      '清除',
-                                      () {
-                                        imageCache?.clear();
-                                        imageRefCache?.clear();
-                                        textCache?.clear();
-                                      },
-                                    ),
-                                    StatefulBuilder(
-                                        builder: (context, setstate) {
-                                      return _builder(
-                                        'count: !done: $v',
-                                        () {
-                                          setstate(() {
-                                            v = imageRefCache?.printDone() ?? 0;
-                                          });
-                                        },
-                                      );
-                                    }),
-                                    SelectableText('aa')
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )));
+                  return RepaintBoundary(child: TopPage());
                 }));
               }),
             ),
@@ -164,12 +105,6 @@ class ListMainPage extends StatelessWidget {
               }),
             )
           ]),
-          if (kDebugMode) const SizedBox(height: 5),
-          if (kDebugMode)
-            _builder('content clear(在调试控制台中观察是否正确释放Picture)', () {
-              // ignore: invalid_use_of_visible_for_testing_member
-              context.read<ContentNotifier>().clear();
-            }),
         ],
       ),
     );

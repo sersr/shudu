@@ -143,29 +143,26 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   }
 
   final _caches = <int, _ZhangduDetailChapterCache>{};
-  final _cachesTime = <int, int>{};
-  static const int updateInterval = 1000 * 60 * 3;
+  static const int updateInterval = 1000 * 30;
 
-  void addArchive(int bookId, _ZhangduDetailChapterCache archive) {
-    _caches[bookId] = archive;
-    _cachesTime[bookId] = DateTime.now().millisecondsSinceEpoch;
+  _ZhangduDetailChapterCache addArchive(int bookId,
+      ZhangduDetailData detailData, List<ZhangduChapterData> chapterData) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final data = _ZhangduDetailChapterCache(detailData, chapterData, now);
+    autoClear();
+    _caches[bookId] = data;
+    return data;
   }
 
   _ZhangduDetailChapterCache? getData(int bookId) {
     return _caches[bookId];
   }
 
-  bool shouldUpate(int bookId) {
-    removeExpired();
-    return _caches.containsKey(bookId);
-  }
-
   Timer? _autoClear;
   void autoClear() {
     _autoClear ??=
-        Timer.periodic(Duration(milliseconds: updateInterval), (timer) {
+        Timer.periodic(const Duration(milliseconds: updateInterval), (timer) {
       removeExpired();
-      assert(_caches.length == _cachesTime.length);
       if (_caches.isEmpty) {
         timer.cancel();
         _autoClear = null;
@@ -175,11 +172,7 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
 
   void removeExpired() {
     final now = DateTime.now().millisecondsSinceEpoch;
-    _cachesTime.removeWhere((key, value) {
-      final remove = value + updateInterval <= now;
-      if (remove) _caches.remove(key);
-      return remove;
-    });
+    _caches.removeWhere((_, value) => value.timePoint + updateInterval <= now);
   }
 
   /// 相同的[bookId]在一个队列中
@@ -189,10 +182,9 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   }
 
   Future<_ZhangduDetailChapterCache?> _autoUpdate(int bookId) async {
-    if (!shouldUpate(bookId)) {
-      final data = getData(bookId);
-      if (data != null) return data;
-    }
+    final data = getData(bookId);
+    if (data != null) return data;
+
     final url = ZhangduApi.getBookIndexDetail(bookId);
     try {
       final result = await dio.get<List<int>>(url,
@@ -234,8 +226,6 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
           }
         }
         if (detailData != null && chapterData != null) {
-          final _cache = _ZhangduDetailChapterCache(detailData, chapterData);
-          addArchive(bookId, _cache);
           final chapterId = chapterData.isNotEmpty ? chapterData.first.id : -1;
           final data = ZhangduCache(
             name: detailData.name,
@@ -266,7 +256,8 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
                 ));
           }
           await insertOrUpdateZhangduIndex(detailData.id ?? bookId, indexData!);
-          return _cache;
+
+          return addArchive(bookId, detailData, chapterData);
         }
       }
     } catch (e) {
@@ -304,10 +295,9 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   }
 
   FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb(int bookId) {
-    if (!shouldUpate(bookId)) {
-      final data = getData(bookId);
-      if (data != null) return data.chapterData;
-    }
+    final data = getData(bookId);
+    if (data != null) return data.chapterData;
+
     final query = zhangduIndex.query
       ..data
       ..where.bookId.equalTo(bookId);
@@ -504,7 +494,8 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
 }
 
 class _ZhangduDetailChapterCache {
-  _ZhangduDetailChapterCache(this.detailData, this.chapterData);
+  _ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
   ZhangduDetailData detailData;
   List<ZhangduChapterData> chapterData;
+  final int timePoint;
 }

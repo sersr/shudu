@@ -48,8 +48,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
     final data = MediaQuery.of(context);
-
-    final rep = cache.repository;
     if (_future == null) {
       final any = FutureAny();
       painterBloc.metricsChange(data);
@@ -58,8 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ..add(painterBloc.initConfigs())
         ..add(cache.load())
         ..add(search.init());
-      _future = Future.value(any.wait);
-      rep.initState.whenComplete(() {
+      _future = Future.value(any.wait).whenComplete(() {
         if (opts.options.updateOnStart == true && mounted) {
           _refreshKey.currentState!.show();
         }
@@ -67,12 +64,26 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
+  var _inApp = true;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _inApp = state.index <= AppLifecycleState.inactive.index;
+
     if (state == AppLifecycleState.paused) {
       painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
+      if (mounted) {
+        cache.repository.init();
+      }
+    }
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    super.didHaveMemoryPressure();
+    if (!_inApp) {
+      cache.repository.close();
     }
   }
 

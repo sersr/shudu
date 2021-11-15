@@ -74,7 +74,7 @@ class MulProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(create: (_) => Repository.create(hotFix)),
+        Provider(create: (_) => Repository.create(hotFix)..init()),
         Provider(create: (_) => TextStyleConfig()),
         ChangeNotifierProvider(create: (_) => OptionsNotifier()),
         ChangeNotifierProvider(

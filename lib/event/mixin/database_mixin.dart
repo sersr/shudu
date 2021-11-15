@@ -38,6 +38,10 @@ mixin DatabaseMixin implements DatabaseEvent {
     return db.initDb();
   }
 
+  FutureOr<void> closeDb() {
+    return db.dispose();
+  }
+
   late final db = BookDatabase(_url, sqfliteFfiEnabled, useSqflite3);
 
   @override
@@ -159,7 +163,7 @@ mixin DatabaseMixin implements DatabaseEvent {
       ..select.count.all.push
       ..where.bookId.equalTo(bookid);
     final count = await (q.go.first.values.first) as int? ?? 0;
-    Log.e('count: .... $count');
+    assert(Log.i('count: .... $count'));
     return count;
   }
 

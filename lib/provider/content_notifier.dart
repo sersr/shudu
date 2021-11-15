@@ -387,7 +387,6 @@ extension DataLoading on ContentNotifier {
           final data = hasContent ? lines : const ['没有章节内容，稍后重试。'];
           final pages = await _genTextData(_bookid, data, name);
           if (pages.isEmpty) return;
-          Log.i(data.first);
           _cnpid = TextData(
             cid: contentid,
             nid: nid,

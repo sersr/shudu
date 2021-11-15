@@ -4,31 +4,38 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:flutter/foundation.dart';
-import 'package:memory_info_platform_interface/model/memory.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
-// ignore: unused_import
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
+import 'package:shudu/event/mixin/event_messager_mixin.dart';
 import 'package:useful_tools/common.dart';
 
-class RepositoryImplTest extends Repository with SendEventPortMixin {
+class RepositoryTest extends Repository {
   @override
-  late BookEvent bookEvent = BookEventMain(this);
+  Future<Isolate> onCreateIsolate(SendPort sdPort) async {
+    final newIsolate = await Isolate.spawn(
+        isolateEvent, [sdPort, './app', './app/cache', false, false]);
+    return newIsolate;
+  }
+}
 
+class RepositoryImplTest extends BookEventMessagerMain
+    with ComplexMessager, SaveImageMessager, SendEventPortMixin {
+  RepositoryImplTest(this.useSqflite);
   late Server server;
   late Client client;
+  final bool useSqflite;
 
-  @override
   Future<void> get initState async {
-    client = Client(this)..init();
+    client = Client(this);
     server = Server();
-    SqfliteMainIsolate.initMainDb();
-    return server.init(client.sendSP);
+    if (useSqflite) {
+      SqfliteMainIsolate.initMainDb();
+    }
+    return server.init(client.sendSP, useSqflite);
   }
 
   @override
@@ -43,25 +50,7 @@ class RepositoryImplTest extends Repository with SendEventPortMixin {
   }
 
   @override
-  void addSystemOverlaysListener(BoolCallback callback) {}
-
-  @override
-  void removeSystemOverlaysListener(BoolCallback callback) {}
-
-  @override
-  bool get systemOverlaysAreVisible => throw UnimplementedError();
-
-  @override
-  ValueNotifier<bool> get init => throw UnimplementedError();
-
-  @override
-  void close() {}
-
-  @override
-  Future<Memory> getMemoryInfo() {
-    // TODO: implement getMemoryInfo
-    throw UnimplementedError();
-  }
+  late final SendEvent sendEvent = this;
 }
 
 class Client {
@@ -71,13 +60,6 @@ class Client {
 
   final client = StreamController();
   StreamSubscription? clientListen;
-
-  void init() {
-    // clientListen = client.stream.listen((event) {
-    //   if (repositoryImpl.add(event)) return;
-    //   Log.e('messager error!!!');
-    // });
-  }
 
   EventSink get sendSP => client.sink;
 }
@@ -99,15 +81,15 @@ class Server {
   }
 
   late BookEventIsolate bookEventIsolate;
-  Future<void> init(EventSink clientSP) async {
+  Future<void> init(EventSink clientSP, bool useSqflite) async {
     sp = clientSP;
 
     tranf?.cancel();
     tranf = receivePort.listen(_tran);
 
-    bookEventIsolate = BookEventIsolateTest(receivePort.sendPort);
-    await bookEventIsolate.db.initDb();
-    await bookEventIsolate.netEventInit();
+    bookEventIsolate =
+        BookEventIsolateTest(receivePort.sendPort, useSqflite: useSqflite);
+    await bookEventIsolate.initState();
     serverListen?.cancel();
     serverListen = server.stream.listen((event) {
       if (bookEventIsolate.resolve(event)) return;
@@ -120,7 +102,9 @@ class Server {
 }
 
 class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendPort sp) : super(sp, '', '', false, true);
+  BookEventIsolateTest(SendPort sp, {bool useSqflite = false})
+      : super(sp, '', '', true/* windows 平台只能为 true */, useSqflite);
+
   @override
   bool remove(key) {
     if (key is KeyController) Log.e(key.keyType);
@@ -136,74 +120,57 @@ class BookEventIsolateTest extends BookEventIsolate {
 
   @override
   FutureOr<int?> deleteZhangduBook(int bookId) {
-    // TODO: implement deleteZhangduBook
     throw UnimplementedError();
   }
 
   @override
   FutureOr<int?> deleteZhangduContentCache(int bookId) {
-    // TODO: implement deleteZhangduContentCache
     throw UnimplementedError();
   }
 
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) {
-    // TODO: implement getZhangduContent
     throw UnimplementedError();
   }
 
   @override
   FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
-    // TODO: implement getZhangduDetail
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<ZhangduIndex?> getZhangduIndexs(int bookId) {
-    // TODO: implement getZhangduIndexs
     throw UnimplementedError();
   }
 
   @override
   FutureOr<List<ZhangduCache>?> getZhangduMainList() {
-    // TODO: implement getZhangduMainList
     throw UnimplementedError();
   }
 
   @override
   FutureOr<int?> insertZhangduBook(ZhangduCache book) {
-    // TODO: implement insertZhangduBook
     throw UnimplementedError();
   }
 
   @override
   FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    // TODO: implement updateZhangduBook
     throw UnimplementedError();
   }
 
   @override
   FutureOr<int?> updateZhangduMainStatus(int bookId) {
-    // TODO: implement updateZhangduMainStatus
     throw UnimplementedError();
   }
 
   @override
   Stream<List<int>?> watchZhangduContentCid(int bookId) {
-    // TODO: implement watchZhangduContentCid
     throw UnimplementedError();
   }
 
   @override
   Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
-    // TODO: implement watchZhangduCurrentCid
     throw UnimplementedError();
   }
 
   @override
   Stream<List<ZhangduCache>?> watchZhangduMainList() {
-    // TODO: implement watchZhangduMainList
     throw UnimplementedError();
   }
 }
