@@ -52,6 +52,18 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case WM_CREATE:
+      int scrWidth, scrHeight;
+      RECT rect;
+      scrWidth = GetSystemMetrics(SM_CXSCREEN);
+      scrHeight = GetSystemMetrics(SM_CYSCREEN);
+
+      GetWindowRect(hwnd, &rect);
+      rect.left = (scrWidth - rect.right) / 2;
+      rect.top = (scrHeight - rect.bottom) / 2;
+
+      SetWindowPos(hwnd, HWND_TOP, rect.left, rect.top, rect.right, rect.bottom, SWP_SHOWWINDOW);
+      break;
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;

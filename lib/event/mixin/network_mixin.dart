@@ -86,8 +86,8 @@ mixin NetworkMixin implements CustomEvent {
   Future<BookTopData> getCategLists(int c, String date, int index) =>
       _getCategLists(c, date, index);
 
-  @override
-  Future<String> getImagePath(String img) => _getImagePath(img);
+  // @override
+  // Future<String> getImagePath(String img) => _getImagePath(img);
 
   @override
   Future<Uint8List?> getImageBytes(String img) => _getImageBytes(img);
@@ -427,25 +427,25 @@ extension _NetworkImpl on NetworkMixin {
     return [url, '${url.hashCode}_$imgName'];
   }
 
-  Future<String> _getImagePath(String img) async {
-    final imgResolve = imageUrlResolve(img);
-    final imgName = imgResolve[1];
+  // Future<String> _getImagePath(String img) async {
+  //   final imgResolve = imageUrlResolve(img);
+  //   final imgName = imgResolve[1];
 
-    final imgPath = join(imageLocalPath, imgName);
+  //   final imgPath = join(imageLocalPath, imgName);
 
-    final imgdateTime = imageUpdate.get(imgName.hashCode);
-    final f = File(imgPath);
+  //   final imgdateTime = imageUpdate.get(imgName.hashCode);
+  //   final f = File(imgPath);
 
-    final exits = await f.exists();
+  //   final exits = await f.exists();
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
-    if (exits && !shouldUpdate) {
-      return imgPath;
-    }
+  //   final now = DateTime.now().millisecondsSinceEpoch;
+  //   final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
+  //   if (exits && !shouldUpdate) {
+  //     return imgPath;
+  //   }
 
-    return getImagePathFromNet(img);
-  }
+  //   return getImagePathFromNet(img);
+  // }
 
   @pragma('vm:prefer-inline')
   bool _isValid(Headers header) {
@@ -462,74 +462,74 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<String> getImagePathFromNet(String img) async {
-    final imgResolve = imageUrlResolve(img);
-    final url = imgResolve[0];
-    final imgName = imgResolve[1];
+  // Future<String> getImagePathFromNet(String img) async {
+  //   final imgResolve = imageUrlResolve(img);
+  //   final url = imgResolve[0];
+  //   final imgName = imgResolve[1];
 
-    final imgPath = join(imageLocalPath, imgName);
+  //   final imgPath = join(imageLocalPath, imgName);
 
-    // 避免太过频繁访问网络
-    if (_errorLoading.containsKey(imgName)) {
-      final time = _errorLoading[imgName]!;
-      if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
-        // 再次发送网络请求
-        _errorLoading.remove(imgName);
-      } else {
-        return imgPath;
-      }
-    }
+  //   // 避免太过频繁访问网络
+  //   if (_errorLoading.containsKey(imgName)) {
+  //     final time = _errorLoading[imgName]!;
+  //     if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
+  //       // 再次发送网络请求
+  //       _errorLoading.remove(imgName);
+  //     } else {
+  //       return imgPath;
+  //     }
+  //   }
 
-    var success = false;
+  //   var success = false;
 
-    List<Uint8List>? imgData;
-    await imageTasks(() async {
-      try {
-        final data = await dio.get<ResponseBody>(url,
-            options: Options(responseType: ResponseType.stream));
+  //   List<Uint8List>? imgData;
+  //   await imageTasks(() async {
+  //     try {
+  //       final data = await dio.get<ResponseBody>(url,
+  //           options: Options(responseType: ResponseType.stream));
 
-        imgData = (await data.data?.stream.toList());
+  //       imgData = (await data.data?.stream.toList());
 
-        success = imgData != null && _isValid(data.headers);
-      } catch (e) {
-        success = false;
-        _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
-        assert(Log.w('$imgName,$url !!!'));
-      }
-    });
+  //       success = imgData != null && _isValid(data.headers);
+  //     } catch (e) {
+  //       success = false;
+  //       _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
+  //       assert(Log.w('$imgName,$url !!!'));
+  //     }
+  //   });
 
-    final data = imgData;
-    if (data != null && success) {
-      try {
-        await ioTasks(() async {
-          final temp = File('$imgPath.temp');
-          await temp.create(recursive: true);
-          final o = await temp.open(mode: FileMode.writeOnly);
+  //   final data = imgData;
+  //   if (data != null && success) {
+  //     try {
+  //       await ioTasks(() async {
+  //         final temp = File('$imgPath.temp');
+  //         await temp.create(recursive: true);
+  //         final o = await temp.open(mode: FileMode.writeOnly);
 
-          for (final d in data) {
-            await o.writeFrom(d);
-          }
+  //         for (final d in data) {
+  //           await o.writeFrom(d);
+  //         }
 
-          await o.close();
-          await temp.rename(imgPath);
-        });
+  //         await o.close();
+  //         await temp.rename(imgPath);
+  //       });
 
-        _errorLoading.remove(imgName);
-        await imageUpdate.put(
-            imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
-      } catch (e) {
-        success = false;
-      }
-    }
+  //       _errorLoading.remove(imgName);
+  //       await imageUpdate.put(
+  //           imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+  //     } catch (e) {
+  //       success = false;
+  //     }
+  //   }
 
-    final exists = await File(imgPath).exists();
+  //   final exists = await File(imgPath).exists();
 
-    if (!exists) {
-      await imageUpdate.delete(imgName.hashCode);
-    }
+  //   if (!exists) {
+  //     await imageUpdate.delete(imgName.hashCode);
+  //   }
 
-    return imgPath;
-  }
+  //   return imgPath;
+  // }
 
   /// Uint8List
   Future<Uint8List?> _getImageBytes(String img) async {
@@ -537,8 +537,8 @@ extension _NetworkImpl on NetworkMixin {
     final imgName = imgResolve[1];
 
     final imgPath = join(imageLocalPath, imgName);
-
-    final imgdateTime = imageUpdate.get(imgName.hashCode);
+    final imageKey = base64Encode(utf8.encode(imgName));
+    final imgdateTime = imageUpdate.get(imageKey);
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final shouldUpdate = imgdateTime == null || imgdateTime + oneDay < now;
@@ -557,10 +557,10 @@ extension _NetworkImpl on NetworkMixin {
 
     if (_bytes != null) return _bytes;
 
-    return getImageBytesFromNet(img);
+    return getImageBytesFromNet(img, imageKey);
   }
 
-  Future<Uint8List?> getImageBytesFromNet(String img) async {
+  Future<Uint8List?> getImageBytesFromNet(String img, String imageKey) async {
     final imgResolve = imageUrlResolve(img);
     final url = imgResolve[0];
     final imgName = imgResolve[1];
@@ -629,9 +629,9 @@ extension _NetworkImpl on NetworkMixin {
         } finally {
           if (success) {
             await imageUpdate.put(
-                imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
+                imageKey, DateTime.now().millisecondsSinceEpoch);
           } else {
-            await imageUpdate.delete(imgName.hashCode);
+            await imageUpdate.delete(imageKey);
           }
         }
       });

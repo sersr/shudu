@@ -3,9 +3,9 @@ import 'dart:convert';
 
 import 'package:file/local.dart';
 import 'package:nop_db/database/nop.dart';
-import 'package:nop_db/extensions/future_or_ext.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
+import 'package:utils/future_or_ext.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
@@ -168,13 +168,10 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
-    late FutureOr<List<BookContentDb>> c;
+    final query = bookContentDb.query..index.by(db.index);
 
-    bookContentDb.query.where
-      ..bookId.equalTo(bookid)
-      ..and.cid.equalTo(contentid)
-      ..whereEnd.let((s) => c = s.goToTable);
-    return c;
+    query.where.cid.equalTo(contentid).and.bookId.equalTo(bookid);
+    return query.goToTable;
   }
 
   FutureOr<Set<int>> getAllBookId() {

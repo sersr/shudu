@@ -108,13 +108,8 @@ class RawContentLines with TransferType<RawContentLines> {
 
   @override
   void encode() {
-    if (_typedData != null) return;
-    final dataInt = <int>[
-      cid ?? 0,
-      pid ?? 0,
-      nid ?? 0,
-      Table.boolToInt(hasContent) ?? 0,
-    ];
+    if (_typedData != null || isEmpty) return;
+    final dataInt = <int>[];
     final dataString = <TypedData>[];
     final cname = utf8.encode(this.cname ?? '');
 
@@ -137,11 +132,7 @@ class RawContentLines with TransferType<RawContentLines> {
 
   void _dispose() {
     _pages = const [];
-    cid = null;
-    pid = null;
-    nid = null;
     cname = null;
-    hasContent = null;
   }
 
   static RawContentLines none = RawContentLines();
@@ -150,32 +141,28 @@ class RawContentLines with TransferType<RawContentLines> {
   @override
   RawContentLines decode() {
     if (_typedData == null) {
-      if (!_decoded) {
-        Log.w('_typeData == null');
-      } else {
-        Log.w('decoded, return null');
-      }
-      return none;
+      assert(Log.w(!_decoded ? '_typeData == null' : 'decoded, return none'));
+      return this;
     }
 
     _decoded = true;
     final data = _typedData!.materialize();
     var cursor = 0;
     // dataInit 有6个元素，每个元素4个字节
-    const six = 6;
-    const dataIntBytes = six * 4;
+    const els = 2;
+    const dataIntBytes = els * 4;
     var newCname = '';
     final newPages = <String>[];
     var dataIntList = const <int>[];
     final allBytes = data.lengthInBytes;
 
     if (allBytes >= cursor + dataIntBytes) {
-      dataIntList = data.asInt32List(cursor, six);
+      dataIntList = data.asInt32List(cursor, els);
       cursor += dataIntBytes;
     }
 
-    if (dataIntList.length >= six) {
-      final pageLength = dataIntList[5];
+    if (dataIntList.length >= els) {
+      final pageLength = dataIntList[els - 1];
       final pagesLengthBytes = pageLength * 4;
 
       var pageListLength = const <int>[];
@@ -185,7 +172,7 @@ class RawContentLines with TransferType<RawContentLines> {
 
         cursor += pagesLengthBytes;
       }
-      final cnameLength = dataIntList[4];
+      final cnameLength = dataIntList[els - 2];
 
       if (allBytes >= cursor + cnameLength) {
         final _c = data.asUint8List(cursor, cnameLength);
@@ -200,16 +187,11 @@ class RawContentLines with TransferType<RawContentLines> {
       }
 
       /// 赋值
-      cid = dataIntList[0];
-      pid = dataIntList[1];
-      nid = dataIntList[2];
-      hasContent = Table.intToBool(dataIntList[3]);
       cname = newCname;
       _pages = newPages;
       _typedData = null;
-      return this;
     }
-    return none;
+    return this;
   }
 
   bool get isNotEmpty => !isEmpty;

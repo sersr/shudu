@@ -1,15 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../provider/provider.dart';
 import '../setting/setting.dart';
 import 'book_history.dart';
 import 'booklist.dart';
 import 'cache_manager.dart';
 import 'category.dart';
-import 'chat_room.dart';
 import 'top.dart';
 
 class ListMainPage extends StatelessWidget {

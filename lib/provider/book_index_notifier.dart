@@ -218,7 +218,7 @@ class BookIndexNotifier extends ChangeNotifier {
     _watchCurrentCid ??= repository.bookEvent.zhangduEvent
         .watchZhangduCurrentCid(bookid)
         .listen((_bookCaches) {
-      assert(Log.e('_bookCaches cache ids'));
+      assert(Log.w('正在监听: $bookid | 当前章节 cid ...'));
 
       if (_data?.isValidZd != true) return;
       EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
@@ -228,7 +228,6 @@ class BookIndexNotifier extends ChangeNotifier {
           final cid = _data!.contentid!;
 
           if (_bookid == bookid && _cid != cid) {
-            Log.i('update:.. $bookid $cid $_cid');
             loadIndexs(bookid, _cid, api: ApiType.zhangdu);
           }
         }
@@ -241,9 +240,8 @@ class BookIndexNotifier extends ChangeNotifier {
       if (listData == null) return;
 
       EventQueue.runOneTaskOnQueue(_cids, () {
-        assert(Log.e('book cache ids'));
+        assert(Log.w('正在监听: $bookid | 缓存章节 ...'));
         if (_data?.isValidZd != true) return;
-        Log.e('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
 
         if (_data?.bookid == bookid) {
           _cacheList = listData;
@@ -350,7 +348,7 @@ class BookIndexNotifier extends ChangeNotifier {
     //   final f = _load(bookid, contentid, restore: restore, api: api);
     //   return _queue.addEventTask(() => f);
     // }
-    Log.i('update: $bookid | $contentid');
+    Log.i('update: bookid: $bookid cid: $contentid');
     return _queue.addOneEventTask(
         () => _load(bookid, contentid, restore: restore, api: api));
   }

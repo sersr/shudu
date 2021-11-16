@@ -340,7 +340,14 @@ mixin ComplexEventMessager {
   }
 }
 
-mixin ZhangduEventResolve on Resolve, ZhangduEvent {
+/// implements [ZhangduEvent]
+mixin ZhangduEventDynamic {
+  FutureOr<TransferType<List<String>?>> getZhangduContentDynamic(int bookId,
+      int contentId, String contentUrl, String name, int sort, bool update);
+}
+mixin ZhangduEventResolve
+    on Resolve, ZhangduEvent
+    implements ZhangduEventDynamic {
   late final _zhangduEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getZhangduContent_0,
     _deleteZhangduContentCache_1,
@@ -378,8 +385,9 @@ mixin ZhangduEventResolve on Resolve, ZhangduEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<String>?> _getZhangduContent_0(args) =>
-      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
+  FutureOr<TransferType<List<String>?>> _getZhangduContent_0(args) =>
+      getZhangduContentDynamic(
+          args[0], args[1], args[2], args[3], args[4], args[5]);
   FutureOr<int?> _deleteZhangduContentCache_1(args) =>
       deleteZhangduContentCache(args);
   Stream<List<int>?> _watchZhangduContentCid_2(args) =>

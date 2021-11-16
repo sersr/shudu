@@ -34,7 +34,6 @@ class BookContentPage extends StatefulWidget {
     }));
   }
 
-  
   @override
   BookContentPageState createState() => BookContentPageState();
 }
@@ -82,11 +81,12 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   Timer? errorTimer;
   @override
   Widget wrapOverlay(context, overlay) {
-    Log.i('....${bloc.inBook}');
     bloc.metricsChange(MediaQuery.of(context));
     Widget child = AnimatedBuilder(
       animation: notifyColor,
       builder: (context, child) {
+        final data  =MediaQuery.of(context);
+        Log.w('padding: ${data.padding} | size: ${data.size}');
         return Material(color: notifyColor.value, child: child);
       },
       child: RepaintBoundary(
@@ -152,7 +152,10 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       ),
     );
 
-    return WillPopScope(onWillPop: onWillPop, child: child);
+    return WillPopScope(
+        onWillPop: onWillPop,
+        child: MediaQuery.removePadding(
+            context: context, removeTop: true, child: child));
   }
 
   Future<bool> onWillPop() async {

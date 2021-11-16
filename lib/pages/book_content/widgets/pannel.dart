@@ -746,6 +746,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     bgColor.value = c;
   }
 
+  bool isLight(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light;
+
   //TODO: 添加配色保存功能
   Widget settings() {
     if (_setting != null) return _setting!;
@@ -978,6 +981,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
       ),
     );
+
     return _setting = Column(
       children: [
         Expanded(
@@ -1088,6 +1092,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         return children[widget.showSettings.value.index];
       },
     );
+    final light = isLight(context);
     return SliderTheme(
         data: SliderTheme.of(context).copyWith(
           thumbColor: Colors.grey.shade300,
@@ -1099,7 +1104,10 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           thumbShape: RoundSliderThumbShape(
               enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
         ),
-        child: RepaintBoundary(child: child));
+        child: RepaintBoundary(
+            child: ColoredBox(
+                color: light ? Colors.grey.shade200 : Colors.grey.shade900,
+                child: child)));
   }
 }
 

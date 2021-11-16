@@ -216,8 +216,9 @@ class ContentPageViewState extends State<ContentPageView>
         return Text(
           bloc.header.value,
           style: bloc.secstyle,
+          maxLines: 1,
           softWrap: false,
-          overflow: TextOverflow.visible,
+          overflow: TextOverflow.ellipsis,
         );
       },
     );

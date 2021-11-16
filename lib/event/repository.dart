@@ -16,7 +16,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/useful_tools.dart';
-
+import 'package:bangs/bangs.dart';
 import '../provider/options_notifier.dart';
 import 'base/book_event.dart';
 import 'mixin/complex_mixin.dart';
@@ -33,7 +33,7 @@ class Repository extends BookEventMessagerMain
         SystemInfos,
         ComplexMessager,
         SaveImageMessager,
-        SendEventPortMixin,
+        SendEventMixin,
         SendIsolateMixin {
   Repository();
 
@@ -65,6 +65,9 @@ class Repository extends BookEventMessagerMain
   @override
   Future<Isolate> onCreateIsolate(SendPort sdPort) async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      Bangs.bangs.setNavigationChangeCallback(_statusState);
+    }
     final _waits = FutureAny();
 
     String? appDirExt;
@@ -86,10 +89,12 @@ class Repository extends BookEventMessagerMain
             Log.i(e);
           }
           final appPath = extPath ?? '/storage/emulated/0';
-          appDirExt = '$appPath/shudu';
+          appDirExt = appPath;
         }
         _waits
           ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
+          ..add(Bangs.safePadding
+              .then((value) => _statusHeight = value.padding.top))
           ..add(Permission.manageExternalStorage.status.then((status) {
             if (status.isDenied) {
               return OptionsNotifier.extenalStorage.then((request) {
@@ -118,7 +123,8 @@ class Repository extends BookEventMessagerMain
 
     await _waits.wait;
 
-    final appPath = appDirExt ?? appDir.path;
+    final _appPath = appDirExt ?? appDir.path;
+    final appPath = join(_appPath, 'shudu');
 
     const fs = LocalFileSystem();
     final dir = fs.currentDirectory.childDirectory(appPath);
@@ -189,6 +195,16 @@ mixin SystemInfos {
     }
 
     return level;
+  }
+
+  double _statusHeight = 0;
+  double get statusHeight => _statusHeight;
+
+  int _height = 0;
+  int get height => _height;
+  void _statusState(bool isShow, int height) {
+    Log.i('statusHeight: $height');
+    _height = height;
   }
 
   MemoryInfoPlugin? memoryInfoPlugin;

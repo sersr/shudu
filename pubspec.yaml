@@ -72,6 +72,8 @@ dependencies:
     path: ../packages/nop_db_sqflite
   nop_db_sqlite:
     path: ../packages/nop_db_sqlite
+  bangs:
+    path: ../packages/bangs
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2

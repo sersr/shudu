@@ -6,6 +6,7 @@ import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';
 import 'package:useful_tools/common.dart';
+import 'package:utils/future_or_ext.dart';
 
 import '../data/data.dart';
 
@@ -123,8 +124,22 @@ class BookDatabase extends _GenBookDatabase {
   final String path;
 
   final int version = 3;
+  final String index = 'book_content_index';
 
   FutureOr<void> initDb() {
+    return _initDb().then((_) {
+      return db.rawQuery(
+          'select count(*) from sqlite_master where type = ? and name = ?',
+          ['index', index]).then((value) {
+        if (value.first.values.first == 0) {
+          return db.execute(
+              'CREATE INDEX $index on ${bookContentDb.table}(${bookContentDb.cid})');
+        }
+      });
+    });
+  }
+
+  FutureOr<void> _initDb() {
     if (useSqfite3) {
       return _initSqflitedb().then(setDb);
     } else {
@@ -152,7 +167,7 @@ class BookDatabase extends _GenBookDatabase {
   @override
   FutureOr<void> onUpgrade(
       NopDatabase db, int oldVersion, int newVersion) async {
-        Log.i('version: $oldVersion  | $newVersion');
+    Log.i('version: $oldVersion  | $newVersion');
     if (oldVersion <= 1) {
       final indexTable = bookIndex.table;
       await db.execute(

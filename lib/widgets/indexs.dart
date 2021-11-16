@@ -167,116 +167,122 @@ class _IndexsState extends State<_Indexs> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-        animation: indexBloc!,
-        builder: (context, _) {
-          final data = indexBloc!.data;
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
-          if (data == null) {
-            return loadingIndicator();
-          } else if (!data.isValid) {
-            return reloadBotton(indexBloc!.reloadIndexs);
-          }
-          if (data.api == ApiType.biquge) {
-            final indexs = data.chapters!;
-            final vols = data.vols!;
+    return ColoredBox(
+      color: isLight ? Colors.grey.shade200 : Colors.grey.shade900,
+      child: AnimatedBuilder(
+          animation: indexBloc!,
+          builder: (context, _) {
+            final data = indexBloc!.data;
 
-            return Scrollbar(
-              controller: controller,
-              interactive: true,
-              thickness: 8,
-              radius: const Radius.circular(5),
-              child: CustomScrollView(
+            if (data == null) {
+              return loadingIndicator();
+            } else if (!data.isValid) {
+              return reloadBotton(indexBloc!.reloadIndexs);
+            }
+            if (data.api == ApiType.biquge) {
+              final indexs = data.chapters!;
+              final vols = data.vols!;
+
+              return Scrollbar(
                 controller: controller,
-                slivers: [
-                  for (var i = 0; i < indexs.length; i++)
+                interactive: true,
+                thickness: 8,
+                radius: const Radius.circular(5),
+                child: CustomScrollView(
+                  controller: controller,
+                  slivers: [
+                    for (var i = 0; i < indexs.length; i++)
+                      SliverStickyHeader.builder(
+                        builder: (context, st) {
+                          return Container(
+                            height: widget.headerextent,
+                            color: const Color.fromRGBO(150, 180, 160, 1),
+
+                            child: Center(child: Text(vols[i])),
+                            // height: headerextent,
+                          );
+                        },
+                        sliver: _StickyBody(
+                            l: indexs[i],
+                            bookid: data.bookid!,
+                            indexBloc: indexBloc!,
+                            onTap: widget.onTap,
+                            extent: widget.extent),
+                      ),
+                  ],
+                ),
+              );
+            } else if (data.api == ApiType.zhangdu) {
+              final indexs = data.data!;
+              return Scrollbar(
+                controller: controller,
+                interactive: true,
+                thickness: 8,
+                radius: const Radius.circular(5),
+                child: CustomScrollView(
+                  controller: controller,
+                  slivers: [
                     SliverStickyHeader.builder(
                       builder: (context, st) {
                         return Container(
                           height: widget.headerextent,
                           color: const Color.fromRGBO(150, 180, 160, 1),
 
-                          child: Center(child: Text(vols[i])),
+                          child: Center(child: Text('正文 | ${indexs.length}章')),
                           // height: headerextent,
                         );
                       },
-                      sliver: _StickyBody(
-                          l: indexs[i],
-                          bookid: data.bookid!,
-                          indexBloc: indexBloc!,
-                          onTap: widget.onTap,
-                          extent: widget.extent),
-                    ),
-                ],
-              ),
-            );
-          } else if (data.api == ApiType.zhangdu) {
-            final indexs = data.data!;
-            return Scrollbar(
-              controller: controller,
-              interactive: true,
-              thickness: 8,
-              radius: const Radius.circular(5),
-              child: CustomScrollView(
-                controller: controller,
-                slivers: [
-                  SliverStickyHeader.builder(
-                    builder: (context, st) {
-                      return Container(
-                        height: widget.headerextent,
-                        color: const Color.fromRGBO(150, 180, 160, 1),
-
-                        child: Center(child: Text('正文 | ${indexs.length}章')),
-                        // height: headerextent,
-                      );
-                    },
-                    sliver: SliverFixedExtentList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          return btn1(
-                            padding: const EdgeInsets.only(left: 10, right: 10),
-                            radius: 6,
-                            child: Row(
-                              textBaseline: TextBaseline.ideographic,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    indexs[index].name ?? '',
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
+                      sliver: SliverFixedExtentList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            return btn1(
+                              padding:
+                                  const EdgeInsets.only(left: 10, right: 10),
+                              radius: 6,
+                              child: Row(
+                                textBaseline: TextBaseline.ideographic,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      indexs[index].name ?? '',
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                                if (indexBloc!.contains(indexs[index].id))
-                                  Text(
-                                    '已缓存',
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        context.read<TextStyleConfig>().body3,
-                                  )
-                              ],
-                            ),
-                            splashColor: Colors.grey[500],
-                            background: false,
-                            onTap: () {
-                              final id = indexs[index].id;
-                              if (id != null)
-                                widget.onTap(context, data.bookid!, id);
-                            },
-                          );
-                        },
-                        childCount: indexs.length,
+                                  if (indexBloc!.contains(indexs[index].id))
+                                    Text(
+                                      '已缓存',
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                      style:
+                                          context.read<TextStyleConfig>().body3,
+                                    )
+                                ],
+                              ),
+                              splashColor: Colors.grey[500],
+                              background: false,
+                              onTap: () {
+                                final id = indexs[index].id;
+                                if (id != null)
+                                  widget.onTap(context, data.bookid!, id);
+                              },
+                            );
+                          },
+                          childCount: indexs.length,
+                        ),
+                        itemExtent: widget.extent,
                       ),
-                      itemExtent: widget.extent,
                     ),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            return const SizedBox.shrink();
-          }
-        });
+                  ],
+                ),
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
+          }),
+    );
   }
 }
 
@@ -297,6 +303,11 @@ class _StickyBody extends StatelessWidget {
   final int bookid;
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final styleConfig = context.read<TextStyleConfig>();
+    final style = styleConfig.body3;
+    final title = styleConfig.title3;
+
     return SliverFixedExtentList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -311,6 +322,9 @@ class _StickyBody extends StatelessWidget {
                     l[index].name ?? '',
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
+                    style: isLight
+                        ? title
+                        : title.copyWith(color: Colors.grey.shade400),
                   ),
                 ),
                 if (indexBloc.contains(l[index].id))
@@ -318,7 +332,7 @@ class _StickyBody extends StatelessWidget {
                     '已缓存',
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
-                    style: context.read<TextStyleConfig>().body3,
+                    style: style,
                   )
               ],
             ),

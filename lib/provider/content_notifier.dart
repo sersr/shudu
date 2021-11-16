@@ -65,7 +65,7 @@ class ContentNotifier extends ChangeNotifier {
 
   /// 为外部UI提供padding
   EdgeInsets get safePadding => _safePadding;
-
+  double _safeTop = 0;
   set safePadding(EdgeInsets e) {
     if (_safePadding == e) return;
     _safePadding = e;
@@ -645,6 +645,7 @@ extension Layout on ContentNotifier {
     // 小标题
     final TextPainter smallTitlePainter = TextPainter(
         text: TextSpan(text: cname, style: secstyle),
+        ellipsis: '...',
         textDirection: TextDirection.ltr,
         maxLines: 1)
       ..layout(maxWidth: width);
@@ -1233,15 +1234,27 @@ extension Event on ContentNotifier {
   bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
-    var _safePadding = _p;
+
+    /// 状态栏遮挡高度，由`statusHeight`值决定是否可占用状态栏
+    final statusHeight = repository.statusHeight;
+    // 取得固定的状态栏高度
+    if (_safeTop == 0 && _p.top != 0) {
+      _safeTop = _p.top;
+    }
+    var _safePadding =
+        _p.copyWith(top: statusHeight != 0 ? statusHeight : _safeTop);
     final paddingRect = EdgeInsets.only(
-      left: _safePadding.left + 16,
-      top: _safePadding.top,
-      right: _safePadding.right + 16,
+      left: _p.left + 16,
+      top: statusHeight, // 如果状态栏无遮挡，占用
+      right: _p.right + 16,
       bottom: 0,
     );
-    Log.w('size: $_size, $_safePadding', onlyDebug: false);
+
+    /// [TopPannel] 使用
     safePadding = _safePadding;
+
+    Log.w('size: $_size, $_safePadding $statusHeight $_safeTop',
+        onlyDebug: false);
     if (size != _size || paddingRect != _paddingRect) {
       size = _size;
       _paddingRect = paddingRect;

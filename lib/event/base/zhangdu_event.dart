@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:nop_annotations/nop_annotations.dart';
+
 import '../../data/zhangdu/zhangdu_chapter.dart';
 import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../data/zhangdu/zhangdu_same_users_books.dart';
@@ -8,6 +10,7 @@ import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
 
 abstract class ZhangduEvent {
+  @NopIsolateMethod(useTransferType: true)
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update);
   FutureOr<int?> deleteZhangduContentCache(int bookId);

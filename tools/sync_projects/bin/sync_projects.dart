@@ -35,6 +35,7 @@ void main(args) async {
     'sqlite3_windows_dll',
     'useful_tools',
     'utils',
+    'bangs',
   ];
 
   if (!projectDir.existsSync()) {

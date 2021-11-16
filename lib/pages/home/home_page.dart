@@ -50,13 +50,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final data = MediaQuery.of(context);
     if (_future == null) {
       final any = FutureAny();
-      painterBloc.metricsChange(data);
       any
         ..add(opts.init())
         ..add(painterBloc.initConfigs())
         ..add(cache.load())
         ..add(search.init());
       _future = Future.value(any.wait).whenComplete(() {
+      painterBloc.metricsChange(data);
         if (opts.options.updateOnStart == true && mounted) {
           _refreshKey.currentState!.show();
         }

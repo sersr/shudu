@@ -4,8 +4,9 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
-import 'package:nop_db/extensions/future_or_ext.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
+import 'package:utils/future_or_ext.dart';
 
 import '../../api/api.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
@@ -15,14 +16,31 @@ import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/nop_database.dart';
 import '../../pages/book_list/cache_manager.dart';
 import '../../provider/book_index_notifier.dart';
+import '../base/book_event.dart';
 import '../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
 
-mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
+mixin ZhangduEventMixin
+    on DatabaseMixin, NetworkMixin
+    implements ZhangduEvent, ZhangduEventDynamic {
   late final zhangduCache = db.zhangduCache;
   late final zhangduContent = db.zhangduContent;
   late final zhangduIndex = db.zhangduIndex;
+
+  @override
+  FutureOr<TransferType<List<String>?>> getZhangduContentDynamic(
+    int bookId,
+    int contentId,
+    String contentUrl,
+    String name,
+    int sort,
+    bool update,
+  ) async {
+    final _data = await getZhangduContent(
+        bookId, contentId, contentUrl, name, sort, update);
+    return TransferTypeMapDataListString(_data);
+  }
 
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
@@ -39,7 +57,6 @@ mixin ZhangduEventMixin on DatabaseMixin, NetworkMixin implements ZhangduEvent {
   String _replaceAll(String source) {
     return source
         .replaceAll(RegExp(r'<br\s*/>'), '\n')
-        // .replaceAll('&nbsp;&nbsp;&nbsp;&nbsp;', '\u3000\u3000')
         .replaceAll(RegExp('&nbsp;|<.*>'), '')
         .replaceAll(RegExp('(&ldquo;)|(&rdquo;)'), '"');
   }

@@ -17,13 +17,8 @@ import 'network_mixin.dart';
 mixin ComplexMixin
     on DatabaseMixin, NetworkMixin
     implements
-        ComplexEvent /*显示 override */,
-        // ComplexEventDynamic,
+        ComplexEvent /* override 提示 */,
         CustomEventDynamic {
-  // @override
-  // Future<RawContentLines> getContentDynamic(int bookid, int contentid, bool update) {
-  //   return getContent(bookid, contentid, update);
-  // }
 
   @override
   Future<dynamic> getImageBytesDynamic(String img) async {
