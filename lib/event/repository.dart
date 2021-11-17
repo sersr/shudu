@@ -3,12 +3,12 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:android_external_storage/android_external_storage.dart';
+import 'package:bangs/bangs.dart';
 import 'package:battery/battery.dart';
 import 'package:device_info/device_info.dart';
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:hot_fix/hot_fix.dart';
 import 'package:memory_info/memory_info.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
@@ -16,7 +16,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:bangs/bangs.dart';
+
 import '../provider/options_notifier.dart';
 import 'base/book_event.dart';
 import 'mixin/complex_mixin.dart';
@@ -52,8 +52,8 @@ class Repository extends BookEventMessagerMain
 
   static Repository? _instance;
 
-  factory Repository.create([DeferredMain? hot]) {
-    _instance ??= Repository().._hotFix = hot;
+  factory Repository.create() {
+    _instance ??= Repository();
     return _instance!;
   }
 
@@ -167,9 +167,6 @@ class Repository extends BookEventMessagerMain
 
 /// TODO: 重新添加刘海屏等顶部遮挡高度信息获取
 mixin SystemInfos {
-  DeferredMain? _hotFix;
-  DeferredMain? get hotFix => _hotFix;
-
   Battery? _battery;
 
   int level = 50;
@@ -258,8 +255,8 @@ class BookEventIsolate extends BookEventResolveMain
   final bool sqfliteFfiEnabled;
 
   Future<void> initState() async {
-    final d = initDb();
-    await netEventInit();
+    final d = netEventInit().logi(false);
+    await initDb().logi(false);
     await d;
   }
 

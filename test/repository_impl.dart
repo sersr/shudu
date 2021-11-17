@@ -11,7 +11,7 @@ import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
 import 'package:shudu/event/mixin/event_messager_mixin.dart';
-import 'package:useful_tools/common.dart';
+import 'package:utils/utils.dart';
 
 class RepositoryTest extends Repository {
   @override
@@ -103,7 +103,7 @@ class Server {
 
 class BookEventIsolateTest extends BookEventIsolate {
   BookEventIsolateTest(SendPort sp, {bool useSqflite = false})
-      : super(sp, '', '', true/* windows 平台只能为 true */, useSqflite);
+      : super(sp, '', '', true /* windows 平台只能为 true */, useSqflite);
 
   @override
   bool remove(key) {

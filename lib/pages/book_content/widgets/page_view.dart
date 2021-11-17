@@ -262,7 +262,7 @@ class ContentPageViewState extends State<ContentPageView>
     );
 
     return _SlideWidget(
-      paddingRect: bloc.paddingRect,
+      paddingRect: bloc.contentLayoutPadding,
       header: RepaintBoundary(child: head),
       body: RepaintBoundary(child: child),
       footer: RepaintBoundary(child: footer),

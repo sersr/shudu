@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:math' as math;
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
+
 import '../../api/api.dart';
 import '../../data/data.dart';
 import '../../database/database.dart';
@@ -135,7 +137,7 @@ extension _NetworkImpl on NetworkMixin {
     final d = Directory(imageLocalPath);
 
     imageUpdate = await Hive.openBox('imageUpdate');
-    final exists = await d.exists();
+    final exists = d.existsSync();
 
     if (imageUpdate.get('_version_', defaultValue: -1) == -1) {
       await imageUpdate.deleteFromDisk();
@@ -144,8 +146,8 @@ extension _NetworkImpl on NetworkMixin {
 
       await imageUpdate.put('_version_', 1);
       if (exists) {
-        await d.delete(recursive: true);
-        await d.create(recursive: true);
+        d.deleteSync(recursive: true);
+        d.createSync(recursive: true);
       }
     }
 

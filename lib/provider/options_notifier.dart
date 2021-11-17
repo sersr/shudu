@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
+
+import '../event/repository.dart';
 
 class ConfigOptions {
   ConfigOptions(
@@ -96,8 +96,8 @@ enum PageBuilder {
 }
 
 class OptionsNotifier extends ChangeNotifier {
-  OptionsNotifier();
-
+  OptionsNotifier(this.repository);
+  final Repository repository;
   final routeObserver = RouteObserver<PageRoute>();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
@@ -171,8 +171,6 @@ class OptionsNotifier extends ChangeNotifier {
       return box.close();
     });
   }
-
-
 
   static Future<ThemeMode> getThemeModeUnSafe() async {
     final box = await Hive.openBox(_options_);
@@ -256,7 +254,10 @@ class OptionsNotifier extends ChangeNotifier {
     final useSqflite3 = options.useSqflite;
     final extenalStorage = options.extenalStorage;
 
-    if (useSqflite3 != null) any.add(setSqfliteBox(useSqflite3));
+    if (useSqflite3 != null && await sqfliteBox != useSqflite3) {
+      any.add(setSqfliteBox(useSqflite3));
+      repository.close().whenComplete(repository.init);
+    }
     if (extenalStorage != null) any.add(setextenalStorage(extenalStorage));
 
     _updateOptions(box, any, _platform, options.platform);

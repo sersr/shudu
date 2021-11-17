@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -34,7 +33,6 @@ class ListMainPage extends StatelessWidget {
       );
     }
 
-    var v = 0;
     return Container(
       color: light ? Colors.grey.shade100 : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),

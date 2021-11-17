@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:utils/utils.dart';
 
 void main() {
   test('set string', () {
@@ -26,8 +26,9 @@ void main() {
 
   test('dynamic type', () {
     bool t<T>() {
-    return T == dynamic;
+      return T == dynamic;
     }
+
     expect(t(), true);
     expect(t<int>(), false);
     expect(t<String>(), false);
@@ -45,6 +46,7 @@ class Impl with Def, DefMixin {}
 
 /// `implements`: [Base]作为抽象接口，本身包含基类
 mixin Def implements Base {
+  @override
   void dprint() {
     print('hello');
   }

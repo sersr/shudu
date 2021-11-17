@@ -62,12 +62,12 @@ class _PannelState extends State<Pannel> {
               color: Colors.grey.shade900,
               child: RepaintBoundary(
                 child: AnimatedBuilder(
-                  animation: bloc.safePaddingNotifier,
+                  animation: bloc.pannelPaddingNotifier,
                   builder: (context, child) {
                     return Padding(
                       padding: EdgeInsets.only(
-                        left: 10.0 + bloc.safePadding.left,
-                        right: 10.0 + bloc.safePadding.right,
+                        left: 10.0 + bloc.pannelPadding.left,
+                        right: 10.0 + bloc.pannelPadding.right,
                       ),
                       child: child!,
                     );
@@ -364,9 +364,9 @@ class _BottomEndState extends State<BottomEnd> {
               final position = curve.drive(op);
               final colors = debx.animate(animation);
               final padding = EdgeInsets.only(
-                  top: 10.0 + bloc.safePadding.top,
-                  left: 24.0 + bloc.safePadding.left,
-                  right: 24.0 + bloc.safePadding.right,
+                  top: 10.0 + bloc.pannelPadding.top,
+                  left: 24.0 + bloc.pannelPadding.left,
+                  right: 24.0 + bloc.pannelPadding.right,
                   bottom: 0);
               // if (state.hide.value) return const SizedBox();
 
@@ -609,17 +609,14 @@ class _TopPannelState extends State<TopPannel> {
       child: Material(
         color: Colors.grey.shade900,
         child: AnimatedBuilder(
-          animation: contentNtf.safePaddingNotifier,
+          animation: contentNtf.pannelPaddingNotifier,
           builder: (context, child) {
-            final size = MediaQuery.of(context).size;
             return Padding(
               padding: EdgeInsets.only(
-                top: size.height >= size.width
-                    ? contentNtf.safePadding.top + 6.0
-                    : 6.0,
+                top: contentNtf.pannelPadding.top + 6.0,
                 bottom: 6.0,
-                left: 4 + contentNtf.safePadding.left,
-                right: 4 + contentNtf.safePadding.right,
+                left: 4 + contentNtf.pannelPadding.left,
+                right: 4 + contentNtf.pannelPadding.right,
               ),
               child: RepaintBoundary(
                 child: Row(

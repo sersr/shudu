@@ -55,21 +55,21 @@ class ContentNotifier extends ChangeNotifier {
 
   /// 文本布局信息
   Size size = Size.zero;
-  EdgeInsets get paddingRect => _paddingRect;
+  EdgeInsets get contentLayoutPadding => _contentLayoutPadding;
 
-  var _paddingRect = EdgeInsets.zero;
+  var _contentLayoutPadding = EdgeInsets.zero;
 
-  final safePaddingNotifier = ValueNotifier<bool>(false);
+  final pannelPaddingNotifier = ValueNotifier<bool>(false);
 
-  var _safePadding = EdgeInsets.zero;
+  var _pannelPadding = EdgeInsets.zero;
 
-  /// 为外部UI提供padding
-  EdgeInsets get safePadding => _safePadding;
+  /// 为[Pannel]提供padding
+  EdgeInsets get pannelPadding => _pannelPadding;
   double _safeTop = 0;
-  set safePadding(EdgeInsets e) {
-    if (_safePadding == e) return;
-    _safePadding = e;
-    safePaddingNotifier.value = !safePaddingNotifier.value;
+  set pannelPadding(EdgeInsets e) {
+    if (_pannelPadding == e) return;
+    _pannelPadding = e;
+    pannelPaddingNotifier.value = !pannelPaddingNotifier.value;
   }
 
   TextStyle _getStyle(ContentViewConfig config) {
@@ -118,28 +118,8 @@ class ContentNotifier extends ChangeNotifier {
     _tData = TextData();
   }
 
-  // final _dataQueue = EventQueue();
-  // Future<void> _tdataRun() async {
-  //   final local = _tData;
-  //   Log.w('progress: ....');
-  //   tts.speak(local.rawContent.join());
-  //   // for (final text in local.rawContent) {
-  //   //   if (local != _tData || config.value.audio != true || !inBook) {
-  //   //     break;
-  //   //   }
-
-  //   //   await tts.speak(text);
-
-  //   //   await tts.awaitSpeakCompletion(true);
-  //   //   Log.w('progress: speak', onlyDebug: false);
-  //   // }
-  // }
-
   /// 当前章节无效，初始加载，设置更改，重新加载
   final initQueue = EventQueue();
-
-  // final _taskEvent = EventQueue();
-  // Future? get taskRunner => _taskEvent.runner;
 
   ///-------------------------
 
@@ -606,12 +586,12 @@ extension Layout on ContentNotifier {
 
     final config = this.config.value.copyWith();
 
-    final words = (size.width - _paddingRect.horizontal) ~/ fontSize;
+    final words = (size.width - _contentLayoutPadding.horizontal) ~/ fontSize;
 
-    final _size = _paddingRect.deflateSize(size);
+    final _size = _contentLayoutPadding.deflateSize(size);
     final width = _size.width;
     final leftExtraPadding = (width % fontSize) / 2;
-    final left = _paddingRect.left + leftExtraPadding;
+    final left = _contentLayoutPadding.left + leftExtraPadding;
 
     // 文本占用高度
     final contentHeight = _size.height - contentWhiteHeight;
@@ -778,7 +758,7 @@ extension Layout on ContentNotifier {
           left: left,
           index: r,
           size: _size,
-          paddingRect: _paddingRect,
+          paddingRect: _contentLayoutPadding,
           showrect: showrect,
           topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
       await releaseUI;
@@ -804,6 +784,7 @@ extension Layout on ContentNotifier {
   }
 
   // test
+  // ignore: unused_element
   Future<List<ContentMetricsText>> _asyncLayoutText(
       List<String> paragraphs, String cname) async {
     var whiteRows = 0;
@@ -815,12 +796,12 @@ extension Layout on ContentNotifier {
 
     final config = this.config.value.copyWith();
 
-    final words = (size.width - _paddingRect.horizontal) ~/ fontSize;
+    final words = (size.width - _contentLayoutPadding.horizontal) ~/ fontSize;
 
-    final _size = _paddingRect.deflateSize(size);
+    final _size = _contentLayoutPadding.deflateSize(size);
     final width = _size.width;
     final leftExtraPadding = (width % fontSize) / 2;
-    final left = _paddingRect.left + leftExtraPadding;
+    final left = _contentLayoutPadding.left + leftExtraPadding;
 
     // 文本占用高度
     final contentHeight = _size.height - contentWhiteHeight;
@@ -971,7 +952,7 @@ extension Layout on ContentNotifier {
         left: left,
         index: r,
         size: _size,
-        paddingRect: _paddingRect,
+        paddingRect: _contentLayoutPadding,
         topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows),
         secStyle: secstyle,
       );
@@ -1154,7 +1135,7 @@ extension Event on ContentNotifier {
     Log.i('api: $api');
     final _reset = _shouldUpdate(newBookid, cid, page, api);
     // assert(_reset || _tData.contentIsNotEmpty);
-    if (_reset) {
+    if (_reset || _tData.contentIsEmpty) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
 
@@ -1220,7 +1201,7 @@ extension Event on ContentNotifier {
       Log.e(changed);
       if (changed && inBook) {
         _sizeChangedTimer?.cancel();
-        _sizeChangedTimer = Timer(const Duration(milliseconds: 100), () {
+        _sizeChangedTimer = Timer(const Duration(milliseconds: 50), () {
           startFirstEvent(onStart: () {
             resetController();
             notifyState(notEmptyOrIgnore: true);
@@ -1231,8 +1212,6 @@ extension Event on ContentNotifier {
     }
   }
 
-  /// 沉浸式体验
-  /// 
   bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
@@ -1243,23 +1222,34 @@ extension Event on ContentNotifier {
     if (_safeTop == 0 && _p.top != 0) {
       _safeTop = _p.top;
     }
-    var _safePadding =
-        _p.copyWith(top: statusHeight != 0 ? statusHeight : _safeTop);
-    final paddingRect = EdgeInsets.only(
-      left: _p.left + 16,
-      top: statusHeight, // 如果状态栏无遮挡，占用
-      right: _p.right + 16,
-      bottom: 0,
-    );
+    var _pannelPadding = _p;
+    var contentLayoutPadding = _p;
 
-    /// [TopPannel] 使用
-    safePadding = _safePadding;
+    /// 竖屏模式下，需要处理 顶部UI面板、状态栏、挖空遮挡之间的关系
+    if (_size.height >= _size.width) {
+      // 顶部UI面板相关，面板的高度显/隐一致，不管有没有遮挡
+      _pannelPadding = _p.copyWith(top: _safeTop);
+      // 文本布局关系密切
+      contentLayoutPadding = EdgeInsets.only(
+        left: _p.left + 16,
+        top: statusHeight, // top: 取决于遮挡的高度(挖孔、刘海、水滴等)
+        right: _p.right + 16,
+      );
+    } else {
+      contentLayoutPadding = EdgeInsets.only(
+        left: _p.left + 16,
+        right: _p.right + 16,
+      );
+    }
 
-    Log.w('size: $_size, $_safePadding $statusHeight $_safeTop ${_p.top}',
+    pannelPadding = _pannelPadding;
+
+    Log.w(
+        'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}',
         onlyDebug: false);
-    if (size != _size || paddingRect != _paddingRect) {
+    if (size != _size || contentLayoutPadding != _contentLayoutPadding) {
       size = _size;
-      _paddingRect = paddingRect;
+      _contentLayoutPadding = contentLayoutPadding;
       return true;
     } else {
       return false;

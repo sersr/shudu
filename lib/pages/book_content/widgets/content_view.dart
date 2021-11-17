@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../../../provider/text_data.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/constansts.dart';
 
@@ -199,9 +199,9 @@ class RenderContentViewText extends RenderBox
     // context.setIsComplexHint();
 
     if (child != null) {
-    final canvas = context.canvas;
+      final canvas = context.canvas;
 
-    final left = contentMetrics.left;
+      final left = contentMetrics.left;
       final height = bottomLeft.size.height;
       final width = child!.size.width;
       final dx = left + offset.dx;

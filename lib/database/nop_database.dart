@@ -5,7 +5,7 @@ import 'package:nop_db/database/nop.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
 import '../data/data.dart';

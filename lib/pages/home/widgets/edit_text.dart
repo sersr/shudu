@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:useful_tools/common.dart';
+import 'package:utils/utils.dart';
+
 import '../../../provider/provider.dart';
 
 class EditText extends StatefulWidget {

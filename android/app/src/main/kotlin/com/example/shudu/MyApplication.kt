@@ -4,10 +4,11 @@ import io.flutter.app.FlutterApplication
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor.DartEntrypoint
-import com.example.hot_fix.HotFixApplication
+// import com.example.hot_fix.HotFixApplication
+import android.app.Application
 
 
-class MyApplication : HotFixApplication() {
+class MyApplication : Application() {
     //  override fun onCreate() {
     //      val loader = FlutterInjector.instance().flutterLoader()
     //      val jni = FlutterJNI()

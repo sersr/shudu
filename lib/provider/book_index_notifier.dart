@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:utils/utils.dart';
 
 import '../data/data.dart';
 import '../data/zhangdu/zhangdu_chapter.dart';
@@ -286,7 +286,6 @@ class BookIndexNotifier extends ChangeNotifier {
         assert(Log.e('book cache ids'));
         if (_data?.isValidBqg != true) return;
         Log.e('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
-
         if (_data?.bookid == bookid) {
           _cacheList = listData;
           notifyListeners();

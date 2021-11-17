@@ -48,20 +48,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
     final data = MediaQuery.of(context);
-    if (_future == null) {
+    _future ??= EventQueue.runTaskOnQueue('hive_init', () async {
       final any = FutureAny();
       any
         ..add(opts.init())
         ..add(painterBloc.initConfigs())
         ..add(cache.load())
         ..add(search.init());
-      _future = Future.value(any.wait).whenComplete(() {
+      await any.wait;
       painterBloc.metricsChange(data);
-        if (opts.options.updateOnStart == true && mounted) {
-          _refreshKey.currentState!.show();
-        }
-      });
-    }
+      if (opts.options.updateOnStart == true && mounted) {
+        _refreshKey.currentState!.show();
+      }
+    });
   }
 
   var _inApp = true;
@@ -74,16 +73,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
       if (mounted) {
-        cache.repository.init();
+        _runIsolate(400, cache.repository.init);
       }
     }
+  }
+
+  Timer? _isolate;
+
+  /// 延迟
+  void _runIsolate(int mill, void Function() run) {
+    _isolate?.cancel();
+    _isolate = Timer(Duration(milliseconds: mill), run);
   }
 
   @override
   void didHaveMemoryPressure() {
     super.didHaveMemoryPressure();
     if (!_inApp) {
-      cache.repository.close();
+      _runIsolate(10000, cache.repository.close);
     }
   }
 

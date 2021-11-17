@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:useful_tools/common.dart';
-
 import '../base/book_event.dart';
 
 /// `Dynamic`方法需要实现原方法

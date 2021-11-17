@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/change_notifier.dart';
-import 'package:useful_tools/common.dart';
 import 'package:useful_tools/widgets.dart';
+import 'package:utils/utils.dart';
 
 import '../../provider/options_notifier.dart';
 
@@ -143,7 +143,7 @@ class _SettingState extends State<Setting> {
         });
     yield line;
     yield selector<OptionsNotifier>(
-        title: '使用 sqflite(重启生效)',
+        title: '使用 sqflite',
         select: (_, opt) => opt.options.useSqflite ?? false,
         onChanged: (updateValue) {
           optionsNotifier.options = ConfigOptions(useSqflite: updateValue);

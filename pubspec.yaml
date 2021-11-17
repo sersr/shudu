@@ -29,8 +29,8 @@ dependencies:
   get: ^4.3.6
   hive: ^2.0.4
   hive_flutter: ^1.0.0
-  hot_fix:
-    path: ../packages/hot_fix
+  # hot_fix:
+  #   path: ../packages/hot_fix
   infinite_scroll_pagination: ^3.1.0
   intl: ^0.17.0
   json_annotation: ^4.0.1
@@ -53,19 +53,6 @@ dependencies:
   # bitsdojo_window: ^0.1.1+1
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
-  # bangs:
-  #   path: ../packages/bangs
-  # bangs:
-  #   git:
-  #     url: https://github.com/sersr/bangs
-  #     ref: master
-  # pull_to_refresh: ^2.0.0
-
-  # shared_preferences: ^2.0.5
-  # nop_db:
-  #   git:
-  #     url: https://github.com/sersr/nop_db
-  #     ref: master
   nop_db:
     path: ../packages/nop_db
   nop_db_sqflite:

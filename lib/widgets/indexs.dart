@@ -167,8 +167,6 @@ class _IndexsState extends State<_Indexs> {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
     return AnimatedBuilder(
         animation: indexBloc!,
         builder: (context, _) {

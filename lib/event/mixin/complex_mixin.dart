@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:lpinyin/lpinyin.dart';
-import 'package:useful_tools/common.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../api/api.dart';
 import '../../data/data.dart';
@@ -16,10 +16,7 @@ import 'network_mixin.dart';
 /// 处理复杂任务
 mixin ComplexMixin
     on DatabaseMixin, NetworkMixin
-    implements
-        ComplexEvent /* override 提示 */,
-        CustomEventDynamic {
-
+    implements ComplexEvent /* override 提示 */, CustomEventDynamic {
   @override
   Future<dynamic> getImageBytesDynamic(String img) async {
     final data = await getImageBytes(img);
