@@ -52,8 +52,8 @@ class _SettingState extends State<Setting> {
         .selector((parent) => parent.options.themeMode ?? ThemeMode.system);
     void _onChanged(ThemeMode? updateValue) {
       optionsNotifier.options = ConfigOptions(themeMode: updateValue);
-      final isDark = OptionsNotifier.isDarkMode(updateValue);
-      uiStyle(dark: isDark);
+      // final isDark = OptionsNotifier.isDarkMode(updateValue);
+      // uiStyle(dark: isDark);
       Navigator.maybePop(context);
     }
 

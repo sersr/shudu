@@ -284,6 +284,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   Widget background({required Widget child}) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return GestureDetector(
       onTap: () {
         showIndexs.value = !showIndexs.value;
@@ -299,7 +301,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               bottom: 66.0,
               child: Material(
                 borderRadius: const BorderRadius.all(Radius.circular(6.0)),
-                color: Colors.grey.shade300,
+                color: isLight ? Colors.grey.shade300 : Colors.grey.shade900,
                 clipBehavior: Clip.hardEdge,
                 child: child,
               ),

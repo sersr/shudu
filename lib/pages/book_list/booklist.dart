@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -20,36 +21,38 @@ class BooklistPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
-      body: DefaultTabController(
-        length: 3,
-        child: BarLayout(
-          title: Text('书单'),
-          bottom: TabBar(
-            // controller: controller,
-            labelColor:
-                isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
-            unselectedLabelColor:
-                isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
-            indicatorColor: Colors.pink.shade200,
-            tabs: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('最新发布'),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('本周最热'),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text('最多收藏'),
-              ),
-            ],
-          ),
-          body: TabBarView(
-            // controller: controller,
-            children: List.generate(
-                3, (index) => WrapWidget(index: index, urlKey: c[index])),
+      body: RepaintBoundary(
+        child: DefaultTabController(
+          length: 3,
+          child: BarLayout(
+            title: Text('书单'),
+            bottom: TabBar(
+              // controller: controller,
+              labelColor:
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
+              unselectedLabelColor:
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+              indicatorColor: Colors.pink.shade200,
+              tabs: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('最新发布'),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('本周最热'),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: Text('最多收藏'),
+                ),
+              ],
+            ),
+            body: TabBarView(
+              // controller: controller,
+              children: List.generate(
+                  3, (index) => WrapWidget(index: index, urlKey: c[index])),
+            ),
           ),
         ),
       ),
@@ -332,41 +335,44 @@ class BarLayout extends StatelessWidget {
 
     final size = MediaQuery.of(context).size;
     final ts = Provider.of<TextStyleConfig>(context);
-    return Material(
-      color: isLight
-          ? Color.fromARGB(255, 240, 240, 240)
-          : Color.fromRGBO(25, 25, 25, 1),
-      child: SafeArea(
-        bottom: false,
-        child: Column(children: [
-          RepaintBoundary(
-            child: CustomMultiChildLayout(
-                delegate: MultLayout(mSize: Size(size.width, 90)),
-                children: [
-                  LayoutId(
-                      id: 'back',
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: InkWell(
-                            borderRadius: BorderRadius.circular(40),
-                            onTap: () => Navigator.maybePop(context),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(Icons.arrow_back, size: 24),
-                            )),
-                      )),
-                  LayoutId(
-                      id: 'title',
-                      child: DefaultTextStyle(
-                          style: isLight
-                              ? ts.bigTitle1
-                              : ts.bigTitle1.copyWith(color: Colors.grey),
-                          child: title)),
-                  LayoutId(id: 'bottom', child: bottom)
-                ]),
-          ),
-          Expanded(child: RepaintBoundary(child: body))
-        ]),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
+      child: Material(
+        color: isLight
+            ? Color.fromARGB(255, 240, 240, 240)
+            : Color.fromRGBO(25, 25, 25, 1),
+        child: SafeArea(
+          bottom: false,
+          child: Column(children: [
+            RepaintBoundary(
+              child: CustomMultiChildLayout(
+                  delegate: MultLayout(mSize: Size(size.width, 90)),
+                  children: [
+                    LayoutId(
+                        id: 'back',
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: InkWell(
+                              borderRadius: BorderRadius.circular(40),
+                              onTap: () => Navigator.maybePop(context),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(Icons.arrow_back, size: 24),
+                              )),
+                        )),
+                    LayoutId(
+                        id: 'title',
+                        child: DefaultTextStyle(
+                            style: isLight
+                                ? ts.bigTitle1
+                                : ts.bigTitle1.copyWith(color: Colors.grey),
+                            child: title)),
+                    LayoutId(id: 'bottom', child: bottom)
+                  ]),
+            ),
+            Expanded(child: RepaintBoundary(child: body))
+          ]),
+        ),
       ),
     );
   }

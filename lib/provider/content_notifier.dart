@@ -1231,13 +1231,15 @@ extension Event on ContentNotifier {
     }
   }
 
+  /// 沉浸式体验
+  /// 
   bool _modifiedSize(MediaQueryData data) {
     var _size = data.size;
     var _p = data.padding;
 
     /// 状态栏遮挡高度，由`statusHeight`值决定是否可占用状态栏
     final statusHeight = repository.statusHeight;
-    // 取得固定的状态栏高度
+    // 从上下文中取得固定的状态栏高度
     if (_safeTop == 0 && _p.top != 0) {
       _safeTop = _p.top;
     }
@@ -1253,7 +1255,7 @@ extension Event on ContentNotifier {
     /// [TopPannel] 使用
     safePadding = _safePadding;
 
-    Log.w('size: $_size, $_safePadding $statusHeight $_safeTop',
+    Log.w('size: $_size, $_safePadding $statusHeight $_safeTop ${_p.top}',
         onlyDebug: false);
     if (size != _size || paddingRect != _paddingRect) {
       size = _size;

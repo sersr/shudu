@@ -121,23 +121,22 @@ class OptionsNotifier extends ChangeNotifier {
   static const _updateOnStart = 'updateOnStart';
   // static const _followSystem = 'followSystem';
   static const _themeMode = 'themeMode';
-  static ThemeMode mode = ThemeMode.system;
 
-  static void autoSetStatus(BuildContext context) {
-    final mode = context.read<OptionsNotifier>().options.themeMode;
+  // static void autoSetStatus(BuildContext context) {
+  //   // final mode = context.read<OptionsNotifier>().options.themeMode;
 
-    uiStyle(dark: isDarkMode(mode));
-  }
+  //   // uiStyle(dark: isDarkMode(mode));
+  // }
 
-  static bool isDarkMode(ThemeMode? mode) {
-    var dark = false;
-    if (mode == ThemeMode.system) {
-      dark = window.platformBrightness == Brightness.dark;
-    } else {
-      dark = mode == ThemeMode.dark;
-    }
-    return dark;
-  }
+  // static bool isDarkMode(ThemeMode? mode) {
+  //   var dark = false;
+  //   if (mode == ThemeMode.system) {
+  //     dark = window.platformBrightness == Brightness.dark;
+  //   } else {
+  //     dark = mode == ThemeMode.dark;
+  //   }
+  //   return dark;
+  // }
 
   static Future<bool> get extenalStorage async {
     return EventQueue.runTaskOnQueue(setextenalStorage, () async {
@@ -173,13 +172,11 @@ class OptionsNotifier extends ChangeNotifier {
     });
   }
 
-  static Future<ThemeMode> getThemeMode() async {
-    return EventQueue.runTaskOnQueue(OptionsNotifier, () async {
-      final box = await Hive.openBox(_options_);
-      final mode = box.get(_themeMode, defaultValue: ThemeMode.system);
-      await box.close();
-      return mode;
-    });
+
+
+  static Future<ThemeMode> getThemeModeUnSafe() async {
+    final box = await Hive.openBox(_options_);
+    return box.get(_themeMode, defaultValue: ThemeMode.system);
   }
 
   final eventQueueKey = Object();

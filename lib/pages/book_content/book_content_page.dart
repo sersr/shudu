@@ -72,8 +72,8 @@ class BookContentPageState extends PanSlideState<BookContentPage>
       EventQueue.runTaskOnQueue(runtimeType, () async {
         if (!bloc.uiOverlayShow) await uiOverlay();
         // 状态栏彻底隐藏之后才改变颜色
-        await release(const Duration(milliseconds: 300));
-        uiStyle(dark: true);
+        // await release(const Duration(milliseconds: 300));
+        // uiStyle(dark: true);
       });
     }
   }
@@ -173,7 +173,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await blocCache.load();
 
     EventQueue.runTaskOnQueue(runtimeType, () async {
-      OptionsNotifier.autoSetStatus(context);
+      // OptionsNotifier.autoSetStatus(context);
       await uiOverlay(hide: false);
     });
     bloc.addInitEventTask(() => null);

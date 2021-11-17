@@ -337,6 +337,8 @@ class _BottomEndState extends State<BottomEnd> {
     indexBloc = context.read<BookIndexNotifier>();
   }
 
+  bool isLight(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light;
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
   final debx =
       ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
@@ -404,7 +406,9 @@ class _BottomEndState extends State<BottomEnd> {
                                             child: Material(
                                               borderRadius:
                                                   BorderRadius.circular(6.0),
-                                              color: Colors.grey.shade300,
+                                              color: isLight(context)
+                                                  ? Colors.grey.shade300
+                                                  : Colors.grey.shade900,
                                               clipBehavior: Clip.hardEdge,
                                               child: BookSettingsView(
                                                 showSettings: showSettings,
@@ -607,9 +611,12 @@ class _TopPannelState extends State<TopPannel> {
         child: AnimatedBuilder(
           animation: contentNtf.safePaddingNotifier,
           builder: (context, child) {
+            final size = MediaQuery.of(context).size;
             return Padding(
               padding: EdgeInsets.only(
-                top: contentNtf.safePadding.top + 6.0,
+                top: size.height >= size.width
+                    ? contentNtf.safePadding.top + 6.0
+                    : 6.0,
                 bottom: 6.0,
                 left: 4 + contentNtf.safePadding.left,
                 right: 4 + contentNtf.safePadding.right,
@@ -640,7 +647,7 @@ class _TopPannelState extends State<TopPannel> {
                                   ..out();
                                 setOrientation(true);
                                 uiOverlay(hide: false);
-                                OptionsNotifier.autoSetStatus(context);
+                                // OptionsNotifier.autoSetStatus(context);
                                 final cache = context.read<BookCacheNotifier>();
                                 BookInfoPage.push(
                                         context, bookid, contentNtf.api)
@@ -745,9 +752,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   void onChangev(HSVColor c) {
     bgColor.value = c;
   }
-
-  bool isLight(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.light;
 
   //TODO: 添加配色保存功能
   Widget settings() {
@@ -1092,7 +1096,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         return children[widget.showSettings.value.index];
       },
     );
-    final light = isLight(context);
+
     return SliderTheme(
         data: SliderTheme.of(context).copyWith(
           thumbColor: Colors.grey.shade300,
@@ -1104,10 +1108,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
           thumbShape: RoundSliderThumbShape(
               enabledThumbRadius: 6, pressedElevation: 4, elevation: 5),
         ),
-        child: RepaintBoundary(
-            child: ColoredBox(
-                color: light ? Colors.grey.shade200 : Colors.grey.shade900,
-                child: child)));
+        child: RepaintBoundary(child: child));
   }
 }
 

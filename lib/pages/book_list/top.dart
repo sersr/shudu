@@ -31,20 +31,23 @@ class _TopPageState extends State<TopPage> {
       initialIndex: 0,
       length: 3,
       child: Scaffold(
-          body: BarLayout(
-        title: Text('榜单'),
-        bottom: TabBar(
-          labelColor:
-              isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
-          unselectedLabelColor:
-              isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
-          labelStyle: TextStyle(fontSize: 15),
-          tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
+        body: RepaintBoundary(
+          child: BarLayout(
+            title: Text('榜单'),
+            bottom: TabBar(
+              labelColor:
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+              unselectedLabelColor:
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
+              labelStyle: TextStyle(fontSize: 15),
+              tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
+            ),
+            body: TabBarView(
+              children: List.generate(3, (index) => Top(index: index)),
+            ),
+          ),
         ),
-        body: TabBarView(
-          children: List.generate(3, (index) => Top(index: index)),
-        ),
-      )),
+      ),
     );
   }
 }
