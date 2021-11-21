@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:typed_data';
-
 import '../base/book_event.dart';
 
 /// `Dynamic`方法需要实现原方法
@@ -12,15 +9,15 @@ mixin SaveImageMessager on CustomEventMessager implements CustomEvent {
   //   return _img ?? img;
   // }
 
-  @override
-  Future<Uint8List?> getImageBytes(String img) async {
-    final _img = await getImageBytesDynamic(img);
+  // @override
+  // Future<Uint8List?> getImageBytes(String img) async {
+  //   final _img = await getImageBytesDynamic(img);
 
-    if (_img is ByteBuffer) {
-      return _img.asUint8List();
-    }
-    return _img;
-  }
+  //   if (_img is ByteBuffer) {
+  //     return _img.asUint8List();
+  //   }
+  //   return _img;
+  // }
 }
 
 /// 调用 数据库 和 网络任务

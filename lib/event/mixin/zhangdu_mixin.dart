@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
-import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
@@ -16,52 +15,39 @@ import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/nop_database.dart';
 import '../../pages/book_list/cache_manager.dart';
 import '../../provider/book_index_notifier.dart';
-import '../base/book_event.dart';
+import '../base/complex_event.dart';
 import '../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
 
 mixin ZhangduEventMixin
-    on DatabaseMixin, NetworkMixin
-    implements ZhangduEvent, ZhangduEventDynamic {
-  late final zhangduCache = db.zhangduCache;
-  late final zhangduContent = db.zhangduContent;
-  late final zhangduIndex = db.zhangduIndex;
-
-  @override
-  FutureOr<TransferType<List<String>?>> getZhangduContentDynamic(
-    int bookId,
-    int contentId,
-    String contentUrl,
-    String name,
-    int sort,
-    bool update,
-  ) async {
-    final _data = await getZhangduContent(
-        bookId, contentId, contentUrl, name, sort, update);
-    return TransferTypeMapDataListString(_data);
-  }
-
+    on ZhangduDatabaseEvent, HiveDioMixin, ComplexOnDatabaseEvent
+    implements ZhangduComplexEvent {
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) async {
     if (update) {
       return await _getContentNet(bookId, contentId, name, sort, contentUrl) ??
-          await _getContentDb(bookId, contentId);
+          await getZhangduContentDb(bookId, contentId);
     } else {
-      return await _getContentDb(bookId, contentId) ??
+      return await getZhangduContentDb(bookId, contentId) ??
           await _getContentNet(bookId, contentId, name, sort, contentUrl);
     }
   }
 
-  String _replaceAll(String source) {
+  @override
+  FutureOr<int?> updateZhangduMainStatus(int bookId) {
+    return getZhangduDetail(bookId).then((_) => 0);
+  }
+
+  static String _replaceAll(String source) {
     return source
         .replaceAll(RegExp(r'<br\s*/>'), '\n')
         .replaceAll(RegExp('&nbsp;|<.*>'), '')
         .replaceAll(RegExp('(&ldquo;)|(&rdquo;)'), '"');
   }
 
-  List<String> _split(String source) {
+  static List<String> _split(String source) {
     return split(source).map((e) {
       if (!e.startsWith('\u3000\u3000')) {
         return '\u3000\u3000$e';
@@ -100,63 +86,6 @@ mixin ZhangduEventMixin
       }
     }
     return data;
-  }
-
-  FutureOr<int> insertOrUpdateZhangduContent(ZhangduContent content) async {
-    assert(content.bookId != null && content.contentId != null);
-    var count = 0;
-    final query = zhangduContent.query
-      ..select.count.all.push
-      ..where.bookId.equalTo(content.bookId!).and
-      ..where.contentId.equalTo(content.contentId!);
-    count = await query.go.first.values.first as int? ?? 0;
-    if (count > 0) {
-      final update = zhangduContent.update
-        ..data.set(content.data)
-        ..name.set(content.name)
-        ..sort.set(content.sort)
-        ..where.bookId.equalTo(content.bookId!).and
-        ..where.contentId.equalTo(content.contentId!);
-      final go = update.go;
-      return go;
-    } else {
-      final insert = zhangduContent.insert.insertTable(content);
-      final go = insert.go;
-      updateZhangduIndexCacheLength(content.bookId!);
-      return go;
-    }
-  }
-
-  Future<void> updateZhangduIndexCacheLength(int bookId) async {
-    final cacheLength = await getZhangduContentCid(bookId) ?? 0;
-    final update = zhangduIndex.update.cacheItemCounts.set(cacheLength)
-      ..where.bookId.equalTo(bookId);
-    await update.go;
-  }
-
-  FutureOr<int?> getZhangduContentCid(int bookid) {
-    final q = zhangduContent.query
-      ..select.count.all.push
-      ..where.bookId.equalTo(bookid);
-    return q.go.first.values.first.then((value) => value as int?);
-  }
-
-  FutureOr<List<String>?> _getContentDb(int bookId, int contentId) {
-    final query = zhangduContent.query.data
-      ..where.bookId.equalTo(bookId).and.contentId.equalTo(contentId);
-
-    return query.goToTable.then((all) {
-      List<String>? data;
-      if (all.isNotEmpty) {
-        assert(all.length > 1 || Log.e('content $bookId count: ${all.length}'));
-        final raw = all.last.data;
-        if (raw != null) {
-          final _raw = _replaceAll(raw);
-          data = _split(_raw);
-        }
-      }
-      return data;
-    });
   }
 
   final _caches = <int, _ZhangduDetailChapterCache>{};
@@ -262,7 +191,7 @@ mixin ZhangduEventMixin
           final exists = (await insertZhangduBook(data)) == -1;
 
           if (exists) {
-            await _updateZhangduBook(
+            await updateZhangduBook(
                 detailData.id ?? bookId,
                 ZhangduCache(
                   chapterName: detailData.chapterName,
@@ -314,7 +243,50 @@ mixin ZhangduEventMixin
   FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb(int bookId) {
     final data = getData(bookId);
     if (data != null) return data.chapterData;
+    return getZhangduIndexDb(bookId);
+  }
 
+  @override
+  Future<ZhangduSearchData?> getZhangduSearchData(
+      String query, int pageIndex, int pageSize) async {
+    final url = ZhangduApi.searchUrl(query, pageIndex, pageSize);
+    try {
+      final response = await dio.get<String>(url);
+      return ZhangduSearch.fromJson(jsonDecode(response.data!)).data ??
+          const ZhangduSearchData();
+    } catch (e) {
+      Log.e(e);
+    }
+  }
+
+  @override
+  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
+      String author) async {
+    try {
+      final url = ZhangduApi.sameUsersBooks(author);
+      final response = await dio.get<String>(url);
+      return ZhangduSameUsersBooks.fromJson(jsonDecode(response.data!)).data ??
+          const [];
+    } catch (e) {
+      Log.w(e);
+    }
+    return const [];
+  }
+}
+
+class _ZhangduDetailChapterCache {
+  _ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
+  ZhangduDetailData detailData;
+  List<ZhangduChapterData> chapterData;
+  final int timePoint;
+}
+
+mixin ZhangduDatabaseMixin on DatabaseMixin implements ZhangduDatabaseEvent {
+  late final zhangduCache = db.zhangduCache;
+  late final zhangduContent = db.zhangduContent;
+  late final zhangduIndex = db.zhangduIndex;
+  @override
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
     final query = zhangduIndex.query
       ..data
       ..where.bookId.equalTo(bookId);
@@ -336,16 +308,63 @@ mixin ZhangduEventMixin
   }
 
   @override
-  Future<ZhangduSearchData?> getZhangduSearchData(
-      String query, int pageIndex, int pageSize) async {
-    final url = ZhangduApi.searchUrl(query, pageIndex, pageSize);
-    try {
-      final response = await dio.get<String>(url);
-      return ZhangduSearch.fromJson(jsonDecode(response.data!)).data ??
-          const ZhangduSearchData();
-    } catch (e) {
-      Log.e(e);
+  FutureOr<int> insertOrUpdateZhangduContent(ZhangduContent content) async {
+    assert(content.bookId != null && content.contentId != null);
+    var count = 0;
+    final query = zhangduContent.query
+      ..select.count.all.push
+      ..where.bookId.equalTo(content.bookId!).and
+      ..where.contentId.equalTo(content.contentId!);
+    count = await query.go.first.values.first as int? ?? 0;
+    if (count > 0) {
+      final update = zhangduContent.update
+        ..data.set(content.data)
+        ..name.set(content.name)
+        ..sort.set(content.sort)
+        ..where.bookId.equalTo(content.bookId!).and
+        ..where.contentId.equalTo(content.contentId!);
+      final go = update.go;
+      return go;
+    } else {
+      final insert = zhangduContent.insert.insertTable(content);
+      final go = insert.go;
+      updateZhangduIndexCacheLength(content.bookId!);
+      return go;
     }
+  }
+
+  Future<void> updateZhangduIndexCacheLength(int bookId) async {
+    final cacheLength = await getZhangduContentCid(bookId) ?? 0;
+    final update = zhangduIndex.update.cacheItemCounts.set(cacheLength)
+      ..where.bookId.equalTo(bookId);
+    await update.go;
+  }
+
+  @override
+  FutureOr<int?> getZhangduContentCid(int bookid) {
+    final q = zhangduContent.query
+      ..select.count.all.push
+      ..where.bookId.equalTo(bookid);
+    return q.go.first.values.first.then((value) => value as int?);
+  }
+
+  @override
+  FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {
+    final query = zhangduContent.query.data
+      ..where.bookId.equalTo(bookId).and.contentId.equalTo(contentId);
+
+    return query.goToTable.then((all) {
+      List<String>? data;
+      if (all.isNotEmpty) {
+        assert(all.length > 1 || Log.e('content $bookId count: ${all.length}'));
+        final raw = all.last.data;
+        if (raw != null) {
+          final _raw = ZhangduEventMixin._replaceAll(raw);
+          data = ZhangduEventMixin._split(_raw);
+        }
+      }
+      return data;
+    });
   }
 
   @override
@@ -372,7 +391,8 @@ mixin ZhangduEventMixin
     });
   }
 
-  FutureOr<int?> _updateZhangduBook(int bookId, ZhangduCache book) {
+  @override
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
     return getZhangduCacheBookId(bookId).then((list) {
       var isNew = false;
       if (list?.isNotEmpty == true) {
@@ -383,20 +403,10 @@ mixin ZhangduEventMixin
         // Log.i('$isNew  ${cache.toJson()} | ${book.toJson()}', onlyDebug: false);
       }
       book.isNew ??= isNew;
-      return updateZhangduBook(bookId, book);
+      final update = zhangduCache.update..where.bookId.equalTo(bookId);
+      zhangduCache.updateZhangduCache(update, book);
+      return update.go;
     });
-  }
-
-  @override
-  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    final update = zhangduCache.update..where.bookId.equalTo(bookId);
-    zhangduCache.updateZhangduCache(update, book);
-    return update.go;
-  }
-
-  @override
-  FutureOr<int?> updateZhangduMainStatus(int bookId) {
-    return getZhangduDetail(bookId).then((_) => 0);
   }
 
   @override
@@ -413,6 +423,7 @@ mixin ZhangduEventMixin
     return query.watchToTable;
   }
 
+  @override
   FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId) {
     return zhangduCache.query.all.where.bookId
         .equalTo(bookId)
@@ -432,25 +443,13 @@ mixin ZhangduEventMixin
   }
 
   @override
-  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
-      String author) async {
-    try {
-      final url = ZhangduApi.sameUsersBooks(author);
-      final response = await dio.get<String>(url);
-      return ZhangduSameUsersBooks.fromJson(jsonDecode(response.data!)).data ??
-          const [];
-    } catch (e) {
-      Log.w(e);
-    }
-    return const [];
-  }
-
   FutureOr<Set<int>> getZdAllBookId() async {
     final query = zhangduCache.query.bookId;
     return query.goToTable
         .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
   }
 
+  @override
   FutureOr<List<ZhangduIndex>> getZdIndexsDbCacheItem() {
     final q = zhangduIndex.query.itemCounts.cacheItemCounts.bookId;
     return q.goToTable;
@@ -477,6 +476,7 @@ mixin ZhangduEventMixin
     return list;
   }
 
+  @override
   FutureOr<int> insertOrUpdateZhangduIndex(int bookId, String data) {
     final query = zhangduIndex.query
       ..select.count.all.push
@@ -508,11 +508,4 @@ mixin ZhangduEventMixin
     }
     return itemCounts;
   }
-}
-
-class _ZhangduDetailChapterCache {
-  _ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
-  ZhangduDetailData detailData;
-  List<ZhangduChapterData> chapterData;
-  final int timePoint;
 }

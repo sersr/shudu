@@ -317,7 +317,7 @@ extension DataLoading on ContentNotifier {
   Future<List<ContentMetrics>> _genTextData(
       int oldBookId, List<String> data, String cname) async {
     final _key = key;
-
+    Log.i('start layout...', onlyDebug: false);
     final pages = await _asyncLayout(data, cname);
 
     if (_key != key || oldBookId != bookid) {
@@ -383,7 +383,8 @@ extension DataLoading on ContentNotifier {
       if (_bookid != bookid) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
-        final pages = await _genTextData(_bookid, lines.pages, lines.cname!);
+        final pages =
+            await _genTextData(_bookid, split(lines.source), lines.cname!);
 
         if (pages.isEmpty) return;
         _cnpid = TextData(
@@ -393,7 +394,6 @@ extension DataLoading on ContentNotifier {
           cid: lines.cid,
           hasContent: lines.hasContent,
           cname: lines.cname,
-          // rawContent: lines.pages,
         );
       }
     }
@@ -685,17 +685,11 @@ extension Layout on ContentNotifier {
         }
 
         await releaseUI;
-        if (end == pc.length &&
-            pc
-                .getRange(start, end)
-                .toString()
-                .replaceAll(regexpEmpty, '')
-                .isEmpty) break;
-
-        final _s = pc.getRange(start, end);
+        final _s = pc.getRange(start, end).toString();
+        if (end == pc.length && _s.replaceAll(regexpEmpty, '').isEmpty) break;
 
         final _text = TextPainter(
-            text: TextSpan(text: _s.toString(), style: style),
+            text: TextSpan(text: _s, style: style),
             textDirection: TextDirection.ltr)
           ..layout(maxWidth: width);
 

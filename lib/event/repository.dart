@@ -20,8 +20,8 @@ import 'package:useful_tools/useful_tools.dart';
 import '../provider/options_notifier.dart';
 import 'base/book_event.dart';
 import 'mixin/complex_mixin.dart';
+import 'mixin/database_delegate_mixin.dart';
 import 'mixin/database_mixin.dart';
-import 'mixin/event_messager_mixin.dart';
 import 'mixin/network_mixin.dart';
 import 'mixin/zhangdu_mixin.dart';
 
@@ -31,10 +31,10 @@ typedef BoolCallback = void Function(bool visible);
 class Repository extends BookEventMessagerMain
     with
         SystemInfos,
-        ComplexMessager,
-        SaveImageMessager,
         SendEventMixin,
-        SendIsolateMixin {
+        SendIsolateMixin,
+        SendCacheMixin,
+        SendInitCloseMixin {
   Repository();
 
   final ValueNotifier<bool> _initStatus = ValueNotifier(false);
@@ -66,7 +66,7 @@ class Repository extends BookEventMessagerMain
   Future<Isolate> onCreateIsolate(SendPort sdPort) async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     if (defaultTargetPlatform == TargetPlatform.android) {
-      Bangs.bangs.setNavigationChangeCallback(_statusState);
+      Bangs.bangs.setNavigationChangeCallback(_navState);
     }
     final _waits = FutureAny();
 
@@ -76,7 +76,7 @@ class Repository extends BookEventMessagerMain
     _waits
       ..add(setOrientation(true))
       ..add(getBatteryLevel);
-
+    bool externalDir = true;
     if (Platform.isAndroid) {
       // 存储在外部，避免重新安装时数据丢失
       _waits.add(getExternalStorageDirectories().then((f) async {
@@ -104,10 +104,10 @@ class Repository extends BookEventMessagerMain
                     return Permission.manageExternalStorage
                         .request()
                         .then((status) {
-                      if (status.isDenied) appDirExt = null;
+                      if (status.isDenied) externalDir = false;
                     });
                   } else {
-                    appDirExt = null;
+                    externalDir = false;
                   }
                 });
               });
@@ -122,6 +122,7 @@ class Repository extends BookEventMessagerMain
     _waits.add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
 
     await _waits.wait;
+    if (!externalDir) appDirExt = null;
 
     final _appPath = appDirExt ?? appDir.path;
     final appPath = join(_appPath, 'shudu');
@@ -165,7 +166,6 @@ class Repository extends BookEventMessagerMain
   }
 }
 
-/// TODO: 重新添加刘海屏等顶部遮挡高度信息获取
 mixin SystemInfos {
   Battery? _battery;
 
@@ -199,7 +199,7 @@ mixin SystemInfos {
 
   int _height = 0;
   int get height => _height;
-  void _statusState(bool isShow, int height) {
+  void _navState(bool isShow, int height) {
     Log.i('statusHeight: $height');
     _height = height;
   }
@@ -238,7 +238,13 @@ mixin SystemInfos {
 
 // 任务隔离(remote):处理 数据库、网络任务
 class BookEventIsolate extends BookEventResolveMain
-    with DatabaseMixin, NetworkMixin, ComplexMixin, ZhangduEventMixin {
+    with
+        DatabaseMixin,
+        HiveDioMixin,
+        NetworkMixin,
+        ComplexMixin,
+        ZhangduDatabaseMixin,
+        ZhangduEventMixin {
   BookEventIsolate(this.sp, this.appPath, this.cachePath,
       this.sqfliteFfiEnabled, this.useSqflite3);
 
@@ -255,13 +261,13 @@ class BookEventIsolate extends BookEventResolveMain
   final bool sqfliteFfiEnabled;
 
   Future<void> initState() async {
-    final d = netEventInit().logi(false);
-    await initDb().logi(false);
+    final d = initNet().logi(false);
+    await initDb();
     await d;
   }
 
   @override
-  void onError(error) {
+  void onError(msg, error) {
     Log.e(error, onlyDebug: false);
   }
 
@@ -295,18 +301,26 @@ void isolateEvent(List args) async {
   Log.i('$appPath | $cachePath | $sqfliteFfiEnabled | $useSqflite3',
       onlyDebug: false);
 
-  final db = BookEventIsolate(
+  final db = BookEventIsolateDeleagete(
       port, appPath, cachePath, sqfliteFfiEnabled, useSqflite3);
-  try {
-    await db.initState();
-  } catch (e) {
-    Log.e('initState error: $e', onlyDebug: false);
-  }
 
-  receivePort.listen((m) {
-    if (db.resolve(m)) return;
-    Log.e('somthing was error: $m');
-  });
+  await runZonedGuarded(() async {
+    await db.initState();
+    receivePort.listen((m) {
+      try {
+        if (db.resolveAll(m)) return;
+      } catch (e, s) {
+        Log.e('error: $e\n$s');
+      }
+      Log.e('somthing was error: $m');
+    });
+  }, (e, s) {
+    Log.e('$e\n$s');
+  }, zoneSpecification:
+      ZoneSpecification(errorCallback: (self, delegate, zone, e, s) {
+    Log.e('error:$e\n$s');
+    return delegate.errorCallback(zone, e, s);
+  }));
 
   port.send(receivePort.sendPort);
 }

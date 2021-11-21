@@ -13,6 +13,7 @@ import '../book_content/book_content_page.dart';
 import '../book_info/info_page.dart';
 import '../book_list/main.dart';
 import 'book_item.dart';
+import 'package:nop_db/nop_db.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -21,7 +22,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+class _MyHomePageState extends State<MyHomePage>
+    with WidgetsBindingObserver, IsolateAutoInitAndCloseMixin {
   int currentIndex = 0;
   late ContentNotifier painterBloc;
   late OptionsNotifier opts;
@@ -63,35 +65,32 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
-  var _inApp = true;
+  @override
+  SendInitCloseMixin get isolateHandle => cache.repository;
+
+  /// 测试调节数据
+  // @override
+  // int get closeDelay => 200;
+  // @override
+  // int get initIDelay => 100;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    _inApp = state.index <= AppLifecycleState.inactive.index;
-
+    closeIsolateState = state.index >= AppLifecycleState.paused.index;
+    initIsolateState =
+        mounted && state.index < AppLifecycleState.inactive.index;
+    Log.i('$closeIsolateState, $initIsolateState $closeDelay $initIDelay');
+    onInitIsolate();
     if (state == AppLifecycleState.paused) {
       painterBloc.autoRun.stopSave();
     } else if (state == AppLifecycleState.resumed) {
       painterBloc.autoRun.stopAutoRun();
-      if (mounted) {
-        _runIsolate(400, cache.repository.init);
-      }
     }
   }
-
-  Timer? _isolate;
-
-  /// 延迟
-  void _runIsolate(int mill, void Function() run) {
-    _isolate?.cancel();
-    _isolate = Timer(Duration(milliseconds: mill), run);
-  }
-
+ 
   @override
   void didHaveMemoryPressure() {
     super.didHaveMemoryPressure();
-    if (!_inApp) {
-      _runIsolate(10000, cache.repository.close);
-    }
+    onCloseIsolate();
   }
 
   @override

@@ -12,7 +12,6 @@ class TextData {
       this.pid,
       this.nid,
       this.cname,
-      this.rawContent,
       this.api = ApiType.biquge,
       bool? hasContent})
       : _content = content,
@@ -25,7 +24,6 @@ class TextData {
   final int? nid;
   final String? cname;
   final bool? _hasContent;
-  final List<String>? rawContent;
   bool get hasContent => _hasContent ?? false;
   bool get isEmpty =>
       content.isEmpty ||

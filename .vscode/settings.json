@@ -1,5 +1,4 @@
 {
-  "dart.flutterSdkPath": "D:\\Userslinks\\flutter\\versions\\flutter",
   "files.associations": {
     "algorithm": "cpp",
     "any": "cpp",
@@ -74,5 +73,6 @@
     "xtr1common": "cpp",
     "xtree": "cpp",
     "xutility": "cpp"
-  }
+  },
+  "dart.flutterSdkPath": "G:\\flutter"
 }

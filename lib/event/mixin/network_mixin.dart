@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-
+import 'package:meta/meta.dart';
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart';
@@ -16,21 +16,35 @@ import '../base/book_event.dart';
 import '../base/constants.dart';
 import '../base/type_adapter.dart';
 
-mixin NetworkMixin implements CustomEvent {
-  var frequency = 0;
+mixin HiveDioMixin {
   late Dio dio;
+  String get appPath;
+  @mustCallSuper
+  Future<void> initNet() async {
+    dio = dioCreater();
+    Hive.init(join(appPath, 'hive'));
+  }
+
+  Future<void> closeNet() async {
+    dio.close(force: true);
+    // await Hive.close();
+  }
+}
+
+mixin NetworkMixin on HiveDioMixin implements CustomEvent {
+  var frequency = 0;
 
   late Box imageUpdate;
 
-  String get appPath;
   String get cachePath;
 
-  Future<void> netEventInit() => _init();
-  Timer? frequencyTimer;
-  Future<void> closeNet() async {
-    dio.close(force: true);
-    await Hive.close();
+  @override
+  Future<void> initNet() async {
+    await super.initNet();
+    return _init();
   }
+
+  Timer? frequencyTimer;
 
   Future<String> getIndexsNet(int id) {
     return _loadIndexs(id);
@@ -132,10 +146,7 @@ extension _NetworkImpl on NetworkMixin {
   String get imageLocalPath => join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
-    dio = dioCreater();
-    Hive.init(join(appPath, 'hive'));
     final d = Directory(imageLocalPath);
-
     imageUpdate = await Hive.openBox('imageUpdate');
     final exists = d.existsSync();
 
@@ -179,6 +190,9 @@ extension _NetworkImpl on NetworkMixin {
     final url = Api.infoUrl(id);
     return _decode(url, onSuccess: (map) {
       return BookInfoRoot.fromJson(map);
+    }).then((value) => value, onError: (e) {
+      Log.i(e);
+      return const BookInfoRoot();
     });
   }
 

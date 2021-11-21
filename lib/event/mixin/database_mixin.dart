@@ -2,17 +2,24 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/local.dart';
-import 'package:nop_db/database/nop.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
 import '../../data/data.dart';
+import '../../data/zhangdu/zhangdu_search.dart';
+import '../../data/zhangdu/zhangdu_same_users_books.dart';
+import '../../data/zhangdu/zhangdu_detail.dart';
+import '../../data/zhangdu/zhangdu_chapter.dart';
 import '../../database/database.dart';
+import '../../pages/book_list/cache_manager.dart';
 import '../base/book_event.dart';
+import '../base/complex_event.dart';
+import '../base/zhangdu_event.dart';
 
 // 数据库接口实现
-mixin DatabaseMixin implements DatabaseEvent {
+mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
@@ -116,6 +123,7 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 
   /// [ComplexMixin]
+  @override
   FutureOr<int> insertOrUpdateContent(BookContentDb contentDb) async {
     var count = 0;
     final q = bookContentDb.query;
@@ -167,6 +175,7 @@ mixin DatabaseMixin implements DatabaseEvent {
     return count;
   }
 
+  @override
   FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
     final query = bookContentDb.query..index.by(db.index);
 
@@ -174,12 +183,14 @@ mixin DatabaseMixin implements DatabaseEvent {
     return query.goToTable;
   }
 
+  @override
   FutureOr<Set<int>> getAllBookId() {
     final query = bookCache.query.bookId;
     return query.goToTable
         .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
   }
 
+  @override
   FutureOr<int> insertOrUpdateIndexs(int id, String indexs) async {
     var count = 0;
 
@@ -220,16 +231,99 @@ mixin DatabaseMixin implements DatabaseEvent {
     return itemCounts;
   }
 
+  @override
   FutureOr<List<BookIndex>> getIndexsDb(int bookid) {
     final q = bookIndex.query.bIndexs..where.bookId.equalTo(bookid);
     return q.goToTable;
   }
 
+  @override
   FutureOr<List<BookIndex>> getIndexsDbCacheItem() {
     final q = bookIndex.query.itemCounts.cacheItemCounts.bookId;
     return q.goToTable;
   }
 
+  @override
   FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>
       bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;
+}
+
+class DataBaseUnImpl implements ZhangduEvent {
+  @override
+  FutureOr<int?> deleteZhangduBook(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> deleteZhangduContentCache(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<CacheItem>?> getZhangduCacheItems() {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
+      String author) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<ZhangduSearchData?> getZhangduSearchData(
+      String query, int pageIndex, int pageSize) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<int?> updateZhangduMainStatus(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<int>?> watchZhangduContentCid(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduMainList() {
+    throw UnimplementedError();
+  }
 }

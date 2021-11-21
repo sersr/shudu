@@ -255,8 +255,8 @@ class OptionsNotifier extends ChangeNotifier {
     final extenalStorage = options.extenalStorage;
 
     if (useSqflite3 != null && await sqfliteBox != useSqflite3) {
-      any.add(setSqfliteBox(useSqflite3));
-      repository.close().whenComplete(repository.init);
+      any.add(setSqfliteBox(useSqflite3)
+        ..whenComplete(() => repository.close().whenComplete(repository.init)));
     }
     if (extenalStorage != null) any.add(setextenalStorage(extenalStorage));
 

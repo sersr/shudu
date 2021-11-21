@@ -6,6 +6,7 @@ part of 'nop_database.dart';
 // Generator: GenNopGeneratorForAnnotation
 // **************************************************************************
 
+// ignore_for_file: curly_braces_in_flow_control_structures
 abstract class _GenBookDatabase extends $Database {
   late final _tables = <DatabaseTable>[
     bookCache,
@@ -19,12 +20,12 @@ abstract class _GenBookDatabase extends $Database {
   @override
   List<DatabaseTable> get tables => _tables;
 
-  late final bookCache = _GenBookCache(this);
-  late final bookContentDb = _GenBookContentDb(this);
-  late final bookIndex = _GenBookIndex(this);
-  late final zhangduCache = _GenZhangduCache(this);
-  late final zhangduContent = _GenZhangduContent(this);
-  late final zhangduIndex = _GenZhangduIndex(this);
+  late final bookCache = GenBookCache(this);
+  late final bookContentDb = GenBookContentDb(this);
+  late final bookIndex = GenBookIndex(this);
+  late final zhangduCache = GenZhangduCache(this);
+  late final zhangduContent = GenZhangduContent(this);
+  late final zhangduIndex = GenZhangduIndex(this);
 }
 
 Map<String, dynamic> _BookCache_toJson(BookCache table) {
@@ -44,8 +45,8 @@ Map<String, dynamic> _BookCache_toJson(BookCache table) {
   };
 }
 
-class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
-  _GenBookCache($Database db) : super(db);
+class GenBookCache extends DatabaseTable<BookCache, GenBookCache> {
+  GenBookCache($Database db) : super(db);
 
   @override
   final table = 'BookCache';
@@ -63,7 +64,7 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
   final isShow = 'isShow';
 
   void updateBookCache(
-      UpdateStatement<BookCache, _GenBookCache> update, BookCache bookCache) {
+      UpdateStatement<BookCache, GenBookCache> update, BookCache bookCache) {
     if (bookCache.id != null) update.id.set(bookCache.id);
 
     if (bookCache.name != null) update.name.set(bookCache.name);
@@ -99,7 +100,7 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
         'INTEGER, $isShow INTEGER)';
   }
 
-  BookCache _toTable(Map<String, dynamic> map) => BookCache(
+  static BookCache mapToTable(Map<String, dynamic> map) => BookCache(
       id: map['id'] as int?,
       name: map['name'] as String?,
       img: map['img'] as String?,
@@ -115,10 +116,10 @@ class _GenBookCache extends DatabaseTable<BookCache, _GenBookCache> {
 
   @override
   List<BookCache> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
-extension ItemExtensionBookCache<T extends ItemExtension<_GenBookCache>> on T {
+extension ItemExtensionBookCache<T extends ItemExtension<GenBookCache>> on T {
   T get id => item(table.id) as T;
 
   T get name => item(table.name) as T;
@@ -143,55 +144,55 @@ extension ItemExtensionBookCache<T extends ItemExtension<_GenBookCache>> on T {
 
   T get isShow => item(table.isShow) as T;
 
-  T get bookCache_id => id;
+  T get genBookCache_id => id;
 
-  T get bookCache_name => name;
+  T get genBookCache_name => name;
 
-  T get bookCache_img => img;
+  T get genBookCache_img => img;
 
-  T get bookCache_updateTime => updateTime;
+  T get genBookCache_updateTime => updateTime;
 
-  T get bookCache_lastChapter => lastChapter;
+  T get genBookCache_lastChapter => lastChapter;
 
-  T get bookCache_chapterId => chapterId;
+  T get genBookCache_chapterId => chapterId;
 
-  T get bookCache_bookId => bookId;
+  T get genBookCache_bookId => bookId;
 
-  T get bookCache_page => page;
+  T get genBookCache_page => page;
 
-  T get bookCache_sortKey => sortKey;
+  T get genBookCache_sortKey => sortKey;
 
-  T get bookCache_isTop => isTop;
+  T get genBookCache_isTop => isTop;
 
-  T get bookCache_isNew => isNew;
+  T get genBookCache_isNew => isNew;
 
-  T get bookCache_isShow => isShow;
+  T get genBookCache_isShow => isShow;
 }
 
-extension JoinItemBookCache<J extends JoinItem<_GenBookCache>> on J {
-  J get bookCache_id => joinItem(joinTable.id) as J;
+extension JoinItemBookCache<J extends JoinItem<GenBookCache>> on J {
+  J get genBookCache_id => joinItem(joinTable.id) as J;
 
-  J get bookCache_name => joinItem(joinTable.name) as J;
+  J get genBookCache_name => joinItem(joinTable.name) as J;
 
-  J get bookCache_img => joinItem(joinTable.img) as J;
+  J get genBookCache_img => joinItem(joinTable.img) as J;
 
-  J get bookCache_updateTime => joinItem(joinTable.updateTime) as J;
+  J get genBookCache_updateTime => joinItem(joinTable.updateTime) as J;
 
-  J get bookCache_lastChapter => joinItem(joinTable.lastChapter) as J;
+  J get genBookCache_lastChapter => joinItem(joinTable.lastChapter) as J;
 
-  J get bookCache_chapterId => joinItem(joinTable.chapterId) as J;
+  J get genBookCache_chapterId => joinItem(joinTable.chapterId) as J;
 
-  J get bookCache_bookId => joinItem(joinTable.bookId) as J;
+  J get genBookCache_bookId => joinItem(joinTable.bookId) as J;
 
-  J get bookCache_page => joinItem(joinTable.page) as J;
+  J get genBookCache_page => joinItem(joinTable.page) as J;
 
-  J get bookCache_sortKey => joinItem(joinTable.sortKey) as J;
+  J get genBookCache_sortKey => joinItem(joinTable.sortKey) as J;
 
-  J get bookCache_isTop => joinItem(joinTable.isTop) as J;
+  J get genBookCache_isTop => joinItem(joinTable.isTop) as J;
 
-  J get bookCache_isNew => joinItem(joinTable.isNew) as J;
+  J get genBookCache_isNew => joinItem(joinTable.isNew) as J;
 
-  J get bookCache_isShow => joinItem(joinTable.isShow) as J;
+  J get genBookCache_isShow => joinItem(joinTable.isShow) as J;
 }
 
 Map<String, dynamic> _BookContentDb_toJson(BookContentDb table) {
@@ -207,9 +208,8 @@ Map<String, dynamic> _BookContentDb_toJson(BookContentDb table) {
   };
 }
 
-class _GenBookContentDb
-    extends DatabaseTable<BookContentDb, _GenBookContentDb> {
-  _GenBookContentDb($Database db) : super(db);
+class GenBookContentDb extends DatabaseTable<BookContentDb, GenBookContentDb> {
+  GenBookContentDb($Database db) : super(db);
 
   @override
   final table = 'BookContentDb';
@@ -223,7 +223,7 @@ class _GenBookContentDb
   final hasContent = 'hasContent';
 
   void updateBookContentDb(
-      UpdateStatement<BookContentDb, _GenBookContentDb> update,
+      UpdateStatement<BookContentDb, GenBookContentDb> update,
       BookContentDb bookContentDb) {
     if (bookContentDb.id != null) update.id.set(bookContentDb.id);
 
@@ -251,7 +251,7 @@ class _GenBookContentDb
         '$hasContent INTEGER)';
   }
 
-  BookContentDb _toTable(Map<String, dynamic> map) => BookContentDb(
+  static BookContentDb mapToTable(Map<String, dynamic> map) => BookContentDb(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
       cid: map['cid'] as int?,
@@ -263,10 +263,10 @@ class _GenBookContentDb
 
   @override
   List<BookContentDb> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
-extension ItemExtensionBookContentDb<T extends ItemExtension<_GenBookContentDb>>
+extension ItemExtensionBookContentDb<T extends ItemExtension<GenBookContentDb>>
     on T {
   T get id => item(table.id) as T;
 
@@ -284,39 +284,39 @@ extension ItemExtensionBookContentDb<T extends ItemExtension<_GenBookContentDb>>
 
   T get hasContent => item(table.hasContent) as T;
 
-  T get bookContentDb_id => id;
+  T get genBookContentDb_id => id;
 
-  T get bookContentDb_bookId => bookId;
+  T get genBookContentDb_bookId => bookId;
 
-  T get bookContentDb_cid => cid;
+  T get genBookContentDb_cid => cid;
 
-  T get bookContentDb_cname => cname;
+  T get genBookContentDb_cname => cname;
 
-  T get bookContentDb_nid => nid;
+  T get genBookContentDb_nid => nid;
 
-  T get bookContentDb_pid => pid;
+  T get genBookContentDb_pid => pid;
 
-  T get bookContentDb_content => content;
+  T get genBookContentDb_content => content;
 
-  T get bookContentDb_hasContent => hasContent;
+  T get genBookContentDb_hasContent => hasContent;
 }
 
-extension JoinItemBookContentDb<J extends JoinItem<_GenBookContentDb>> on J {
-  J get bookContentDb_id => joinItem(joinTable.id) as J;
+extension JoinItemBookContentDb<J extends JoinItem<GenBookContentDb>> on J {
+  J get genBookContentDb_id => joinItem(joinTable.id) as J;
 
-  J get bookContentDb_bookId => joinItem(joinTable.bookId) as J;
+  J get genBookContentDb_bookId => joinItem(joinTable.bookId) as J;
 
-  J get bookContentDb_cid => joinItem(joinTable.cid) as J;
+  J get genBookContentDb_cid => joinItem(joinTable.cid) as J;
 
-  J get bookContentDb_cname => joinItem(joinTable.cname) as J;
+  J get genBookContentDb_cname => joinItem(joinTable.cname) as J;
 
-  J get bookContentDb_nid => joinItem(joinTable.nid) as J;
+  J get genBookContentDb_nid => joinItem(joinTable.nid) as J;
 
-  J get bookContentDb_pid => joinItem(joinTable.pid) as J;
+  J get genBookContentDb_pid => joinItem(joinTable.pid) as J;
 
-  J get bookContentDb_content => joinItem(joinTable.content) as J;
+  J get genBookContentDb_content => joinItem(joinTable.content) as J;
 
-  J get bookContentDb_hasContent => joinItem(joinTable.hasContent) as J;
+  J get genBookContentDb_hasContent => joinItem(joinTable.hasContent) as J;
 }
 
 Map<String, dynamic> _BookIndex_toJson(BookIndex table) {
@@ -329,8 +329,8 @@ Map<String, dynamic> _BookIndex_toJson(BookIndex table) {
   };
 }
 
-class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
-  _GenBookIndex($Database db) : super(db);
+class GenBookIndex extends DatabaseTable<BookIndex, GenBookIndex> {
+  GenBookIndex($Database db) : super(db);
 
   @override
   final table = 'BookIndex';
@@ -341,7 +341,7 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
   final cacheItemCounts = 'cacheItemCounts';
 
   void updateBookIndex(
-      UpdateStatement<BookIndex, _GenBookIndex> update, BookIndex bookIndex) {
+      UpdateStatement<BookIndex, GenBookIndex> update, BookIndex bookIndex) {
     if (bookIndex.id != null) update.id.set(bookIndex.id);
 
     if (bookIndex.bookId != null) update.bookId.set(bookIndex.bookId);
@@ -361,7 +361,7 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
         '$bIndexs TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
   }
 
-  BookIndex _toTable(Map<String, dynamic> map) => BookIndex(
+  static BookIndex mapToTable(Map<String, dynamic> map) => BookIndex(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
       bIndexs: map['bIndexs'] as String?,
@@ -370,10 +370,10 @@ class _GenBookIndex extends DatabaseTable<BookIndex, _GenBookIndex> {
 
   @override
   List<BookIndex> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
-extension ItemExtensionBookIndex<T extends ItemExtension<_GenBookIndex>> on T {
+extension ItemExtensionBookIndex<T extends ItemExtension<GenBookIndex>> on T {
   T get id => item(table.id) as T;
 
   T get bookId => item(table.bookId) as T;
@@ -384,27 +384,28 @@ extension ItemExtensionBookIndex<T extends ItemExtension<_GenBookIndex>> on T {
 
   T get cacheItemCounts => item(table.cacheItemCounts) as T;
 
-  T get bookIndex_id => id;
+  T get genBookIndex_id => id;
 
-  T get bookIndex_bookId => bookId;
+  T get genBookIndex_bookId => bookId;
 
-  T get bookIndex_bIndexs => bIndexs;
+  T get genBookIndex_bIndexs => bIndexs;
 
-  T get bookIndex_itemCounts => itemCounts;
+  T get genBookIndex_itemCounts => itemCounts;
 
-  T get bookIndex_cacheItemCounts => cacheItemCounts;
+  T get genBookIndex_cacheItemCounts => cacheItemCounts;
 }
 
-extension JoinItemBookIndex<J extends JoinItem<_GenBookIndex>> on J {
-  J get bookIndex_id => joinItem(joinTable.id) as J;
+extension JoinItemBookIndex<J extends JoinItem<GenBookIndex>> on J {
+  J get genBookIndex_id => joinItem(joinTable.id) as J;
 
-  J get bookIndex_bookId => joinItem(joinTable.bookId) as J;
+  J get genBookIndex_bookId => joinItem(joinTable.bookId) as J;
 
-  J get bookIndex_bIndexs => joinItem(joinTable.bIndexs) as J;
+  J get genBookIndex_bIndexs => joinItem(joinTable.bIndexs) as J;
 
-  J get bookIndex_itemCounts => joinItem(joinTable.itemCounts) as J;
+  J get genBookIndex_itemCounts => joinItem(joinTable.itemCounts) as J;
 
-  J get bookIndex_cacheItemCounts => joinItem(joinTable.cacheItemCounts) as J;
+  J get genBookIndex_cacheItemCounts =>
+      joinItem(joinTable.cacheItemCounts) as J;
 }
 
 Map<String, dynamic> _ZhangduCache_toJson(ZhangduCache table) {
@@ -425,8 +426,8 @@ Map<String, dynamic> _ZhangduCache_toJson(ZhangduCache table) {
   };
 }
 
-class _GenZhangduCache extends DatabaseTable<ZhangduCache, _GenZhangduCache> {
-  _GenZhangduCache($Database db) : super(db);
+class GenZhangduCache extends DatabaseTable<ZhangduCache, GenZhangduCache> {
+  GenZhangduCache($Database db) : super(db);
 
   @override
   final table = 'ZhangduCache';
@@ -444,8 +445,7 @@ class _GenZhangduCache extends DatabaseTable<ZhangduCache, _GenZhangduCache> {
   final isNew = 'isNew';
   final isShow = 'isShow';
 
-  void updateZhangduCache(
-      UpdateStatement<ZhangduCache, _GenZhangduCache> update,
+  void updateZhangduCache(UpdateStatement<ZhangduCache, GenZhangduCache> update,
       ZhangduCache zhangduCache) {
     if (zhangduCache.id != null) update.id.set(zhangduCache.id);
 
@@ -485,7 +485,7 @@ class _GenZhangduCache extends DatabaseTable<ZhangduCache, _GenZhangduCache> {
         'INTEGER, $isTop INTEGER, $isNew INTEGER, $isShow INTEGER)';
   }
 
-  ZhangduCache _toTable(Map<String, dynamic> map) => ZhangduCache(
+  static ZhangduCache mapToTable(Map<String, dynamic> map) => ZhangduCache(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
       name: map['name'] as String?,
@@ -502,10 +502,10 @@ class _GenZhangduCache extends DatabaseTable<ZhangduCache, _GenZhangduCache> {
 
   @override
   List<ZhangduCache> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
-extension ItemExtensionZhangduCache<T extends ItemExtension<_GenZhangduCache>>
+extension ItemExtensionZhangduCache<T extends ItemExtension<GenZhangduCache>>
     on T {
   T get id => item(table.id) as T;
 
@@ -533,60 +533,60 @@ extension ItemExtensionZhangduCache<T extends ItemExtension<_GenZhangduCache>>
 
   T get isShow => item(table.isShow) as T;
 
-  T get zhangduCache_id => id;
+  T get genZhangduCache_id => id;
 
-  T get zhangduCache_bookId => bookId;
+  T get genZhangduCache_bookId => bookId;
 
-  T get zhangduCache_name => name;
+  T get genZhangduCache_name => name;
 
-  T get zhangduCache_pinyin => pinyin;
+  T get genZhangduCache_pinyin => pinyin;
 
-  T get zhangduCache_picture => picture;
+  T get genZhangduCache_picture => picture;
 
-  T get zhangduCache_chapterId => chapterId;
+  T get genZhangduCache_chapterId => chapterId;
 
-  T get zhangduCache_chapterName => chapterName;
+  T get genZhangduCache_chapterName => chapterName;
 
-  T get zhangduCache_chapterUpdateTime => chapterUpdateTime;
+  T get genZhangduCache_chapterUpdateTime => chapterUpdateTime;
 
-  T get zhangduCache_page => page;
+  T get genZhangduCache_page => page;
 
-  T get zhangduCache_sortKey => sortKey;
+  T get genZhangduCache_sortKey => sortKey;
 
-  T get zhangduCache_isTop => isTop;
+  T get genZhangduCache_isTop => isTop;
 
-  T get zhangduCache_isNew => isNew;
+  T get genZhangduCache_isNew => isNew;
 
-  T get zhangduCache_isShow => isShow;
+  T get genZhangduCache_isShow => isShow;
 }
 
-extension JoinItemZhangduCache<J extends JoinItem<_GenZhangduCache>> on J {
-  J get zhangduCache_id => joinItem(joinTable.id) as J;
+extension JoinItemZhangduCache<J extends JoinItem<GenZhangduCache>> on J {
+  J get genZhangduCache_id => joinItem(joinTable.id) as J;
 
-  J get zhangduCache_bookId => joinItem(joinTable.bookId) as J;
+  J get genZhangduCache_bookId => joinItem(joinTable.bookId) as J;
 
-  J get zhangduCache_name => joinItem(joinTable.name) as J;
+  J get genZhangduCache_name => joinItem(joinTable.name) as J;
 
-  J get zhangduCache_pinyin => joinItem(joinTable.pinyin) as J;
+  J get genZhangduCache_pinyin => joinItem(joinTable.pinyin) as J;
 
-  J get zhangduCache_picture => joinItem(joinTable.picture) as J;
+  J get genZhangduCache_picture => joinItem(joinTable.picture) as J;
 
-  J get zhangduCache_chapterId => joinItem(joinTable.chapterId) as J;
+  J get genZhangduCache_chapterId => joinItem(joinTable.chapterId) as J;
 
-  J get zhangduCache_chapterName => joinItem(joinTable.chapterName) as J;
+  J get genZhangduCache_chapterName => joinItem(joinTable.chapterName) as J;
 
-  J get zhangduCache_chapterUpdateTime =>
+  J get genZhangduCache_chapterUpdateTime =>
       joinItem(joinTable.chapterUpdateTime) as J;
 
-  J get zhangduCache_page => joinItem(joinTable.page) as J;
+  J get genZhangduCache_page => joinItem(joinTable.page) as J;
 
-  J get zhangduCache_sortKey => joinItem(joinTable.sortKey) as J;
+  J get genZhangduCache_sortKey => joinItem(joinTable.sortKey) as J;
 
-  J get zhangduCache_isTop => joinItem(joinTable.isTop) as J;
+  J get genZhangduCache_isTop => joinItem(joinTable.isTop) as J;
 
-  J get zhangduCache_isNew => joinItem(joinTable.isNew) as J;
+  J get genZhangduCache_isNew => joinItem(joinTable.isNew) as J;
 
-  J get zhangduCache_isShow => joinItem(joinTable.isShow) as J;
+  J get genZhangduCache_isShow => joinItem(joinTable.isShow) as J;
 }
 
 Map<String, dynamic> _ZhangduContent_toJson(ZhangduContent table) {
@@ -600,9 +600,9 @@ Map<String, dynamic> _ZhangduContent_toJson(ZhangduContent table) {
   };
 }
 
-class _GenZhangduContent
-    extends DatabaseTable<ZhangduContent, _GenZhangduContent> {
-  _GenZhangduContent($Database db) : super(db);
+class GenZhangduContent
+    extends DatabaseTable<ZhangduContent, GenZhangduContent> {
+  GenZhangduContent($Database db) : super(db);
 
   @override
   final table = 'ZhangduContent';
@@ -614,7 +614,7 @@ class _GenZhangduContent
   final data = 'data';
 
   void updateZhangduContent(
-      UpdateStatement<ZhangduContent, _GenZhangduContent> update,
+      UpdateStatement<ZhangduContent, GenZhangduContent> update,
       ZhangduContent zhangduContent) {
     if (zhangduContent.id != null) update.id.set(zhangduContent.id);
 
@@ -636,7 +636,7 @@ class _GenZhangduContent
         '$contentId INTEGER, $name TEXT, $sort INTEGER, $data TEXT)';
   }
 
-  ZhangduContent _toTable(Map<String, dynamic> map) => ZhangduContent(
+  static ZhangduContent mapToTable(Map<String, dynamic> map) => ZhangduContent(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
       contentId: map['contentId'] as int?,
@@ -646,11 +646,11 @@ class _GenZhangduContent
 
   @override
   List<ZhangduContent> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
 extension ItemExtensionZhangduContent<
-    T extends ItemExtension<_GenZhangduContent>> on T {
+    T extends ItemExtension<GenZhangduContent>> on T {
   T get id => item(table.id) as T;
 
   T get bookId => item(table.bookId) as T;
@@ -663,31 +663,31 @@ extension ItemExtensionZhangduContent<
 
   T get data => item(table.data) as T;
 
-  T get zhangduContent_id => id;
+  T get genZhangduContent_id => id;
 
-  T get zhangduContent_bookId => bookId;
+  T get genZhangduContent_bookId => bookId;
 
-  T get zhangduContent_contentId => contentId;
+  T get genZhangduContent_contentId => contentId;
 
-  T get zhangduContent_name => name;
+  T get genZhangduContent_name => name;
 
-  T get zhangduContent_sort => sort;
+  T get genZhangduContent_sort => sort;
 
-  T get zhangduContent_data => data;
+  T get genZhangduContent_data => data;
 }
 
-extension JoinItemZhangduContent<J extends JoinItem<_GenZhangduContent>> on J {
-  J get zhangduContent_id => joinItem(joinTable.id) as J;
+extension JoinItemZhangduContent<J extends JoinItem<GenZhangduContent>> on J {
+  J get genZhangduContent_id => joinItem(joinTable.id) as J;
 
-  J get zhangduContent_bookId => joinItem(joinTable.bookId) as J;
+  J get genZhangduContent_bookId => joinItem(joinTable.bookId) as J;
 
-  J get zhangduContent_contentId => joinItem(joinTable.contentId) as J;
+  J get genZhangduContent_contentId => joinItem(joinTable.contentId) as J;
 
-  J get zhangduContent_name => joinItem(joinTable.name) as J;
+  J get genZhangduContent_name => joinItem(joinTable.name) as J;
 
-  J get zhangduContent_sort => joinItem(joinTable.sort) as J;
+  J get genZhangduContent_sort => joinItem(joinTable.sort) as J;
 
-  J get zhangduContent_data => joinItem(joinTable.data) as J;
+  J get genZhangduContent_data => joinItem(joinTable.data) as J;
 }
 
 Map<String, dynamic> _ZhangduIndex_toJson(ZhangduIndex table) {
@@ -700,8 +700,8 @@ Map<String, dynamic> _ZhangduIndex_toJson(ZhangduIndex table) {
   };
 }
 
-class _GenZhangduIndex extends DatabaseTable<ZhangduIndex, _GenZhangduIndex> {
-  _GenZhangduIndex($Database db) : super(db);
+class GenZhangduIndex extends DatabaseTable<ZhangduIndex, GenZhangduIndex> {
+  GenZhangduIndex($Database db) : super(db);
 
   @override
   final table = 'ZhangduIndex';
@@ -711,8 +711,7 @@ class _GenZhangduIndex extends DatabaseTable<ZhangduIndex, _GenZhangduIndex> {
   final itemCounts = 'itemCounts';
   final cacheItemCounts = 'cacheItemCounts';
 
-  void updateZhangduIndex(
-      UpdateStatement<ZhangduIndex, _GenZhangduIndex> update,
+  void updateZhangduIndex(UpdateStatement<ZhangduIndex, GenZhangduIndex> update,
       ZhangduIndex zhangduIndex) {
     if (zhangduIndex.id != null) update.id.set(zhangduIndex.id);
 
@@ -733,7 +732,7 @@ class _GenZhangduIndex extends DatabaseTable<ZhangduIndex, _GenZhangduIndex> {
         '$data TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
   }
 
-  ZhangduIndex _toTable(Map<String, dynamic> map) => ZhangduIndex(
+  static ZhangduIndex mapToTable(Map<String, dynamic> map) => ZhangduIndex(
       id: map['id'] as int?,
       bookId: map['bookId'] as int?,
       data: map['data'] as String?,
@@ -742,10 +741,10 @@ class _GenZhangduIndex extends DatabaseTable<ZhangduIndex, _GenZhangduIndex> {
 
   @override
   List<ZhangduIndex> toTable(Iterable<Map<String, Object?>> query) =>
-      query.map((e) => _toTable(e)).toList();
+      query.map((e) => mapToTable(e)).toList();
 }
 
-extension ItemExtensionZhangduIndex<T extends ItemExtension<_GenZhangduIndex>>
+extension ItemExtensionZhangduIndex<T extends ItemExtension<GenZhangduIndex>>
     on T {
   T get id => item(table.id) as T;
 
@@ -757,26 +756,26 @@ extension ItemExtensionZhangduIndex<T extends ItemExtension<_GenZhangduIndex>>
 
   T get cacheItemCounts => item(table.cacheItemCounts) as T;
 
-  T get zhangduIndex_id => id;
+  T get genZhangduIndex_id => id;
 
-  T get zhangduIndex_bookId => bookId;
+  T get genZhangduIndex_bookId => bookId;
 
-  T get zhangduIndex_data => data;
+  T get genZhangduIndex_data => data;
 
-  T get zhangduIndex_itemCounts => itemCounts;
+  T get genZhangduIndex_itemCounts => itemCounts;
 
-  T get zhangduIndex_cacheItemCounts => cacheItemCounts;
+  T get genZhangduIndex_cacheItemCounts => cacheItemCounts;
 }
 
-extension JoinItemZhangduIndex<J extends JoinItem<_GenZhangduIndex>> on J {
-  J get zhangduIndex_id => joinItem(joinTable.id) as J;
+extension JoinItemZhangduIndex<J extends JoinItem<GenZhangduIndex>> on J {
+  J get genZhangduIndex_id => joinItem(joinTable.id) as J;
 
-  J get zhangduIndex_bookId => joinItem(joinTable.bookId) as J;
+  J get genZhangduIndex_bookId => joinItem(joinTable.bookId) as J;
 
-  J get zhangduIndex_data => joinItem(joinTable.data) as J;
+  J get genZhangduIndex_data => joinItem(joinTable.data) as J;
 
-  J get zhangduIndex_itemCounts => joinItem(joinTable.itemCounts) as J;
+  J get genZhangduIndex_itemCounts => joinItem(joinTable.itemCounts) as J;
 
-  J get zhangduIndex_cacheItemCounts =>
+  J get genZhangduIndex_cacheItemCounts =>
       joinItem(joinTable.cacheItemCounts) as J;
 }

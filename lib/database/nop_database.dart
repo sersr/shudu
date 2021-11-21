@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:nop_annotations/nop_annotations.dart';
-import 'package:nop_db/database/nop.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';
@@ -181,4 +180,13 @@ class BookDatabase extends _GenBookDatabase {
       await db.execute(zhangduIndex.createTable());
     }
   }
+
+  // @override
+  // FutureOr<void> dispose() {
+  //   // super.dispose();
+  //   Log.i('....');
+  //   if (db is NopDatabaseSqflite) {
+  //     db.disposeNop();
+  //   }
+  // }
 }

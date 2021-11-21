@@ -24,7 +24,7 @@
 - flutter channel: master
 - 在项目的根目录下运行：
 
-        dart run tools/sync.dart
+        dart run tools/sync_projects/bin/sync_projects.dart
  
 保持最新状态：
 

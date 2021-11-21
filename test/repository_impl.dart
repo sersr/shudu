@@ -35,6 +35,9 @@ class RepositoryImplTest extends BookEventMessagerMain
     if (useSqflite) {
       SqfliteMainIsolate.initMainDb();
     }
+    final sendPort = server.receivePort.sendPort;
+    sendPortGroup =
+        SendPortOwner(localSendPort: sendPort, remoteSendPort: sendPort);
     return server.init(client.sendSP, useSqflite);
   }
 
@@ -51,6 +54,15 @@ class RepositoryImplTest extends BookEventMessagerMain
 
   @override
   late final SendEvent sendEvent = this;
+
+  @override
+  SendPortOwner? sendPortGroup;
+
+  @override
+  void sendDelegate(message) {}
+
+  @override
+  void onResume() {}
 }
 
 class Client {
