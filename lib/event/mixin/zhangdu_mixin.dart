@@ -20,7 +20,7 @@ import '../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
 
-mixin ZhangduEventMixin
+mixin ZhangduComplexMixin
     on ZhangduDatabaseEvent, HiveDioMixin, ComplexOnDatabaseEvent
     implements ZhangduComplexEvent {
   @override
@@ -246,19 +246,130 @@ mixin ZhangduEventMixin
     return getZhangduIndexDb(bookId);
   }
 
+
+
+
+}
+
+class _ZhangduDetailChapterCache {
+  _ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
+  ZhangduDetailData detailData;
+  List<ZhangduChapterData> chapterData;
+  final int timePoint;
+}
+
+mixin ZhangduDatabaseMixin on DatabaseMixin implements ZhangduDatabaseEvent {
+  late final zhangduCache = db.zhangduCache;
+  late final zhangduContent = db.zhangduContent;
+  late final zhangduIndex = db.zhangduIndex;
+
   @override
-  Future<ZhangduSearchData?> getZhangduSearchData(
-      String query, int pageIndex, int pageSize) async {
-    final url = ZhangduApi.searchUrl(query, pageIndex, pageSize);
-    try {
-      final response = await dio.get<String>(url);
-      return ZhangduSearch.fromJson(jsonDecode(response.data!)).data ??
-          const ZhangduSearchData();
-    } catch (e) {
-      Log.e(e);
-    }
+  FutureOr<int?> deleteZhangduBook(int bookId) {
+    return zhangduCache.delete.where.bookId.equalTo(bookId).back.whereEnd.go;
   }
 
+  @override
+  FutureOr<int?> deleteZhangduContentCache(int bookId) {
+    return zhangduContent.delete.where.bookId.equalTo(bookId).back.whereEnd.go;
+  }
+
+  @override
+  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
+    final query = zhangduCache.query;
+    assert(book.bookId != null);
+    query
+      ..select.count.all.push
+      ..where.bookId.equalTo(book.bookId!);
+    return query.go.then((go) {
+      FutureOr<int> count = go.first.values.first as int? ?? 0;
+      if (count == 0) return zhangduCache.insert.insertTable(book).go;
+      return -1;
+    });
+  }
+
+  FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId) {
+    return zhangduCache.query.all.where.bookId
+        .equalTo(bookId)
+        .back
+        .whereEnd
+        .goToTable;
+  }
+
+  @override
+  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
+    return getZhangduCacheBookId(bookId).then((list) {
+      var isNew = false;
+      if (list?.isNotEmpty == true) {
+        final cache = list!.last;
+        final bChapterName = book.chapterName;
+        isNew = cache.isNew == true || cache.chapterName != bChapterName;
+
+        // Log.i('$isNew  ${cache.toJson()} | ${book.toJson()}', onlyDebug: false);
+      }
+      book.isNew ??= isNew;
+      final update = zhangduCache.update..where.bookId.equalTo(bookId);
+      zhangduCache.updateZhangduCache(update, book);
+      return update.go;
+    });
+  }
+
+  @override
+  Stream<List<int>?> watchZhangduContentCid(int bookId) {
+    final query = zhangduContent.query..contentId.where.bookId.equalTo(bookId);
+    return query.watchToTable.map(
+        (event) => event.map((e) => e.contentId).whereType<int>().toList());
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
+    final query = zhangduCache.query
+      ..chapterId.bookId.where.bookId.equalTo(bookId);
+    return query.watchToTable;
+  }
+
+  @override
+  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
+    return zhangduCache.query.goToTable;
+  }
+
+  @override
+  Stream<List<ZhangduCache>?> watchZhangduMainList() {
+    return zhangduCache.query.all.watchToTable;
+  }
+
+  FutureOr<Set<int>> getZdAllBookId() async {
+    final query = zhangduCache.query.bookId;
+    return query.goToTable
+        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
+  }
+
+  FutureOr<List<ZhangduIndex>> getZdIndexsDbCacheItem() {
+    final q = zhangduIndex.query.itemCounts.cacheItemCounts.bookId;
+    return q.goToTable;
+  }
+  @override
+  FutureOr<List<CacheItem>?> getZhangduCacheItems() async {
+    final list = <CacheItem>[];
+    final queryData = await getZdIndexsDbCacheItem();
+    var map =
+        queryData.asMap().map((key, value) => MapEntry(value.bookId, value));
+    final allBookIds = await getZdAllBookId();
+    for (var id in allBookIds) {
+      final index = map[id];
+      final itemCounts = index?.itemCounts;
+      if (itemCounts != null) {
+        final item = CacheItem(id, itemCounts, index?.cacheItemCounts ?? 0,
+            api: ApiType.zhangdu);
+        list.add(item);
+      } else {
+        list.add(CacheItem(id, 0, 0, api: ApiType.zhangdu));
+      }
+    }
+    return list;
+  }
+}
+
+mixin ZhangduNetMixin on HiveDioMixin implements ZhangduNetEvent {
   @override
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author) async {
@@ -272,16 +383,23 @@ mixin ZhangduEventMixin
     }
     return const [];
   }
+
+  @override
+  Future<ZhangduSearchData?> getZhangduSearchData(
+      String query, int pageIndex, int pageSize) async {
+    final url = ZhangduApi.searchUrl(query, pageIndex, pageSize);
+    try {
+      final response = await dio.get<String>(url);
+      return ZhangduSearch.fromJson(jsonDecode(response.data!)).data ??
+          const ZhangduSearchData();
+    } catch (e) {
+      Log.e(e);
+    }
+  }
 }
 
-class _ZhangduDetailChapterCache {
-  _ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
-  ZhangduDetailData detailData;
-  List<ZhangduChapterData> chapterData;
-  final int timePoint;
-}
-
-mixin ZhangduDatabaseMixin on DatabaseMixin implements ZhangduDatabaseEvent {
+mixin ZhangduComplexOnDatabaseMixin on DatabaseMixin
+    implements ComplexOnDatabaseEvent {
   late final zhangduCache = db.zhangduCache;
   late final zhangduContent = db.zhangduContent;
   late final zhangduIndex = db.zhangduIndex;
@@ -359,122 +477,15 @@ mixin ZhangduDatabaseMixin on DatabaseMixin implements ZhangduDatabaseEvent {
         assert(all.length > 1 || Log.e('content $bookId count: ${all.length}'));
         final raw = all.last.data;
         if (raw != null) {
-          final _raw = ZhangduEventMixin._replaceAll(raw);
-          data = ZhangduEventMixin._split(_raw);
+          final _raw = ZhangduComplexMixin._replaceAll(raw);
+          data = ZhangduComplexMixin._split(_raw);
         }
       }
       return data;
     });
   }
 
-  @override
-  FutureOr<int?> deleteZhangduBook(int bookId) {
-    return zhangduCache.delete.where.bookId.equalTo(bookId).back.whereEnd.go;
-  }
 
-  @override
-  FutureOr<int?> deleteZhangduContentCache(int bookId) {
-    return zhangduContent.delete.where.bookId.equalTo(bookId).back.whereEnd.go;
-  }
-
-  @override
-  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
-    final query = zhangduCache.query;
-    assert(book.bookId != null);
-    query
-      ..select.count.all.push
-      ..where.bookId.equalTo(book.bookId!);
-    return query.go.then((go) {
-      FutureOr<int> count = go.first.values.first as int? ?? 0;
-      if (count == 0) return zhangduCache.insert.insertTable(book).go;
-      return -1;
-    });
-  }
-
-  @override
-  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    return getZhangduCacheBookId(bookId).then((list) {
-      var isNew = false;
-      if (list?.isNotEmpty == true) {
-        final cache = list!.last;
-        final bChapterName = book.chapterName;
-        isNew = cache.isNew == true || cache.chapterName != bChapterName;
-
-        // Log.i('$isNew  ${cache.toJson()} | ${book.toJson()}', onlyDebug: false);
-      }
-      book.isNew ??= isNew;
-      final update = zhangduCache.update..where.bookId.equalTo(bookId);
-      zhangduCache.updateZhangduCache(update, book);
-      return update.go;
-    });
-  }
-
-  @override
-  Stream<List<int>?> watchZhangduContentCid(int bookId) {
-    final query = zhangduContent.query..contentId.where.bookId.equalTo(bookId);
-    return query.watchToTable.map(
-        (event) => event.map((e) => e.contentId).whereType<int>().toList());
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
-    final query = zhangduCache.query
-      ..chapterId.bookId.where.bookId.equalTo(bookId);
-    return query.watchToTable;
-  }
-
-  @override
-  FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId) {
-    return zhangduCache.query.all.where.bookId
-        .equalTo(bookId)
-        .back
-        .whereEnd
-        .goToTable;
-  }
-
-  @override
-  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
-    return zhangduCache.query.goToTable;
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduMainList() {
-    return zhangduCache.query.all.watchToTable;
-  }
-
-  @override
-  FutureOr<Set<int>> getZdAllBookId() async {
-    final query = zhangduCache.query.bookId;
-    return query.goToTable
-        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
-  }
-
-  @override
-  FutureOr<List<ZhangduIndex>> getZdIndexsDbCacheItem() {
-    final q = zhangduIndex.query.itemCounts.cacheItemCounts.bookId;
-    return q.goToTable;
-  }
-
-  @override
-  FutureOr<List<CacheItem>?> getZhangduCacheItems() async {
-    final list = <CacheItem>[];
-    final queryData = await getZdIndexsDbCacheItem();
-    var map =
-        queryData.asMap().map((key, value) => MapEntry(value.bookId, value));
-    final allBookIds = await getZdAllBookId();
-    for (var id in allBookIds) {
-      final index = map[id];
-      final itemCounts = index?.itemCounts;
-      if (itemCounts != null) {
-        final item = CacheItem(id, itemCounts, index?.cacheItemCounts ?? 0,
-            api: ApiType.zhangdu);
-        list.add(item);
-      } else {
-        list.add(CacheItem(id, 0, 0, api: ApiType.zhangdu));
-      }
-    }
-    return list;
-  }
 
   @override
   FutureOr<int> insertOrUpdateZhangduIndex(int bookId, String data) {

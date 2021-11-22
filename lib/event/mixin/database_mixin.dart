@@ -19,7 +19,7 @@ import '../base/complex_event.dart';
 import '../base/zhangdu_event.dart';
 
 // 数据库接口实现
-mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
+mixin DatabaseMixin implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
@@ -121,42 +121,6 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
     return bookCache.query.all.watchToTable;
   }
 
-  /// [ComplexMixin]
-  @override
-  FutureOr<int> insertOrUpdateContent(BookContentDb contentDb) async {
-    var count = 0;
-    final q = bookContentDb.query;
-    q.where
-      ..select.count.all.push
-      ..bookId.equalTo(contentDb.bookId!).and
-      ..cid.equalTo(contentDb.cid!);
-
-    count = await q.go.first.values.first as int? ?? count;
-
-    if (count > 0) {
-      final update = bookContentDb.update
-        ..pid.set(contentDb.pid).nid.set(contentDb.nid)
-        ..hasContent.set(contentDb.hasContent).content.set(contentDb.content);
-
-      update.where
-        ..bookId.equalTo(contentDb.bookId!).and
-        ..cid.equalTo(contentDb.cid!);
-
-      final x = update.go;
-      assert(Log.i('update: ${await x}, ${update.updateItems}'));
-      return x;
-    } else {
-      final insert = bookContentDb.insert.insertTable(contentDb);
-      final x = insert.go;
-      assert(Log.i('insert: ${await x}, ${contentDb.bookId}'));
-
-      /// update Index cacheItemCounts
-      updateIndexCacheLength(contentDb.bookId!);
-
-      return x;
-    }
-  }
-
   Future<void> updateIndexCacheLength(int bookId) async {
     final cacheLength = await getBookContentCid(bookId) ?? 0;
     final update = bookIndex.update.cacheItemCounts.set(cacheLength)
@@ -173,48 +137,6 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
     return count;
   }
 
-  @override
-  FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
-    final query = bookContentDb.query..index.by(db.index);
-
-    query.where.cid.equalTo(contentid).and.bookId.equalTo(bookid);
-    return query.goToTable;
-  }
-
-  @override
-  FutureOr<Set<int>> getAllBookId() {
-    final query = bookCache.query.bookId;
-    return query.goToTable
-        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
-  }
-
-  @override
-  FutureOr<int> insertOrUpdateIndexs(int id, String indexs) async {
-    var count = 0;
-
-    final q = bookIndex.query;
-    q.where
-      ..select.count.all.push
-      ..bookId.equalTo(id);
-    count = await q.go.first.values.first as int? ?? count;
-    final bIndexs = indexs;
-
-    var itemCounts = _computeIndexLength(bIndexs);
-
-    if (count > 0) {
-      final update = bookIndex.update
-        ..bIndexs.set(indexs)
-        ..itemCounts.set(itemCounts)
-        ..where.bookId.equalTo(id);
-      return update.go;
-    } else {
-      final insert = bookIndex.insert.insertTable(
-          BookIndex(bookId: id, bIndexs: indexs, itemCounts: itemCounts));
-
-      return insert.go;
-    }
-  }
-
   int _computeIndexLength(String rawIndexs) {
     var itemCounts = 0;
     final decodeIndexs = BookIndexRoot.fromJson(jsonDecode(rawIndexs)).data ??
@@ -228,22 +150,6 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
     }
     return itemCounts;
   }
-
-  @override
-  FutureOr<List<BookIndex>> getIndexsDb(int bookid) {
-    final q = bookIndex.query.bIndexs..where.bookId.equalTo(bookid);
-    return q.goToTable;
-  }
-
-  @override
-  FutureOr<List<BookIndex>> getIndexsDbCacheItem() {
-    final q = bookIndex.query.itemCounts.cacheItemCounts.bookId;
-    return q.goToTable;
-  }
-
-  @override
-  FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>
-      bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;
 }
 
 class DataBaseUnImpl implements ZhangduEvent {
@@ -324,4 +230,99 @@ class DataBaseUnImpl implements ZhangduEvent {
   Stream<List<ZhangduCache>?> watchZhangduMainList() {
     throw UnimplementedError();
   }
+}
+
+mixin ComplexOnDatabaseMixin on DatabaseMixin implements ComplexOnDatabaseEvent {
+  @override
+  FutureOr<int> insertOrUpdateContent(BookContentDb contentDb) async {
+    var count = 0;
+    final q = bookContentDb.query;
+    q.where
+      ..select.count.all.push
+      ..bookId.equalTo(contentDb.bookId!).and
+      ..cid.equalTo(contentDb.cid!);
+
+    count = await q.go.first.values.first as int? ?? count;
+
+    if (count > 0) {
+      final update = bookContentDb.update
+        ..pid.set(contentDb.pid).nid.set(contentDb.nid)
+        ..hasContent.set(contentDb.hasContent).content.set(contentDb.content);
+
+      update.where
+        ..bookId.equalTo(contentDb.bookId!).and
+        ..cid.equalTo(contentDb.cid!);
+
+      final x = update.go;
+      assert(Log.i('update: ${await x}, ${update.updateItems}'));
+      return x;
+    } else {
+      final insert = bookContentDb.insert.insertTable(contentDb);
+      final x = insert.go;
+      assert(Log.i('insert: ${await x}, ${contentDb.bookId}'));
+
+      /// update Index cacheItemCounts
+      updateIndexCacheLength(contentDb.bookId!);
+
+      return x;
+    }
+  }
+
+  @override
+  FutureOr<List<BookContentDb>> getContentDb(int bookid, int contentid) {
+    final query = bookContentDb.query..index.by(db.index);
+
+    query.where.cid.equalTo(contentid).and.bookId.equalTo(bookid);
+    return query.goToTable;
+  }
+
+  @override
+  FutureOr<Set<int>> getAllBookId() {
+    final query = bookCache.query.bookId;
+    return query.goToTable
+        .then((value) => value.map((e) => e.bookId).whereType<int>().toSet());
+  }
+
+  @override
+  FutureOr<int> insertOrUpdateIndexs(int id, String indexs) async {
+    var count = 0;
+
+    final q = bookIndex.query;
+    q.where
+      ..select.count.all.push
+      ..bookId.equalTo(id);
+    count = await q.go.first.values.first as int? ?? count;
+    final bIndexs = indexs;
+
+    var itemCounts = _computeIndexLength(bIndexs);
+
+    if (count > 0) {
+      final update = bookIndex.update
+        ..bIndexs.set(indexs)
+        ..itemCounts.set(itemCounts)
+        ..where.bookId.equalTo(id);
+      return update.go;
+    } else {
+      final insert = bookIndex.insert.insertTable(
+          BookIndex(bookId: id, bIndexs: indexs, itemCounts: itemCounts));
+
+      return insert.go;
+    }
+  }
+
+  @override
+  FutureOr<List<BookIndex>> getIndexsDb(int bookid) {
+    final q = bookIndex.query.bIndexs..where.bookId.equalTo(bookid);
+    return q.goToTable;
+  }
+
+  @override
+  FutureOr<List<BookIndex>> getIndexsDbCacheItem() {
+    final q = bookIndex.query.itemCounts.cacheItemCounts.bookId;
+    return q.goToTable;
+  }
+
+  @override
+  FutureOr<List<BookCache>> getBookCacheDb(int bookid) =>
+      bookCache.query.where.bookId.equalTo(bookid).back.whereEnd.goToTable;
 }

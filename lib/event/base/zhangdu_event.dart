@@ -11,7 +11,7 @@ import '../../pages/book_list/cache_manager.dart';
 
 @NopIsolateEventItem(separate: true)
 abstract class ZhangduEvent
-    implements ZhangduDatabaseEvent, ZhangduComplexEvent {}
+    implements ZhangduDatabaseEvent, ZhangduComplexEvent, ZhangduNetEvent {}
 
 abstract class ZhangduDatabaseEvent {
   FutureOr<int?> deleteZhangduContentCache(int bookId);
@@ -27,17 +27,19 @@ abstract class ZhangduDatabaseEvent {
   FutureOr<List<CacheItem>?> getZhangduCacheItems();
 }
 
-abstract class ZhangduComplexEvent {
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update);
-
-  FutureOr<int?> updateZhangduMainStatus(int bookId);
-  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId);
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update);
-
+abstract class ZhangduNetEvent {
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author);
 
   FutureOr<ZhangduSearchData?> getZhangduSearchData(
       String query, int pageIndex, int pageSize);
+}
+
+abstract class ZhangduComplexEvent {
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update);
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update);
+
+  FutureOr<int?> updateZhangduMainStatus(int bookId);
+  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId);
 }

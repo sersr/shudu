@@ -46,13 +46,12 @@ enum ZhangduDatabaseEventMessage {
   getZhangduCacheItems
 }
 enum ZhangduComplexEventMessage {
+  getZhangduIndex,
   getZhangduContent,
   updateZhangduMainStatus,
-  getZhangduDetail,
-  getZhangduIndex,
-  getZhangduSameUsersBooks,
-  getZhangduSearchData
+  getZhangduDetail
 }
+enum ZhangduNetEventMessage { getZhangduSameUsersBooks, getZhangduSearchData }
 
 abstract class BookEventResolveMain extends BookEvent
     with
@@ -62,7 +61,8 @@ abstract class BookEventResolveMain extends BookEvent
         BookContentEventResolve,
         ComplexEventResolve,
         ZhangduDatabaseEventResolve,
-        ZhangduComplexEventResolve {}
+        ZhangduComplexEventResolve,
+        ZhangduNetEventResolve {}
 
 abstract class BookEventMessagerMain extends BookEvent
     with
@@ -71,7 +71,8 @@ abstract class BookEventMessagerMain extends BookEvent
         BookContentEventMessager,
         ComplexEventMessager,
         ZhangduDatabaseEventMessager,
-        ZhangduComplexEventMessager {}
+        ZhangduComplexEventMessager,
+        ZhangduNetEventMessager {}
 
 /// implements [CustomEvent]
 mixin CustomEventDynamic {
@@ -469,12 +470,10 @@ mixin ZhangduDatabaseEventMessager {
 mixin ZhangduComplexEventResolve on Resolve, ZhangduComplexEvent {
   late final _zhangduComplexEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
-    _getZhangduContent_0,
-    _updateZhangduMainStatus_1,
-    _getZhangduDetail_2,
-    _getZhangduIndex_3,
-    _getZhangduSameUsersBooks_4,
-    _getZhangduSearchData_5
+    _getZhangduIndex_0,
+    _getZhangduContent_1,
+    _updateZhangduMainStatus_2,
+    _getZhangduDetail_3
   ]);
   bool onZhangduComplexEventResolve(message) => false;
   @override
@@ -497,25 +496,25 @@ mixin ZhangduComplexEventResolve on Resolve, ZhangduComplexEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<String>?> _getZhangduContent_0(args) =>
-      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
-  FutureOr<int?> _updateZhangduMainStatus_1(args) =>
-      updateZhangduMainStatus(args);
-  FutureOr<ZhangduDetailData?> _getZhangduDetail_2(args) =>
-      getZhangduDetail(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_3(args) =>
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_0(args) =>
       getZhangduIndex(args[0], args[1]);
-  FutureOr<List<ZhangduSameUsersBooksData>?> _getZhangduSameUsersBooks_4(
-          args) =>
-      getZhangduSameUsersBooks(args);
-  FutureOr<ZhangduSearchData?> _getZhangduSearchData_5(args) =>
-      getZhangduSearchData(args[0], args[1], args[2]);
+  FutureOr<List<String>?> _getZhangduContent_1(args) =>
+      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
+  FutureOr<int?> _updateZhangduMainStatus_2(args) =>
+      updateZhangduMainStatus(args);
+  FutureOr<ZhangduDetailData?> _getZhangduDetail_3(args) =>
+      getZhangduDetail(args);
 }
 
 /// implements [ZhangduComplexEvent]
 mixin ZhangduComplexEventMessager {
   SendEvent get sendEvent;
   SendEvent get zhangduComplexEventSendEvent => sendEvent;
+
+  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
+    return zhangduComplexEventSendEvent.sendMessage(
+        ZhangduComplexEventMessage.getZhangduIndex, [bookId, update]);
+  }
 
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) {
@@ -533,22 +532,55 @@ mixin ZhangduComplexEventMessager {
     return zhangduComplexEventSendEvent.sendMessage(
         ZhangduComplexEventMessage.getZhangduDetail, bookId);
   }
+}
 
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
-    return zhangduComplexEventSendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduIndex, [bookId, update]);
+mixin ZhangduNetEventResolve on Resolve, ZhangduNetEvent {
+  late final _zhangduNetEventResolveFuncList =
+      List<DynamicCallback>.unmodifiable(
+          [_getZhangduSameUsersBooks_0, _getZhangduSearchData_1]);
+  bool onZhangduNetEventResolve(message) => false;
+  @override
+  bool resolve(resolveMessage) {
+    if (resolveMessage is IsolateSendMessage) {
+      final type = resolveMessage.type;
+      if (type is ZhangduNetEventMessage) {
+        dynamic result;
+        try {
+          if (onZhangduNetEventResolve(resolveMessage)) return true;
+          result = _zhangduNetEventResolveFuncList
+              .elementAt(type.index)(resolveMessage.args);
+          receipt(result, resolveMessage);
+        } catch (e) {
+          receipt(result, resolveMessage, e);
+        }
+        return true;
+      }
+    }
+    return super.resolve(resolveMessage);
   }
+
+  FutureOr<List<ZhangduSameUsersBooksData>?> _getZhangduSameUsersBooks_0(
+          args) =>
+      getZhangduSameUsersBooks(args);
+  FutureOr<ZhangduSearchData?> _getZhangduSearchData_1(args) =>
+      getZhangduSearchData(args[0], args[1], args[2]);
+}
+
+/// implements [ZhangduNetEvent]
+mixin ZhangduNetEventMessager {
+  SendEvent get sendEvent;
+  SendEvent get zhangduNetEventSendEvent => sendEvent;
 
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author) {
-    return zhangduComplexEventSendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduSameUsersBooks, author);
+    return zhangduNetEventSendEvent.sendMessage(
+        ZhangduNetEventMessage.getZhangduSameUsersBooks, author);
   }
 
   FutureOr<ZhangduSearchData?> getZhangduSearchData(
       String query, int pageIndex, int pageSize) {
-    return zhangduComplexEventSendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduSearchData,
+    return zhangduNetEventSendEvent.sendMessage(
+        ZhangduNetEventMessage.getZhangduSearchData,
         [query, pageIndex, pageSize]);
   }
 }

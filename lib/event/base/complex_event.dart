@@ -10,7 +10,7 @@ part 'complex_event.g.dart';
 
 @NopIsolateEvent()
 abstract class ComplexOnDatabaseEvent {
-  /// buqu
+  /// biqu
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem();
   FutureOr<Set<int>?> getAllBookId();
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs);
@@ -21,9 +21,9 @@ abstract class ComplexOnDatabaseEvent {
 
   /// zhangdu
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data);
-  FutureOr<List<ZhangduIndex>?> getZdIndexsDbCacheItem();
-  FutureOr<Set<int>?> getZdAllBookId();
-  FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId);
+  // FutureOr<List<ZhangduIndex>?> getZdIndexsDbCacheItem();
+  // FutureOr<Set<int>?> getZdAllBookId();
+  // FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId);
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId);
   FutureOr<int?> getZhangduContentCid(int bookid);
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content);

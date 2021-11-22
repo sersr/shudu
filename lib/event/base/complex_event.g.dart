@@ -17,9 +17,6 @@ enum ComplexOnDatabaseEventMessage {
   getBookCacheDb,
   insertOrUpdateContent,
   insertOrUpdateZhangduIndex,
-  getZdIndexsDbCacheItem,
-  getZdAllBookId,
-  getZhangduCacheBookId,
   getZhangduContentDb,
   getZhangduContentCid,
   insertOrUpdateZhangduContent,
@@ -43,13 +40,10 @@ mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
     _getBookCacheDb_5,
     _insertOrUpdateContent_6,
     _insertOrUpdateZhangduIndex_7,
-    _getZdIndexsDbCacheItem_8,
-    _getZdAllBookId_9,
-    _getZhangduCacheBookId_10,
-    _getZhangduContentDb_11,
-    _getZhangduContentCid_12,
-    _insertOrUpdateZhangduContent_13,
-    _getZhangduIndexDb_14
+    _getZhangduContentDb_8,
+    _getZhangduContentCid_9,
+    _insertOrUpdateZhangduContent_10,
+    _getZhangduIndexDb_11
   ]);
   bool onComplexOnDatabaseEventResolve(message) => false;
   @override
@@ -84,17 +78,12 @@ mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
   FutureOr<int?> _insertOrUpdateContent_6(args) => insertOrUpdateContent(args);
   FutureOr<int?> _insertOrUpdateZhangduIndex_7(args) =>
       insertOrUpdateZhangduIndex(args[0], args[1]);
-  FutureOr<List<ZhangduIndex>?> _getZdIndexsDbCacheItem_8(args) =>
-      getZdIndexsDbCacheItem();
-  FutureOr<Set<int>?> _getZdAllBookId_9(args) => getZdAllBookId();
-  FutureOr<List<ZhangduCache>?> _getZhangduCacheBookId_10(args) =>
-      getZhangduCacheBookId(args);
-  FutureOr<List<String>?> _getZhangduContentDb_11(args) =>
+  FutureOr<List<String>?> _getZhangduContentDb_8(args) =>
       getZhangduContentDb(args[0], args[1]);
-  FutureOr<int?> _getZhangduContentCid_12(args) => getZhangduContentCid(args);
-  FutureOr<int?> _insertOrUpdateZhangduContent_13(args) =>
+  FutureOr<int?> _getZhangduContentCid_9(args) => getZhangduContentCid(args);
+  FutureOr<int?> _insertOrUpdateZhangduContent_10(args) =>
       insertOrUpdateZhangduContent(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_14(args) =>
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_11(args) =>
       getZhangduIndexDb(args);
 }
 
@@ -142,21 +131,6 @@ mixin ComplexOnDatabaseEventMessager {
     return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduIndex,
         [bookId, data]);
-  }
-
-  FutureOr<List<ZhangduIndex>?> getZdIndexsDbCacheItem() {
-    return complexOnDatabaseEventSendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZdIndexsDbCacheItem, null);
-  }
-
-  FutureOr<Set<int>?> getZdAllBookId() {
-    return complexOnDatabaseEventSendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZdAllBookId, null);
-  }
-
-  FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId) {
-    return complexOnDatabaseEventSendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduCacheBookId, bookId);
   }
 
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {

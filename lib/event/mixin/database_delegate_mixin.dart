@@ -7,9 +7,7 @@ import 'package:utils/utils.dart';
 
 import '../base/book_event.dart';
 import '../base/complex_event.dart';
-import '../base/zhangdu_event.dart';
 import 'complex_mixin.dart';
-import 'database_mixin.dart';
 import 'entry_point.dart';
 import 'network_mixin.dart';
 import 'zhangdu_mixin.dart';
@@ -54,52 +52,20 @@ class DatabaseDelegateMessger extends DatabaseDelegate
   SendEvent get sendEvent => this;
 }
 
-class DatabaseImpl
-    with
-        Resolve,
-        BookCacheEvent,
-        BookContentEvent,
-        ZhangduDatabaseEvent,
-        DatabaseMixin,
-        BookCacheEventResolve,
-        BookContentEventResolve,
-        ComplexOnDatabaseEventResolve,
-        ZhangduDatabaseMixin,
-        ZhangduDatabaseEventResolve {
-  DatabaseImpl({
-    required this.appPath,
-    required this.useSqflite3,
-  });
-
-  Future<void> initState() async {
-    await initDb();
-  }
-
-  @override
-  final String appPath;
-  @override
-  final bool useSqflite3;
-
-  @override
-  FutureOr<bool> onClose() async {
-    await closeDb();
-    return true;
-  }
-}
-
 // 任务隔离(remote):处理 数据库、网络任务
 // 在隔离中再创建一个隔离处理数据库任务
 class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基类
     with
+        ComplexOnDatabaseEvent,
         BookCacheEventMessager, // 提供本地调用接口（当前Isolate）
         BookContentEventMessager, //
         ZhangduDatabaseEventMessager, //
         ComplexOnDatabaseEventMessager, // （后台之间的交互）
-        ComplexOnDatabaseEvent,
         HiveDioMixin,
         NetworkMixin,
+        ZhangduNetMixin,
         ComplexMixin,
-        ZhangduEventMixin {
+        ZhangduComplexMixin {
   BookEventIsolateDeleagete(
       this.sp, this.appPath, this.cachePath, this.useSqflite3);
 

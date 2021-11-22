@@ -3,8 +3,8 @@ import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
+
 import 'resolve_event.dart';
-import 'database_delegate_mixin.dart';
 
 /// 单一隔离
 void singleIsolateEvent(List args) async {
@@ -51,7 +51,6 @@ void multiIsolateEvent(List args) async {
   Log.i('$appPath | $cachePath | $useSqflite3', onlyDebug: false);
 
   final db = BookEventMultiIsolate(
-    port,
     appPath,
     cachePath,
     useSqflite3,
