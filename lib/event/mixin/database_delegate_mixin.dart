@@ -10,6 +10,7 @@ import '../base/complex_event.dart';
 import '../base/zhangdu_event.dart';
 import 'complex_mixin.dart';
 import 'database_mixin.dart';
+import 'entry_point.dart';
 import 'network_mixin.dart';
 import 'zhangdu_mixin.dart';
 
@@ -33,34 +34,29 @@ class DatabaseDelegate
         [remoteSendPort, appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
   }
 }
+ 
 
-void dataBaseEntryPoint(args) async {
-  final localSendPort = args[0] as SendPort;
-  final appPath = args[1] as String;
-  final cachePath = args[2] as String;
-  final ffiEnabled = args[3] as bool;
-  final useSqflite3 = args[4] as bool;
-  final db = DatabaseImpl(
-      appPath: appPath,
-      cachePath: cachePath,
-      sqfliteFfiEnabled: ffiEnabled,
-      useSqflite3: useSqflite3);
-  final rcPort = ReceivePort();
+class DatabaseDelegateMessger extends DatabaseDelegate
+    with
+        BookCacheEventMessager,
+        BookContentEventMessager,
+        ZhangduDatabaseEventMessager
+// ComplexOnDatabaseEventMessager // 由其他函数间接调用
+{
+  DatabaseDelegateMessger({
+    required String appPath,
+    required bool sqfliteFfiEnabled,
+    required bool useSqflite3,
+    required String cachePath,
+  }) : super(
+          appPath: appPath,
+          sqfliteFfiEnabled: sqfliteFfiEnabled,
+          useSqflite3: useSqflite3,
+          cachePath: cachePath,
+        );
 
-  await runZonedGuarded(() async {
-    await db.initState();
-    rcPort.listen((message) {
-      if (db.resolveAll(message)) return;
-      Log.e('eeeor $message');
-    });
-  }, (e, s) {
-    Log.e('$e\n$s');
-  }, zoneSpecification:
-      ZoneSpecification(errorCallback: (self, delegate, zone, e, s) {
-    Log.e('error:$e\n$s');
-    return delegate.errorCallback(zone, e, s);
-  }));
-  localSendPort.send(rcPort.sendPort);
+  @override
+  SendEvent get sendEvent => this;
 }
 
 class DatabaseImpl
@@ -79,7 +75,6 @@ class DatabaseImpl
     required this.appPath,
     required this.sqfliteFfiEnabled,
     required this.useSqflite3,
-    required this.cachePath,
   });
 
   Future<void> initState() async {
@@ -93,8 +88,6 @@ class DatabaseImpl
   @override
   final bool useSqflite3;
 
-  final String cachePath;
-
   @override
   FutureOr<bool> onClose() async {
     await closeDb();
@@ -103,12 +96,13 @@ class DatabaseImpl
 }
 
 // 任务隔离(remote):处理 数据库、网络任务
-class BookEventIsolateDeleagete extends BookEventResolveMain
+// 在隔离中再创建一个隔离处理数据库任务
+class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基类
     with
-        BookCacheEventMessager,
-        BookContentEventMessager,
-        ZhangduDatabaseEventMessager,
-        ComplexOnDatabaseEventMessager,
+        BookCacheEventMessager, // 提供本地调用接口（当前Isolate）
+        BookContentEventMessager, //
+        ZhangduDatabaseEventMessager, //
+        ComplexOnDatabaseEventMessager, // （后台之间的交互）
         ComplexOnDatabaseEvent,
         HiveDioMixin,
         NetworkMixin,
@@ -154,29 +148,20 @@ class BookEventIsolateDeleagete extends BookEventResolveMain
 
   @override
   void onError(msg, error) {
-    // if (msg is IsolateSendMessage || msg is KeyController) {
-    //   dbDelegate.sendDelegate(msg);
-    //   return;
-    // }
     Log.e(error, onlyDebug: false);
   }
 
   @override
   FutureOr<bool> onClose() async {
-    // try {
     await closeNet();
     await dbDelegate.close();
-    scheduleMicrotask(() {
-      throw 'ssss';
-    });
-    // } catch (e) {
-    //   Log.e('close: error: $e');
-    // }
     return true;
   }
 
   @override
   SendEvent get sendEvent => dbDelegate;
+
+  /// ------ 代理转发 ---------
   @override
   bool onBookCacheEventResolve(message) {
     dbDelegate.sendDelegate(message);

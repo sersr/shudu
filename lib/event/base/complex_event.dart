@@ -10,6 +10,7 @@ part 'complex_event.g.dart';
 
 @NopIsolateEvent()
 abstract class ComplexOnDatabaseEvent {
+  /// buqu
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem();
   FutureOr<Set<int>?> getAllBookId();
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs);

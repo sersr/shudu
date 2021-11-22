@@ -342,12 +342,6 @@ class BookIndexNotifier extends ChangeNotifier {
 
   Future<void> loadIndexs(int? bookid, int? contentid,
       {bool restore = false, ApiType api = ApiType.biquge}) async {
-    // if (!_queue.actived) {
-    //   // 先执行在添加到队列中
-    //   final f = _load(bookid, contentid, restore: restore, api: api);
-    //   return _queue.addEventTask(() => f);
-    // }
-    Log.i('update: bookid: $bookid cid: $contentid');
     return _queue.addOneEventTask(
         () => _load(bookid, contentid, restore: restore, api: api));
   }
@@ -361,6 +355,8 @@ class BookIndexNotifier extends ChangeNotifier {
     final refresh = _data?.shouldUpdate(bookid, contentid, api) ?? true;
 
     final isNewBook = _data?.bookid != bookid;
+    Log.i(
+        'update: bookid: $bookid cid: $contentid $isNewBook | $refresh | $restore');
 
     await releaseUI;
     if (isNewBook) {

@@ -117,7 +117,7 @@ mixin ComplexMixin
   Future<RawContentLines> getContent(
       int bookid, int contentid, bool update) async {
     final url = Api.contentUrl(bookid, contentid);
-    Log.i('url: $url');
+    assert(Log.i('url: $url'));
     
     if (update) {
       return await _getContentNet(bookid, contentid) ??

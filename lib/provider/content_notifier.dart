@@ -317,7 +317,6 @@ extension DataLoading on ContentNotifier {
   Future<List<ContentMetrics>> _genTextData(
       int oldBookId, List<String> data, String cname) async {
     final _key = key;
-    Log.i('start layout...', onlyDebug: false);
     final pages = await _asyncLayout(data, cname);
 
     if (_key != key || oldBookId != bookid) {
@@ -1192,7 +1191,6 @@ extension Event on ContentNotifier {
     if (inBook || size.isEmpty) {
       if (size.isEmpty) size = data.size;
       final changed = _modifiedSize(data);
-      Log.e(changed);
       if (changed && inBook) {
         _sizeChangedTimer?.cancel();
         _sizeChangedTimer = Timer(const Duration(milliseconds: 50), () {
@@ -1238,12 +1236,12 @@ extension Event on ContentNotifier {
 
     pannelPadding = _pannelPadding;
 
-    Log.w(
-        'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}',
-        onlyDebug: false);
     if (size != _size || contentLayoutPadding != _contentLayoutPadding) {
       size = _size;
       _contentLayoutPadding = contentLayoutPadding;
+      Log.w(
+          'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}',
+          onlyDebug: false);
       return true;
     } else {
       return false;

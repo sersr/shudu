@@ -19,22 +19,29 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../provider/options_notifier.dart';
 import 'base/book_event.dart';
-import 'mixin/complex_mixin.dart';
-import 'mixin/database_delegate_mixin.dart';
-import 'mixin/database_mixin.dart';
-import 'mixin/network_mixin.dart';
-import 'mixin/zhangdu_mixin.dart';
+import 'mixin/entry_point.dart';
 
 typedef BoolCallback = void Function(bool visible);
 
-/// 主隔离(native)
-class Repository extends BookEventMessagerMain
-    with
-        SystemInfos,
-        SendEventMixin,
-        SendIsolateMixin,
-        SendCacheMixin,
-        SendInitCloseMixin {
+abstract class RepositoryBase extends BookEventMessagerMain
+    with SendEventMixin, SendIsolateMixin, SendCacheMixin, SendInitCloseMixin {}
+
+/// 主隔离: 处理数据库任务
+class DatabaseRepository extends RepositoryBase {
+  DatabaseRepository();
+  List? args;
+  @override
+  SendEvent get sendEvent => this;
+
+  @override
+  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) {
+    Log.w(args);
+    return Isolate.spawn(dataBaseEntryPoint, [remoteSendPort, ...?args]);
+  }
+}
+
+/// 主隔离: 网络，数据库([DatabaseRepository]代理)
+class Repository extends RepositoryBase with SystemInfos {
   Repository();
 
   final ValueNotifier<bool> _initStatus = ValueNotifier(false);
@@ -45,6 +52,14 @@ class Repository extends BookEventMessagerMain
   void notifiyState(bool init) {
     _initStatus.value = init;
   }
+
+  final DatabaseRepository databaseRepository = DatabaseRepository();
+  @override
+  SendEvent get bookCacheEventSendEvent => databaseRepository;
+  @override
+  SendEvent get bookContentEventSendEvent => databaseRepository;
+  @override
+  SendEvent get zhangduDatabaseEventSendEvent => databaseRepository;
 
   @override
   late final SendEvent sendEvent = this;
@@ -63,7 +78,77 @@ class Repository extends BookEventMessagerMain
   }
 
   @override
-  Future<Isolate> onCreateIsolate(SendPort sdPort) async {
+  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) {
+    return initWork(remoteSendPort);
+  }
+
+  @override
+  Future<Isolate> createIsolate(SendPort remoteSendPort, List args) async {
+    databaseRepository.args = args;
+    await databaseRepository.init();
+    final databaseLocalSendPort =
+        databaseRepository.sendPortGroup!.localSendPort;
+
+    /// Isolate event
+    ///  [remoteSendPort, appPath, cachePath,sqfliteFfiEnabled,useSqflite3,databaseLocalSendPort]
+    return Isolate.spawn(
+        multiIsolateEvent, [remoteSendPort, ...args, databaseLocalSendPort]);
+  }
+
+  @override
+  FutureOr<void> onCloseStart() async {
+    await super.onCloseStart();
+    return databaseRepository.close();
+  }
+}
+
+/// 一个 隔离
+/// 主隔离(native)
+class SingleRepository extends RepositoryBase with SystemInfos {
+  SingleRepository();
+
+  final ValueNotifier<bool> _initStatus = ValueNotifier(false);
+
+  ValueListenable<bool> get initStatus => _initStatus;
+
+  @override
+  void notifiyState(bool init) {
+    _initStatus.value = init;
+  }
+
+  @override
+  late final SendEvent sendEvent = this;
+  late final BookEvent bookEvent = this;
+
+  static SingleRepository? _instance;
+
+  factory SingleRepository.create() {
+    _instance ??= SingleRepository();
+    return _instance!;
+  }
+
+  @visibleForTesting
+  static void repositoryTest(SingleRepository repository) {
+    _instance ??= repository;
+  }
+
+  @override
+  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) {
+    return initWork(remoteSendPort);
+  }
+
+  @override
+  Future<Isolate> createIsolate(SendPort remoteSendPort, List args) async {
+    /// Isolate event
+    /// [remoteSendPort, appPath, cachePath,sqfliteFfiEnabled,useSqflite3]
+    return Isolate.spawn(singleIsolateEvent, [remoteSendPort, ...args]);
+  }
+}
+
+/// [Repository]需要的信息
+mixin SystemInfos {
+  Future<Isolate> createIsolate(SendPort remoteSendPort, List args);
+  Future<Isolate> initWork(SendPort remoteSendPort) async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     if (defaultTargetPlatform == TargetPlatform.android) {
       Bangs.bangs.setNavigationChangeCallback(_navState);
@@ -150,9 +235,9 @@ class Repository extends BookEventMessagerMain
       SqfliteMainIsolate.initMainDb();
     }
 
-    /// Isolate event
-    final newIsolate = await Isolate.spawn(isolateEvent,
-        [sdPort, appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
+    final newIsolate = await createIsolate(
+        remoteSendPort, [appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
+
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {
       final memory = await getMemoryInfo();
@@ -164,9 +249,7 @@ class Repository extends BookEventMessagerMain
     }
     return newIsolate;
   }
-}
 
-mixin SystemInfos {
   Battery? _battery;
 
   int level = 50;
@@ -194,13 +277,15 @@ mixin SystemInfos {
     return level;
   }
 
+  // 状态栏遮挡占用的高度
   double _statusHeight = 0;
   double get statusHeight => _statusHeight;
 
+  // 底部导航栏高度
   int _height = 0;
   int get height => _height;
   void _navState(bool isShow, int height) {
-    Log.i('statusHeight: $height');
+    Log.i('navHeight: $height | $isShow');
     _height = height;
   }
 
@@ -211,6 +296,7 @@ mixin SystemInfos {
     return memoryInfoPlugin!.memoryInfo;
   }
 
+  /// 系统UI
   bool _systemOverlaysAreVisible = false;
   bool get systemOverlaysAreVisible => _systemOverlaysAreVisible;
 
@@ -222,7 +308,6 @@ mixin SystemInfos {
       }
   }
 
-  /// 弃用
   final _changesListeners = <BoolCallback>{};
 
   void addSystemOverlaysListener(BoolCallback callback) {
@@ -234,93 +319,4 @@ mixin SystemInfos {
   void removeSystemOverlaysListener(BoolCallback callback) {
     _changesListeners.remove(callback);
   }
-}
-
-// 任务隔离(remote):处理 数据库、网络任务
-class BookEventIsolate extends BookEventResolveMain
-    with
-        DatabaseMixin,
-        HiveDioMixin,
-        NetworkMixin,
-        ComplexMixin,
-        ZhangduDatabaseMixin,
-        ZhangduEventMixin {
-  BookEventIsolate(this.sp, this.appPath, this.cachePath,
-      this.sqfliteFfiEnabled, this.useSqflite3);
-
-  @override
-  final SendPort sp;
-  @override
-  final String appPath;
-  @override
-  final String cachePath;
-
-  @override
-  final bool useSqflite3;
-  @override
-  final bool sqfliteFfiEnabled;
-
-  Future<void> initState() async {
-    final d = initNet().logi(false);
-    await initDb();
-    await d;
-  }
-
-  @override
-  void onError(msg, error) {
-    Log.e(error, onlyDebug: false);
-  }
-
-  @override
-  FutureOr<bool> onClose() async {
-    await closeDb();
-    await closeNet();
-    return true;
-  }
-
-  // @override
-  // bool remove(key) {
-  //   assert(key is! KeyController || Log.w(key));
-  //   return super.remove(key);
-  // }
-
-  // @override
-  // bool resolve(m) {
-  //   return super.resolve(m);
-  // }
-}
-
-/// remote Isolate 入口
-void isolateEvent(List args) async {
-  final port = args[0];
-  final appPath = args[1];
-  final cachePath = args[2];
-  final sqfliteFfiEnabled = args[3];
-  final useSqflite3 = args[4];
-  final receivePort = ReceivePort();
-  Log.i('$appPath | $cachePath | $sqfliteFfiEnabled | $useSqflite3',
-      onlyDebug: false);
-
-  final db = BookEventIsolateDeleagete(
-      port, appPath, cachePath, sqfliteFfiEnabled, useSqflite3);
-
-  await runZonedGuarded(() async {
-    await db.initState();
-    receivePort.listen((m) {
-      try {
-        if (db.resolveAll(m)) return;
-      } catch (e, s) {
-        Log.e('error: $e\n$s');
-      }
-      Log.e('somthing was error: $m');
-    });
-  }, (e, s) {
-    Log.e('$e\n$s');
-  }, zoneSpecification:
-      ZoneSpecification(errorCallback: (self, delegate, zone, e, s) {
-    Log.e('error:$e\n$s');
-    return delegate.errorCallback(zone, e, s);
-  }));
-
-  port.send(receivePort.sendPort);
 }

@@ -101,80 +101,81 @@ mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
 /// implements [ComplexOnDatabaseEvent]
 mixin ComplexOnDatabaseEventMessager {
   SendEvent get sendEvent;
+  SendEvent get complexOnDatabaseEventSendEvent => sendEvent;
 
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem() {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getIndexsDbCacheItem, null);
   }
 
   FutureOr<Set<int>?> getAllBookId() {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getAllBookId, null);
   }
 
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateIndexs, [id, indexs]);
   }
 
   FutureOr<List<BookContentDb>?> getContentDb(int bookid, int contentid) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getContentDb, [bookid, contentid]);
   }
 
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getIndexsDb, bookid);
   }
 
   FutureOr<List<BookCache>?> getBookCacheDb(int bookid) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getBookCacheDb, bookid);
   }
 
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateContent, contentDb);
   }
 
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduIndex,
         [bookId, data]);
   }
 
   FutureOr<List<ZhangduIndex>?> getZdIndexsDbCacheItem() {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZdIndexsDbCacheItem, null);
   }
 
   FutureOr<Set<int>?> getZdAllBookId() {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZdAllBookId, null);
   }
 
   FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZhangduCacheBookId, bookId);
   }
 
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZhangduContentDb, [bookId, contentId]);
   }
 
   FutureOr<int?> getZhangduContentCid(int bookid) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZhangduContentCid, bookid);
   }
 
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduContent, content);
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
-    return sendEvent.sendMessage(
+    return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZhangduIndexDb, bookId);
   }
 }

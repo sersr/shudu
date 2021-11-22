@@ -149,8 +149,7 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
     } else {
       final insert = bookContentDb.insert.insertTable(contentDb);
       final x = insert.go;
-      assert(Log.i(
-          'insert: ${await x}, ${insert.updateItems}, ${contentDb.bookId}'));
+      assert(Log.i('insert: ${await x}, ${contentDb.bookId}'));
 
       /// update Index cacheItemCounts
       updateIndexCacheLength(contentDb.bookId!);

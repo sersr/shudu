@@ -30,7 +30,7 @@ abstract class BookEvent
 @NopIsolateEventItem(separate: true)
 abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
 
-@NopIsolateEventItem()
+@NopIsolateEventItem(sendEventUseClassName: true)
 abstract class BookContentEvent {
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid);
 
@@ -47,7 +47,7 @@ abstract class ComplexEvent {
   FutureOr<BookInfoRoot?> getInfo(int id);
 }
 
-@NopIsolateEventItem()
+@NopIsolateEventItem(sendEventUseClassName: true)
 abstract class BookCacheEvent {
   FutureOr<List<BookCache>?> getMainList();
   Stream<List<BookCache>?> watchMainList();
