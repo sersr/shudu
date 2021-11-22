@@ -10,20 +10,21 @@ import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/event/mixin/event_messager_mixin.dart';
+import 'package:shudu/event/mixin/entry_point.dart';
+import 'package:shudu/event/mixin/resolve_event.dart';
 import 'package:utils/utils.dart';
 
 class RepositoryTest extends Repository {
   @override
   Future<Isolate> onCreateIsolate(SendPort sdPort) async {
     final newIsolate = await Isolate.spawn(
-        isolateEvent, [sdPort, './app', './app/cache', false, false]);
+        singleIsolateEvent, [sdPort, './app', './app/cache', false, false]);
     return newIsolate;
   }
 }
 
 class RepositoryImplTest extends BookEventMessagerMain
-    with ComplexMessager, SaveImageMessager, SendEventPortMixin {
+    with SendEventPortMixin {
   RepositoryImplTest(this.useSqflite);
   late Server server;
   late Client client;

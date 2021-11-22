@@ -24,7 +24,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with WidgetsBindingObserver, IsolateAutoInitAndCloseMixin {
-  int currentIndex = 0;
   late ContentNotifier painterBloc;
   late OptionsNotifier opts;
   late BookCacheNotifier cache;
@@ -50,19 +49,22 @@ class _MyHomePageState extends State<MyHomePage>
     final search = context.read<SearchNotifier>();
     cache = context.read<BookCacheNotifier>();
     final data = MediaQuery.of(context);
-    _future ??= EventQueue.runTaskOnQueue('hive_init', () async {
+    if (_future == null) {
       final any = FutureAny();
+      cache.load();
       any
         ..add(opts.init())
         ..add(painterBloc.initConfigs())
-        ..add(cache.load())
         ..add(search.init());
-      await any.wait;
-      painterBloc.metricsChange(data);
-      if (opts.options.updateOnStart == true && mounted) {
-        _refreshKey.currentState!.show();
-      }
-    });
+      _future = Future.value(any.wait).whenComplete(() {
+        painterBloc.metricsChange(data);
+        Timer.run(() {
+          if (opts.options.updateOnStart == true && mounted) {
+            _refreshKey.currentState!.show();
+          }
+        });
+      });
+    }
   }
 
   @override
@@ -78,15 +80,17 @@ class _MyHomePageState extends State<MyHomePage>
     closeIsolateState = state.index >= AppLifecycleState.paused.index;
     initIsolateState =
         mounted && state.index < AppLifecycleState.inactive.index;
-    Log.i('$closeIsolateState, $initIsolateState $closeDelay $initIDelay');
+    assert(
+        Log.i('$closeIsolateState, $initIsolateState $closeDelay $initIDelay'));
+
     onInitIsolate();
-    if (state == AppLifecycleState.paused) {
+    if (closeIsolateState) {
       painterBloc.autoRun.stopSave();
-    } else if (state == AppLifecycleState.resumed) {
+    } else if (initIsolateState) {
       painterBloc.autoRun.stopAutoRun();
     }
   }
- 
+
   @override
   void didHaveMemoryPressure() {
     super.didHaveMemoryPressure();
@@ -191,38 +195,46 @@ class _MyHomePageState extends State<MyHomePage>
         ),
       ),
       body: RepaintBoundary(
-        child: IndexedStack(
-          index: currentIndex,
-          children: <Widget>[
-            RepaintBoundary(child: buildBlocBuilder()),
-            RepaintBoundary(child: ListMainPage())
-          ],
-        ),
+        child: AnimatedBuilder(
+            animation: notifier,
+            builder: (context, _) {
+              return IndexedStack(
+                index: notifier.value,
+                children: <Widget>[
+                  RepaintBoundary(child: buildBlocBuilder()),
+                  RepaintBoundary(child: ListMainPage())
+                ],
+              );
+            }),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        iconSize: 18.0,
-        selectedFontSize: 11.0,
-        unselectedFontSize: 11.0,
-        items: const [
-          BottomNavigationBarItem(label: '主页', icon: Icon(Icons.home_rounded)),
-          BottomNavigationBarItem(
-              label: '书城', icon: Icon(Icons.local_grocery_store_rounded))
-        ],
-        onTap: (index) {
-          if (index == currentIndex) {
-            if (currentIndex == 0) _refreshKey.currentState!.show(atTop: true);
-
-            return;
-          }
-          setState(() {
-            currentIndex = index;
-          });
-        },
-        currentIndex: currentIndex,
+      bottomNavigationBar: RepaintBoundary(
+        child: AnimatedBuilder(
+            animation: notifier,
+            builder: (context, _) {
+              final light = isLight;
+              return BottomNavigationBar(
+                iconSize: 18.0,
+                selectedFontSize: 11.0,
+                unselectedFontSize: 11.0,
+                selectedItemColor: light
+                    ? ui.Color.fromARGB(255, 27, 27, 27)
+                    : ui.Color.fromARGB(255, 216, 216, 216),
+                unselectedItemColor: light
+                    ? ui.Color.fromARGB(255, 110, 110, 110)
+                    : ui.Color.fromARGB(255, 112, 112, 112),
+                items: const [
+                  BottomNavigationBarItem(
+                      label: '主页', icon: Icon(Icons.home_rounded)),
+                  BottomNavigationBarItem(
+                      label: '书城',
+                      icon: Icon(Icons.local_grocery_store_rounded))
+                ],
+                onTap: changed,
+                currentIndex: notifier.value,
+              );
+            }),
       ),
     );
-
-    // return child;
 
     /// 安全地初始化
     return FutureBuilder<void>(
@@ -233,6 +245,14 @@ class _MyHomePageState extends State<MyHomePage>
             child: child);
       },
     );
+  }
+
+  ValueNotifier<int> notifier = ValueNotifier(0);
+  void changed(index) {
+    if (notifier.value == index && index == 0) {
+      _refreshKey.currentState!.show(atTop: true);
+    }
+    notifier.value = index;
   }
 
   void showbts() {

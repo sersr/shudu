@@ -13,7 +13,6 @@ import '../../pages/book_list/cache_manager.dart';
 abstract class ZhangduEvent
     implements ZhangduDatabaseEvent, ZhangduComplexEvent {}
 
-@NopIsolateEventItem(sendEventUseClassName: true)
 abstract class ZhangduDatabaseEvent {
   FutureOr<int?> deleteZhangduContentCache(int bookId);
 
