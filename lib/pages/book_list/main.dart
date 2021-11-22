@@ -34,7 +34,7 @@ class ListMainPage extends StatelessWidget {
     }
 
     return Container(
-      color: light ? Colors.grey.shade100 : Colors.grey.shade900,
+      color: light ? Color.fromARGB(255, 231, 231, 231) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

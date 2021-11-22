@@ -23,8 +23,7 @@ class RepositoryTest extends Repository {
   }
 }
 
-class RepositoryImplTest extends BookEventMessagerMain
-    with SendEventPortMixin {
+class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
   RepositoryImplTest(this.useSqflite);
   late Server server;
   late Client client;
@@ -116,7 +115,7 @@ class Server {
 
 class BookEventIsolateTest extends BookEventIsolate {
   BookEventIsolateTest(SendPort sp, {bool useSqflite = false})
-      : super(sp, '', '', true /* windows 平台只能为 true */, useSqflite);
+      : super(sp, '', '', useSqflite);
 
   @override
   bool remove(key) {

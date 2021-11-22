@@ -18,23 +18,20 @@ class DatabaseDelegate
     with SendEventMixin, SendIsolateMixin, SendCacheMixin, SendInitCloseMixin {
   DatabaseDelegate({
     required this.appPath,
-    required this.sqfliteFfiEnabled,
     required this.useSqflite3,
     required this.cachePath,
   });
 
   final String appPath;
-  final bool sqfliteFfiEnabled;
   final bool useSqflite3;
   final String cachePath;
 
   @override
   Future<Isolate> onCreateIsolate(SendPort remoteSendPort) async {
-    return Isolate.spawn(dataBaseEntryPoint,
-        [remoteSendPort, appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
+    return Isolate.spawn(
+        dataBaseEntryPoint, [remoteSendPort, appPath, cachePath, useSqflite3]);
   }
 }
- 
 
 class DatabaseDelegateMessger extends DatabaseDelegate
     with
@@ -45,12 +42,10 @@ class DatabaseDelegateMessger extends DatabaseDelegate
 {
   DatabaseDelegateMessger({
     required String appPath,
-    required bool sqfliteFfiEnabled,
     required bool useSqflite3,
     required String cachePath,
   }) : super(
           appPath: appPath,
-          sqfliteFfiEnabled: sqfliteFfiEnabled,
           useSqflite3: useSqflite3,
           cachePath: cachePath,
         );
@@ -73,7 +68,6 @@ class DatabaseImpl
         ZhangduDatabaseEventResolve {
   DatabaseImpl({
     required this.appPath,
-    required this.sqfliteFfiEnabled,
     required this.useSqflite3,
   });
 
@@ -83,8 +77,6 @@ class DatabaseImpl
 
   @override
   final String appPath;
-  @override
-  final bool sqfliteFfiEnabled;
   @override
   final bool useSqflite3;
 
@@ -108,8 +100,8 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
         NetworkMixin,
         ComplexMixin,
         ZhangduEventMixin {
-  BookEventIsolateDeleagete(this.sp, this.appPath, this.cachePath,
-      this.sqfliteFfiEnabled, this.useSqflite3);
+  BookEventIsolateDeleagete(
+      this.sp, this.appPath, this.cachePath, this.useSqflite3);
 
   @override
   final SendPort sp;
@@ -119,7 +111,6 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
   final String cachePath;
 
   final bool useSqflite3;
-  final bool sqfliteFfiEnabled;
 
   late DatabaseDelegate dbDelegate;
   Future<void> initState() async {
@@ -127,7 +118,6 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
     dbDelegate = DatabaseDelegate(
       appPath: appPath,
       cachePath: cachePath,
-      sqfliteFfiEnabled: sqfliteFfiEnabled,
       useSqflite3: useSqflite3,
     );
     await dbDelegate.init();

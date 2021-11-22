@@ -114,11 +114,9 @@ class BookIndex extends Table {
   ZhangduIndex,
 ])
 class BookDatabase extends _GenBookDatabase {
-  BookDatabase(this.path, this.useFfi, this.useSqfite3);
+  BookDatabase(this.path, this.useSqfite3);
 
   final bool useSqfite3;
-
-  final bool useFfi;
 
   final String path;
 
@@ -156,7 +154,6 @@ class BookDatabase extends _GenBookDatabase {
 
   Future<NopDatabase> _initSqflitedb() {
     return NopDatabaseSqflite.openSqfite(path,
-        useFfi: useFfi, // sqflite 桌面平台是FFI实现
         version: version,
         onCreate: onCreate,
         onUpgrade: onUpgrade,

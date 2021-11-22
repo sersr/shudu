@@ -23,7 +23,6 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
-  bool get sqfliteFfiEnabled => false;
   bool get useSqflite3 => false;
 
   late final bookCache = db.bookCache;
@@ -49,7 +48,7 @@ mixin DatabaseMixin implements DatabaseEvent, ComplexOnDatabaseEvent {
     return db.dispose();
   }
 
-  late final db = BookDatabase(_url, sqfliteFfiEnabled, useSqflite3);
+  late final db = BookDatabase(_url, useSqflite3);
 
   @override
   FutureOr<int> updateBook(int id, BookCache book) {

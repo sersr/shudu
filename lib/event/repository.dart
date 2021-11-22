@@ -140,7 +140,7 @@ class SingleRepository extends RepositoryBase with SystemInfos {
   @override
   Future<Isolate> createIsolate(SendPort remoteSendPort, List args) async {
     /// Isolate event
-    /// [remoteSendPort, appPath, cachePath,sqfliteFfiEnabled,useSqflite3]
+    /// [remoteSendPort, appPath, cachePath, useSqflite3]
     return Isolate.spawn(singleIsolateEvent, [remoteSendPort, ...args]);
   }
 }
@@ -204,7 +204,14 @@ mixin SystemInfos {
     late Directory appDir;
     bool useSqflite3 = false;
     _waits.add(getApplicationDocumentsDirectory().then((dir) => appDir = dir));
-    _waits.add(OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        break;
+      default:
+        _waits.add(
+            OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
+    }
 
     await _waits.wait;
     if (!externalDir) appDirExt = null;
@@ -222,21 +229,13 @@ mixin SystemInfos {
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
-    bool sqfliteFfiEnabled = false;
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        sqfliteFfiEnabled = true;
-        break;
-      default:
-    }
     Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
-    if (!sqfliteFfiEnabled && useSqflite3) {
+    if (useSqflite3) {
       SqfliteMainIsolate.initMainDb();
     }
 
     final newIsolate = await createIsolate(
-        remoteSendPort, [appPath, cachePath, sqfliteFfiEnabled, useSqflite3]);
+        remoteSendPort, [appPath, cachePath, useSqflite3]);
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {

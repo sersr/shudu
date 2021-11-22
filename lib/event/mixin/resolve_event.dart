@@ -24,7 +24,7 @@ class BookEventIsolate extends BookEventResolveMain
         ZhangduDatabaseMixin,
         ZhangduEventMixin {
   BookEventIsolate(this.sp, this.appPath, this.cachePath,
-      this.sqfliteFfiEnabled, this.useSqflite3);
+      this.useSqflite3);
 
   @override
   final SendPort sp;
@@ -35,8 +35,6 @@ class BookEventIsolate extends BookEventResolveMain
 
   @override
   final bool useSqflite3;
-  @override
-  final bool sqfliteFfiEnabled;
 
   Future<void> initState() async {
     final d = initNet().logi(false);
@@ -73,7 +71,8 @@ class BookEventMultiIsolate extends BookEventResolveMain // Resolve 为基类
         ComplexMixin,
         ZhangduEventMixin {
   BookEventMultiIsolate(this.sp, this.appPath, this.cachePath,
-      this.sqfliteFfiEnabled, this.useSqflite3, this.sendPortGroup);
+        this.useSqflite3,
+      this.sendPortGroup);
 
   @override
   final SendPort sp;
@@ -83,7 +82,6 @@ class BookEventMultiIsolate extends BookEventResolveMain // Resolve 为基类
   final String cachePath;
 
   final bool useSqflite3;
-  final bool sqfliteFfiEnabled;
 
   @override
   SendPortOwner? sendPortGroup;
@@ -100,8 +98,8 @@ class BookEventMultiIsolate extends BookEventResolveMain // Resolve 为基类
 
   @override
   FutureOr<bool> onClose() async {
-    sendPortGroup = null;
     await closeNet();
+    sendPortGroup = null;
     return true;
   }
 

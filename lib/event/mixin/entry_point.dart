@@ -11,15 +11,12 @@ void singleIsolateEvent(List args) async {
   final port = args[0];
   final appPath = args[1];
   final cachePath = args[2];
-  final sqfliteFfiEnabled = args[3];
-  final useSqflite3 = args[4];
+  final useSqflite3 = args[3];
 
   final receivePort = ReceivePort();
-  Log.i('$appPath | $cachePath | $sqfliteFfiEnabled | $useSqflite3',
-      onlyDebug: false);
+  Log.i('$appPath | $cachePath | $useSqflite3', onlyDebug: false);
 
-  final db = BookEventIsolate(
-      port, appPath, cachePath, sqfliteFfiEnabled, useSqflite3);
+  final db = BookEventIsolate(port, appPath, cachePath, useSqflite3);
 
   await runZonedGuarded(() async {
     await db.initState();
@@ -47,19 +44,16 @@ void multiIsolateEvent(List args) async {
   final port = args[0];
   final appPath = args[1];
   final cachePath = args[2];
-  final sqfliteFfiEnabled = args[3];
-  final useSqflite3 = args[4];
-  final databaseRepositorySendPort = args[5];
+  final useSqflite3 = args[3];
+  final databaseRepositorySendPort = args[4];
 
   final receivePort = ReceivePort();
-  Log.i('$appPath | $cachePath | $sqfliteFfiEnabled | $useSqflite3',
-      onlyDebug: false);
+  Log.i('$appPath | $cachePath | $useSqflite3', onlyDebug: false);
 
   final db = BookEventMultiIsolate(
     port,
     appPath,
     cachePath,
-    sqfliteFfiEnabled,
     useSqflite3,
     SendPortOwner(
         localSendPort: databaseRepositorySendPort,
@@ -93,12 +87,10 @@ void dataBaseEntryPoint(args) async {
   final localSendPort = args[0] as SendPort;
   final appPath = args[1] as String;
   // final cachePath = args[2] as String;
-  final ffiEnabled = args[3] as bool;
-  final useSqflite3 = args[4] as bool;
+  final useSqflite3 = args[3] as bool;
   final db = DatabaseImpl(
       appPath: appPath,
       // cachePath: cachePath,
-      sqfliteFfiEnabled: ffiEnabled,
       useSqflite3: useSqflite3);
   final rcPort = ReceivePort();
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -141,13 +143,15 @@ class _SettingState extends State<Setting> {
         onChanged: (updateValue) {
           optionsNotifier.options = ConfigOptions(useTextCache: updateValue);
         });
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '使用 sqflite',
-        select: (_, opt) => opt.options.useSqflite ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options = ConfigOptions(useSqflite: updateValue);
-        });
+    if (!(Platform.isWindows || Platform.isLinux)) {
+      yield line;
+      yield selector<OptionsNotifier>(
+          title: '使用 sqflite',
+          select: (_, opt) => opt.options.useSqflite ?? false,
+          onChanged: (updateValue) {
+            optionsNotifier.options = ConfigOptions(useSqflite: updateValue);
+          });
+    }
 
     yield line;
     void update(TargetPlatform? d) {
