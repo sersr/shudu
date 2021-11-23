@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
+
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -16,22 +17,29 @@ import '../base/book_event.dart';
 import '../base/constants.dart';
 import '../base/type_adapter.dart';
 
-mixin HiveDioMixin {
+mixin HiveDioMixin on Resolve {
   late Dio dio;
   String get appPath;
-  @mustCallSuper
-  Future<void> initNet() async {
+
+  FutureOr<void> _initNet() {
     dio = dioCreater();
     Hive.init(join(appPath, 'hive'));
   }
 
-  Future<void> closeNet() async {
+  @override
+  void initStateResolve(add) {
+    super.initStateResolve(add);
+    add(_initNet());
+  }
+
+  @override
+  FutureOr<bool> onClose() {
     dio.close(force: true);
-    // await Hive.close();
+    return super.onClose();
   }
 }
 
-mixin NetworkMixin on HiveDioMixin implements CustomEvent {
+mixin NetworkMixin on Resolve, HiveDioMixin implements CustomEvent {
   var frequency = 0;
 
   late Box imageUpdate;
@@ -39,9 +47,9 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent {
   String get cachePath;
 
   @override
-  Future<void> initNet() async {
-    await super.initNet();
-    return _init();
+  void initStateResolve(add) {
+    super.initStateResolve(add);
+    add(_init());
   }
 
   Timer? frequencyTimer;

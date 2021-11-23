@@ -85,14 +85,22 @@ class Repository extends RepositoryBase with SystemInfos {
   @override
   Future<Isolate> createIsolate(SendPort remoteSendPort, List args) async {
     databaseRepository.args = args;
-    await databaseRepository.init();
-    final databaseLocalSendPort =
-        databaseRepository.sendPortGroup!.localSendPort;
 
     /// Isolate event
-    ///  [remoteSendPort, appPath, cachePath,sqfliteFfiEnabled,useSqflite3,databaseLocalSendPort]
-    return Isolate.spawn(
-        multiIsolateEvent, [remoteSendPort, ...args, databaseLocalSendPort]);
+    ///  [remoteSendPort, appPath, cachePath,sqfliteFfiEnabled,useSqflite3]
+    final newIsolate =
+        Isolate.spawn(multiIsolateEvent, [remoteSendPort, ...args]);
+    await databaseRepository.init();
+
+    return newIsolate;
+  }
+
+  @override
+  void onResume() {
+    assert(sendPortOwner != null);
+    sendPortOwner!.localSendPort.send(ResolveName(
+        'database', databaseRepository.sendPortOwner!.localSendPort));
+    super.onResume();
   }
 
   @override
@@ -231,11 +239,11 @@ mixin SystemInfos {
 
     Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
     if (useSqflite3) {
-      SqfliteMainIsolate.initMainDb();
+      await SqfliteMainIsolate.initMainDb();
     }
 
-    final newIsolate = await createIsolate(
-        remoteSendPort, [appPath, cachePath, useSqflite3]);
+    final newIsolate =
+        await createIsolate(remoteSendPort, [appPath, cachePath, useSqflite3]);
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {

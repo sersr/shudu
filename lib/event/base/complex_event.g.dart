@@ -16,11 +16,13 @@ enum ComplexOnDatabaseEventMessage {
   getIndexsDb,
   getBookCacheDb,
   insertOrUpdateContent,
+  insertOrUpdateBook,
   insertOrUpdateZhangduIndex,
   getZhangduContentDb,
   getZhangduContentCid,
   insertOrUpdateZhangduContent,
-  getZhangduIndexDb
+  getZhangduIndexDb,
+  insertOrUpdateZhangduBook
 }
 
 abstract class ComplexOnDatabaseEventResolveMain extends ComplexOnDatabaseEvent
@@ -29,7 +31,8 @@ abstract class ComplexOnDatabaseEventResolveMain extends ComplexOnDatabaseEvent
 abstract class ComplexOnDatabaseEventMessagerMain extends ComplexOnDatabaseEvent
     with ComplexOnDatabaseEventMessager {}
 
-mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
+mixin ComplexOnDatabaseEventResolve on Resolve
+    implements ComplexOnDatabaseEvent {
   late final _complexOnDatabaseEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
     _getIndexsDbCacheItem_0,
@@ -39,11 +42,13 @@ mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
     _getIndexsDb_4,
     _getBookCacheDb_5,
     _insertOrUpdateContent_6,
-    _insertOrUpdateZhangduIndex_7,
-    _getZhangduContentDb_8,
-    _getZhangduContentCid_9,
-    _insertOrUpdateZhangduContent_10,
-    _getZhangduIndexDb_11
+    _insertOrUpdateBook_7,
+    _insertOrUpdateZhangduIndex_8,
+    _getZhangduContentDb_9,
+    _getZhangduContentCid_10,
+    _insertOrUpdateZhangduContent_11,
+    _getZhangduIndexDb_12,
+    _insertOrUpdateZhangduBook_13
   ]);
   bool onComplexOnDatabaseEventResolve(message) => false;
   @override
@@ -76,15 +81,18 @@ mixin ComplexOnDatabaseEventResolve on Resolve, ComplexOnDatabaseEvent {
   FutureOr<List<BookIndex>?> _getIndexsDb_4(args) => getIndexsDb(args);
   FutureOr<List<BookCache>?> _getBookCacheDb_5(args) => getBookCacheDb(args);
   FutureOr<int?> _insertOrUpdateContent_6(args) => insertOrUpdateContent(args);
-  FutureOr<int?> _insertOrUpdateZhangduIndex_7(args) =>
+  FutureOr<int?> _insertOrUpdateBook_7(args) => insertOrUpdateBook(args);
+  FutureOr<int?> _insertOrUpdateZhangduIndex_8(args) =>
       insertOrUpdateZhangduIndex(args[0], args[1]);
-  FutureOr<List<String>?> _getZhangduContentDb_8(args) =>
+  FutureOr<List<String>?> _getZhangduContentDb_9(args) =>
       getZhangduContentDb(args[0], args[1]);
-  FutureOr<int?> _getZhangduContentCid_9(args) => getZhangduContentCid(args);
-  FutureOr<int?> _insertOrUpdateZhangduContent_10(args) =>
+  FutureOr<int?> _getZhangduContentCid_10(args) => getZhangduContentCid(args);
+  FutureOr<int?> _insertOrUpdateZhangduContent_11(args) =>
       insertOrUpdateZhangduContent(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_11(args) =>
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_12(args) =>
       getZhangduIndexDb(args);
+  FutureOr<void> _insertOrUpdateZhangduBook_13(args) =>
+      insertOrUpdateZhangduBook(args[0], args[1], args[2]);
 }
 
 /// implements [ComplexOnDatabaseEvent]
@@ -127,6 +135,11 @@ mixin ComplexOnDatabaseEventMessager {
         ComplexOnDatabaseEventMessage.insertOrUpdateContent, contentDb);
   }
 
+  FutureOr<int?> insertOrUpdateBook(BookInfo data) {
+    return complexOnDatabaseEventSendEvent.sendMessage(
+        ComplexOnDatabaseEventMessage.insertOrUpdateBook, data);
+  }
+
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data) {
     return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduIndex,
@@ -151,5 +164,12 @@ mixin ComplexOnDatabaseEventMessager {
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
     return complexOnDatabaseEventSendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.getZhangduIndexDb, bookId);
+  }
+
+  FutureOr<void> insertOrUpdateZhangduBook(
+      int bookId, int firstChapterId, ZhangduDetailData data) {
+    return complexOnDatabaseEventSendEvent.sendMessage(
+        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduBook,
+        [bookId, firstChapterId, data]);
   }
 }

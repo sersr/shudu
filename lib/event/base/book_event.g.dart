@@ -78,7 +78,7 @@ abstract class BookEventMessagerMain extends BookEvent
 mixin CustomEventDynamic {
   FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
 }
-mixin CustomEventResolve on Resolve, CustomEvent implements CustomEventDynamic {
+mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
   late final _customEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getSearchData_0,
     _getImageBytes_1,
@@ -175,7 +175,7 @@ mixin CustomEventMessager {
   }
 }
 
-mixin BookCacheEventResolve on Resolve, BookCacheEvent {
+mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
   late final _bookCacheEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
     _getMainList_0,
@@ -250,7 +250,7 @@ mixin BookCacheEventMessager {
   }
 }
 
-mixin BookContentEventResolve on Resolve, BookContentEvent {
+mixin BookContentEventResolve on Resolve implements BookContentEvent {
   late final _bookContentEventResolveFuncList =
       List<DynamicCallback>.unmodifiable(
           [_watchBookContentCid_0, _deleteCache_1]);
@@ -296,7 +296,7 @@ mixin BookContentEventMessager {
   }
 }
 
-mixin ComplexEventResolve on Resolve, ComplexEvent {
+mixin ComplexEventResolve on Resolve implements ComplexEvent {
   late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
     _getCacheItems_0,
     _getContent_1,
@@ -364,7 +364,7 @@ mixin ComplexEventMessager {
   }
 }
 
-mixin ZhangduDatabaseEventResolve on Resolve, ZhangduDatabaseEvent {
+mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
   late final _zhangduDatabaseEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
     _deleteZhangduContentCache_0,
@@ -467,7 +467,7 @@ mixin ZhangduDatabaseEventMessager {
   }
 }
 
-mixin ZhangduComplexEventResolve on Resolve, ZhangduComplexEvent {
+mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
   late final _zhangduComplexEventResolveFuncList =
       List<DynamicCallback>.unmodifiable([
     _getZhangduIndex_0,
@@ -534,7 +534,7 @@ mixin ZhangduComplexEventMessager {
   }
 }
 
-mixin ZhangduNetEventResolve on Resolve, ZhangduNetEvent {
+mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
   late final _zhangduNetEventResolveFuncList =
       List<DynamicCallback>.unmodifiable(
           [_getZhangduSameUsersBooks_0, _getZhangduSearchData_1]);

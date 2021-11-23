@@ -15,6 +15,5 @@ void main() async {
   await getApplicationDocumentsDirectory().logi(false).then((appDir) {
     hiveInit(join(appDir.path, 'hive'));
   });
-
   runApp(const MulProvider(mode: ThemeMode.system));
 }

@@ -198,7 +198,13 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                       child: SizedBox(
                                         height: 56,
                                         child: Center(
-                                          child: Text(show ? '阅读' : '试读'),
+                                          child: Text(
+                                            show ? '阅读' : '试读',
+                                            style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 224, 224, 224),
+                                                fontSize: 18),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -237,7 +243,12 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                           height: 56,
                                           child: Center(
                                               child: Text(
-                                                  '${show ? '移除' : '添加到'}书架'))),
+                                            '${show ? '移除' : '添加到'}书架',
+                                            style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 224, 224, 224),
+                                                fontSize: 18),
+                                          ))),
                                     ),
                                   ),
                                 ),

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
 
+import '../../data/data.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
+import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../database/nop_database.dart';
 
 part 'complex_event.g.dart';
@@ -18,6 +20,7 @@ abstract class ComplexOnDatabaseEvent {
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid);
   FutureOr<List<BookCache>?> getBookCacheDb(int bookid);
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb);
+  FutureOr<int?> insertOrUpdateBook(BookInfo data);
 
   /// zhangdu
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data);
@@ -28,4 +31,6 @@ abstract class ComplexOnDatabaseEvent {
   FutureOr<int?> getZhangduContentCid(int bookid);
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content);
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId);
+  FutureOr<void> insertOrUpdateZhangduBook(
+      int bookId, int firstChapterId, ZhangduDetailData data);
 }

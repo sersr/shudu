@@ -27,13 +27,13 @@ class ShuduApp extends StatelessWidget {
           themeMode: list[0] ?? mode,
           title: 'shudu',
           theme: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              // primary: Colors.grey.shade100,
-              // primaryVariant: Colors.grey.shade200,
+            colorScheme: ColorScheme.light(
+                primary: Color.fromARGB(255, 15, 152, 231),
+                primaryVariant: Colors.grey.shade200,
               secondary: Colors.grey,
-              // onPrimary: Colors.grey.shade700,
-              // onSurface: Colors.blue,
-              // secondaryVariant: Colors.grey.shade400
+                onPrimary: Color.fromARGB(255, 238, 238, 238),
+                onSurface: Color.fromARGB(255, 14, 97, 165),
+                secondaryVariant: Colors.grey.shade400
             ),
             // primarySwatch: Colors.grey,
             platform: list[1] ?? defaultTargetPlatform,

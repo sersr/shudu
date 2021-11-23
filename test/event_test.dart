@@ -9,7 +9,7 @@ import 'repository_impl.dart';
 
 void main() async {
   final repository = RepositoryImplTest(true);
-  await repository.initState;
+  await repository.initRepository;
   final watcher = repository.server.bookEventIsolate.db.watcher;
   watcher.sync = true;
   final bookEvent = repository;

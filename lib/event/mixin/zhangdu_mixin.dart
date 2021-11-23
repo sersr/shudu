@@ -20,9 +20,8 @@ import '../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
 
-mixin ZhangduComplexMixin
-    on ZhangduDatabaseEvent, HiveDioMixin, ComplexOnDatabaseEvent
-    implements ZhangduComplexEvent {
+mixin ZhangduComplexMixin on HiveDioMixin
+    implements ComplexOnDatabaseEvent, ZhangduComplexEvent {
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) async {
@@ -65,7 +64,6 @@ mixin ZhangduComplexMixin
       if (result != null) {
         final _raw = _replaceAll(result);
         data = _split(_raw);
-        if (data.isNotEmpty) Log.e(data.first);
         insertOrUpdateZhangduContent(ZhangduContent(
           bookId: bookId,
           contentId: contentId,
@@ -172,35 +170,10 @@ mixin ZhangduComplexMixin
           }
         }
         if (detailData != null && chapterData != null) {
-          final chapterId = chapterData.isNotEmpty ? chapterData.first.id : -1;
-          final data = ZhangduCache(
-            name: detailData.name,
-            picture: detailData.picture,
-            pinyin: detailData.pinyin,
-            chapterUpdateTime: detailData.chapterUpdateTime,
-            chapterName: detailData.chapterName,
-            chapterId: chapterId,
-            bookId: detailData.id,
-            sortKey: sortKey,
-            page: 1,
-            isTop: false,
-            isNew: true,
-            isShow: false,
-          );
+          final chapterId =
+              chapterData.isNotEmpty ? chapterData.first.id ?? -1 : -1;
 
-          final exists = (await insertZhangduBook(data)) == -1;
-
-          if (exists) {
-            await updateZhangduBook(
-                detailData.id ?? bookId,
-                ZhangduCache(
-                  chapterName: detailData.chapterName,
-                  chapterUpdateTime: detailData.chapterUpdateTime,
-                  name: detailData.name,
-                  // pinyin: detailData.pinyin,
-                  picture: detailData.picture,
-                ));
-          }
+          await insertOrUpdateZhangduBook(bookId, chapterId, detailData);
           await insertOrUpdateZhangduIndex(detailData.id ?? bookId, indexData!);
 
           return addArchive(bookId, detailData, chapterData);
@@ -245,10 +218,6 @@ mixin ZhangduComplexMixin
     if (data != null) return data.chapterData;
     return getZhangduIndexDb(bookId);
   }
-
-
-
-
 }
 
 class _ZhangduDetailChapterCache {
@@ -347,6 +316,7 @@ mixin ZhangduDatabaseMixin on DatabaseMixin implements ZhangduDatabaseEvent {
     final q = zhangduIndex.query.itemCounts.cacheItemCounts.bookId;
     return q.goToTable;
   }
+
   @override
   FutureOr<List<CacheItem>?> getZhangduCacheItems() async {
     final list = <CacheItem>[];
@@ -398,11 +368,42 @@ mixin ZhangduNetMixin on HiveDioMixin implements ZhangduNetEvent {
   }
 }
 
-mixin ZhangduComplexOnDatabaseMixin on DatabaseMixin
+mixin ZhangduComplexOnDatabaseMixin
+    on DatabaseMixin, ZhangduDatabaseMixin
     implements ComplexOnDatabaseEvent {
-  late final zhangduCache = db.zhangduCache;
-  late final zhangduContent = db.zhangduContent;
-  late final zhangduIndex = db.zhangduIndex;
+  @override
+  FutureOr<void> insertOrUpdateZhangduBook(
+      int bookId, int firstChapterId, ZhangduDetailData detailData) async {
+    final data = ZhangduCache(
+      name: detailData.name,
+      picture: detailData.picture,
+      pinyin: detailData.pinyin,
+      chapterUpdateTime: detailData.chapterUpdateTime,
+      chapterName: detailData.chapterName,
+      chapterId: firstChapterId,
+      bookId: detailData.id,
+      sortKey: sortKey,
+      page: 1,
+      isTop: false,
+      isNew: true,
+      isShow: false,
+    );
+
+    final exists = (await insertZhangduBook(data)) == -1;
+
+    if (exists) {
+      await updateZhangduBook(
+          detailData.id ?? bookId,
+          ZhangduCache(
+            chapterName: detailData.chapterName,
+            chapterUpdateTime: detailData.chapterUpdateTime,
+            name: detailData.name,
+            // pinyin: detailData.pinyin,
+            picture: detailData.picture,
+          ));
+    }
+  }
+
   @override
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
     final query = zhangduIndex.query
@@ -474,7 +475,8 @@ mixin ZhangduComplexOnDatabaseMixin on DatabaseMixin
     return query.goToTable.then((all) {
       List<String>? data;
       if (all.isNotEmpty) {
-        assert(all.length > 1 || Log.e('content $bookId count: ${all.length}'));
+        assert(
+            all.length <= 1 || Log.e('content $bookId count: ${all.length}'));
         final raw = all.last.data;
         if (raw != null) {
           final _raw = ZhangduComplexMixin._replaceAll(raw);
@@ -484,8 +486,6 @@ mixin ZhangduComplexOnDatabaseMixin on DatabaseMixin
       return data;
     });
   }
-
-
 
   @override
   FutureOr<int> insertOrUpdateZhangduIndex(int bookId, String data) {

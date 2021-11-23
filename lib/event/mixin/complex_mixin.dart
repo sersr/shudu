@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../api/api.dart';
@@ -14,9 +13,11 @@ import 'network_mixin.dart';
 /// 复合任务
 /// 处理复杂任务
 
-mixin ComplexMixin
-    on BookCacheEvent, BookContentEvent, ComplexOnDatabaseEvent, NetworkMixin
-    implements ComplexEvent /* override 提示 */, CustomEventDynamic {
+mixin ComplexMixin on NetworkMixin
+    implements
+        ComplexOnDatabaseEvent,
+        ComplexEvent /* override 提示 */,
+        CustomEventDynamic {
   @override
   Future<Uint8ListType> getImageBytesDynamic(String img) async {
     final data = await getImageBytes(img);
@@ -31,58 +32,11 @@ mixin ComplexMixin
 
   @override
   Future<BookInfoRoot> getInfo(int id) async {
-    final _getInfoNet = getInfoNet(id);
-    final bookInfo = await getBookCacheDb(id);
-    final rawData = await _getInfoNet;
-    final data = rawData.data;
+    final rootData = await getInfoNet(id);
+    final data = rootData.data;
+    if (data != null) insertOrUpdateBook(data);
 
-    if (data != null) {
-      BookCache? book;
-      bookInfo?.any((e) {
-        final equal = e.bookId == id;
-        if (equal) book = e;
-        return equal;
-      });
-
-      final lastChapter = data.lastChapter;
-      final lastTime = data.lastTime;
-
-      final name = data.name;
-      final img = data.img ??
-          '${PinyinHelper.getPinyinE(name ?? '', separator: '')}.jpg';
-
-      final _book = book;
-
-      if (_book == null) {
-        insertBook(BookCache(
-          name: name,
-          img: img,
-          updateTime: lastTime,
-          lastChapter: data.lastChapter,
-          chapterId: data.firstChapterId,
-          bookId: data.id,
-          sortKey: sortKey,
-          isTop: false,
-          page: 1,
-          isNew: true,
-          isShow: false,
-        ));
-      } else {
-        final isNew = _book.isNew == true ||
-            lastChapter != _book.lastChapter && lastTime != _book.updateTime;
-
-        final book = BookCache(
-            lastChapter: lastChapter,
-            updateTime: lastTime,
-            name: name,
-            img: img,
-            isNew: isNew);
-
-        final x = updateBook(id, book);
-        assert(Log.w('update ${await x}'));
-      }
-    }
-    return rawData;
+    return rootData;
   }
 
   @override

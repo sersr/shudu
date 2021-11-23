@@ -29,6 +29,7 @@ class DatabaseDelegate
     return Isolate.spawn(
         dataBaseEntryPoint, [remoteSendPort, appPath, cachePath, useSqflite3]);
   }
+
 }
 
 class DatabaseDelegateMessger extends DatabaseDelegate
@@ -66,11 +67,13 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
         ZhangduNetMixin,
         ComplexMixin,
         ZhangduComplexMixin {
-  BookEventIsolateDeleagete(
-      this.sp, this.appPath, this.cachePath, this.useSqflite3);
+  BookEventIsolateDeleagete({
+    required this.appPath,
+    required this.cachePath,
+    required this.useSqflite3,
+    required this.remoteSendPort,
+  });
 
-  @override
-  final SendPort sp;
   @override
   final String appPath;
   @override
@@ -78,16 +81,20 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
 
   final bool useSqflite3;
 
+  @override
+  final SendPort remoteSendPort;
+
   late DatabaseDelegate dbDelegate;
-  Future<void> initState() async {
-    final d = initNet().logi(false);
+  @override
+  Future<void> initStateResolve(add) async {
     dbDelegate = DatabaseDelegate(
       appPath: appPath,
       cachePath: cachePath,
       useSqflite3: useSqflite3,
     );
     await dbDelegate.init();
-    await d;
+
+    return super.initStateResolve(add);
   }
 
   @override
@@ -109,9 +116,8 @@ class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基�
 
   @override
   FutureOr<bool> onClose() async {
-    await closeNet();
     await dbDelegate.close();
-    return true;
+    return super.onClose();
   }
 
   @override

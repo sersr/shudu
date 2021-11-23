@@ -29,14 +29,14 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
   late Client client;
   final bool useSqflite;
 
-  Future<void> get initState async {
+  Future<void> get initRepository async {
     client = Client(this);
     server = Server();
     if (useSqflite) {
       SqfliteMainIsolate.initMainDb();
     }
     final sendPort = server.receivePort.sendPort;
-    sendPortGroup =
+    sendPortOwner =
         SendPortOwner(localSendPort: sendPort, remoteSendPort: sendPort);
     return server.init(client.sendSP, useSqflite);
   }
@@ -56,13 +56,17 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
   late final SendEvent sendEvent = this;
 
   @override
-  SendPortOwner? sendPortGroup;
-
-  @override
   void sendDelegate(message) {}
 
   @override
   void onResume() {}
+
+  SendPortOwner? sendPortOwner;
+
+  @override
+  SendPortOwner? getSendPortOwner(key) {
+    return sendPortOwner;
+  }
 }
 
 class Client {
@@ -101,10 +105,17 @@ class Server {
 
     bookEventIsolate =
         BookEventIsolateTest(receivePort.sendPort, useSqflite: useSqflite);
-    await bookEventIsolate.initState();
+    final list = <Future>[];
+    bookEventIsolate.initStateResolve((task) {
+      if (task is Future) {
+        list.add(task);
+      }
+    });
+    await Future.wait(list);
+
     serverListen?.cancel();
     serverListen = server.stream.listen((event) {
-      if (bookEventIsolate.resolve(event)) return;
+      if (bookEventIsolate.resolveAll(event)) return;
     });
   }
 
@@ -115,7 +126,11 @@ class Server {
 
 class BookEventIsolateTest extends BookEventIsolate {
   BookEventIsolateTest(SendPort sp, {bool useSqflite = false})
-      : super(sp, '', '', useSqflite);
+      : super(
+            remoteSendPort: sp,
+            appPath: '',
+            cachePath: '',
+            useSqflite3: useSqflite);
 
   @override
   bool remove(key) {

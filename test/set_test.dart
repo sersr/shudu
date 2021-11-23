@@ -33,6 +33,12 @@ void main() {
     expect(t<int>(), false);
     expect(t<String>(), false);
   });
+
+  // test('split string', () {
+  //   final str =
+  //       'slsfsfs fsfsfas as 四分十六老师是是否是否fsfsflsa assasl sfLFsfsfs;fs;fs;s fs s ss是了数量三零四十六发生类似阿萨四分十六老师是是否是否是了数量三零四十六发生类似阿萨四分十六老师是是否是否是了数量三零四十六发生类似阿萨 是否是否发生 fss  sfsferfwkw sgosgksgksgsgsslgsgosgs;gks ;gsg s ';
+  //   Log.i(str);
+  // });
 }
 
 abstract class Base {

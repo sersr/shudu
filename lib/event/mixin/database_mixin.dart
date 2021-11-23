@@ -2,24 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/local.dart';
+import 'package:lpinyin/lpinyin.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
 import '../../data/data.dart';
-import '../../data/zhangdu/zhangdu_search.dart';
-import '../../data/zhangdu/zhangdu_same_users_books.dart';
-import '../../data/zhangdu/zhangdu_detail.dart';
-import '../../data/zhangdu/zhangdu_chapter.dart';
 import '../../database/database.dart';
-import '../../pages/book_list/cache_manager.dart';
 import '../base/book_event.dart';
 import '../base/complex_event.dart';
-import '../base/zhangdu_event.dart';
 
 // 数据库接口实现
-mixin DatabaseMixin implements DatabaseEvent {
+mixin DatabaseMixin on Resolve implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
@@ -33,7 +28,19 @@ mixin DatabaseMixin implements DatabaseEvent {
       ? NopDatabase.memory
       : join(appPath, name);
 
-  FutureOr<void> initDb() {
+  @override
+  FutureOr<bool> onClose() async {
+    await db.dispose();
+    return super.onClose();
+  }
+
+  @override
+  void initStateResolve(add) {
+    super.initStateResolve(add);
+    add(_initDb());
+  }
+
+  FutureOr<void> _initDb() {
     if (_url != NopDatabase.memory) {
       const fs = LocalFileSystem();
       final dir = fs.currentDirectory.childDirectory(appPath);
@@ -42,10 +49,6 @@ mixin DatabaseMixin implements DatabaseEvent {
       }
     }
     return db.initDb();
-  }
-
-  FutureOr<void> closeDb() {
-    return db.dispose();
   }
 
   late final db = BookDatabase(_url, useSqflite3);
@@ -152,87 +155,58 @@ mixin DatabaseMixin implements DatabaseEvent {
   }
 }
 
-class DataBaseUnImpl implements ZhangduEvent {
+mixin ComplexOnDatabaseMixin on DatabaseMixin
+    implements ComplexOnDatabaseEvent {
   @override
-  FutureOr<int?> deleteZhangduBook(int bookId) {
-    throw UnimplementedError();
+  FutureOr<int?> insertOrUpdateBook(BookInfo data) async {
+    final bookId = data.id;
+    if (bookId == null) return 0;
+    final bookInfo = await getBookCacheDb(bookId);
+
+    BookCache? book;
+    if (bookInfo.isNotEmpty) {
+      book = bookInfo.last;
+    }
+
+    final lastChapter = data.lastChapter;
+    final lastTime = data.lastTime;
+
+    final name = data.name;
+    final img =
+        data.img ?? '${PinyinHelper.getPinyinE(name ?? '', separator: '')}.jpg';
+
+    final _book = book;
+
+    if (_book == null) {
+      insertBook(BookCache(
+        name: name,
+        img: img,
+        updateTime: lastTime,
+        lastChapter: data.lastChapter,
+        chapterId: data.firstChapterId,
+        bookId: data.id,
+        sortKey: sortKey,
+        isTop: false,
+        page: 1,
+        isNew: true,
+        isShow: false,
+      ));
+    } else {
+      final isNew = _book.isNew == true ||
+          lastChapter != _book.lastChapter && lastTime != _book.updateTime;
+
+      final book = BookCache(
+          lastChapter: lastChapter,
+          updateTime: lastTime,
+          name: name,
+          img: img,
+          isNew: isNew);
+
+      final x = updateBook(bookId, book);
+      assert(Log.w('update ${await x}'));
+    }
   }
 
-  @override
-  FutureOr<int?> deleteZhangduContentCache(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<CacheItem>?> getZhangduCacheItems() {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
-      String author) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<ZhangduSearchData?> getZhangduSearchData(
-      String query, int pageIndex, int pageSize) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> updateZhangduMainStatus(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<int>?> watchZhangduContentCid(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduMainList() {
-    throw UnimplementedError();
-  }
-}
-
-mixin ComplexOnDatabaseMixin on DatabaseMixin implements ComplexOnDatabaseEvent {
   @override
   FutureOr<int> insertOrUpdateContent(BookContentDb contentDb) async {
     var count = 0;

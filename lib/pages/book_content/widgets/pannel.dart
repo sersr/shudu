@@ -307,17 +307,30 @@ Widget _topButton(
     required VoidCallback onTap,
     VoidCallback? onLongPress}) {
   assert(child != null || text != null);
-  return InkWell(
-    onTap: onTap,
-    onLongPress: onLongPress,
-    borderRadius: BorderRadius.circular(10.0),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      child: child ??
-          Text(
-            text!,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade300),
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 1.0),
+    child: SizedBox(
+      height: 42,
+      width: 60,
+      child: OverflowBox(
+        maxHeight: 60,
+        maxWidth: 60,
+        child: btn1(
+          onTap: onTap,
+          radius: 100,
+          onLongPress: onLongPress,
+          bgColor: Colors.grey.withAlpha(0),
+          splashColor: Color.fromARGB(255, 119, 119, 119),
+          // borderRadius: BorderRadius.circular(100.0),
+          child: Center(
+            child: child ??
+                Text(
+                  text!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade300),
+                ),
           ),
+        ),
+      ),
     ),
   );
 }

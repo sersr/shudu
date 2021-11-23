@@ -488,7 +488,7 @@ extension Tasks on ContentNotifier {
                       debugTest = false;
                     }
                     Log.w(
-                        'update $updateCid \n url: ${Api.contentUrl(bookid, updateCid)}',
+                        'update $updateCid url: ${Api.contentUrl(bookid, updateCid)}',
                         onlyDebug: false);
                   });
               return true;

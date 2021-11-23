@@ -160,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage>
                                   .read<TextStyleConfig>()
                                   .body2
                                   .copyWith(
-                                      color: TextStyleConfig.blackColor9))),
+                                      color: Colors.white))),
                       child: SizedBox(
                         height: height,
                         width: height,
@@ -398,17 +398,17 @@ class BookSearchPage extends SearchDelegate<void> {
             textInputAction: TextInputAction.search,
             searchFieldStyle: textStyle);
 
-  // @override
-  // ThemeData appBarTheme(BuildContext context) {
-  //   final theme = Theme.of(context);
-  //   return theme.copyWith(
-  //     // primaryColor: Colors.white,
-  //     // primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
-  //     // primaryColorBrightness: Brightness.light,
-  //     primaryTextTheme: theme.textTheme,
-  //     // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
-  //   );
-  // }
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      primaryColor: ui.Color.fromARGB(255, 247, 247, 247),
+      primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
+      // primaryTextTheme:
+      //     theme.textTheme.copyWith(bodyText2: TextStyle(color: Colors.amber)),
+      // colorScheme: theme.colorScheme.copyWith(primary: Colors.white)
+    );
+  }
 
   @override
   Widget buildLeading(BuildContext context) => Center(
@@ -696,7 +696,8 @@ class BookSearchPage extends SearchDelegate<void> {
           padding: const EdgeInsets.all(16.0),
           child: Text(
             '搜索',
-            style: TextStyle(color: isLight ? Colors.grey.shade800 : null),
+            style: TextStyle(
+                color: isLight ? ui.Color.fromARGB(255, 194, 194, 194) : null),
           ),
         )),
       )
