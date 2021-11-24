@@ -7,16 +7,16 @@ import 'package:dio/dio.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
-import '../../api/api.dart';
-import '../../data/zhangdu/zhangdu_chapter.dart';
-import '../../data/zhangdu/zhangdu_detail.dart';
-import '../../data/zhangdu/zhangdu_same_users_books.dart';
-import '../../data/zhangdu/zhangdu_search.dart';
-import '../../database/nop_database.dart';
-import '../../pages/book_list/cache_manager.dart';
-import '../../provider/book_index_notifier.dart';
-import '../base/complex_event.dart';
-import '../base/zhangdu_event.dart';
+import '../../../api/api.dart';
+import '../../../data/zhangdu/zhangdu_chapter.dart';
+import '../../../data/zhangdu/zhangdu_detail.dart';
+import '../../../data/zhangdu/zhangdu_same_users_books.dart';
+import '../../../data/zhangdu/zhangdu_search.dart';
+import '../../../database/nop_database.dart';
+import '../../../pages/book_list/cache_manager.dart';
+import '../../../provider/book_index_notifier.dart';
+import '../../base/complex_event.dart';
+import '../../base/zhangdu_event.dart';
 import 'database_mixin.dart';
 import 'network_mixin.dart';
 
@@ -156,7 +156,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
             }
             if (chapterData == null) {
               try {
-                Log.i(' a ...${file.name}');
+                Log.i(file.name);
 
                 chapterData = ZhangduChapter.fromJson(data).data;
                 if (chapterData != null) {

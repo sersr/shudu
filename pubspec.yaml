@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   # animations: ^2.0.0
   # audio_service: ^0.17.1
-  battery: ^2.0.2
   async: any
   # characters: ^1.1.0
   # collection: ^1.15.0
@@ -69,6 +68,7 @@ dependencies:
   archive: ^3.1.6
   http: ^0.13.4
   android_external_storage: ^0.1.0
+  battery_plus: ^2.0.1
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

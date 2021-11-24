@@ -173,3 +173,103 @@ mixin ComplexOnDatabaseEventMessager {
         [bookId, firstChapterId, data]);
   }
 }
+
+mixin MultiComplexOnDatabaseEventDefaultMixin
+    on SendEvent, Send, SendMultiIsolateMixin, ComplexOnDatabaseEvent {
+  Future<Isolate> createIsolateComplexOnDatabaseEventDefault(
+      SendPort remoteSendPort);
+  final String complexOnDatabaseEventDefaultIsolate =
+      'ComplexOnDatabaseEventDefault';
+  SendPortOwner? get defaultSendPortOwner =>
+      complexOnDatabaseEventDefaultIsolateSendPortOwner;
+  String get defaultIsolateName => complexOnDatabaseEventDefaultIsolate;
+  SendPortOwner? complexOnDatabaseEventDefaultIsolateSendPortOwner;
+
+  void createAllIsolate(SendPort remoteSendPort, add) {
+    final task = createIsolateComplexOnDatabaseEventDefault(remoteSendPort)
+        .then((isolate) =>
+            addNewIsolate(complexOnDatabaseEventDefaultIsolate, isolate));
+    add(task);
+    return super.createAllIsolate(remoteSendPort, add);
+  }
+
+  void onDoneMulti(
+      String isolateName, SendPort localSendPort, SendPort remoteSendPort) {
+    if (isolateName == complexOnDatabaseEventDefaultIsolate) {
+      complexOnDatabaseEventDefaultIsolateSendPortOwner = SendPortOwner(
+          localSendPort: localSendPort, remoteSendPort: remoteSendPort);
+      return;
+    }
+    super.onDoneMulti(isolateName, localSendPort, remoteSendPort);
+  }
+
+  void onResume() {
+    if (complexOnDatabaseEventDefaultIsolateSendPortOwner == null) {
+      Log.e(
+          'sendPortOwner error: current complexOnDatabaseEventDefaultIsolateSendPortOwner == null',
+          onlyDebug: false);
+    }
+    super.onResume();
+  }
+
+  SendPortOwner? getSendPortOwner(messagerType) {
+    switch (messagerType.runtimeType) {
+      case ComplexOnDatabaseEventMessage:
+        return complexOnDatabaseEventDefaultIsolateSendPortOwner;
+      default:
+    }
+
+    if (messagerType == complexOnDatabaseEventDefaultIsolate) {
+      return complexOnDatabaseEventDefaultIsolateSendPortOwner;
+    }
+    return super.getSendPortOwner(messagerType);
+  }
+
+  void disposeIsolate(String isolateName) {
+    if (isolateName == complexOnDatabaseEventDefaultIsolate) {
+      complexOnDatabaseEventDefaultIsolateSendPortOwner = null;
+      return;
+    }
+    return super.disposeIsolate(isolateName);
+  }
+}
+
+mixin MultiComplexOnDatabaseEventDefaultResolveMixin
+    on SendEvent, Send, ResolveMixin {
+  bool add(message);
+  SendPortOwner? complexOnDatabaseEventDefaultIsolateSendPortOwner;
+  final String complexOnDatabaseEventDefaultIsolate =
+      'ComplexOnDatabaseEventDefault';
+
+  bool listenResolve(message) {
+    // 处理返回的消息/数据
+    if (add(message)) return true;
+    // 默认，分发事件
+    return super.listenResolve(message);
+  }
+
+  void onResolveReceivedSendPort(SendPortName sendPortName) {
+    if (sendPortName.name == complexOnDatabaseEventDefaultIsolate) {
+      Log.w('received sendPort: ${sendPortName.name}', onlyDebug: false);
+      complexOnDatabaseEventDefaultIsolateSendPortOwner = SendPortOwner(
+          localSendPort: sendPortName.sendPort, remoteSendPort: localSendPort);
+      onResume();
+      return;
+    }
+    super.onResolveReceivedSendPort(sendPortName);
+  }
+
+  FutureOr<bool> onClose() async {
+    complexOnDatabaseEventDefaultIsolateSendPortOwner = null;
+    return super.onClose();
+  }
+}
+
+mixin MultiComplexOnDatabaseEventDefaultOnResumeMixin on ResolveMixin {
+  void onResumeResolve() {
+    if (remoteSendPort != null) {
+      remoteSendPort!
+          .send(SendPortName('ComplexOnDatabaseEventDefault', localSendPort));
+    }
+  }
+}

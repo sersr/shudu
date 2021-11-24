@@ -10,15 +10,16 @@ import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/event/mixin/entry_point.dart';
 import 'package:shudu/event/mixin/resolve_event.dart';
+import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
 
-class RepositoryTest extends Repository {
+class RepositoryTest extends RepositoryBase {
   @override
   Future<Isolate> onCreateIsolate(SendPort sdPort) async {
     final newIsolate = await Isolate.spawn(
-        singleIsolateEvent, [sdPort, './app', './app/cache', false, false]);
+        singleIsolateEntryPoint,
+        [sdPort, './app', './app/cache', false, false]);
     return newIsolate;
   }
 }
@@ -54,9 +55,6 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
 
   @override
   late final SendEvent sendEvent = this;
-
-  @override
-  void sendDelegate(message) {}
 
   @override
   void onResume() {}

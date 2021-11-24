@@ -139,6 +139,10 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    final children = <Widget>[
+      RepaintBoundary(child: buildBlocBuilder()),
+      RepaintBoundary(child: ListMainPage()),
+    ];
     final child = Scaffold(
       appBar: AppBar(
         title: Text('shudu'),
@@ -159,8 +163,7 @@ class _MyHomePageState extends State<MyHomePage>
                               textStyle: context
                                   .read<TextStyleConfig>()
                                   .body2
-                                  .copyWith(
-                                      color: Colors.white))),
+                                  .copyWith(color: Colors.white))),
                       child: SizedBox(
                         height: height,
                         width: height,
@@ -198,13 +201,7 @@ class _MyHomePageState extends State<MyHomePage>
         child: AnimatedBuilder(
             animation: notifier,
             builder: (context, _) {
-              return IndexedStack(
-                index: notifier.value,
-                children: <Widget>[
-                  RepaintBoundary(child: buildBlocBuilder()),
-                  RepaintBoundary(child: ListMainPage())
-                ],
-              );
+              return IndexedStack(index: notifier.value, children: children);
             }),
       ),
       bottomNavigationBar: RepaintBoundary(
@@ -224,10 +221,11 @@ class _MyHomePageState extends State<MyHomePage>
                     : ui.Color.fromARGB(255, 112, 112, 112),
                 items: const [
                   BottomNavigationBarItem(
-                      label: '主页', icon: Icon(Icons.home_rounded)),
+                      label: '主页', icon: Icon(Icons.home_rounded), tooltip: ''),
                   BottomNavigationBarItem(
                       label: '书城',
-                      icon: Icon(Icons.local_grocery_store_rounded))
+                      icon: Icon(Icons.local_grocery_store_rounded),
+                      tooltip: '')
                 ],
                 onTap: changed,
                 currentIndex: notifier.value,
@@ -697,7 +695,7 @@ class BookSearchPage extends SearchDelegate<void> {
           child: Text(
             '搜索',
             style: TextStyle(
-                color: isLight ? ui.Color.fromARGB(255, 194, 194, 194) : null),
+                color: isLight ? ui.Color.fromARGB(255, 238, 238, 238) : null),
           ),
         )),
       )

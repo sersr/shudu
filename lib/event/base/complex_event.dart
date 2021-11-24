@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
@@ -24,9 +26,6 @@ abstract class ComplexOnDatabaseEvent {
 
   /// zhangdu
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data);
-  // FutureOr<List<ZhangduIndex>?> getZdIndexsDbCacheItem();
-  // FutureOr<Set<int>?> getZdAllBookId();
-  // FutureOr<List<ZhangduCache>?> getZhangduCacheBookId(int bookId);
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId);
   FutureOr<int?> getZhangduContentCid(int bookid);
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content);

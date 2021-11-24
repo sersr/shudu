@@ -36,9 +36,9 @@ class _TopPageState extends State<TopPage> {
             title: Text('榜单'),
             bottom: TabBar(
               labelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
               unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
               labelStyle: TextStyle(fontSize: 15),
               tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
             ),

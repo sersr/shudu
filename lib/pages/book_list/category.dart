@@ -191,9 +191,9 @@ class _CategoriesState extends State<Categories> {
             ),
             bottom: TabBar(
               labelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
               unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
               tabs: _titles
                   .map((e) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),

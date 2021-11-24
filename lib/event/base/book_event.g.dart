@@ -584,3 +584,210 @@ mixin ZhangduNetEventMessager {
         [query, pageIndex, pageSize]);
   }
 }
+
+mixin MultiBookEventDefaultMixin
+    on
+        SendEvent,
+        Send,
+        SendMultiIsolateMixin,
+        BookEvent,
+        CustomEvent,
+        DatabaseEvent,
+        ComplexEvent,
+        ZhangduEvent,
+        ZhangduComplexEvent,
+        ZhangduNetEvent {
+  Future<Isolate> createIsolateBookEventDefault(SendPort remoteSendPort);
+  final String bookEventDefaultIsolate = 'BookEventDefault';
+  SendPortOwner? get defaultSendPortOwner =>
+      bookEventDefaultIsolateSendPortOwner;
+  String get defaultIsolateName => bookEventDefaultIsolate;
+  SendPortOwner? bookEventDefaultIsolateSendPortOwner;
+
+  void createAllIsolate(SendPort remoteSendPort, add) {
+    final task = createIsolateBookEventDefault(remoteSendPort)
+        .then((isolate) => addNewIsolate(bookEventDefaultIsolate, isolate));
+    add(task);
+    return super.createAllIsolate(remoteSendPort, add);
+  }
+
+  void onDoneMulti(
+      String isolateName, SendPort localSendPort, SendPort remoteSendPort) {
+    if (isolateName == bookEventDefaultIsolate) {
+      bookEventDefaultIsolateSendPortOwner = SendPortOwner(
+          localSendPort: localSendPort, remoteSendPort: remoteSendPort);
+      return;
+    }
+    super.onDoneMulti(isolateName, localSendPort, remoteSendPort);
+  }
+
+  void onResume() {
+    if (bookEventDefaultIsolateSendPortOwner == null) {
+      Log.e(
+          'sendPortOwner error: current bookEventDefaultIsolateSendPortOwner == null',
+          onlyDebug: false);
+    }
+    super.onResume();
+  }
+
+  SendPortOwner? getSendPortOwner(messagerType) {
+    switch (messagerType.runtimeType) {
+      case CustomEventMessage:
+      case ComplexEventMessage:
+      case ZhangduComplexEventMessage:
+      case ZhangduNetEventMessage:
+        return bookEventDefaultIsolateSendPortOwner;
+      default:
+    }
+
+    if (messagerType == bookEventDefaultIsolate) {
+      return bookEventDefaultIsolateSendPortOwner;
+    }
+    return super.getSendPortOwner(messagerType);
+  }
+
+  void disposeIsolate(String isolateName) {
+    if (isolateName == bookEventDefaultIsolate) {
+      bookEventDefaultIsolateSendPortOwner = null;
+      return;
+    }
+    return super.disposeIsolate(isolateName);
+  }
+}
+
+mixin MultiBookEventDefaultResolveMixin on SendEvent, Send, ResolveMixin {
+  bool add(message);
+  SendPortOwner? bookEventDefaultIsolateSendPortOwner;
+  final String bookEventDefaultIsolate = 'BookEventDefault';
+
+  bool listenResolve(message) {
+    // 处理返回的消息/数据
+    if (add(message)) return true;
+    // 默认，分发事件
+    return super.listenResolve(message);
+  }
+
+  void onResolveReceivedSendPort(SendPortName sendPortName) {
+    if (sendPortName.name == bookEventDefaultIsolate) {
+      Log.w('received sendPort: ${sendPortName.name}', onlyDebug: false);
+      bookEventDefaultIsolateSendPortOwner = SendPortOwner(
+          localSendPort: sendPortName.sendPort, remoteSendPort: localSendPort);
+      onResume();
+      return;
+    }
+    super.onResolveReceivedSendPort(sendPortName);
+  }
+
+  FutureOr<bool> onClose() async {
+    bookEventDefaultIsolateSendPortOwner = null;
+    return super.onClose();
+  }
+}
+
+mixin MultiBookEventDefaultOnResumeMixin on ResolveMixin {
+  void onResumeResolve() {
+    if (remoteSendPort != null) {
+      remoteSendPort!.send(SendPortName('BookEventDefault', localSendPort));
+    }
+  }
+}
+
+mixin MultiDatabaseMixin
+    on
+        SendEvent,
+        Send,
+        SendMultiIsolateMixin,
+        DatabaseEvent,
+        BookCacheEvent,
+        BookContentEvent,
+        ZhangduDatabaseEvent {
+  Future<Isolate> createIsolateDatabase(SendPort remoteSendPort);
+  final String databaseIsolate = 'database';
+
+  SendPortOwner? databaseIsolateSendPortOwner;
+
+  void createAllIsolate(SendPort remoteSendPort, add) {
+    final task = createIsolateDatabase(remoteSendPort)
+        .then((isolate) => addNewIsolate(databaseIsolate, isolate));
+    add(task);
+    return super.createAllIsolate(remoteSendPort, add);
+  }
+
+  void onDoneMulti(
+      String isolateName, SendPort localSendPort, SendPort remoteSendPort) {
+    if (isolateName == databaseIsolate) {
+      databaseIsolateSendPortOwner = SendPortOwner(
+          localSendPort: localSendPort, remoteSendPort: remoteSendPort);
+      return;
+    }
+    super.onDoneMulti(isolateName, localSendPort, remoteSendPort);
+  }
+
+  void onResume() {
+    if (databaseIsolateSendPortOwner == null) {
+      Log.e('sendPortOwner error: current databaseIsolateSendPortOwner == null',
+          onlyDebug: false);
+    }
+    super.onResume();
+  }
+
+  SendPortOwner? getSendPortOwner(messagerType) {
+    switch (messagerType.runtimeType) {
+      case BookCacheEventMessage:
+      case BookContentEventMessage:
+      case ZhangduDatabaseEventMessage:
+        return databaseIsolateSendPortOwner;
+      default:
+    }
+
+    if (messagerType == databaseIsolate) {
+      return databaseIsolateSendPortOwner;
+    }
+    return super.getSendPortOwner(messagerType);
+  }
+
+  void disposeIsolate(String isolateName) {
+    if (isolateName == databaseIsolate) {
+      databaseIsolateSendPortOwner = null;
+      return;
+    }
+    return super.disposeIsolate(isolateName);
+  }
+}
+
+mixin MultiDatabaseResolveMixin on SendEvent, Send, ResolveMixin {
+  bool add(message);
+  SendPortOwner? databaseIsolateSendPortOwner;
+  final String databaseIsolate = 'database';
+
+  bool listenResolve(message) {
+    // 处理返回的消息/数据
+    if (add(message)) return true;
+    // 默认，分发事件
+    return super.listenResolve(message);
+  }
+
+  void onResolveReceivedSendPort(SendPortName sendPortName) {
+    if (sendPortName.name == databaseIsolate) {
+      Log.w('received sendPort: ${sendPortName.name}', onlyDebug: false);
+      databaseIsolateSendPortOwner = SendPortOwner(
+          localSendPort: sendPortName.sendPort, remoteSendPort: localSendPort);
+      onResume();
+      return;
+    }
+    super.onResolveReceivedSendPort(sendPortName);
+  }
+
+  FutureOr<bool> onClose() async {
+    databaseIsolateSendPortOwner = null;
+    return super.onClose();
+  }
+}
+
+mixin MultiDatabaseOnResumeMixin on ResolveMixin {
+  void onResumeResolve() {
+    if (remoteSendPort != null) {
+      remoteSendPort!.send(SendPortName('database', localSendPort));
+    }
+  }
+}

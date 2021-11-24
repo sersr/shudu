@@ -28,10 +28,10 @@ class BooklistPage extends StatelessWidget {
             title: Text('书单'),
             bottom: TabBar(
               // controller: controller,
-              labelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade700,
               unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade400,
+                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
+              labelColor:
+                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
               indicatorColor: Colors.pink.shade200,
               tabs: [
                 Container(
@@ -351,14 +351,22 @@ class BarLayout extends StatelessWidget {
                     LayoutId(
                         id: 'back',
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: InkWell(
-                              borderRadius: BorderRadius.circular(40),
-                              onTap: () => Navigator.maybePop(context),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(Icons.arrow_back, size: 24),
-                              )),
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: SizedBox(
+                            height: 56,
+                            width: 56,
+                            child: OverflowBox(
+                              maxHeight: 60,
+                              maxWidth: 60,
+                              child: InkWell(
+                                  borderRadius: BorderRadius.circular(40),
+                                  onTap: () => Navigator.maybePop(context),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(Icons.arrow_back, size: 24),
+                                  )),
+                            ),
+                          ),
                         )),
                     LayoutId(
                         id: 'title',

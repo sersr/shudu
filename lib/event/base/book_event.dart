@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
@@ -27,7 +28,7 @@ abstract class BookEvent
   ZhangduEvent get zhangduEvent => this;
 }
 
-@NopIsolateEventItem(separate: true)
+@NopIsolateEventItem(separate: true, isolateName: 'database')
 abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
 
 abstract class BookContentEvent {

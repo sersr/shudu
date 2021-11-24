@@ -8,10 +8,10 @@ import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
-import '../../data/data.dart';
-import '../../database/database.dart';
-import '../base/book_event.dart';
-import '../base/complex_event.dart';
+import '../../../data/data.dart';
+import '../../../database/database.dart';
+import '../../base/book_event.dart';
+import '../../base/complex_event.dart';
 
 // 数据库接口实现
 mixin DatabaseMixin on Resolve implements DatabaseEvent {
@@ -136,7 +136,7 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
       ..select.count.all.push
       ..where.bookId.equalTo(bookid);
     final count = await (q.go.first.values.first) as int? ?? 0;
-    assert(Log.i('count: .... $count'));
+    assert(Log.i('count: $count'));
     return count;
   }
 
@@ -202,8 +202,9 @@ mixin ComplexOnDatabaseMixin on DatabaseMixin
           img: img,
           isNew: isNew);
 
-      final x = updateBook(bookId, book);
-      assert(Log.w('update ${await x}'));
+      // final x =
+      updateBook(bookId, book);
+      // assert(Log.w('update ${await x}'));
     }
   }
 

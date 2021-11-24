@@ -10,12 +10,12 @@ import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../api/api.dart';
-import '../../data/data.dart';
-import '../../database/database.dart';
-import '../base/book_event.dart';
-import '../base/constants.dart';
-import '../base/type_adapter.dart';
+import '../../../api/api.dart';
+import '../../../data/data.dart';
+import '../../../database/database.dart';
+import '../../base/book_event.dart';
+import '../../base/constants.dart';
+import '../../base/type_adapter.dart';
 
 mixin HiveDioMixin on Resolve {
   late Dio dio;
@@ -140,7 +140,7 @@ mixin NetworkMixin on Resolve, HiveDioMixin implements CustomEvent {
 
   @pragma('vm:prefer-inline')
   Future<T> imageTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 10);
+    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 20);
   }
 
   @pragma('vm:prefer-inline')

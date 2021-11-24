@@ -188,6 +188,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                               children: [
                                 Expanded(
                                   child: btn1(
+                                    splashColor:
+                                        Color.fromARGB(255, 179, 208, 218),
                                     child: Padding(
                                       padding: EdgeInsets.only(
                                           bottom: bottom > 0.0 &&
@@ -203,7 +205,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                             style: TextStyle(
                                                 color: Color.fromARGB(
                                                     255, 224, 224, 224),
-                                                fontSize: 18),
+                                                fontSize: 15),
                                           ),
                                         ),
                                       ),
@@ -230,6 +232,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                 Expanded(
                                   child: btn1(
                                     background: false,
+                                    splashColor:
+                                        Color.fromARGB(255, 179, 208, 218),
                                     onTap: () => cache.updateShow(
                                         bookId, !show, widget.api),
                                     child: Padding(
@@ -247,7 +251,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                             style: TextStyle(
                                                 color: Color.fromARGB(
                                                     255, 224, 224, 224),
-                                                fontSize: 18),
+                                                fontSize: 15),
                                           ))),
                                     ),
                                   ),

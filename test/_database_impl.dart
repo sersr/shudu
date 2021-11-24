@@ -7,7 +7,7 @@ import 'package:shudu/data/biquge/book_info.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/data/zhangdu/zhangdu_chapter.dart';
 import 'package:shudu/event/base/complex_event.dart';
-import 'package:shudu/event/mixin/database_mixin.dart';
+import 'package:shudu/event/mixin/base/database_mixin.dart';
 
 class Database with Resolve, ComplexOnDatabaseEvent, DatabaseMixin {
   @override

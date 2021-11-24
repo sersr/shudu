@@ -1073,7 +1073,7 @@ extension Event on ContentNotifier {
           }
         }
       }
-
+      Timer.run(scheduleTask);
       onDone?.call();
 
       if (_key == key) _currentTextWasChanged();
@@ -1702,15 +1702,19 @@ class AutoRun {
 
 extension FutureTasksMap<T, E> on Map<T, Future<E>> {
   // 将一个异步任务添加到任务列表中，并在完成之后自动删除
-  void addTask(T key, Future<E> f,
-      {void Function()? callback,
-      void Function(T)? solve,
-      void Function(Future<E>)? solveTask}) {
-    Log.i('addTask $key');
+  void addTask(
+    T key,
+    Future<E> f, {
+    void Function()? callback,
+    void Function(T)? solve,
+    void Function(Future<E>)? solveTask,
+  }) {
+    assert(Log.i('addTask: $key'));
     if (containsKey(key)) return;
     this[key] = f;
+    
     f.whenComplete(() {
-      assert(Log.i('task complete $key'));
+      assert(Log.i('task $key: completed'));
       solve?.call(key);
       solveTask?.call(f);
       callback?.call();

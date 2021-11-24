@@ -7,10 +7,10 @@ import 'package:utils/utils.dart';
 
 import '../base/book_event.dart';
 import '../base/complex_event.dart';
-import 'complex_mixin.dart';
-import 'entry_point.dart';
-import 'network_mixin.dart';
-import 'zhangdu_mixin.dart';
+import 'base/complex_mixin.dart';
+import 'database_only_impl.dart';
+import 'base/network_mixin.dart';
+import 'base/zhangdu_mixin.dart';
 
 class DatabaseDelegate
     with SendEventMixin, SendIsolateMixin, SendCacheMixin, SendInitCloseMixin {
@@ -29,15 +29,14 @@ class DatabaseDelegate
     return Isolate.spawn(
         dataBaseEntryPoint, [remoteSendPort, appPath, cachePath, useSqflite3]);
   }
-
 }
 
 class DatabaseDelegateMessger extends DatabaseDelegate
     with
         BookCacheEventMessager,
         BookContentEventMessager,
-        ZhangduDatabaseEventMessager
-// ComplexOnDatabaseEventMessager // 由其他函数间接调用
+        ZhangduDatabaseEventMessager,
+        ComplexOnDatabaseEventMessager // 由其他函数间接调用
 {
   DatabaseDelegateMessger({
     required String appPath,
@@ -48,16 +47,14 @@ class DatabaseDelegateMessger extends DatabaseDelegate
           useSqflite3: useSqflite3,
           cachePath: cachePath,
         );
-
-  @override
-  SendEvent get sendEvent => this;
 }
 
+/// 与[SingleRepository]配合使用
 // 任务隔离(remote):处理 数据库、网络任务
 // 在隔离中再创建一个隔离处理数据库任务
 class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基类
     with
-        ComplexOnDatabaseEvent,
+        ResolveMixin,
         BookCacheEventMessager, // 提供本地调用接口（当前Isolate）
         BookContentEventMessager, //
         ZhangduDatabaseEventMessager, //
