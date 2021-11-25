@@ -13,11 +13,13 @@ import '../../data/zhangdu/zhangdu_same_users_books.dart';
 import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
+import 'complex_event.dart';
 import 'zhangdu_event.dart';
 
 part 'book_event.g.dart';
 
 @NopIsolateEvent()
+@NopIsolateEventItem(connectToIsolate: ['database'])
 abstract class BookEvent
     implements CustomEvent, DatabaseEvent, ComplexEvent, ZhangduEvent {
   BookCacheEvent get bookCacheEvent => this;
@@ -29,13 +31,15 @@ abstract class BookEvent
 }
 
 @NopIsolateEventItem(separate: true, isolateName: 'database')
-abstract class DatabaseEvent with BookCacheEvent, BookContentEvent {}
+abstract class DatabaseEvent
+    with BookCacheEvent, BookContentEvent, ComplexOnDatabaseEvent {}
 
 abstract class BookContentEvent {
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid);
 
   FutureOr<int?> deleteCache(int bookId);
 }
+
 
 abstract class ComplexEvent {
   FutureOr<List<CacheItem>?> getCacheItems();

@@ -1,18 +1,12 @@
 import 'dart:async';
-import 'dart:isolate';
-
-import 'package:nop_annotations/nop_annotations.dart';
-import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../data/zhangdu/zhangdu_chapter.dart';
 import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../database/nop_database.dart';
 
-part 'complex_event.g.dart';
 
-@NopIsolateEvent()
+// @NopIsolateEventItem(isolateName: 'complexOnDatabase', create: false)
 abstract class ComplexOnDatabaseEvent {
   /// biqu
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem();

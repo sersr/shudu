@@ -10,14 +10,14 @@ import 'database_only_impl.dart';
 import 'resolve_event.dart';
 
 /// ---------------- multi Isolate --------------------
-
 class MultiIsolateRepository extends Repository
     with
-        SendEventPortMixin,
+        SendEventMixin,
+        // SendEventPortMixin,
         SendCacheMixin,
         SendMultiIsolateMixin,
-        MultiBookEventDefaultMixin, // 默认
-        MultiDatabaseMixin // 由代码生成
+        MultiDatabaseMixin, // 由代码生成
+        MultiBookEventDefaultMixin // 默认
 {
   // [appPath, cachePath, useSqflite3]
   List? args;
@@ -43,11 +43,6 @@ class MultiIsolateRepository extends Repository
 
   @override
   void onResume() {
-    assert(databaseIsolateSendPortOwner != null);
-
-    /// 处理隔离之间的关系
-    defaultSendPortOwner!.localSendPort.send(SendPortName(
-        databaseIsolate, databaseIsolateSendPortOwner!.localSendPort));
     super.onResume();
     notifiyStateRoot(true);
     // args = null; // 安全

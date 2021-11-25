@@ -2,7 +2,7 @@ import 'dart:isolate';
 
 import 'package:useful_tools/useful_tools.dart';
 
-import '../repository.dart';
+import '../../repository.dart';
 import 'database_delegate_mixin.dart';
 
 /// 单一 隔离

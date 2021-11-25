@@ -28,12 +28,10 @@ class ShuduApp extends StatelessWidget {
           title: 'shudu',
           theme: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
-                primary: Color.fromARGB(255, 15, 152, 231),
-                primaryVariant: Colors.grey.shade200,
+              primary: Color.fromARGB(255, 15, 152, 231),
               secondary: Color.fromARGB(255, 223, 223, 223),
               onPrimary: Color.fromARGB(255, 253, 253, 253),
-                onSurface: Color.fromARGB(255, 14, 97, 165),
-              secondaryVariant: Color.fromARGB(255, 177, 26, 26),
+              onSurface: Color.fromARGB(255, 14, 97, 165),
             ),
             splashColor: Color.fromARGB(255, 212, 212, 212),
             // primarySwatch: Colors.grey,

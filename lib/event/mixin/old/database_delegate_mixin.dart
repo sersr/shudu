@@ -5,12 +5,11 @@ import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/utils.dart';
 
-import '../base/book_event.dart';
-import '../base/complex_event.dart';
-import 'base/complex_mixin.dart';
-import 'database_only_impl.dart';
-import 'base/network_mixin.dart';
-import 'base/zhangdu_mixin.dart';
+import '../../base/book_event.dart';
+import '../base/complex_mixin.dart';
+import '../base/network_mixin.dart';
+import '../base/zhangdu_mixin.dart';
+import '../database_only_impl.dart';
 
 class DatabaseDelegate
     with SendEventMixin, SendIsolateMixin, SendCacheMixin, SendInitCloseMixin {
@@ -55,6 +54,7 @@ class DatabaseDelegateMessger extends DatabaseDelegate
 class BookEventIsolateDeleagete extends BookEventResolveMain // Resolve 为基类
     with
         ResolveMixin,
+        SendEvent,
         BookCacheEventMessager, // 提供本地调用接口（当前Isolate）
         BookContentEventMessager, //
         ZhangduDatabaseEventMessager, //

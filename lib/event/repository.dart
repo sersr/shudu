@@ -5,9 +5,7 @@ import 'base/book_event.dart';
 // ignore: unused_import
 import 'mixin/multi_Isolate_repository.dart';
 // ignore: unused_import
-import 'mixin/multi_repository.dart';
-// ignore: unused_import
-import 'mixin/single_repository.dart';
+import 'mixin/old/single_repository.dart';
 import 'mixin/base/system_infos.dart';
 
 abstract class Repository extends BookEventMessagerMain
@@ -22,7 +20,6 @@ abstract class Repository extends BookEventMessagerMain
 
   factory Repository.create() {
     // _instance ??= SingleRepository();
-    // _instance ??= MultiRepository();
     _instance ??= MultiIsolateRepository();
     return _instance!;
   }

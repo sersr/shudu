@@ -4,7 +4,6 @@ import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
-import '../base/complex_event.dart';
 import 'base/database_mixin.dart';
 import 'base/zhangdu_mixin.dart';
 
@@ -29,9 +28,9 @@ class DatabaseImpl
     with
         Resolve,
         ResolveMixin,
-        MultiDatabaseOnResumeMixin,
         DatabaseMixin,
         ZhangduDatabaseMixin,
+        MultiDatabaseOnResumeMixin,
         ComplexOnDatabaseMixin,
         ZhangduComplexOnDatabaseMixin,
         BookCacheEventResolve, // 1
@@ -51,12 +50,6 @@ class DatabaseImpl
   final String appPath;
   @override
   final bool useSqflite3;
-
-  @override
-  void onResumeResolve() {
-    Log.i('DatabaseImpl: onresume', onlyDebug: false);
-    super.onResumeResolve();
-  }
 
   @override
   void onResolvedFailed(message) {
