@@ -21,6 +21,7 @@ class IndexsWidget extends StatelessWidget {
       child: DefaultTextStyle(
         style: context
             .read<TextStyleConfig>()
+            .data
             .title3
             .copyWith(color: Colors.grey.shade800),
         child: GestureDetector(
@@ -213,7 +214,7 @@ class _IndexsState extends State<_Indexs> {
           } else if (data.api == ApiType.zhangdu) {
             final indexs = data.data!;
             final isLight = Theme.of(context).brightness == Brightness.light;
-            final styleConfig = context.read<TextStyleConfig>();
+            final styleConfig = context.read<TextStyleConfig>().data;
             final title = styleConfig.title3;
             final style = styleConfig.body3;
 
@@ -314,7 +315,7 @@ class _StickyBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final styleConfig = context.read<TextStyleConfig>();
+    final styleConfig = context.read<TextStyleConfig>().data;
     final style = styleConfig.body3;
     final title = styleConfig.title3;
 
@@ -328,14 +329,10 @@ class _StickyBody extends StatelessWidget {
               textBaseline: TextBaseline.ideographic,
               children: [
                 Expanded(
-                  child: Text(
-                    l[index].name ?? '',
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    style: isLight
-                        ? title
-                        : title.copyWith(color: Colors.grey.shade500),
-                  ),
+                  child: Text(l[index].name ?? '',
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: title),
                 ),
                 if (indexBloc.contains(l[index].id))
                   Padding(
@@ -344,9 +341,7 @@ class _StickyBody extends StatelessWidget {
                       '已缓存',
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
-                      style: isLight
-                          ? style
-                          : style.copyWith(color: Colors.grey.shade700),
+                      style: style,
                     ),
                   )
               ],

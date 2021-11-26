@@ -186,7 +186,7 @@ extension _NetworkImpl on NetworkMixin {
       return onSuccess(map);
     } on DioError catch (e) {
       // 从错误通道发送 `str`
-      Log.i('$e, $url');
+      Log.i(Log.splitString('$e, $url', lines: 1).first);
       throw str;
     } catch (e) {
       /// 可能的错误：json 解码错误
@@ -618,7 +618,7 @@ extension _NetworkImpl on NetworkMixin {
         success = _isValid(data.headers);
       } catch (e) {
         success = false;
-        assert(Log.w('error: $imgName | $url\n$e'));
+        assert(Log.w(Log.splitString('error: $imgName | $url\n$e', lines: 1)));
       } finally {
         if (success)
           _errorLoading.remove(imgName);

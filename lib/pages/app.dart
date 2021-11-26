@@ -29,24 +29,21 @@ class ShuduApp extends StatelessWidget {
           theme: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
               primary: Color.fromARGB(255, 15, 152, 231),
-              secondary: Color.fromARGB(255, 223, 223, 223),
-              onPrimary: Color.fromARGB(255, 253, 253, 253),
-              onSurface: Color.fromARGB(255, 14, 97, 165),
+              secondary: Color.fromARGB(255, 179, 179, 179),
+              onPrimary: Color.fromARGB(255, 245, 245, 245),
+              onSurface: Color.fromARGB(255, 17, 30, 41),
             ),
             splashColor: Color.fromARGB(255, 212, 212, 212),
-            // primarySwatch: Colors.grey,
+            scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
             platform: list[1] ?? defaultTargetPlatform,
-            // brightness: Brightness.light,
-            // primaryColorBrightness: Brightness.light,
-            // primaryColor: Colors.grey.shade900,
-            // fontFamily: 'NotoSansSC',]
-
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
               TargetPlatform.iOS: SlidePageTransition(),
               TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
             }),
           ),
           darkTheme: ThemeData.dark().copyWith(
+            splashColor: Color.fromARGB(255, 212, 212, 212),
+            scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
             platform: list[1] ?? defaultTargetPlatform,
             colorScheme: const ColorScheme.dark(secondary: Colors.grey),
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
@@ -72,7 +69,6 @@ class MulProvider extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider(create: (_) => Repository.create()..init()),
-        Provider(create: (_) => TextStyleConfig()),
         ChangeNotifierProvider(
             create: (context) => OptionsNotifier(context.read())),
         ChangeNotifierProvider(
@@ -84,7 +80,8 @@ class MulProvider extends StatelessWidget {
             create: (context) => ContentNotifier(repository: context.read())),
         ChangeNotifierProvider(
           create: (context) => BookCacheNotifier(context.read()),
-        )
+        ),
+        ChangeNotifierProvider(create: (_) => TextStyleConfig()),
       ],
       child: ShuduApp(mode: mode),
     );

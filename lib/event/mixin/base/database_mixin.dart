@@ -98,8 +98,6 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
       ..where.bookId.equalTo(cache.bookId!);
     final g = q.go;
     final _count = await g.first.values.first ?? 0;
-
-    Log.i('insertBook: $count');
     if (_count == 0) count = bookCache.insert.insertTable(cache).go;
 
     return count;

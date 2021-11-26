@@ -334,7 +334,7 @@ class BarLayout extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     final size = MediaQuery.of(context).size;
-    final ts = Provider.of<TextStyleConfig>(context);
+    final ts = context.read<TextStyleConfig>().data;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
       child: Material(
@@ -371,10 +371,7 @@ class BarLayout extends StatelessWidget {
                     LayoutId(
                         id: 'title',
                         child: DefaultTextStyle(
-                            style: isLight
-                                ? ts.bigTitle1
-                                : ts.bigTitle1.copyWith(color: Colors.grey),
-                            child: title)),
+                            style: ts.bigTitle1, child: title)),
                     LayoutId(id: 'bottom', child: bottom)
                   ]),
             ),

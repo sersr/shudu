@@ -1051,7 +1051,6 @@ extension Event on ContentNotifier {
       final _bookid = bookid;
       final _cid = tData.cid;
       if (_cid != null) {
-        assert(Log.i('cid: $_cid'));
         _loadTasks(_bookid, _cid);
 
         await _futures.awaitKey(_cid);
@@ -1125,7 +1124,6 @@ extension Event on ContentNotifier {
       footer.value = '';
       header.value = '';
     }
-    Log.i('api: $api');
     final _reset = _shouldUpdate(newBookid, cid, page, api);
     // assert(_reset || _tData.contentIsNotEmpty);
     if (_reset || _tData.contentIsEmpty) {

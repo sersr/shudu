@@ -23,7 +23,7 @@ class ListCatetoryPage extends StatefulWidget {
 class _ListCatetoryPageState extends State<ListCatetoryPage>
     with PageAnimationMixin {
   final _category = CategoryListNotifier();
-  late TextStyleConfig ts;
+  late TextStyleData ts;
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
-    ts = context.read<TextStyleConfig>();
+    ts = context.read<TextStyleConfig>().data;
 
     _category.repository = repository;
   }
@@ -97,11 +97,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                             children: [
                               Expanded(child: ImageResolve(img: e.image)),
                               const SizedBox(height: 4),
-                              Text(e.name ?? '',
-                                  style: isLight
-                                      ? ts.title2
-                                      : ts.title2.copyWith(
-                                          color: Colors.grey.shade400)),
+                              Text(e.name ?? '', style: ts.title2),
                             ],
                           ),
                         ),

@@ -49,7 +49,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   }
 
   Iterable<Widget> _getChildren(
-      BookListDetailData data, TextStyleConfig ts) sync* {
+      BookListDetailData data, TextStyleData ts) sync* {
     // header
     yield TitleWidget(data: data, total: widget.total);
     yield const SizedBox(height: 6);
@@ -62,10 +62,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
       color:
           isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0),
-      child: Text('书单列表',
-          style: isLight
-              ? ts.title2
-              : ts.title2.copyWith(color: Colors.grey.shade400)),
+      child: Text('书单列表', style: ts.title2),
     );
 
     yield const SizedBox(height: 3);
@@ -84,7 +81,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   bool get isLight => Theme.of(context).brightness == Brightness.light;
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
+    final ts = context.read<TextStyleConfig>().data;
 
     return Scaffold(
       appBar: AppBar(
@@ -103,50 +100,21 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
           }
 
           final children = _getChildren(data, ts);
-
           return Stack(
             children: [
               RepaintBoundary(
-                child: Scrollbar(
-                  interactive: true,
-                  thickness: 8,
-                  child: ListViewBuilder(
-                    color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+                child: ListViewBuilder(
+                  color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
 
-                    refreshDelegate: refreshDelegate2,
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    // cacheExtent: 100,
-                    itemBuilder: (context, index) {
-                      return children.elementAt(index);
-                    },
-                    itemCount: children.length,
-                  ),
+                  refreshDelegate: refreshDelegate2,
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  // cacheExtent: 100,
+                  itemBuilder: (context, index) {
+                    return children.elementAt(index);
+                  },
+                  itemCount: children.length,
                 ),
               ),
-              Positioned(
-                left: 10,
-                bottom: 20,
-                child: RepaintBoundary(
-                  child: ElevatedButton(
-                    child: const Text('show'),
-                    onPressed: () {
-                      refreshDelegate2.show();
-                    },
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 10,
-                bottom: 20,
-                child: RepaintBoundary(
-                  child: ElevatedButton(
-                    child: const Text('hide'),
-                    onPressed: () {
-                      refreshDelegate2.hide();
-                    },
-                  ),
-                ),
-              )
             ],
           );
         },
@@ -156,7 +124,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
 
   var hide = ValueNotifier(true);
 
-  Widget buildIntro(TextStyleConfig ts, String? description) {
+  Widget buildIntro(TextStyleData ts, String? description) {
     return Container(
       padding: const EdgeInsets.only(left: 10.0, right: 10.0),
       color:
@@ -225,7 +193,7 @@ class _TitleWidgetState extends State<TitleWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final ts = context.read<TextStyleConfig>();
+    final ts = context.read<TextStyleConfig>().data;
     final data = widget.data;
     return Container(
       height: 120,
@@ -252,12 +220,8 @@ class _TitleWidgetState extends State<TitleWidget>
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child: Text(data.title ?? '',
-                          maxLines: 2,
-                          style: isLight
-                              ? ts.title2
-                              : ts.title2
-                                  .copyWith(color: Colors.grey.shade400)),
+                      child:
+                          Text(data.title ?? '', maxLines: 2, style: ts.title2),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),

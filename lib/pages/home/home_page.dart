@@ -27,6 +27,7 @@ class _MyHomePageState extends State<MyHomePage>
   late ContentNotifier painterBloc;
   late OptionsNotifier opts;
   late BookCacheNotifier cache;
+  late TextStyleConfig config;
   Future? _future;
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
   @override
@@ -38,16 +39,25 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangePlatformBrightness() {
     Log.i('changed brightness..', onlyDebug: false);
+    if (mounted) {
+      config.notify(Theme.of(context).brightness);
+    }
     // opts.toggle();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    painterBloc = context.read<ContentNotifier>();
-    opts = context.read<OptionsNotifier>();
+    painterBloc = context.read();
+    opts = context.read();
     final search = context.read<SearchNotifier>();
-    cache = context.read<BookCacheNotifier>();
+    cache = context.read();
+    config = context.read();
+    final brightness = Theme.of(context).brightness;
+    scheduleMicrotask(() {
+      config.notify(brightness);
+    });
+
     final data = MediaQuery.of(context);
     if (_future == null) {
       final any = FutureAny();
@@ -80,8 +90,7 @@ class _MyHomePageState extends State<MyHomePage>
     closeIsolateState = state.index >= AppLifecycleState.paused.index;
     initIsolateState =
         mounted && state.index < AppLifecycleState.inactive.index;
-    assert(
-        Log.i('$closeIsolateState, $initIsolateState $closeDelay $initIDelay'));
+    assert(Log.i('close: $closeIsolateState, resume: $initIsolateState'));
 
     onInitIsolate();
     if (closeIsolateState) {
@@ -162,8 +171,7 @@ class _MyHomePageState extends State<MyHomePage>
                           delegate: BookSearchPage(
                               textStyle: context
                                   .read<TextStyleConfig>()
-                                  .body2
-                                  .copyWith(color: Colors.white))),
+                                  .data.body2)),
                       child: SizedBox(
                         height: height,
                         width: height,
@@ -423,7 +431,7 @@ class BookSearchPage extends SearchDelegate<void> {
   Widget suggestions(BuildContext context) {
     final bloc = context.read<SearchNotifier>();
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final ts = context.read<TextStyleConfig>();
+    final ts = context.read<TextStyleConfig>().data;
     return StatefulBuilder(
       builder: (context, setstate) {
         return Padding(
@@ -453,13 +461,7 @@ class BookSearchPage extends SearchDelegate<void> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8.0, vertical: 4.0),
-                          child: Text(
-                            i,
-                            style: isLight
-                                ? ts.body2.copyWith(color: Colors.grey.shade700)
-                                : ts.body2
-                                    .copyWith(color: Colors.grey.shade400),
-                          ),
+                          child: Text(i, style: ts.body2),
                         ),
                       ),
                     ),

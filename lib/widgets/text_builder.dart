@@ -30,8 +30,7 @@ class TextAsyncLayout extends StatelessWidget {
   final int bottomLines;
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>();
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final ts = context.read<TextStyleConfig>().data;
     final child = ItemWidget(
         topRight: topRightScore != null
             ? Text(topRightScore ?? '',
@@ -57,7 +56,6 @@ class TextAsyncLayout extends StatelessWidget {
           if (useTextCache && textCache != null)
             return LayoutBuilder(builder: (context, constraints) {
               return _CacheText(
-                  isLight: isLight,
                   bottom: bottom,
                   top: top,
                   topRightScore: topRightScore,
@@ -82,7 +80,6 @@ class _CacheText extends StatefulWidget {
     required this.center,
     required this.bottom,
     required this.maxWidth,
-    required this.isLight,
     this.centerLines = 1,
     this.bottomLines = 2,
     this.height = 112,
@@ -96,14 +93,13 @@ class _CacheText extends StatefulWidget {
   final int centerLines;
   final int bottomLines;
   final double maxWidth;
-  final bool isLight;
 
   @override
   State<_CacheText> createState() => _CacheTextState();
 }
 
 class _CacheTextState extends State<_CacheText> {
-  late TextStyleConfig ts;
+  late TextStyleData ts;
 
   late List _keys;
 
@@ -116,7 +112,6 @@ class _CacheTextState extends State<_CacheText> {
   void _updateKeys() {
     _keys = [
       runtimeType, // 以[runtimeType]区分布局方式
-      widget.isLight,
       widget.maxWidth,
       widget.topRightScore,
       widget.top,
@@ -138,7 +133,7 @@ class _CacheTextState extends State<_CacheText> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ts = context.read<TextStyleConfig>();
+    ts = context.read<TextStyleConfig>().data;
   }
 
   @override
@@ -154,25 +149,18 @@ class _CacheTextState extends State<_CacheText> {
 
   // 如果是一个匿名函数每次重建都会新建一个对象
   Future<void> _layoutText(PutIfAbsentText putIfAbsent) async {
-    final topRightKey = [
-      widget.maxWidth,
-      widget.topRightScore,
-      1,
-      widget.isLight
-    ];
+    final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
+    final topRightKey = [widget.maxWidth, widget.topRightScore, 1, trs];
     final _tpr = putIfAbsent(topRightKey, () {
-      return _painter(widget.topRightScore,
-          style: ts.body2.copyWith(color: Colors.yellow.shade700), maxLines: 1)
+      return _painter(widget.topRightScore, style: trs, maxLines: 1)
         ..layout(maxWidth: widget.maxWidth);
     });
 
     final _tpWidth = _tpr.painter.width;
 
     final topWidth = widget.maxWidth - _tpWidth;
-    final topKey = [topWidth, widget.top, 1, widget.isLight];
-    final style = widget.isLight
-        ? ts.title3
-        : ts.title3.copyWith(color: Colors.grey.shade400);
+    final style = ts.title2;
+    final topKey = [topWidth, widget.top, 1, style];
 
     putIfAbsent(topKey, () {
       return _painter(widget.top, style: style, maxLines: 1)
@@ -184,7 +172,7 @@ class _CacheTextState extends State<_CacheText> {
       widget.maxWidth,
       widget.center,
       widget.centerLines,
-      widget.isLight
+      ts.body2
     ];
     putIfAbsent(centerKey, () {
       return _painter(widget.center,
@@ -197,7 +185,7 @@ class _CacheTextState extends State<_CacheText> {
       widget.maxWidth,
       widget.bottom,
       widget.bottomLines,
-      widget.isLight
+      ts.body3
     ];
     putIfAbsent(bottomKey, () {
       return _painter(widget.bottom,

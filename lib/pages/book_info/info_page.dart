@@ -49,13 +49,13 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   // 确保关闭动画结束
   ValueNotifier<bool> showSecondary = ValueNotifier(false);
   final info = BookInfoProvider();
-  late TextStyleConfig ts;
+  late TextStyleData ts;
   late BookCacheNotifier cache;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final repository = context.read<Repository>();
-    ts = context.read<TextStyleConfig>();
+    ts = context.read<TextStyleConfig>().data;
     info.repository = repository;
     cache = context.read<BookCacheNotifier>();
   }
@@ -336,7 +336,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       String? lastChapter,
       String? lastTime,
       List<SameUserBook>? sameUserBooks,
-      TextStyleConfig ts,
+      TextStyleData ts,
       {ApiType api = ApiType.biquge}) sync* {
     yield const SizedBox(height: 6);
     yield Container(
@@ -347,10 +347,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('简介',
-              style: isLight
-                  ? ts.title2
-                  : ts.title2.copyWith(color: Colors.grey.shade400)),
+          Text('简介', style: ts.title2),
           Padding(
             padding: const EdgeInsets.only(top: 2.0),
             child: StatefulBuilder(builder: (context, setstate) {
@@ -424,13 +421,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            '目录 最近更新 ',
-                            style: isLight
-                                ? ts.title2
-                                : ts.title2
-                                    .copyWith(color: Colors.grey.shade400),
-                          ),
+                          Text('目录 最近更新 ', style: ts.title2),
                           Expanded(
                             child: Align(
                               alignment: Alignment.centerRight,
@@ -470,7 +461,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
           ? const Color.fromRGBO(250, 250, 250, 1)
           : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-      child: Text('$author 还写过'),
+      child: Text('$author 还写过', style: ts.body1),
     );
 
     yield const SizedBox(height: 3);
@@ -490,7 +481,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   Widget header(String? author, String? bookStatus, String? name, double? scroe,
-      String? cName, String? img, TextStyleConfig ts) {
+      String? cName, String? img, TextStyleData ts) {
     return Container(
       padding: const EdgeInsets.only(bottom: 5.0),
       color: isLight
@@ -524,10 +515,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                 const EdgeInsets.only(top: 2.0, bottom: 5.0),
                             child: Text(
                               name ?? '',
-                              style: isLight
-                                  ? ts.title2
-                                  : ts.title2
-                                      .copyWith(color: Colors.grey.shade400),
+                              style: ts.title2,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 2,
                               softWrap: false,

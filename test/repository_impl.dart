@@ -10,8 +10,7 @@ import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
 import 'package:shudu/event/event.dart';
-import 'package:shudu/event/mixin/old/resolves.dart';
-import 'package:shudu/event/mixin/old/single_repository.dart';
+import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
 
 class RepositoryTest extends RepositoryBase {
