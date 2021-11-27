@@ -99,15 +99,10 @@ class _CacheText extends StatefulWidget {
 }
 
 class _CacheTextState extends State<_CacheText> {
-  late TextStyleData ts;
+  late TextStyleConfig tsConfig;
 
   late List _keys;
 
-  @override
-  void initState() {
-    super.initState();
-    _updateKeys();
-  }
 
   void _updateKeys() {
     _keys = [
@@ -120,7 +115,8 @@ class _CacheTextState extends State<_CacheText> {
       1,
       1,
       widget.centerLines,
-      widget.bottomLines
+      widget.bottomLines,
+      tsConfig.brightness,
     ];
   }
 
@@ -133,7 +129,8 @@ class _CacheTextState extends State<_CacheText> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ts = context.read<TextStyleConfig>().data;
+    tsConfig = context.read<TextStyleConfig>();
+    _updateKeys();
   }
 
   @override
@@ -149,6 +146,7 @@ class _CacheTextState extends State<_CacheText> {
 
   // 如果是一个匿名函数每次重建都会新建一个对象
   Future<void> _layoutText(PutIfAbsentText putIfAbsent) async {
+    final ts = tsConfig.data;
     final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
     final topRightKey = [widget.maxWidth, widget.topRightScore, 1, trs];
     final _tpr = putIfAbsent(topRightKey, () {

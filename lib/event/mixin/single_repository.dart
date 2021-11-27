@@ -1,6 +1,5 @@
 import 'dart:isolate';
 
-import 'package:nop_db/isolate_event.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
@@ -52,7 +51,6 @@ void singleIsolateEntryPoint(List args) async {
 /// 与[SingleRepository]配合使用
 class BookEventIsolate extends BookEventResolveMain
     with
-        ResolveMixin,
         // base
         DatabaseMixin,
         ZhangduDatabaseMixin,

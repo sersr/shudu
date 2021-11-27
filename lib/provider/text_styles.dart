@@ -42,6 +42,8 @@ class TextStyleConfig extends ChangeNotifier {
   var _brightness = Brightness.light;
   TextStyleData _data = TextStyleData.normal;
   TextStyleData get data => _data;
+  Brightness get brightness => _brightness;
+  
   void notify(Brightness brightness) {
     if (_brightness == brightness) return;
     _brightness = brightness;
@@ -58,7 +60,7 @@ class TextStyleConfig extends ChangeNotifier {
   );
   static const TextStyle title2 = TextStyle(
     fontSize: 14,
-    color: blackColor4,
+    color: blackColor3,
     inherit: false,
   );
   static const TextStyle title3 = TextStyle(

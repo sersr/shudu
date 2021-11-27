@@ -102,7 +102,7 @@ class Server {
     bookEventIsolate =
         BookEventIsolateTest(receivePort.sendPort, useSqflite: useSqflite);
     final list = <Future>[];
-    bookEventIsolate.initStateResolve((task) {
+    bookEventIsolate.initStateListen((task) {
       if (task is Future) {
         list.add(task);
       }
@@ -111,7 +111,7 @@ class Server {
 
     serverListen?.cancel();
     serverListen = server.stream.listen((event) {
-      if (bookEventIsolate.resolveAll(event)) return;
+      if (bookEventIsolate.listen(event)) return;
     });
   }
 

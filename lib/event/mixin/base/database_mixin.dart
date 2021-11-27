@@ -35,8 +35,8 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   }
 
   @override
-  void initStateResolve(add) {
-    super.initStateResolve(add);
+  void initStateListen(add) {
+    super.initStateListen(add);
     add(_initDb());
   }
 

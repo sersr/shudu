@@ -317,7 +317,7 @@ class _StickyBody extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final styleConfig = context.read<TextStyleConfig>().data;
     final style = styleConfig.body3;
-    final title = styleConfig.title3;
+    final title = styleConfig.title2;
 
     return SliverFixedExtentList(
       delegate: SliverChildBuilderDelegate(

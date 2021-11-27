@@ -132,10 +132,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('简介',
-              style: isLight
-                  ? ts.title2
-                  : ts.title2.copyWith(color: Colors.grey.shade400)),
+          Text('简介', style: ts.title2),
           Padding(
             padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
             child: AnimatedBuilder(
@@ -153,7 +150,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                           description ?? '',
                           maxLines: hide.value ? 2 : null,
                           overflow: TextOverflow.fade,
-                          style: ts.body2,
+                          style: ts.body3,
                         ),
                         Center(
                             child: Icon(

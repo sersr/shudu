@@ -24,20 +24,12 @@ void dataBaseEntryPoint(args) async {
 }
 
 /// 只处理数据库相关操作
-class DatabaseImpl
+class DatabaseImpl extends MultiDatabaseResolveMain
     with
-        Resolve,
-        ResolveMixin,
         DatabaseMixin,
         ZhangduDatabaseMixin,
-        MultiDatabaseOnResumeMixin,
         ComplexOnDatabaseMixin,
-        ZhangduComplexOnDatabaseMixin,
-        BookCacheEventResolve, // 1
-        BookContentEventResolve, // 2
-        ZhangduDatabaseEventResolve, // 3
-        ComplexOnDatabaseEventResolve // 4
-{
+        ZhangduComplexOnDatabaseMixin {
   DatabaseImpl({
     required this.appPath,
     required this.useSqflite3,

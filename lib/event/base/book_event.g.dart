@@ -71,11 +71,11 @@ enum ZhangduNetEventMessage { getZhangduSameUsersBooks, getZhangduSearchData }
 
 abstract class BookEventResolveMain extends BookEvent
     with
+        ListenMixin,
         Resolve,
         CustomEventResolve,
         BookCacheEventResolve,
         BookContentEventResolve,
-        ComplexOnDatabaseEventResolve,
         ComplexEventResolve,
         ZhangduDatabaseEventResolve,
         ZhangduComplexEventResolve,
@@ -87,7 +87,6 @@ abstract class BookEventMessagerMain extends BookEvent
         CustomEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
-        ComplexOnDatabaseEventMessager,
         ComplexEventMessager,
         ZhangduDatabaseEventMessager,
         ZhangduComplexEventMessager,
@@ -749,14 +748,7 @@ mixin ZhangduNetEventMessager on SendEvent {
   }
 }
 mixin MultiBookEventDefaultMessagerMixin
-    on
-        SendEvent,
-        Send,
-        SendMultiIsolateMixin,
-        CustomEvent,
-        ComplexEvent,
-        ZhangduComplexEvent,
-        ZhangduNetEvent {
+    on SendEvent, Send, ListenMixin, SendMultiIsolateMixin /*impl*/ {
   SendPortOwner? get defaultSendPortOwner => bookEventDefaultSendPortOwner;
   Future<Isolate> createIsolateBookEventDefault(SendPort remoteSendPort);
   Future<Isolate> createIsolateDatabase(SendPort remoteSendPort);
@@ -772,9 +764,9 @@ mixin MultiBookEventDefaultMessagerMixin
         'bookEventDefault': bookEventDefaultProtocols
       };
   List<Type> get databaseProtocols => [
+        ComplexOnDatabaseEventMessage,
         BookCacheEventMessage,
         BookContentEventMessage,
-        ComplexOnDatabaseEventMessage,
         ZhangduDatabaseEventMessage,
       ];
 
@@ -791,13 +783,14 @@ mixin MultiBookEventDefaultMessagerMixin
     super.createAllIsolate(remoteSendPort, add);
   }
 
-  void onDoneMulti(SendPortName sendPortName, SendPort remoteSendPort) {
+  void onListenReceivedSendPort(SendPortName sendPortName) {
     final protocols = bookEventDefaultAllProtocols[sendPortName.name];
     if (protocols != null) {
-      final equal = iterableEquality.equals(sendPortName.protocols, protocols);
+      final equal = sendPortName.protocols != null &&
+          sendPortName.protocols!.every(protocols.contains);
       final sendPortOwner = SendPortOwner(
         localSendPort: sendPortName.sendPort,
-        remoteSendPort: remoteSendPort,
+        remoteSendPort: localSendPort,
       );
       switch (sendPortName.name) {
         case 'database':
@@ -812,10 +805,10 @@ mixin MultiBookEventDefaultMessagerMixin
           onlyDebug: false);
       return;
     }
-    super.onDoneMulti(sendPortName, remoteSendPort);
+    super.onListenReceivedSendPort(sendPortName);
   }
 
-  void onResume() {
+  void onResumeListen() {
     if (databaseSendPortOwner == null ||
         bookEventDefaultSendPortOwner == null) {
       Log.e('sendPortOwner error', onlyDebug: false);
@@ -823,7 +816,7 @@ mixin MultiBookEventDefaultMessagerMixin
     bookEventDefaultSendPortOwner!.localSendPort.send(SendPortName(
         'database', databaseSendPortOwner!.localSendPort,
         protocols: databaseProtocols));
-    super.onResume();
+    super.onResumeListen();
   }
 
   SendPortOwner? getSendPortOwner(messagerType) {
@@ -862,10 +855,22 @@ mixin MultiBookEventDefaultMessagerMixin
   }
 }
 
+abstract class MultiBookEventDefaultResolveMain
+    with
+        Send,
+        SendEvent,
+        ListenMixin,
+        Resolve,
+        MultiBookEventDefaultMixin,
+        CustomEventResolve,
+        ComplexEventResolve,
+        ZhangduComplexEventResolve,
+        ZhangduNetEventResolve {}
+
 /// 在[Resolve]中为`Messager`提供便携
-mixin MultiBookEventDefaultMixin on Send, SendEvent, ResolveMixin {
+mixin MultiBookEventDefaultMixin on Send, SendEvent, Resolve {
   SendPortOwner? databaseSendPortOwner;
-  void onResolveReceivedSendPort(SendPortName sendPortName) {
+  void onListenReceivedSendPort(SendPortName sendPortName) {
     final sendPortOwner = SendPortOwner(
       localSendPort: sendPortName.sendPort,
       remoteSendPort: localSendPort,
@@ -888,14 +893,14 @@ mixin MultiBookEventDefaultMixin on Send, SendEvent, ResolveMixin {
         return;
       default:
     }
-    super.onResolveReceivedSendPort(sendPortName);
+    super.onListenReceivedSendPort(sendPortName);
   }
 
   SendPortOwner? getSendPortOwner(key) {
     switch (key.runtimeType) {
+      case ComplexOnDatabaseEventMessage:
       case BookCacheEventMessage:
       case BookContentEventMessage:
-      case ComplexOnDatabaseEventMessage:
       case ZhangduDatabaseEventMessage:
         return databaseSendPortOwner;
 
@@ -909,20 +914,12 @@ mixin MultiBookEventDefaultMixin on Send, SendEvent, ResolveMixin {
     return super.onClose();
   }
 
-  bool listenResolve(message) {
+  bool listen(message) {
     if (add(message)) return true;
-    return super.listenResolve(message);
+    return super.listen(message);
   }
-}
 
-mixin MultiBookEventDefaultOnResumeMixin
-    on
-        ResolveMixin,
-        CustomEvent,
-        ComplexEvent,
-        ZhangduComplexEvent,
-        ZhangduNetEvent {
-  void onResumeResolve() {
+  void onResumeListen() {
     if (remoteSendPort != null)
       remoteSendPort!.send(SendPortName(
         'bookEventDefault',
@@ -934,17 +931,22 @@ mixin MultiBookEventDefaultOnResumeMixin
           ZhangduNetEventMessage,
         ],
       ));
-    super.onResumeResolve();
+    super.onResumeListen();
   }
 }
-mixin MultiDatabaseOnResumeMixin
-    on
-        ResolveMixin,
-        BookCacheEvent,
-        BookContentEvent,
-        ComplexOnDatabaseEvent,
-        ZhangduDatabaseEvent {
-  void onResumeResolve() {
+
+abstract class MultiDatabaseResolveMain
+    with
+        ListenMixin,
+        Resolve,
+        BookCacheEventResolve,
+        BookContentEventResolve,
+        ComplexOnDatabaseEventResolve,
+        ZhangduDatabaseEventResolve,
+        MultiDatabaseOnResumeMixin {}
+
+mixin MultiDatabaseOnResumeMixin on Resolve /*impl*/ {
+  void onResumeListen() {
     if (remoteSendPort != null)
       remoteSendPort!.send(SendPortName(
         'database',
@@ -956,6 +958,6 @@ mixin MultiDatabaseOnResumeMixin
           ZhangduDatabaseEventMessage,
         ],
       ));
-    super.onResumeResolve();
+    super.onResumeListen();
   }
 }

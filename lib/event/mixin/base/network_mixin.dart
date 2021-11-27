@@ -27,8 +27,8 @@ mixin HiveDioMixin on Resolve {
   }
 
   @override
-  void initStateResolve(add) {
-    super.initStateResolve(add);
+  void initStateListen(add) {
+    super.initStateListen(add);
     add(_initNet());
   }
 
@@ -39,7 +39,7 @@ mixin HiveDioMixin on Resolve {
   }
 }
 
-mixin NetworkMixin on Resolve, HiveDioMixin implements CustomEvent {
+mixin NetworkMixin on HiveDioMixin implements CustomEvent {
   var frequency = 0;
 
   late Box imageUpdate;
@@ -47,8 +47,8 @@ mixin NetworkMixin on Resolve, HiveDioMixin implements CustomEvent {
   String get cachePath;
 
   @override
-  void initStateResolve(add) {
-    super.initStateResolve(add);
+  void initStateListen(add) {
+    super.initStateListen(add);
     add(_init());
   }
 

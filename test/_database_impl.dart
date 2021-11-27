@@ -9,7 +9,8 @@ import 'package:shudu/data/zhangdu/zhangdu_chapter.dart';
 import 'package:shudu/event/base/complex_event.dart';
 import 'package:shudu/event/mixin/base/database_mixin.dart';
 
-class Database with Resolve, ComplexOnDatabaseEvent, DatabaseMixin {
+class Database
+    with ListenMixin, Resolve, ComplexOnDatabaseEvent, DatabaseMixin {
   @override
   String get appPath => ':memory:';
   @override

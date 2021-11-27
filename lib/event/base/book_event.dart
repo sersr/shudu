@@ -30,9 +30,12 @@ abstract class BookEvent
   ZhangduEvent get zhangduEvent => this;
 }
 
-@NopIsolateEventItem(separate: true, isolateName: 'database')
+@NopIsolateEventItem(
+    separate: true,
+    isolateName: 'database',
+    privateProtocols: [ComplexOnDatabaseEvent])
 abstract class DatabaseEvent
-    with BookCacheEvent, BookContentEvent, ComplexOnDatabaseEvent {}
+    with BookCacheEvent, BookContentEvent {}
 
 abstract class BookContentEvent {
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid);

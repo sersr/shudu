@@ -13,6 +13,7 @@ import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
     with
+        ListenMixin,
         // SendEventMixin,
         SendEventPortMixin,
         SendCacheMixin,
@@ -42,8 +43,8 @@ class MultiIsolateRepository extends Repository
   }
 
   @override
-  void onResume() {
-    super.onResume();
+  void onResumeListen() {
+    super.onResumeListen();
     notifiyStateRoot(true);
     // args = null; // 安全
   }
@@ -68,27 +69,20 @@ void _multiIsolateEntryPoint(List args) async {
     useSqflite3: useSqflite3,
     remoteSendPort: remoteSendPort,
   );
-  db.run();
+  db.init();
 }
 
 /// 与 [MultiIsolateRepository] 配合使用
 /// 任务隔离(remote):处理 数据库、网络任务
 /// 接受一个[SendPortOwner]处理数据库消息
-class BookEventMultiIsolate
+class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
     with
-        Resolve,
-        ResolveMixin,
+
         // sender
         SendEventMixin,
         // SendEventPortMixin,
         SendCacheMixin,
-        // ---- 在当前隔离处理 ------
-        CustomEventResolve,
-        ZhangduNetEventResolve,
-        ComplexEventResolve,
-        ZhangduComplexEventResolve,
-        MultiBookEventDefaultMixin,
-        MultiBookEventDefaultOnResumeMixin, // 初始化：返回协议内容
+        SendInitCloseMixin,
         // -- SendPortOwner 代理----
         ComplexOnDatabaseEventMessager, // 初始化：要返回的Messager协议
         // net
@@ -114,6 +108,12 @@ class BookEventMultiIsolate
   @override
   final SendPort remoteSendPort;
 
+  @override
+  FutureOr<void> initTask() => run();
+
+  @override
+  FutureOr<void> closeTask() => onClose();
+  
   @override
   SendPortOwner? getSendPortOwner(key) {
     final owner = super.getSendPortOwner(key);
