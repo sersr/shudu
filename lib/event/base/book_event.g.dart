@@ -7,7 +7,7 @@ part of 'book_event.dart';
 // **************************************************************************
 
 // ignore_for_file: annotate_overrides
-
+// ignore_for_file: curly_braces_in_flow_control_structures
 enum CustomEventMessage {
   getSearchData,
   getImageBytes,
@@ -150,43 +150,52 @@ mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
 /// implements [CustomEvent]
 mixin CustomEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get bookEventDefault => 'bookEventDefault';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'bookEventDefault') yield CustomEventMessage;
+    if (name == bookEventDefault) yield CustomEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
-    return sendEvent.sendMessage(CustomEventMessage.getSearchData, key);
+    return sendEvent.sendMessage(CustomEventMessage.getSearchData, key,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<Uint8List?> getImageBytes(String img) {
-    return sendEvent.sendMessage(CustomEventMessage.getImageBytes, img);
+    return sendEvent.sendMessage(CustomEventMessage.getImageBytes, img,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookList>?> getHiveShudanLists(String c) {
-    return sendEvent.sendMessage(CustomEventMessage.getHiveShudanLists, c);
+    return sendEvent.sendMessage(CustomEventMessage.getHiveShudanLists, c,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookList>?> getShudanLists(String c, int index) {
-    return sendEvent.sendMessage(CustomEventMessage.getShudanLists, [c, index]);
+    return sendEvent.sendMessage(CustomEventMessage.getShudanLists, [c, index],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<BookTopData?> getTopLists(String c, String date, int index) {
-    return sendEvent
-        .sendMessage(CustomEventMessage.getTopLists, [c, date, index]);
+    return sendEvent.sendMessage(
+        CustomEventMessage.getTopLists, [c, date, index],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<BookTopData?> getCategLists(int c, String date, int index) {
-    return sendEvent
-        .sendMessage(CustomEventMessage.getCategLists, [c, date, index]);
+    return sendEvent.sendMessage(
+        CustomEventMessage.getCategLists, [c, date, index],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<BookListDetailData?> getShudanDetail(int index) {
-    return sendEvent.sendMessage(CustomEventMessage.getShudanDetail, index);
+    return sendEvent.sendMessage(CustomEventMessage.getShudanDetail, index,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookCategoryData>?> getCategoryData() {
-    return sendEvent.sendMessage(CustomEventMessage.getCategoryData, null);
+    return sendEvent.sendMessage(CustomEventMessage.getCategoryData, null,
+        isolateName: bookEventDefault);
   }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
@@ -231,35 +240,42 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
 /// implements [BookCacheEvent]
 mixin BookCacheEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get database => 'database';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'database') yield BookCacheEventMessage;
+    if (name == database) yield BookCacheEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<List<BookCache>?> getMainList() {
-    return sendEvent.sendMessage(BookCacheEventMessage.getMainList, null);
+    return sendEvent.sendMessage(BookCacheEventMessage.getMainList, null,
+        isolateName: database);
   }
 
   Stream<List<BookCache>?> watchMainList() {
     return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchMainList, null);
+        BookCacheEventMessage.watchMainList, null,
+        isolateName: database);
   }
 
   FutureOr<int?> updateBook(int id, BookCache book) {
-    return sendEvent.sendMessage(BookCacheEventMessage.updateBook, [id, book]);
+    return sendEvent.sendMessage(BookCacheEventMessage.updateBook, [id, book],
+        isolateName: database);
   }
 
   FutureOr<int?> insertBook(BookCache bookCache) {
-    return sendEvent.sendMessage(BookCacheEventMessage.insertBook, bookCache);
+    return sendEvent.sendMessage(BookCacheEventMessage.insertBook, bookCache,
+        isolateName: database);
   }
 
   FutureOr<int?> deleteBook(int id) {
-    return sendEvent.sendMessage(BookCacheEventMessage.deleteBook, id);
+    return sendEvent.sendMessage(BookCacheEventMessage.deleteBook, id,
+        isolateName: database);
   }
 
   Stream<List<BookCache>?> watchCurrentCid(int id) {
     return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchCurrentCid, id);
+        BookCacheEventMessage.watchCurrentCid, id,
+        isolateName: database);
   }
 }
 mixin BookContentEventResolve on Resolve implements BookContentEvent {
@@ -295,18 +311,21 @@ mixin BookContentEventResolve on Resolve implements BookContentEvent {
 /// implements [BookContentEvent]
 mixin BookContentEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get database => 'database';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'database') yield BookContentEventMessage;
+    if (name == database) yield BookContentEventMessage;
     yield* super.getProtocols(name);
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
     return sendEvent.sendMessageStream(
-        BookContentEventMessage.watchBookContentCid, bookid);
+        BookContentEventMessage.watchBookContentCid, bookid,
+        isolateName: database);
   }
 
   FutureOr<int?> deleteCache(int bookId) {
-    return sendEvent.sendMessage(BookContentEventMessage.deleteCache, bookId);
+    return sendEvent.sendMessage(BookContentEventMessage.deleteCache, bookId,
+        isolateName: database);
   }
 }
 mixin ComplexOnDatabaseEventResolve on Resolve
@@ -376,82 +395,97 @@ mixin ComplexOnDatabaseEventResolve on Resolve
 /// implements [ComplexOnDatabaseEvent]
 mixin ComplexOnDatabaseEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get database => 'database';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'database') yield ComplexOnDatabaseEventMessage;
+    if (name == database) yield ComplexOnDatabaseEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem() {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getIndexsDbCacheItem, null);
+        ComplexOnDatabaseEventMessage.getIndexsDbCacheItem, null,
+        isolateName: database);
   }
 
   FutureOr<Set<int>?> getAllBookId() {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getAllBookId, null);
+        ComplexOnDatabaseEventMessage.getAllBookId, null,
+        isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateIndexs, [id, indexs]);
+        ComplexOnDatabaseEventMessage.insertOrUpdateIndexs, [id, indexs],
+        isolateName: database);
   }
 
   FutureOr<List<BookContentDb>?> getContentDb(int bookid, int contentid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getContentDb, [bookid, contentid]);
+        ComplexOnDatabaseEventMessage.getContentDb, [bookid, contentid],
+        isolateName: database);
   }
 
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getIndexsDb, bookid);
+        ComplexOnDatabaseEventMessage.getIndexsDb, bookid,
+        isolateName: database);
   }
 
   FutureOr<List<BookCache>?> getBookCacheDb(int bookid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getBookCacheDb, bookid);
+        ComplexOnDatabaseEventMessage.getBookCacheDb, bookid,
+        isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateContent, contentDb);
+        ComplexOnDatabaseEventMessage.insertOrUpdateContent, contentDb,
+        isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateBook(BookInfo data) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateBook, data);
+        ComplexOnDatabaseEventMessage.insertOrUpdateBook, data,
+        isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data) {
     return sendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduIndex,
-        [bookId, data]);
+        [bookId, data],
+        isolateName: database);
   }
 
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduContentDb, [bookId, contentId]);
+        ComplexOnDatabaseEventMessage.getZhangduContentDb, [bookId, contentId],
+        isolateName: database);
   }
 
   FutureOr<int?> getZhangduContentCid(int bookid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduContentCid, bookid);
+        ComplexOnDatabaseEventMessage.getZhangduContentCid, bookid,
+        isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduContent, content);
+        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduContent, content,
+        isolateName: database);
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduIndexDb, bookId);
+        ComplexOnDatabaseEventMessage.getZhangduIndexDb, bookId,
+        isolateName: database);
   }
 
   FutureOr<void> insertOrUpdateZhangduBook(
       int bookId, int firstChapterId, ZhangduDetailData data) {
     return sendEvent.sendMessage(
         ComplexOnDatabaseEventMessage.insertOrUpdateZhangduBook,
-        [bookId, firstChapterId, data]);
+        [bookId, firstChapterId, data],
+        isolateName: database);
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
@@ -494,32 +528,38 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
 /// implements [ComplexEvent]
 mixin ComplexEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get bookEventDefault => 'bookEventDefault';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'bookEventDefault') yield ComplexEventMessage;
+    if (name == bookEventDefault) yield ComplexEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<List<CacheItem>?> getCacheItems() {
-    return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null);
+    return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<RawContentLines?> getContent(
       int bookid, int contentid, bool update) {
     return sendEvent.sendMessage(
-        ComplexEventMessage.getContent, [bookid, contentid, update]);
+        ComplexEventMessage.getContent, [bookid, contentid, update],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update) {
-    return sendEvent
-        .sendMessage(ComplexEventMessage.getIndexs, [bookid, update]);
+    return sendEvent.sendMessage(
+        ComplexEventMessage.getIndexs, [bookid, update],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<int?> updateBookStatus(int id) {
-    return sendEvent.sendMessage(ComplexEventMessage.updateBookStatus, id);
+    return sendEvent.sendMessage(ComplexEventMessage.updateBookStatus, id,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<BookInfoRoot?> getInfo(int id) {
-    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id);
+    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id,
+        isolateName: bookEventDefault);
   }
 }
 mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
@@ -577,54 +617,64 @@ mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
 /// implements [ZhangduDatabaseEvent]
 mixin ZhangduDatabaseEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get database => 'database';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'database') yield ZhangduDatabaseEventMessage;
+    if (name == database) yield ZhangduDatabaseEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<int?> deleteZhangduContentCache(int bookId) {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.deleteZhangduContentCache, bookId);
+        ZhangduDatabaseEventMessage.deleteZhangduContentCache, bookId,
+        isolateName: database);
   }
 
   Stream<List<int>?> watchZhangduContentCid(int bookId) {
     return sendEvent.sendMessageStream(
-        ZhangduDatabaseEventMessage.watchZhangduContentCid, bookId);
+        ZhangduDatabaseEventMessage.watchZhangduContentCid, bookId,
+        isolateName: database);
   }
 
   FutureOr<List<ZhangduCache>?> getZhangduMainList() {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.getZhangduMainList, null);
+        ZhangduDatabaseEventMessage.getZhangduMainList, null,
+        isolateName: database);
   }
 
   Stream<List<ZhangduCache>?> watchZhangduMainList() {
     return sendEvent.sendMessageStream(
-        ZhangduDatabaseEventMessage.watchZhangduMainList, null);
+        ZhangduDatabaseEventMessage.watchZhangduMainList, null,
+        isolateName: database);
   }
 
   FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.updateZhangduBook, [bookId, book]);
+        ZhangduDatabaseEventMessage.updateZhangduBook, [bookId, book],
+        isolateName: database);
   }
 
   FutureOr<int?> insertZhangduBook(ZhangduCache book) {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.insertZhangduBook, book);
+        ZhangduDatabaseEventMessage.insertZhangduBook, book,
+        isolateName: database);
   }
 
   FutureOr<int?> deleteZhangduBook(int bookId) {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.deleteZhangduBook, bookId);
+        ZhangduDatabaseEventMessage.deleteZhangduBook, bookId,
+        isolateName: database);
   }
 
   Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
     return sendEvent.sendMessageStream(
-        ZhangduDatabaseEventMessage.watchZhangduCurrentCid, bookId);
+        ZhangduDatabaseEventMessage.watchZhangduCurrentCid, bookId,
+        isolateName: database);
   }
 
   FutureOr<List<CacheItem>?> getZhangduCacheItems() {
     return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.getZhangduCacheItems, null);
+        ZhangduDatabaseEventMessage.getZhangduCacheItems, null,
+        isolateName: database);
   }
 }
 mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
@@ -669,30 +719,35 @@ mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
 /// implements [ZhangduComplexEvent]
 mixin ZhangduComplexEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get bookEventDefault => 'bookEventDefault';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'bookEventDefault') yield ZhangduComplexEventMessage;
+    if (name == bookEventDefault) yield ZhangduComplexEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
     return sendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduIndex, [bookId, update]);
+        ZhangduComplexEventMessage.getZhangduIndex, [bookId, update],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) {
     return sendEvent.sendMessage(ZhangduComplexEventMessage.getZhangduContent,
-        [bookId, contentId, contentUrl, name, sort, update]);
+        [bookId, contentId, contentUrl, name, sort, update],
+        isolateName: bookEventDefault);
   }
 
   FutureOr<int?> updateZhangduMainStatus(int bookId) {
     return sendEvent.sendMessage(
-        ZhangduComplexEventMessage.updateZhangduMainStatus, bookId);
+        ZhangduComplexEventMessage.updateZhangduMainStatus, bookId,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
     return sendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduDetail, bookId);
+        ZhangduComplexEventMessage.getZhangduDetail, bookId,
+        isolateName: bookEventDefault);
   }
 }
 mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
@@ -730,134 +785,66 @@ mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
 /// implements [ZhangduNetEvent]
 mixin ZhangduNetEventMessager on SendEvent {
   SendEvent get sendEvent;
+  String get bookEventDefault => 'bookEventDefault';
   Iterable<Type> getProtocols(String name) sync* {
-    if (name == 'bookEventDefault') yield ZhangduNetEventMessage;
+    if (name == bookEventDefault) yield ZhangduNetEventMessage;
     yield* super.getProtocols(name);
   }
 
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author) {
     return sendEvent.sendMessage(
-        ZhangduNetEventMessage.getZhangduSameUsersBooks, author);
+        ZhangduNetEventMessage.getZhangduSameUsersBooks, author,
+        isolateName: bookEventDefault);
   }
 
   FutureOr<ZhangduSearchData?> getZhangduSearchData(
       String query, int pageIndex, int pageSize) {
     return sendEvent.sendMessage(ZhangduNetEventMessage.getZhangduSearchData,
-        [query, pageIndex, pageSize]);
+        [query, pageIndex, pageSize],
+        isolateName: bookEventDefault);
   }
 }
 mixin MultiBookEventDefaultMessagerMixin
-    on SendEvent, Send, ListenMixin, SendMultiIsolateMixin /*impl*/ {
-  SendPortOwner? get defaultSendPortOwner => bookEventDefaultSendPortOwner;
-  Future<Isolate> createIsolateBookEventDefault(SendPort remoteSendPort);
-  Future<Isolate> createIsolateDatabase(SendPort remoteSendPort);
+    on SendEvent, ListenMixin, SendMultiServerMixin /*impl*/ {
+  String get defaultSendPortOwnerName => 'bookEventDefault';
+  Future<RemoteServer> createRemoteServerBookEventDefault();
+  Future<RemoteServer> createRemoteServerDatabase();
 
-  final bookEventDefaultProtocols = [
-    CustomEventMessage,
-    ComplexEventMessage,
-    ZhangduComplexEventMessage,
-    ZhangduNetEventMessage,
-  ];
-  Map<String, List<Type>> get bookEventDefaultAllProtocols => {
-        'database': databaseProtocols,
-        'bookEventDefault': bookEventDefaultProtocols
-      };
-  List<Type> get databaseProtocols => [
-        ComplexOnDatabaseEventMessage,
-        BookCacheEventMessage,
-        BookContentEventMessage,
-        ZhangduDatabaseEventMessage,
-      ];
-
-  SendPortOwner? bookEventDefaultSendPortOwner;
-  SendPortOwner? databaseSendPortOwner;
-
-  void createAllIsolate(SendPort remoteSendPort, add) {
-    final task = createIsolateBookEventDefault(remoteSendPort)
-        .then((isolate) => addNewIsolate('bookEventDefault', isolate));
-    add(task);
-    final databasetask = createIsolateDatabase(remoteSendPort)
-        .then((isolate) => addNewIsolate('database', isolate));
-    add(databasetask);
-    super.createAllIsolate(remoteSendPort, add);
+  Iterable<MapEntry<String, CreateRemoteServer>>
+      createRemoteServerIterable() sync* {
+    yield MapEntry('bookEventDefault', createRemoteServerBookEventDefault);
+    yield MapEntry('database', createRemoteServerDatabase);
+    yield* super.createRemoteServerIterable();
   }
 
-  void onListenReceivedSendPort(SendPortName sendPortName) {
-    final protocols = bookEventDefaultAllProtocols[sendPortName.name];
-    if (protocols != null) {
-      final equal = sendPortName.protocols != null &&
-          sendPortName.protocols!.every(protocols.contains);
-      final sendPortOwner = SendPortOwner(
-        localSendPort: sendPortName.sendPort,
-        remoteSendPort: localSendPort,
-      );
-      switch (sendPortName.name) {
-        case 'database':
-          databaseSendPortOwner = sendPortOwner;
-          break;
-        case 'bookEventDefault':
-          bookEventDefaultSendPortOwner = sendPortOwner;
-          break;
-        default:
-      }
-      Log.i('init: protocol status: $equal | ${sendPortName.name}',
-          onlyDebug: false);
-      return;
-    }
-    super.onListenReceivedSendPort(sendPortName);
+  Iterable<MapEntry<String, List<Type>>> allProtocolsItreable() sync* {
+    yield const MapEntry('bookEventDefault', [
+      CustomEventMessage,
+      ComplexEventMessage,
+      ZhangduComplexEventMessage,
+      ZhangduNetEventMessage
+    ]);
+    yield const MapEntry('database', [
+      ComplexOnDatabaseEventMessage,
+      BookCacheEventMessage,
+      BookContentEventMessage,
+      ZhangduDatabaseEventMessage
+    ]);
+    yield* super.allProtocolsItreable();
   }
 
   void onResumeListen() {
-    if (databaseSendPortOwner == null ||
-        bookEventDefaultSendPortOwner == null) {
-      Log.e('sendPortOwner error', onlyDebug: false);
-    }
-    bookEventDefaultSendPortOwner!.localSendPort.send(SendPortName(
-        'database', databaseSendPortOwner!.localSendPort,
-        protocols: databaseProtocols));
+    sendPortOwners['bookEventDefault']!.localSendPort.send(SendPortName(
+        'database', sendPortOwners['database']!.localSendPort,
+        protocols: allProtocols['database']));
+
     super.onResumeListen();
-  }
-
-  SendPortOwner? getSendPortOwner(messagerType) {
-    var matchName = '';
-    if (messagerType is String) {
-      matchName = messagerType;
-    } else {
-      for (var entry in bookEventDefaultAllProtocols.entries) {
-        if (entry.value.contains(messagerType.runtimeType)) {
-          matchName = entry.key;
-          break;
-        }
-      }
-    }
-    switch (matchName) {
-      case 'database':
-        return databaseSendPortOwner;
-      case 'bookEventDefault':
-        return bookEventDefaultSendPortOwner;
-      default:
-    }
-    return super.getSendPortOwner(messagerType);
-  }
-
-  void disposeIsolate(String isolateName) {
-    switch (isolateName) {
-      case 'database':
-        databaseSendPortOwner = null;
-        return;
-      case 'bookEventDefault':
-        bookEventDefaultSendPortOwner = null;
-        return;
-      default:
-    }
-    super.disposeIsolate(isolateName);
   }
 }
 
 abstract class MultiBookEventDefaultResolveMain
     with
-        Send,
         SendEvent,
         ListenMixin,
         Resolve,
@@ -867,8 +854,7 @@ abstract class MultiBookEventDefaultResolveMain
         ZhangduComplexEventResolve,
         ZhangduNetEventResolve {}
 
-/// 在[Resolve]中为`Messager`提供便携
-mixin MultiBookEventDefaultMixin on Send, SendEvent, Resolve {
+mixin MultiBookEventDefaultMixin on SendEvent, Resolve {
   SendPortOwner? databaseSendPortOwner;
   void onListenReceivedSendPort(SendPortName sendPortName) {
     final sendPortOwner = SendPortOwner(
@@ -876,47 +862,44 @@ mixin MultiBookEventDefaultMixin on Send, SendEvent, Resolve {
       remoteSendPort: localSendPort,
     );
     final localProts = sendPortName.protocols;
-    final prots = getProtocols(sendPortName.name).toList();
     if (localProts != null) {
-      if (prots.every((e) => localProts.contains(e))) {
-        Log.w('bookEventDefault: received ${sendPortName.name}, prots: matched',
-            onlyDebug: false);
-      } else {
-        Log.w(
-            'bookEventDefault: not metched, ${sendPortName.name}:$localProts, remote: $prots',
-            onlyDebug: false);
-      }
+      final prots = getProtocols(sendPortName.name).toList();
+      final success = prots.every((e) => localProts.contains(e));
+      Log.w(
+          'eventDefault: received ${sendPortName.name}, prots:${success ? '' : ' not'} matched',
+          onlyDebug: false);
+    } else {
+      Log.e('${sendPortName.name} protocols isEmpty', onlyDebug: false);
     }
     switch (sendPortName.name) {
       case 'database':
         databaseSendPortOwner = sendPortOwner;
+        break;
+      default:
+        super.onListenReceivedSendPort(sendPortName);
         return;
-      default:
     }
-    super.onListenReceivedSendPort(sendPortName);
-  }
-
-  SendPortOwner? getSendPortOwner(key) {
-    switch (key.runtimeType) {
-      case ComplexOnDatabaseEventMessage:
-      case BookCacheEventMessage:
-      case BookContentEventMessage:
-      case ZhangduDatabaseEventMessage:
-        return databaseSendPortOwner;
-
-      default:
-    }
-    return super.getSendPortOwner(key);
-  }
-
-  FutureOr<bool> onClose() async {
-    databaseSendPortOwner = null;
-    return super.onClose();
+    onResume();
   }
 
   bool listen(message) {
     if (add(message)) return true;
     return super.listen(message);
+  }
+
+  SendPortOwner? getSendPortOwner(isolateName) {
+    switch (isolateName) {
+      case 'database':
+        return databaseSendPortOwner;
+
+      default:
+    }
+    return super.getSendPortOwner(isolateName);
+  }
+
+  FutureOr<bool> onClose() async {
+    databaseSendPortOwner = null;
+    return super.onClose();
   }
 
   void onResumeListen() {
@@ -928,7 +911,7 @@ mixin MultiBookEventDefaultMixin on Send, SendEvent, Resolve {
           CustomEventMessage,
           ComplexEventMessage,
           ZhangduComplexEventMessage,
-          ZhangduNetEventMessage,
+          ZhangduNetEventMessage
         ],
       ));
     super.onResumeListen();
@@ -939,13 +922,13 @@ abstract class MultiDatabaseResolveMain
     with
         ListenMixin,
         Resolve,
+        MultiDatabaseMixin,
         BookCacheEventResolve,
         BookContentEventResolve,
         ComplexOnDatabaseEventResolve,
-        ZhangduDatabaseEventResolve,
-        MultiDatabaseOnResumeMixin {}
+        ZhangduDatabaseEventResolve {}
 
-mixin MultiDatabaseOnResumeMixin on Resolve /*impl*/ {
+mixin MultiDatabaseMixin on Resolve {
   void onResumeListen() {
     if (remoteSendPort != null)
       remoteSendPort!.send(SendPortName(
@@ -955,7 +938,7 @@ mixin MultiDatabaseOnResumeMixin on Resolve /*impl*/ {
           BookCacheEventMessage,
           BookContentEventMessage,
           ComplexOnDatabaseEventMessage,
-          ZhangduDatabaseEventMessage,
+          ZhangduDatabaseEventMessage
         ],
       ));
     super.onResumeListen();

@@ -7,6 +7,8 @@ part of 'nop_database.dart';
 // **************************************************************************
 
 // ignore_for_file: curly_braces_in_flow_control_structures
+// ignore_for_file: non_constant_identifier_names
+
 abstract class _GenBookDatabase extends $Database {
   late final _tables = <DatabaseTable>[
     bookCache,

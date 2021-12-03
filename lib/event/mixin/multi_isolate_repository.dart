@@ -17,7 +17,7 @@ class MultiIsolateRepository extends Repository
         // SendEventMixin,
         SendEventPortMixin,
         SendCacheMixin,
-        SendMultiIsolateMixin,
+        SendMultiServerMixin,
         MultiBookEventDefaultMessagerMixin // 默认
 {
   // [appPath, cachePath, useSqflite3]
@@ -31,15 +31,19 @@ class MultiIsolateRepository extends Repository
   }
 
   @override
-  Future<Isolate> createIsolateDatabase(SendPort remoteSendPort) {
+  Future<RemoteServer> createRemoteServerDatabase() async {
     assert(args != null);
-    return Isolate.spawn(dataBaseEntryPoint, [remoteSendPort, ...?args]);
+    final isolate =
+        await Isolate.spawn(dataBaseEntryPoint, [localSendPort, ...?args]);
+    return RemoteIsolateServer(isolate);
   }
 
   @override
-  Future<Isolate> createIsolateBookEventDefault(SendPort remoteSendPort) {
+  Future<RemoteServer> createRemoteServerBookEventDefault() async {
     assert(args != null);
-    return Isolate.spawn(_multiIsolateEntryPoint, [remoteSendPort, ...?args]);
+    final isolate =
+        await Isolate.spawn(_multiIsolateEntryPoint, [localSendPort, ...?args]);
+    return RemoteIsolateServer(isolate);
   }
 
   @override
@@ -113,7 +117,7 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
 
   @override
   FutureOr<void> closeTask() => onClose();
-  
+
   @override
   SendPortOwner? getSendPortOwner(key) {
     final owner = super.getSendPortOwner(key);
