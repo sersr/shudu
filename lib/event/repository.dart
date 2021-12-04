@@ -19,8 +19,8 @@ abstract class Repository extends BookEventMessagerMain
   static Repository? _instance;
 
   factory Repository.create() {
-    // _instance ??= SingleRepository();
     _instance ??= MultiIsolateRepository();
+    _instance ??= SingleRepository();
     return _instance!;
   }
 

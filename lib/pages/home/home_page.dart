@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -169,9 +170,8 @@ class _MyHomePageState extends State<MyHomePage>
                       onTap: () => showSearch(
                           context: context,
                           delegate: BookSearchPage(
-                              textStyle: context
-                                  .read<TextStyleConfig>()
-                                  .data.body2)),
+                              textStyle:
+                                  context.read<TextStyleConfig>().data.body2)),
                       child: SizedBox(
                         height: height,
                         width: height,
@@ -222,10 +222,10 @@ class _MyHomePageState extends State<MyHomePage>
                 selectedFontSize: 11.0,
                 unselectedFontSize: 11.0,
                 selectedItemColor: light
-                    ? ui.Color.fromARGB(255, 27, 27, 27)
+                    ? ui.Color.fromARGB(255, 5, 145, 238)
                     : ui.Color.fromARGB(255, 216, 216, 216),
                 unselectedItemColor: light
-                    ? ui.Color.fromARGB(255, 110, 110, 110)
+                    ? ui.Color.fromARGB(255, 109, 116, 119)
                     : ui.Color.fromARGB(255, 112, 112, 112),
                 items: const [
                   BottomNavigationBarItem(
@@ -417,12 +417,18 @@ class BookSearchPage extends SearchDelegate<void> {
   }
 
   @override
-  Widget buildLeading(BuildContext context) => Center(
+  Widget buildLeading(BuildContext context) => InkWell(
+      splashFactory: InkRipple.splashFactory,
+      borderRadius: BorderRadius.circular(100),
+      onTap: () {
+        Log.w('sss');
+        Navigator.maybePop(context);
+      },
       child: SizedBox(
           // color: Colors.cyan,
           height: 100,
           width: 100,
-          child: Icon(Icons.ac_unit, size: 30)));
+          child: Icon(Icons.arrow_back, size: 30)));
   @override
   Widget buildSuggestions(BuildContext context) {
     return wrap(context, suggestions(context));
@@ -706,6 +712,7 @@ class BookSearchPage extends SearchDelegate<void> {
 
   @override
   void showResults(BuildContext context) {
+    if (query.isEmpty) return;
     final search = context.read<SearchNotifier>();
     search.load(query);
     super.showResults(context);

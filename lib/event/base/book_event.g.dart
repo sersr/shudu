@@ -97,7 +97,7 @@ mixin CustomEventDynamic {
   FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
 }
 mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
-  late final _customEventResolveFuncList = List<DynamicCallback>.unmodifiable([
+  late final _customEventResolveFuncList = List<Function>.unmodifiable([
     _getSearchData_0,
     _getImageBytes_1,
     _getHiveShudanLists_2,
@@ -107,6 +107,11 @@ mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
     _getShudanDetail_6,
     _getCategoryData_7
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('bookEventDefault', CustomEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onCustomEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -151,9 +156,9 @@ mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
 mixin CustomEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == bookEventDefault) yield CustomEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(bookEventDefault, CustomEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
@@ -199,8 +204,7 @@ mixin CustomEventMessager on SendEvent {
   }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
-  late final _bookCacheEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable([
+  late final _bookCacheEventResolveFuncList = List<Function>.unmodifiable([
     _getMainList_0,
     _watchMainList_1,
     _updateBook_2,
@@ -208,6 +212,11 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
     _deleteBook_4,
     _watchCurrentCid_5
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('database', BookCacheEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onBookCacheEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -241,9 +250,9 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
 mixin BookCacheEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get database => 'database';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == database) yield BookCacheEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(database, BookCacheEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<List<BookCache>?> getMainList() {
@@ -280,8 +289,12 @@ mixin BookCacheEventMessager on SendEvent {
 }
 mixin BookContentEventResolve on Resolve implements BookContentEvent {
   late final _bookContentEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable(
-          [_watchBookContentCid_0, _deleteCache_1]);
+      List<Function>.unmodifiable([_watchBookContentCid_0, _deleteCache_1]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('database', BookContentEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onBookContentEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -312,9 +325,9 @@ mixin BookContentEventResolve on Resolve implements BookContentEvent {
 mixin BookContentEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get database => 'database';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == database) yield BookContentEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(database, BookContentEventMessage);
+    yield* super.getProtocols();
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
@@ -331,7 +344,7 @@ mixin BookContentEventMessager on SendEvent {
 mixin ComplexOnDatabaseEventResolve on Resolve
     implements ComplexOnDatabaseEvent {
   late final _complexOnDatabaseEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable([
+      List<Function>.unmodifiable([
     _getIndexsDbCacheItem_0,
     _getAllBookId_1,
     _insertOrUpdateIndexs_2,
@@ -347,6 +360,11 @@ mixin ComplexOnDatabaseEventResolve on Resolve
     _getZhangduIndexDb_12,
     _insertOrUpdateZhangduBook_13
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('database', ComplexOnDatabaseEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onComplexOnDatabaseEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -396,9 +414,9 @@ mixin ComplexOnDatabaseEventResolve on Resolve
 mixin ComplexOnDatabaseEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get database => 'database';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == database) yield ComplexOnDatabaseEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(database, ComplexOnDatabaseEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<List<BookIndex>?> getIndexsDbCacheItem() {
@@ -489,13 +507,18 @@ mixin ComplexOnDatabaseEventMessager on SendEvent {
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
-  late final _complexEventResolveFuncList = List<DynamicCallback>.unmodifiable([
+  late final _complexEventResolveFuncList = List<Function>.unmodifiable([
     _getCacheItems_0,
     _getContent_1,
     _getIndexs_2,
     _updateBookStatus_3,
     _getInfo_4
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('bookEventDefault', ComplexEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onComplexEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -529,9 +552,9 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
 mixin ComplexEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == bookEventDefault) yield ComplexEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(bookEventDefault, ComplexEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<List<CacheItem>?> getCacheItems() {
@@ -564,7 +587,7 @@ mixin ComplexEventMessager on SendEvent {
 }
 mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
   late final _zhangduDatabaseEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable([
+      List<Function>.unmodifiable([
     _deleteZhangduContentCache_0,
     _watchZhangduContentCid_1,
     _getZhangduMainList_2,
@@ -575,6 +598,11 @@ mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
     _watchZhangduCurrentCid_7,
     _getZhangduCacheItems_8
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('database', ZhangduDatabaseEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onZhangduDatabaseEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -618,9 +646,9 @@ mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
 mixin ZhangduDatabaseEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get database => 'database';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == database) yield ZhangduDatabaseEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(database, ZhangduDatabaseEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<int?> deleteZhangduContentCache(int bookId) {
@@ -678,13 +706,17 @@ mixin ZhangduDatabaseEventMessager on SendEvent {
   }
 }
 mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
-  late final _zhangduComplexEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable([
+  late final _zhangduComplexEventResolveFuncList = List<Function>.unmodifiable([
     _getZhangduIndex_0,
     _getZhangduContent_1,
     _updateZhangduMainStatus_2,
     _getZhangduDetail_3
   ]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('bookEventDefault', ZhangduComplexEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onZhangduComplexEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -720,9 +752,9 @@ mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
 mixin ZhangduComplexEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == bookEventDefault) yield ZhangduComplexEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(bookEventDefault, ZhangduComplexEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
@@ -751,9 +783,13 @@ mixin ZhangduComplexEventMessager on SendEvent {
   }
 }
 mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
-  late final _zhangduNetEventResolveFuncList =
-      List<DynamicCallback>.unmodifiable(
-          [_getZhangduSameUsersBooks_0, _getZhangduSearchData_1]);
+  late final _zhangduNetEventResolveFuncList = List<Function>.unmodifiable(
+      [_getZhangduSameUsersBooks_0, _getZhangduSearchData_1]);
+  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
+    yield const MapEntry('bookEventDefault', ZhangduNetEventMessage);
+    yield* super.getResolveProtocols();
+  }
+
   bool onZhangduNetEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
@@ -786,9 +822,9 @@ mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
 mixin ZhangduNetEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<Type> getProtocols(String name) sync* {
-    if (name == bookEventDefault) yield ZhangduNetEventMessage;
-    yield* super.getProtocols(name);
+  Iterable<MapEntry<String, Type>> getProtocols() sync* {
+    yield MapEntry(bookEventDefault, ZhangduNetEventMessage);
+    yield* super.getProtocols();
   }
 
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
@@ -810,7 +846,6 @@ mixin MultiBookEventDefaultMessagerMixin
   String get defaultSendPortOwnerName => 'bookEventDefault';
   Future<RemoteServer> createRemoteServerBookEventDefault();
   Future<RemoteServer> createRemoteServerDatabase();
-
   Iterable<MapEntry<String, CreateRemoteServer>>
       createRemoteServerIterable() sync* {
     yield MapEntry('bookEventDefault', createRemoteServerBookEventDefault);
@@ -818,26 +853,10 @@ mixin MultiBookEventDefaultMessagerMixin
     yield* super.createRemoteServerIterable();
   }
 
-  Iterable<MapEntry<String, List<Type>>> allProtocolsItreable() sync* {
-    yield const MapEntry('bookEventDefault', [
-      CustomEventMessage,
-      ComplexEventMessage,
-      ZhangduComplexEventMessage,
-      ZhangduNetEventMessage
-    ]);
-    yield const MapEntry('database', [
-      ComplexOnDatabaseEventMessage,
-      BookCacheEventMessage,
-      BookContentEventMessage,
-      ZhangduDatabaseEventMessage
-    ]);
-    yield* super.allProtocolsItreable();
-  }
-
   void onResumeListen() {
     sendPortOwners['bookEventDefault']!.localSendPort.send(SendPortName(
         'database', sendPortOwners['database']!.localSendPort,
-        protocols: allProtocols['database']));
+        protocols: getResolveProtocols('database')));
 
     super.onResumeListen();
   }
@@ -848,99 +867,17 @@ abstract class MultiBookEventDefaultResolveMain
         SendEvent,
         ListenMixin,
         Resolve,
-        MultiBookEventDefaultMixin,
+        ResolveMultiRecievedMixin,
         CustomEventResolve,
         ComplexEventResolve,
         ZhangduComplexEventResolve,
         ZhangduNetEventResolve {}
 
-mixin MultiBookEventDefaultMixin on SendEvent, Resolve {
-  SendPortOwner? databaseSendPortOwner;
-  void onListenReceivedSendPort(SendPortName sendPortName) {
-    final sendPortOwner = SendPortOwner(
-      localSendPort: sendPortName.sendPort,
-      remoteSendPort: localSendPort,
-    );
-    final localProts = sendPortName.protocols;
-    if (localProts != null) {
-      final prots = getProtocols(sendPortName.name).toList();
-      final success = prots.every((e) => localProts.contains(e));
-      Log.w(
-          'eventDefault: received ${sendPortName.name}, prots:${success ? '' : ' not'} matched',
-          onlyDebug: false);
-    } else {
-      Log.e('${sendPortName.name} protocols isEmpty', onlyDebug: false);
-    }
-    switch (sendPortName.name) {
-      case 'database':
-        databaseSendPortOwner = sendPortOwner;
-        break;
-      default:
-        super.onListenReceivedSendPort(sendPortName);
-        return;
-    }
-    onResume();
-  }
-
-  bool listen(message) {
-    if (add(message)) return true;
-    return super.listen(message);
-  }
-
-  SendPortOwner? getSendPortOwner(isolateName) {
-    switch (isolateName) {
-      case 'database':
-        return databaseSendPortOwner;
-
-      default:
-    }
-    return super.getSendPortOwner(isolateName);
-  }
-
-  FutureOr<bool> onClose() async {
-    databaseSendPortOwner = null;
-    return super.onClose();
-  }
-
-  void onResumeListen() {
-    if (remoteSendPort != null)
-      remoteSendPort!.send(SendPortName(
-        'bookEventDefault',
-        localSendPort,
-        protocols: [
-          CustomEventMessage,
-          ComplexEventMessage,
-          ZhangduComplexEventMessage,
-          ZhangduNetEventMessage
-        ],
-      ));
-    super.onResumeListen();
-  }
-}
-
 abstract class MultiDatabaseResolveMain
     with
         ListenMixin,
         Resolve,
-        MultiDatabaseMixin,
         BookCacheEventResolve,
         BookContentEventResolve,
         ComplexOnDatabaseEventResolve,
         ZhangduDatabaseEventResolve {}
-
-mixin MultiDatabaseMixin on Resolve {
-  void onResumeListen() {
-    if (remoteSendPort != null)
-      remoteSendPort!.send(SendPortName(
-        'database',
-        localSendPort,
-        protocols: [
-          BookCacheEventMessage,
-          BookContentEventMessage,
-          ComplexOnDatabaseEventMessage,
-          ZhangduDatabaseEventMessage
-        ],
-      ));
-    super.onResumeListen();
-  }
-}

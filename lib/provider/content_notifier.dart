@@ -750,8 +750,8 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       if (_bookid != bookid) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
-        final pages =
-            await _genTextData(_bookid, split(lines.source), lines.cname!);
+        final allLines = debugTest ? ['debugTest'] : split(lines.source);
+        final pages = await _genTextData(_bookid, allLines, lines.cname!);
 
         if (pages.isEmpty) return;
         _cnpid = TextData(
@@ -759,42 +759,24 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
           nid: lines.nid,
           pid: lines.pid,
           cid: lines.cid,
-          hasContent: lines.hasContent,
+          hasContent: debugTest ? false : lines.hasContent,
           cname: lines.cname,
         );
+        debugTest = false;
       }
     }
     if (_cnpid != null) {
       final old = _caches.remove(_cnpid.cid);
       old?.dispose();
       _caches[_cnpid.cid!] = _cnpid.clone();
-      if (!_cnpid.hasContent && api == ApiType.zhangdu) {
-        _autoAddReloadIds(contentid);
-      }
       _cnpid.dispose();
     }
   }
-
-  bool _autoAddReloadIds(int id);
 }
 
 mixin ContentTasks on ContentDataBase, ContentLoad {
   // 所有异步任务
-  var _futures = <int, Future>{};
-
-  /// 管理整个章节是否载入[_caches]的标识码
-  ///
-  /// 决定文本布局之后是否有效
-
-  @override
-  void didChangeKey() {
-    super.didChangeKey();
-
-    /// [_futures]依赖于contentid
-    /// 当[key]自增时，意味着正在进行的任务将被抛弃
-    /// 由于[_futures]自动管理状态，创建一个新对象避免干扰
-    _futures = <int, Future>{};
-  }
+  final _futures = <int, Future>{};
 
   void _loadTasks(int _bookid, int? contentid) {
     if (!inBook) return;
@@ -816,7 +798,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   bool _scheduled = false;
 
   void scheduleTask() {
-    if (_scheduled) return;
+    if (_scheduled || !inBook) return;
     Timer(const Duration(milliseconds: 100), () {
       _scheduled = false;
       _loadResolve();
@@ -826,15 +808,11 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   }
 
   void _loadAuto() {
-    if (inBook)
-      _getCurrentIds()
-          .where((e) => !_caches.containsKey(e))
-          .forEach(_loadWithId);
+    _getCurrentIds().where((e) => !_caches.containsKey(e)).forEach(_loadWithId);
   }
 
   void _loadWithId(int? id) => _loadTasks(bookid, id);
 
-  @override
   bool _autoAddReloadIds(int contentId) {
     if (_reloadIds.contains(contentId)) return true;
     assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
@@ -849,30 +827,20 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   // 处于最后一章节时，查看是否有更新
   Future<void> _loadResolve() async {
     final updateCid = tData.cid;
-    if (updateCid == null) return;
-    // if (api == ApiType.zhangdu) {
-    //   return;
-    // }
-    if (tData.nid == -1 || !tData.hasContent || debugTest) {
-      if (tData.contentIsEmpty) return;
-
+    if (updateCid == null || initQueue.actived) return;
+    final updateNid = tData.nid == -1;
+    final updateContent = !tData.hasContent;
+    if (updateNid || updateContent) {
+      Log.w('resolve $updateCid', onlyDebug: false);
       bool _getdata() {
         if (_caches.containsKey(updateCid) && tData.cid == updateCid) {
           if (tData.contentIsNotEmpty &&
               (currentPage == tData.content.length || currentPage == 1)) {
             final _tData = _getTextData(updateCid)!;
-            if (_tData.nid != -1 && _tData.hasContent || debugTest) {
-              startFirstEvent(
-                  only: false,
-                  clear: false,
-                  onDone: () {
-                    if (debugTest) {
-                      debugTest = false;
-                    }
-                    Log.w(
-                        'update $updateCid url: ${Api.contentUrl(bookid, updateCid)}',
-                        onlyDebug: false);
-                  });
+            // hasContent 有可能还是 [false]
+            if ((updateNid && _tData.nid != -1) ||
+                (updateContent && _tData.hasContent)) {
+              startFirstEvent(only: false, clear: false);
               return true;
             }
           }
@@ -1763,7 +1731,10 @@ extension FutureTasksMap<T, E> on Map<T, Future<E>> {
     void Function(Future<E>)? solveTask,
   }) {
     assert(Log.i('addTask: $key'));
-    if (containsKey(key)) return;
+    Log.e('keys: $keys');
+    if (containsKey(key)) {
+      return;
+    }
     this[key] = f;
 
     f.whenComplete(() {

@@ -34,7 +34,7 @@ class BookItem extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxHeight: 98, minHeight: 98),
       width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: CustomMultiChildLayout(
         delegate: ImageLayout(width: 68),
         children: [

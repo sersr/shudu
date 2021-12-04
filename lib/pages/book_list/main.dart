@@ -19,6 +19,7 @@ class ListMainPage extends StatelessWidget {
     final light = isLight(context);
     Widget _builder(String text, VoidCallback onTap) {
       return btn1(
+        elevation: 0.5,
         radius: 10.0,
         bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
         splashColor: light ? null : Color.fromRGBO(60, 60, 60, 1),
