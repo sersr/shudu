@@ -3,8 +3,7 @@ import 'package:utils/utils.dart';
 
 import '../api/api.dart';
 import '../data/data.dart';
-import '../data/zhangdu/zhangdu_detail.dart';
-import '../data/zhangdu/zhangdu_same_users_books.dart';
+
 import '../event/event.dart';
 import 'book_index_notifier.dart';
 

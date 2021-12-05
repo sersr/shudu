@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
-import '../../data/zhangdu/zhangdu_detail.dart';
 import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/image_text.dart';

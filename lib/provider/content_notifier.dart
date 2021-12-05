@@ -11,7 +11,6 @@ import 'package:screen_brightness/screen_brightness.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:wakelock/wakelock.dart';
 
-import '../api/api.dart';
 import '../data/zhangdu/zhangdu_chapter.dart';
 import '../database/database.dart';
 import '../event/event.dart';
@@ -725,7 +724,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
       assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
       if (url != null && name != null && sort != null) {
-        final lines = await repository.bookEvent.zhangduEvent
+        final lines = await repository.bookEvent
             .getZhangduContent(_bookid, contentid, url, name, sort, update);
         if (_bookid != bookid) return;
 
@@ -812,7 +811,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   }
 
   void _loadWithId(int? id) => _loadTasks(bookid, id);
-
+  bool canReload(int id) => !_reloadIds.contains(id);
   bool _autoAddReloadIds(int contentId) {
     if (_reloadIds.contains(contentId)) return true;
     assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
@@ -827,7 +826,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   // 处于最后一章节时，查看是否有更新
   Future<void> _loadResolve() async {
     final updateCid = tData.cid;
-    if (updateCid == null || initQueue.actived) return;
+    if (updateCid == null || initQueue.actived || !canReload(updateCid)) return;
     final updateNid = tData.nid == -1;
     final updateContent = !tData.hasContent;
     if (updateNid || updateContent) {
@@ -837,7 +836,6 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
           if (tData.contentIsNotEmpty &&
               (currentPage == tData.content.length || currentPage == 1)) {
             final _tData = _getTextData(updateCid)!;
-            // hasContent 有可能还是 [false]
             if ((updateNid && _tData.nid != -1) ||
                 (updateContent && _tData.hasContent)) {
               startFirstEvent(only: false, clear: false);
@@ -848,11 +846,14 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
         return false;
       }
 
+      await releaseUI;
       if (_getdata()) return;
 
       if (_autoAddReloadIds(updateCid)) return;
-      await load(bookid, updateCid, update: true);
-      _getdata();
+      if ((currentPage == tData.content.length || currentPage == 1)) {
+        await load(bookid, updateCid, update: true);
+        _getdata();
+      }
     }
   }
 
@@ -1731,7 +1732,6 @@ extension FutureTasksMap<T, E> on Map<T, Future<E>> {
     void Function(Future<E>)? solveTask,
   }) {
     assert(Log.i('addTask: $key'));
-    Log.e('keys: $keys');
     if (containsKey(key)) {
       return;
     }

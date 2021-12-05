@@ -6,11 +6,10 @@ import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/data/biquge/book_info.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/data/zhangdu/zhangdu_chapter.dart';
-import 'package:shudu/event/base/complex_event.dart';
+import 'package:shudu/event/base/server_event.dart';
 import 'package:shudu/event/mixin/base/database_mixin.dart';
 
-class Database
-    with ListenMixin, Resolve, ComplexOnDatabaseEvent, DatabaseMixin {
+class Database with ListenMixin, Resolve, ServerEvent, DatabaseMixin {
   @override
   String get appPath => ':memory:';
   @override
@@ -42,28 +41,12 @@ class Database
     throw UnimplementedError();
   }
 
-  @override
-  FutureOr<Set<int>?> getAllBookId() {
-    throw UnimplementedError();
-  }
-
-  @override
   FutureOr<List<BookCache>?> getBookCacheDb(int bookid) {
     throw UnimplementedError();
   }
 
   @override
-  FutureOr<List<BookContentDb>?> getContentDb(int bookid, int contentid) {
-    throw UnimplementedError();
-  }
-
-  @override
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<BookIndex>?> getIndexsDbCacheItem() {
     throw UnimplementedError();
   }
 

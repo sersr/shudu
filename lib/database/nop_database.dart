@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/nop_db_sqlite.dart';

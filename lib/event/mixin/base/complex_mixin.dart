@@ -1,68 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';
-import '../../../database/nop_database.dart';
-import '../../../pages/book_list/cache_manager.dart';
+import '../../../database/database.dart';
 import '../../base/book_event.dart';
-import '../../base/complex_event.dart';
-import 'network_mixin.dart';
+import 'zhangdu_mixin.dart';
 
-/// 复合任务
-/// 处理复杂任务
-
-mixin ComplexMixin on NetworkMixin
-    implements
-        ComplexOnDatabaseEvent,
-        ComplexEvent /* override 提示 */,
-        CustomEventDynamic {
+/// 可以处理跨隔离任务
+mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
   @override
-  Future<Uint8ListType> getImageBytesDynamic(String img) async {
-    final data = await getImageBytes(img);
-    return Uint8ListType(data);
-  }
-
-  @override
-  Future<int> updateBookStatus(int id) async {
-    await getInfo(id);
-    return 0;
-  }
-
-  @override
-  Future<BookInfoRoot> getInfo(int id) async {
+  FutureOr<BookInfoRoot?> getInfo(int id) async {
     final rootData = await getInfoNet(id);
-    final data = rootData.data;
+    final data = rootData?.data;
     if (data != null) insertOrUpdateBook(data);
 
     return rootData;
-  }
-
-  @override
-  Future<List<CacheItem>> getCacheItems() async {
-    final list = <CacheItem>[];
-    final stop = Stopwatch()..start();
-    var queryList = await getIndexsDbCacheItem();
-    var map =
-        queryList?.asMap().map((key, value) => MapEntry(value.bookId, value)) ??
-            const <int?, BookIndex>{};
-
-    var allBookids = await getAllBookId() ?? <int>{};
-
-    for (var a in allBookids) {
-      final index = map[a];
-      final itemCounts = index?.itemCounts;
-      if (itemCounts != null) {
-        final item = CacheItem(a, itemCounts, index?.cacheItemCounts ?? 0);
-        list.add(item);
-      } else {
-        list.add(CacheItem(a, 0, 0));
-      }
-    }
-    stop.stop();
-    Log.w('use time: ${stop.elapsedMilliseconds} ms', onlyDebug: false);
-    return list;
   }
 
   @override
@@ -73,17 +28,17 @@ mixin ComplexMixin on NetworkMixin
 
     if (update) {
       return await _getContentNet(bookid, contentid) ??
-          await _getContentDb(bookid, contentid) ??
+          await getContentDb(bookid, contentid) ??
           RawContentLines.none;
     } else {
-      return await _getContentDb(bookid, contentid) ??
+      return await getContentDb(bookid, contentid) ??
           await _getContentNet(bookid, contentid) ??
           RawContentLines.none;
     }
   }
 
   @override
-  Future<NetBookIndex> getIndexs(int bookid, bool update) async {
+  Future<NetBookIndex?> getIndexs(int bookid, bool update) async {
     if (update) {
       return _getIndexsNet(bookid);
     } else {
@@ -93,10 +48,22 @@ mixin ComplexMixin on NetworkMixin
     }
   }
 
-  Future<NetBookIndex> _getIndexsNet(int bookid) async {
+  NetBookIndex getIndexsDecodeLists(args) {
+    try {
+      return BookIndexRoot.fromJson(jsonDecode(args)).data ??
+          const NetBookIndex();
+    } catch (e) {
+      Log.e('url:$args, $e');
+      rethrow;
+    }
+  }
+
+  Future<NetBookIndex?> _getIndexsNet(int bookid) async {
     final str = await getIndexsNet(bookid);
-    insertOrUpdateIndexs(bookid, str);
-    return getIndexsDecodeLists(str);
+    if (str != null) {
+      insertOrUpdateIndexs(bookid, str);
+      return getIndexsDecodeLists(str);
+    }
   }
 
   Future<NetBookIndex> _getIndexsDb(bookid) async {
@@ -110,11 +77,11 @@ mixin ComplexMixin on NetworkMixin
 
     final bookContent = await getContentNet(bookid, contentid);
 
-    if (bookContent.content != null) {
+    if (bookContent?.content != null) {
       // final lines = split(bookContent.content!);
 
       // if (lines.isNotEmpty) {
-      insertOrUpdateContent(bookContent);
+      insertOrUpdateContent(bookContent!);
       return RawContentLines(
         source: bookContent.content!,
         nid: bookContent.nid,
@@ -128,24 +95,34 @@ mixin ComplexMixin on NetworkMixin
     return null;
   }
 
-  Future<RawContentLines?> _getContentDb(int bookid, int contentid) async {
-    final queryList = await getContentDb(bookid, contentid);
-    if (queryList?.isNotEmpty == true) {
-      final bookContent = queryList!.last;
-      if (bookContent.content != null) {
-        // final lines = split(bookContent.content!);
-        // if (lines.isNotEmpty) {
-        return RawContentLines(
-          source: bookContent.content!,
-          nid: bookContent.nid,
-          pid: bookContent.pid,
-          cid: bookContent.cid,
-          hasContent: bookContent.hasContent,
-          cname: bookContent.cname,
-        );
-        // }
-      }
+  // zhangdu
+  @override
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update) async {
+    if (update) {
+      return await _getZhangduContentNet(
+              bookId, contentId, name, sort, contentUrl) ??
+          await getZhangduContentDb(bookId, contentId);
+    } else {
+      return await getZhangduContentDb(bookId, contentId) ??
+          await _getZhangduContentNet(
+              bookId, contentId, name, sort, contentUrl);
     }
-    return null;
+  }
+
+  Future<List<String>?> _getZhangduContentNet(int bookId, int contentId,
+      String name, int sort, String contentUrl) async {
+    final result = await getZhangduContentNet(contentUrl);
+    if (result != null) {
+      final _raw = ZhangduComplexMixin.replaceAll(result);
+      insertOrUpdateZhangduContent(ZhangduContent(
+        bookId: bookId,
+        contentId: contentId,
+        name: name,
+        data: result,
+        sort: sort,
+      ));
+      return split(_raw);
+    }
   }
 }

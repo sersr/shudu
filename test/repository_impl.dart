@@ -54,14 +54,11 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
   @override
   late final SendEvent sendEvent = this;
 
-  @override
-  void onResume() {}
-
   SendPortOwner? sendPortOwner;
 
   @override
   SendPortOwner? getSendPortOwner(key) {
-    return sendPortOwner;
+    return sendPortOwner ?? super.getSendPortOwner(key);
   }
 }
 

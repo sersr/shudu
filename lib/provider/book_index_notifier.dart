@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:utils/utils.dart';
 
 import '../data/data.dart';
-import '../data/zhangdu/zhangdu_chapter.dart';
 import '../event/event.dart';
 
 enum ApiType {

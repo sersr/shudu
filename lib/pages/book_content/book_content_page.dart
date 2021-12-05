@@ -173,7 +173,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await blocCache.load();
 
     EventQueue.runTaskOnQueue(runtimeType, () async {
-      // OptionsNotifier.autoSetStatus(context);
       await uiOverlay(hide: false);
     });
     bloc.addInitEventTask(() => null);

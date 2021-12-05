@@ -16,7 +16,12 @@ enum CustomEventMessage {
   getTopLists,
   getCategLists,
   getShudanDetail,
-  getCategoryData
+  getCategoryData,
+  updateBookStatus,
+  getContentNet,
+  getInfoNet,
+  getIndexsNet,
+  getZhangduContentNet
 }
 enum BookCacheEventMessage {
   getMainList,
@@ -24,16 +29,14 @@ enum BookCacheEventMessage {
   updateBook,
   insertBook,
   deleteBook,
-  watchCurrentCid
+  watchCurrentCid,
+  getCacheItems
 }
 enum BookContentEventMessage { watchBookContentCid, deleteCache }
-enum ComplexOnDatabaseEventMessage {
-  getIndexsDbCacheItem,
-  getAllBookId,
-  insertOrUpdateIndexs,
+enum ServerEventMessage {
   getContentDb,
+  insertOrUpdateIndexs,
   getIndexsDb,
-  getBookCacheDb,
   insertOrUpdateContent,
   insertOrUpdateBook,
   insertOrUpdateZhangduIndex,
@@ -43,13 +46,7 @@ enum ComplexOnDatabaseEventMessage {
   getZhangduIndexDb,
   insertOrUpdateZhangduBook
 }
-enum ComplexEventMessage {
-  getCacheItems,
-  getContent,
-  getIndexs,
-  updateBookStatus,
-  getInfo
-}
+enum ComplexEventMessage { getContent, getIndexs, getInfo, getZhangduContent }
 enum ZhangduDatabaseEventMessage {
   deleteZhangduContentCache,
   watchZhangduContentCid,
@@ -63,7 +60,6 @@ enum ZhangduDatabaseEventMessage {
 }
 enum ZhangduComplexEventMessage {
   getZhangduIndex,
-  getZhangduContent,
   updateZhangduMainStatus,
   getZhangduDetail
 }
@@ -76,6 +72,7 @@ abstract class BookEventResolveMain extends BookEvent
         CustomEventResolve,
         BookCacheEventResolve,
         BookContentEventResolve,
+        ServerEventResolve,
         ComplexEventResolve,
         ZhangduDatabaseEventResolve,
         ZhangduComplexEventResolve,
@@ -87,6 +84,7 @@ abstract class BookEventMessagerMain extends BookEvent
         CustomEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
+        ServerEventMessager,
         ComplexEventMessager,
         ZhangduDatabaseEventMessager,
         ZhangduComplexEventMessager,
@@ -96,7 +94,8 @@ abstract class BookEventMessagerMain extends BookEvent
 mixin CustomEventDynamic {
   FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
 }
-mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
+mixin CustomEventResolve on Resolve
+    implements CustomEvent, ServerNetEvent, CustomEventDynamic {
   late final _customEventResolveFuncList = List<Function>.unmodifiable([
     _getSearchData_0,
     _getImageBytes_1,
@@ -105,7 +104,12 @@ mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
     _getTopLists_4,
     _getCategLists_5,
     _getShudanDetail_6,
-    _getCategoryData_7
+    _getCategoryData_7,
+    _updateBookStatus_8,
+    _getContentNet_9,
+    _getInfoNet_10,
+    _getIndexsNet_11,
+    _getZhangduContentNet_12
   ]);
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
     yield const MapEntry('bookEventDefault', CustomEventMessage);
@@ -150,6 +154,13 @@ mixin CustomEventResolve on Resolve implements CustomEvent, CustomEventDynamic {
       getShudanDetail(args);
   FutureOr<List<BookCategoryData>?> _getCategoryData_7(args) =>
       getCategoryData();
+  FutureOr<int?> _updateBookStatus_8(args) => updateBookStatus(args);
+  FutureOr<BookContentDb?> _getContentNet_9(args) =>
+      getContentNet(args[0], args[1]);
+  FutureOr<BookInfoRoot?> _getInfoNet_10(args) => getInfoNet(args);
+  FutureOr<String?> _getIndexsNet_11(args) => getIndexsNet(args);
+  FutureOr<String?> _getZhangduContentNet_12(args) =>
+      getZhangduContentNet(args);
 }
 
 /// implements [CustomEvent]
@@ -202,6 +213,32 @@ mixin CustomEventMessager on SendEvent {
     return sendEvent.sendMessage(CustomEventMessage.getCategoryData, null,
         isolateName: bookEventDefault);
   }
+
+  FutureOr<int?> updateBookStatus(int id) {
+    return sendEvent.sendMessage(CustomEventMessage.updateBookStatus, id,
+        isolateName: bookEventDefault);
+  }
+
+  FutureOr<BookContentDb?> getContentNet(int bookid, int contentid) {
+    return sendEvent.sendMessage(
+        CustomEventMessage.getContentNet, [bookid, contentid],
+        isolateName: bookEventDefault);
+  }
+
+  FutureOr<BookInfoRoot?> getInfoNet(int id) {
+    return sendEvent.sendMessage(CustomEventMessage.getInfoNet, id,
+        isolateName: bookEventDefault);
+  }
+
+  FutureOr<String?> getIndexsNet(int id) {
+    return sendEvent.sendMessage(CustomEventMessage.getIndexsNet, id,
+        isolateName: bookEventDefault);
+  }
+
+  FutureOr<String?> getZhangduContentNet(String url) {
+    return sendEvent.sendMessage(CustomEventMessage.getZhangduContentNet, url,
+        isolateName: bookEventDefault);
+  }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
   late final _bookCacheEventResolveFuncList = List<Function>.unmodifiable([
@@ -210,7 +247,8 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
     _updateBook_2,
     _insertBook_3,
     _deleteBook_4,
-    _watchCurrentCid_5
+    _watchCurrentCid_5,
+    _getCacheItems_6
   ]);
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
     yield const MapEntry('database', BookCacheEventMessage);
@@ -244,6 +282,7 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
   FutureOr<int?> _insertBook_3(args) => insertBook(args);
   FutureOr<int?> _deleteBook_4(args) => deleteBook(args);
   Stream<List<BookCache>?> _watchCurrentCid_5(args) => watchCurrentCid(args);
+  FutureOr<List<CacheItem>?> _getCacheItems_6(args) => getCacheItems();
 }
 
 /// implements [BookCacheEvent]
@@ -284,6 +323,11 @@ mixin BookCacheEventMessager on SendEvent {
   Stream<List<BookCache>?> watchCurrentCid(int id) {
     return sendEvent.sendMessageStream(
         BookCacheEventMessage.watchCurrentCid, id,
+        isolateName: database);
+  }
+
+  FutureOr<List<CacheItem>?> getCacheItems() {
+    return sendEvent.sendMessage(BookCacheEventMessage.getCacheItems, null,
         isolateName: database);
   }
 }
@@ -341,40 +385,35 @@ mixin BookContentEventMessager on SendEvent {
         isolateName: database);
   }
 }
-mixin ComplexOnDatabaseEventResolve on Resolve
-    implements ComplexOnDatabaseEvent {
-  late final _complexOnDatabaseEventResolveFuncList =
-      List<Function>.unmodifiable([
-    _getIndexsDbCacheItem_0,
-    _getAllBookId_1,
-    _insertOrUpdateIndexs_2,
-    _getContentDb_3,
-    _getIndexsDb_4,
-    _getBookCacheDb_5,
-    _insertOrUpdateContent_6,
-    _insertOrUpdateBook_7,
-    _insertOrUpdateZhangduIndex_8,
-    _getZhangduContentDb_9,
-    _getZhangduContentCid_10,
-    _insertOrUpdateZhangduContent_11,
-    _getZhangduIndexDb_12,
-    _insertOrUpdateZhangduBook_13
+mixin ServerEventResolve on Resolve implements ServerEvent {
+  late final _serverEventResolveFuncList = List<Function>.unmodifiable([
+    _getContentDb_0,
+    _insertOrUpdateIndexs_1,
+    _getIndexsDb_2,
+    _insertOrUpdateContent_3,
+    _insertOrUpdateBook_4,
+    _insertOrUpdateZhangduIndex_5,
+    _getZhangduContentDb_6,
+    _getZhangduContentCid_7,
+    _insertOrUpdateZhangduContent_8,
+    _getZhangduIndexDb_9,
+    _insertOrUpdateZhangduBook_10
   ]);
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('database', ComplexOnDatabaseEventMessage);
+    yield const MapEntry('database', ServerEventMessage);
     yield* super.getResolveProtocols();
   }
 
-  bool onComplexOnDatabaseEventResolve(message) => false;
+  bool onServerEventResolve(message) => false;
   @override
   bool resolve(resolveMessage) {
     if (resolveMessage is IsolateSendMessage) {
       final type = resolveMessage.type;
-      if (type is ComplexOnDatabaseEventMessage) {
+      if (type is ServerEventMessage) {
         dynamic result;
         try {
-          if (onComplexOnDatabaseEventResolve(resolveMessage)) return true;
-          result = _complexOnDatabaseEventResolveFuncList
+          if (onServerEventResolve(resolveMessage)) return true;
+          result = _serverEventResolveFuncList
               .elementAt(type.index)(resolveMessage.args);
           receipt(result, resolveMessage);
         } catch (e) {
@@ -386,134 +425,102 @@ mixin ComplexOnDatabaseEventResolve on Resolve
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<BookIndex>?> _getIndexsDbCacheItem_0(args) =>
-      getIndexsDbCacheItem();
-  FutureOr<Set<int>?> _getAllBookId_1(args) => getAllBookId();
-  FutureOr<int?> _insertOrUpdateIndexs_2(args) =>
-      insertOrUpdateIndexs(args[0], args[1]);
-  FutureOr<List<BookContentDb>?> _getContentDb_3(args) =>
+  FutureOr<RawContentLines?> _getContentDb_0(args) =>
       getContentDb(args[0], args[1]);
-  FutureOr<List<BookIndex>?> _getIndexsDb_4(args) => getIndexsDb(args);
-  FutureOr<List<BookCache>?> _getBookCacheDb_5(args) => getBookCacheDb(args);
-  FutureOr<int?> _insertOrUpdateContent_6(args) => insertOrUpdateContent(args);
-  FutureOr<int?> _insertOrUpdateBook_7(args) => insertOrUpdateBook(args);
-  FutureOr<int?> _insertOrUpdateZhangduIndex_8(args) =>
+  FutureOr<int?> _insertOrUpdateIndexs_1(args) =>
+      insertOrUpdateIndexs(args[0], args[1]);
+  FutureOr<List<BookIndex>?> _getIndexsDb_2(args) => getIndexsDb(args);
+  FutureOr<int?> _insertOrUpdateContent_3(args) => insertOrUpdateContent(args);
+  FutureOr<int?> _insertOrUpdateBook_4(args) => insertOrUpdateBook(args);
+  FutureOr<int?> _insertOrUpdateZhangduIndex_5(args) =>
       insertOrUpdateZhangduIndex(args[0], args[1]);
-  FutureOr<List<String>?> _getZhangduContentDb_9(args) =>
+  FutureOr<List<String>?> _getZhangduContentDb_6(args) =>
       getZhangduContentDb(args[0], args[1]);
-  FutureOr<int?> _getZhangduContentCid_10(args) => getZhangduContentCid(args);
-  FutureOr<int?> _insertOrUpdateZhangduContent_11(args) =>
+  FutureOr<int?> _getZhangduContentCid_7(args) => getZhangduContentCid(args);
+  FutureOr<int?> _insertOrUpdateZhangduContent_8(args) =>
       insertOrUpdateZhangduContent(args);
-  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_12(args) =>
+  FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb_9(args) =>
       getZhangduIndexDb(args);
-  FutureOr<void> _insertOrUpdateZhangduBook_13(args) =>
+  FutureOr<void> _insertOrUpdateZhangduBook_10(args) =>
       insertOrUpdateZhangduBook(args[0], args[1], args[2]);
 }
 
-/// implements [ComplexOnDatabaseEvent]
-mixin ComplexOnDatabaseEventMessager on SendEvent {
+/// implements [ServerEvent]
+mixin ServerEventMessager on SendEvent {
   SendEvent get sendEvent;
   String get database => 'database';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(database, ComplexOnDatabaseEventMessage);
+    yield MapEntry(database, ServerEventMessage);
     yield* super.getProtocols();
   }
 
-  FutureOr<List<BookIndex>?> getIndexsDbCacheItem() {
+  FutureOr<RawContentLines?> getContentDb(int bookid, int contentid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getIndexsDbCacheItem, null,
-        isolateName: database);
-  }
-
-  FutureOr<Set<int>?> getAllBookId() {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getAllBookId, null,
+        ServerEventMessage.getContentDb, [bookid, contentid],
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateIndexs, [id, indexs],
-        isolateName: database);
-  }
-
-  FutureOr<List<BookContentDb>?> getContentDb(int bookid, int contentid) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getContentDb, [bookid, contentid],
+        ServerEventMessage.insertOrUpdateIndexs, [id, indexs],
         isolateName: database);
   }
 
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getIndexsDb, bookid,
-        isolateName: database);
-  }
-
-  FutureOr<List<BookCache>?> getBookCacheDb(int bookid) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getBookCacheDb, bookid,
+    return sendEvent.sendMessage(ServerEventMessage.getIndexsDb, bookid,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateContent, contentDb,
+        ServerEventMessage.insertOrUpdateContent, contentDb,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateBook(BookInfo data) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateBook, data,
+    return sendEvent.sendMessage(ServerEventMessage.insertOrUpdateBook, data,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduIndex,
-        [bookId, data],
+        ServerEventMessage.insertOrUpdateZhangduIndex, [bookId, data],
         isolateName: database);
   }
 
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduContentDb, [bookId, contentId],
+        ServerEventMessage.getZhangduContentDb, [bookId, contentId],
         isolateName: database);
   }
 
   FutureOr<int?> getZhangduContentCid(int bookid) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduContentCid, bookid,
+        ServerEventMessage.getZhangduContentCid, bookid,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content) {
     return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduContent, content,
+        ServerEventMessage.insertOrUpdateZhangduContent, content,
         isolateName: database);
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.getZhangduIndexDb, bookId,
+    return sendEvent.sendMessage(ServerEventMessage.getZhangduIndexDb, bookId,
         isolateName: database);
   }
 
   FutureOr<void> insertOrUpdateZhangduBook(
       int bookId, int firstChapterId, ZhangduDetailData data) {
-    return sendEvent.sendMessage(
-        ComplexOnDatabaseEventMessage.insertOrUpdateZhangduBook,
+    return sendEvent.sendMessage(ServerEventMessage.insertOrUpdateZhangduBook,
         [bookId, firstChapterId, data],
         isolateName: database);
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
-  late final _complexEventResolveFuncList = List<Function>.unmodifiable([
-    _getCacheItems_0,
-    _getContent_1,
-    _getIndexs_2,
-    _updateBookStatus_3,
-    _getInfo_4
-  ]);
+  late final _complexEventResolveFuncList = List<Function>.unmodifiable(
+      [_getContent_0, _getIndexs_1, _getInfo_2, _getZhangduContent_3]);
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
     yield const MapEntry('bookEventDefault', ComplexEventMessage);
     yield* super.getResolveProtocols();
@@ -540,12 +547,12 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
     return super.resolve(resolveMessage);
   }
 
-  FutureOr<List<CacheItem>?> _getCacheItems_0(args) => getCacheItems();
-  FutureOr<RawContentLines?> _getContent_1(args) =>
+  FutureOr<RawContentLines?> _getContent_0(args) =>
       getContent(args[0], args[1], args[2]);
-  FutureOr<NetBookIndex?> _getIndexs_2(args) => getIndexs(args[0], args[1]);
-  FutureOr<int?> _updateBookStatus_3(args) => updateBookStatus(args);
-  FutureOr<BookInfoRoot?> _getInfo_4(args) => getInfo(args);
+  FutureOr<NetBookIndex?> _getIndexs_1(args) => getIndexs(args[0], args[1]);
+  FutureOr<BookInfoRoot?> _getInfo_2(args) => getInfo(args);
+  FutureOr<List<String>?> _getZhangduContent_3(args) =>
+      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
 }
 
 /// implements [ComplexEvent]
@@ -555,11 +562,6 @@ mixin ComplexEventMessager on SendEvent {
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(bookEventDefault, ComplexEventMessage);
     yield* super.getProtocols();
-  }
-
-  FutureOr<List<CacheItem>?> getCacheItems() {
-    return sendEvent.sendMessage(ComplexEventMessage.getCacheItems, null,
-        isolateName: bookEventDefault);
   }
 
   FutureOr<RawContentLines?> getContent(
@@ -575,13 +577,15 @@ mixin ComplexEventMessager on SendEvent {
         isolateName: bookEventDefault);
   }
 
-  FutureOr<int?> updateBookStatus(int id) {
-    return sendEvent.sendMessage(ComplexEventMessage.updateBookStatus, id,
+  FutureOr<BookInfoRoot?> getInfo(int id) {
+    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id,
         isolateName: bookEventDefault);
   }
 
-  FutureOr<BookInfoRoot?> getInfo(int id) {
-    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id,
+  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+      String contentUrl, String name, int sort, bool update) {
+    return sendEvent.sendMessage(ComplexEventMessage.getZhangduContent,
+        [bookId, contentId, contentUrl, name, sort, update],
         isolateName: bookEventDefault);
   }
 }
@@ -706,12 +710,8 @@ mixin ZhangduDatabaseEventMessager on SendEvent {
   }
 }
 mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
-  late final _zhangduComplexEventResolveFuncList = List<Function>.unmodifiable([
-    _getZhangduIndex_0,
-    _getZhangduContent_1,
-    _updateZhangduMainStatus_2,
-    _getZhangduDetail_3
-  ]);
+  late final _zhangduComplexEventResolveFuncList = List<Function>.unmodifiable(
+      [_getZhangduIndex_0, _updateZhangduMainStatus_1, _getZhangduDetail_2]);
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
     yield const MapEntry('bookEventDefault', ZhangduComplexEventMessage);
     yield* super.getResolveProtocols();
@@ -740,11 +740,9 @@ mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
 
   FutureOr<List<ZhangduChapterData>?> _getZhangduIndex_0(args) =>
       getZhangduIndex(args[0], args[1]);
-  FutureOr<List<String>?> _getZhangduContent_1(args) =>
-      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
-  FutureOr<int?> _updateZhangduMainStatus_2(args) =>
+  FutureOr<int?> _updateZhangduMainStatus_1(args) =>
       updateZhangduMainStatus(args);
-  FutureOr<ZhangduDetailData?> _getZhangduDetail_3(args) =>
+  FutureOr<ZhangduDetailData?> _getZhangduDetail_2(args) =>
       getZhangduDetail(args);
 }
 
@@ -760,13 +758,6 @@ mixin ZhangduComplexEventMessager on SendEvent {
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
     return sendEvent.sendMessage(
         ZhangduComplexEventMessage.getZhangduIndex, [bookId, update],
-        isolateName: bookEventDefault);
-  }
-
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update) {
-    return sendEvent.sendMessage(ZhangduComplexEventMessage.getZhangduContent,
-        [bookId, contentId, contentUrl, name, sort, update],
         isolateName: bookEventDefault);
   }
 
@@ -856,7 +847,7 @@ mixin MultiBookEventDefaultMessagerMixin
   void onResumeListen() {
     sendPortOwners['bookEventDefault']!.localSendPort.send(SendPortName(
         'database', sendPortOwners['database']!.localSendPort,
-        protocols: getResolveProtocols('database')));
+        protocols: getServerProtocols('database')));
 
     super.onResumeListen();
   }
@@ -879,5 +870,5 @@ abstract class MultiDatabaseResolveMain
         Resolve,
         BookCacheEventResolve,
         BookContentEventResolve,
-        ComplexOnDatabaseEventResolve,
+        ServerEventResolve,
         ZhangduDatabaseEventResolve {}

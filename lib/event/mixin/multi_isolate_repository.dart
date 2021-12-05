@@ -6,13 +6,12 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
 import '../repository.dart';
-import 'base/complex_mixin.dart';
-import 'base/network_mixin.dart';
-import 'base/zhangdu_mixin.dart';
+import 'base/base.dart';
 import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
     with
+        ComplexMixin, // 简单的条件判断可以在主隔离中调用
         ListenMixin,
         // SendEventMixin,
         SendEventPortMixin,
@@ -81,18 +80,16 @@ void _multiIsolateEntryPoint(List args) async {
 /// 接受一个[SendPortOwner]处理数据库消息
 class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
     with
-
-        // sender
+        // senders
         SendEventMixin,
         // SendEventPortMixin,
         SendCacheMixin,
         SendInitCloseMixin,
-        // -- SendPortOwner 代理----
-        ComplexOnDatabaseEventMessager, // 初始化：要返回的Messager协议
         // net
         HiveDioMixin,
         NetworkMixin,
         ZhangduNetMixin,
+        ServerEventMessager,
         // complex
         ComplexMixin,
         ZhangduComplexMixin {
@@ -117,15 +114,6 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
 
   @override
   FutureOr<void> closeTask() => onClose();
-
-  @override
-  SendPortOwner? getSendPortOwner(key) {
-    final owner = super.getSendPortOwner(key);
-    if (owner == null) {
-      Log.e('owner == null,需要与$key匹配的`SendPortOwner`发送消息', onlyDebug: false);
-    }
-    return owner;
-  }
 
   @override
   void onResolvedFailed(message) {

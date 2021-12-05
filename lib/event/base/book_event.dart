@@ -1,20 +1,17 @@
 import 'dart:async';
-import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:nop_annotations/nop_annotations.dart';
 import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
-import '../../data/zhangdu/zhangdu_chapter.dart';
-import '../../data/zhangdu/zhangdu_detail.dart';
-import '../../data/zhangdu/zhangdu_same_users_books.dart';
-import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
-import 'complex_event.dart';
+import 'data.dart';
+import 'server_event.dart';
 import 'zhangdu_event.dart';
+
+export 'data.dart';
+export 'server_event.dart';
 
 part 'book_event.g.dart';
 
@@ -30,28 +27,9 @@ abstract class BookEvent
   ZhangduEvent get zhangduEvent => this;
 }
 
-@NopIsolateEventItem(
-    separate: true,
-    isolateName: 'database',
-    privateProtocols: [ComplexOnDatabaseEvent])
-abstract class DatabaseEvent
-    with BookCacheEvent, BookContentEvent {}
-
 abstract class BookContentEvent {
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid);
-
   FutureOr<int?> deleteCache(int bookId);
-}
-
-
-abstract class ComplexEvent {
-  FutureOr<List<CacheItem>?> getCacheItems();
-
-  FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
-  FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
-  FutureOr<int?> updateBookStatus(int id);
-
-  FutureOr<BookInfoRoot?> getInfo(int id);
 }
 
 abstract class BookCacheEvent {
@@ -63,9 +41,14 @@ abstract class BookCacheEvent {
   FutureOr<int?> deleteBook(int id);
 
   Stream<List<BookCache>?> watchCurrentCid(int id);
+  FutureOr<List<CacheItem>?> getCacheItems();
 }
 
-abstract class CustomEvent {
+@NopIsolateEventItem(separate: true, isolateName: 'database')
+abstract class DatabaseEvent
+    with BookCacheEvent, BookContentEvent, ServerEvent {}
+
+abstract class CustomEvent implements ServerNetEvent {
   FutureOr<SearchList?> getSearchData(String key);
 
   @NopIsolateMethod(useTransferType: true)
@@ -79,65 +62,5 @@ abstract class CustomEvent {
 
   FutureOr<BookListDetailData?> getShudanDetail(int index);
   FutureOr<List<BookCategoryData>?> getCategoryData();
-}
-
-class Uint8ListType with TransferTypeMapData<Uint8List?> {
-  Uint8ListType(this.list);
-  Uint8List? list;
-  @override
-  FutureOr<Uint8List?> tranDecode() {
-    final buffer = getData('list');
-    if (buffer != null) {
-      final data = buffer.materialize();
-      return data.asUint8List();
-    }
-  }
-
-  @override
-  FutureOr<void> tranEncode() {
-    if (list != null) {
-      final data = list!;
-      list = null;
-      final typeData = TransferableTypedData.fromList([data]);
-      push('list', typeData);
-    }
-  }
-}
-
-class RawContentLines {
-  RawContentLines(
-      {this.source = '',
-      this.cid,
-      this.pid,
-      this.nid,
-      this.cname,
-      this.hasContent});
-
-  final String source;
-
-  final int? cid;
-  final int? pid;
-  final int? nid;
-  final String? cname;
-  final bool? hasContent;
-
-  bool get isEmpty =>
-      source.isEmpty ||
-      cid == null ||
-      pid == null ||
-      nid == null ||
-      cname == null ||
-      hasContent == null;
-
-  static RawContentLines none = RawContentLines();
-
-  bool get isNotEmpty => !isEmpty;
-
-  bool get contentIsNotEmpty => isNotEmpty;
-  bool get contentIsEmpty => isEmpty;
-
-  @override
-  String toString() {
-    return '$runtimeType: $cid, $pid, $nid, $hasContent, $cname, $source';
-  }
+  FutureOr<int?> updateBookStatus(int id);
 }

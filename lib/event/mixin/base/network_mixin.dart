@@ -39,7 +39,7 @@ mixin HiveDioMixin on Resolve {
   }
 }
 
-mixin NetworkMixin on HiveDioMixin implements CustomEvent {
+mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
   var frequency = 0;
 
   late Box imageUpdate;
@@ -54,12 +54,14 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent {
 
   Timer? frequencyTimer;
 
+  @override
   Future<String> getIndexsNet(int id) {
     return _loadIndexs(id);
   }
 
   /// 章节内容
   /// 从网络数据格式转换成数据库格式
+  @override
   Future<BookContentDb> getContentNet(int bookid, int contentid) async {
     if (frequency >= 6) {
       await Future.delayed(const Duration(seconds: 1));
@@ -83,60 +85,21 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent {
         .then((v) => BookContentDb.fromBookContent(v));
   }
 
-  // @override
-  NetBookIndex getIndexsDecodeLists(String str) => _decodeIndexsLists(str);
-
-  Future<BookInfoRoot> getInfoNet(int id) => _loadInfo(id);
+  @override
+  Future<int> updateBookStatus(int id) async {
+    await getInfoNet(id);
+    return 0;
+  }
 
   @override
-  Future<List<BookList>> getHiveShudanLists(String c) =>
-      _loadHiveShudanLists(c);
-
-  @override
-  Future<List<BookList>> getShudanLists(String c, int index) =>
-      _loadShudanLists(c, index);
-  @override
-  Future<BookTopData> getTopLists(String c, String date, int index) =>
-      _loadTopLists(c, date, index);
-
-  @override
-  Future<BookListDetailData> getShudanDetail(int index) =>
-      _loadShudanDetail(index);
-
-  @override
-  Future<SearchList> getSearchData(String key) => _loadSearchData(key);
-
-  @override
-  Future<BookTopData> getCategLists(int c, String date, int index) =>
-      _getCategLists(c, date, index);
-
-  // @override
-  // Future<String> getImagePath(String img) => _getImagePath(img);
-
-  @override
-  Future<Uint8List?> getImageBytes(String img) => _getImageBytes(img);
-
-  // @override
-  // Future<Uint8List?> getImageFromNetMemory(String img) =>
-  //     _getImageFromNetMemory(img);
-
-  @override
-  Future<List<BookCategoryData>> getCategoryData() => _getCategoryData();
+  Future<Uint8ListType> getImageBytesDynamic(String img) async {
+    final data = await getImageBytes(img);
+    return Uint8ListType(data);
+  }
 
   LazyBox? box;
 
   final _errorLoading = <String, int>{};
-
-  final _e = RegExp('(?:(?:\n|<br/>)[\u3000 ]*)*(?:\n|<br/>)');
-  final _en = RegExp('\n');
-  final _es = RegExp('\u3000| ');
-
-  final _em = RegExp(
-      r'"id":([0-9]+),"name":"(.*?)","cid":(.*?),"cname":"(.*?)","pid":(.*?),'
-      r'"nid":(.*?),"content":"(.*?)","hasContent":(.*?)}');
-
-  final _ei = RegExp('https?://');
-  final _e2f = RegExp('/|%2F');
 
   @pragma('vm:prefer-inline')
   Future<T> imageTasks<T>(EventCallback<T> task) {
@@ -147,10 +110,7 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent {
   Future<T> ioTasks<T>(EventCallback<T> task) {
     return EventQueue.runTaskOnQueue(ioTasks, task);
   }
-}
 
-/// 以扩展的形式实现
-extension _NetworkImpl on NetworkMixin {
   String get imageLocalPath => join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
@@ -194,7 +154,8 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<BookInfoRoot> _loadInfo(id) async {
+  @override
+  Future<BookInfoRoot> getInfoNet(int id) async {
     final url = Api.infoUrl(id);
     return _decode(url, onSuccess: (map) {
       return BookInfoRoot.fromJson(map);
@@ -204,7 +165,8 @@ extension _NetworkImpl on NetworkMixin {
     });
   }
 
-  Future<BookListDetailData> _loadShudanDetail(index) async {
+  @override
+  Future<BookListDetailData> getShudanDetail(int index) async {
     final url = Api.shudanDetailUrl(index);
 
     return _decode(url,
@@ -213,13 +175,15 @@ extension _NetworkImpl on NetworkMixin {
             const BookListDetailData());
   }
 
-  Future<List<BookCategoryData>> _getCategoryData() async {
+  @override
+  Future<List<BookCategoryData>> getCategoryData() async {
     final url = Api.bookCategory();
     return _decode(url,
         onSuccess: (map) => BookCategoryAll.fromJson(map).data ?? const []);
   }
 
-  Future<SearchList> _loadSearchData(String key) async {
+  @override
+  Future<SearchList> getSearchData(String key) async {
     final url = Api.searchUrl(key);
     return _decode(url, onSuccess: (map) => SearchList.fromJson(map));
   }
@@ -236,34 +200,14 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  NetBookIndex _decodeIndexsLists(args) {
-    // var bookIndexShort = <List>[];
-    try {
-      return BookIndexRoot.fromJson(jsonDecode(args)).data ??
-          const NetBookIndex();
-
-      // for (var bookVol in map.list!) {
-      //   final _inl = <dynamic>[bookVol.name];
-      //   for (var bookChapter in bookVol.list!) {
-      //     _inl.add(BookIndexShort(map.name, bookChapter.name, bookChapter.id));
-      //   }
-      //   bookIndexShort.add(_inl);
-      // }
-      // return bookIndexShort;
-    } catch (e) {
-      Log.e('url:$args, $e');
-      rethrow;
-    }
-  }
-
-  Future<List<BookList>> _loadHiveShudanLists(args) async {
-    final String c = args;
+  @override
+  Future<List<BookList>> getHiveShudanLists(String args) async {
     String? data;
 
     if (box == null || !box!.isOpen) {
       box = await Hive.openLazyBox('shudanlist');
     }
-    switch (c) {
+    switch (args) {
       case 'new':
         data = await box!.get('shudanNewList');
         break;
@@ -288,7 +232,8 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<List<BookList>> _loadShudanLists(String c, int index) async {
+  @override
+  Future<List<BookList>> getShudanLists(String c, int index) async {
     final url = Api.shudanUrl(c, index);
     try {
       var respone = await dio.get(url);
@@ -318,7 +263,8 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<BookTopData> _loadTopLists(String c, String date, int index) async {
+  @override
+  Future<BookTopData> getTopLists(String c, String date, int index) async {
     final url = Api.topUrl(c, date, index);
     try {
       var respone = await dio.get(url);
@@ -339,7 +285,8 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  Future<BookTopData> _getCategLists(int c, String date, int index) async {
+  @override
+  Future<BookTopData> getCategLists(int c, String date, int index) async {
     final url = Api.categUrl(c, date, index);
     try {
       var respone = await dio.get(url);
@@ -353,11 +300,13 @@ extension _NetworkImpl on NetworkMixin {
   }
 
   String trim(String text) {
-    var _text = text.replaceAll(trimReg, '').replaceAll(_e, '\n');
-    if (_text.startsWith(_en)) {
-      _text = _text.replaceFirst(_en, '');
+    var _text = text
+        .replaceAll(trimReg, '')
+        .replaceAll(RegExp('(?:(?:\n|<br/>)[\u3000 ]*)*(?:\n|<br/>)'), '\n');
+    if (_text.startsWith('\n')) {
+      _text = _text.replaceFirst(RegExp('\u3000| '), '');
     }
-    if (!_text.startsWith(_es)) {
+    if (!_text.startsWith(RegExp('\u3000| '))) {
       _text = '\u3000\u3000$_text';
     }
     return _text;
@@ -393,7 +342,10 @@ extension _NetworkImpl on NetworkMixin {
         var pid = -1;
         final now = Stopwatch()..start();
 
-        str.replaceAllMapped(_em, (match) {
+        str.replaceAllMapped(
+            RegExp(
+                r'"id":([0-9]+),"name":"(.*?)","cid":(.*?),"cname":"(.*?)","pid":(.*?),'
+                r'"nid":(.*?),"content":"(.*?)","hasContent":(.*?)}'), (match) {
           id = int.tryParse(match[1]!) ?? id;
           name = match[2] ?? name;
           cid = int.tryParse(match[3]!) ?? cid;
@@ -435,8 +387,8 @@ extension _NetworkImpl on NetworkMixin {
   List<String> imageUrlResolve(String img) {
     var imgName = '';
     String url;
-    if (img.startsWith(_ei)) {
-      final splist = img.split(_e2f);
+    if (img.startsWith(RegExp('https?://'))) {
+      final splist = img.split(RegExp('/|%2F'));
       for (var i = splist.length - 1; i >= 0; i--) {
         if (splist[i].isNotEmpty) {
           imgName = splist[i];
@@ -450,26 +402,6 @@ extension _NetworkImpl on NetworkMixin {
     }
     return [url, '${url.hashCode}_$imgName'];
   }
-
-  // Future<String> _getImagePath(String img) async {
-  //   final imgResolve = imageUrlResolve(img);
-  //   final imgName = imgResolve[1];
-
-  //   final imgPath = join(imageLocalPath, imgName);
-
-  //   final imgdateTime = imageUpdate.get(imgName.hashCode);
-  //   final f = File(imgPath);
-
-  //   final exits = await f.exists();
-
-  //   final now = DateTime.now().millisecondsSinceEpoch;
-  //   final shouldUpdate = imgdateTime == null || imgdateTime + oneDay / 2 < now;
-  //   if (exits && !shouldUpdate) {
-  //     return imgPath;
-  //   }
-
-  //   return getImagePathFromNet(img);
-  // }
 
   @pragma('vm:prefer-inline')
   bool _isValid(Headers header) {
@@ -486,77 +418,9 @@ extension _NetworkImpl on NetworkMixin {
     }
   }
 
-  // Future<String> getImagePathFromNet(String img) async {
-  //   final imgResolve = imageUrlResolve(img);
-  //   final url = imgResolve[0];
-  //   final imgName = imgResolve[1];
-
-  //   final imgPath = join(imageLocalPath, imgName);
-
-  //   // 避免太过频繁访问网络
-  //   if (_errorLoading.containsKey(imgName)) {
-  //     final time = _errorLoading[imgName]!;
-  //     if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
-  //       // 再次发送网络请求
-  //       _errorLoading.remove(imgName);
-  //     } else {
-  //       return imgPath;
-  //     }
-  //   }
-
-  //   var success = false;
-
-  //   List<Uint8List>? imgData;
-  //   await imageTasks(() async {
-  //     try {
-  //       final data = await dio.get<ResponseBody>(url,
-  //           options: Options(responseType: ResponseType.stream));
-
-  //       imgData = (await data.data?.stream.toList());
-
-  //       success = imgData != null && _isValid(data.headers);
-  //     } catch (e) {
-  //       success = false;
-  //       _errorLoading[imgName] = DateTime.now().millisecondsSinceEpoch;
-  //       assert(Log.w('$imgName,$url !!!'));
-  //     }
-  //   });
-
-  //   final data = imgData;
-  //   if (data != null && success) {
-  //     try {
-  //       await ioTasks(() async {
-  //         final temp = File('$imgPath.temp');
-  //         await temp.create(recursive: true);
-  //         final o = await temp.open(mode: FileMode.writeOnly);
-
-  //         for (final d in data) {
-  //           await o.writeFrom(d);
-  //         }
-
-  //         await o.close();
-  //         await temp.rename(imgPath);
-  //       });
-
-  //       _errorLoading.remove(imgName);
-  //       await imageUpdate.put(
-  //           imgName.hashCode, DateTime.now().millisecondsSinceEpoch);
-  //     } catch (e) {
-  //       success = false;
-  //     }
-  //   }
-
-  //   final exists = await File(imgPath).exists();
-
-  //   if (!exists) {
-  //     await imageUpdate.delete(imgName.hashCode);
-  //   }
-
-  //   return imgPath;
-  // }
-
   /// Uint8List
-  Future<Uint8List?> _getImageBytes(String img) async {
+  @override
+  Future<Uint8List?> getImageBytes(String img) async {
     final imgResolve = imageUrlResolve(img);
     final imgName = imgResolve[1];
 
@@ -590,11 +454,10 @@ extension _NetworkImpl on NetworkMixin {
     final imgName = imgResolve[1];
 
     final imgPath = join(imageLocalPath, imgName);
-    // 避免太过频繁访问网络
+
     if (_errorLoading.containsKey(imgName)) {
       final time = _errorLoading[imgName]!;
       if (time + thirtySeconds <= DateTime.now().millisecondsSinceEpoch) {
-        // 再次发送网络请求
         _errorLoading.remove(imgName);
       } else {
         return null;

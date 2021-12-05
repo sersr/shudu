@@ -1,11 +1,9 @@
 import 'dart:isolate';
 
-import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
-import 'base/database_mixin.dart';
-import 'base/zhangdu_mixin.dart';
+import 'base/base.dart';
 
 /// [multiIsolateEvent] 子隔离，处理数据库任务
 void dataBaseEntryPoint(args) async {
