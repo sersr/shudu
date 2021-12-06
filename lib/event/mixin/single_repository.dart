@@ -1,5 +1,6 @@
 import 'dart:isolate';
 
+import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
@@ -8,7 +9,8 @@ import 'base/base.dart';
 
 /// 单一 隔离
 /// 主隔离(native)
-class SingleRepository extends RepositoryBase {
+class SingleRepository extends Repository
+    with SendEventMixin, SendCacheMixin, SendIsolateMixin {
   SingleRepository();
 
   @override

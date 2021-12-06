@@ -169,7 +169,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
   }
 }
 
-class _CacheNotifier extends ChangeNotifier {
+class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
   _CacheNotifier();
 
   List<CacheItem> get data => List.of(_items);
@@ -206,6 +206,17 @@ class _CacheNotifier extends ChangeNotifier {
   set repository(Repository? v) {
     if (_repository == v) return;
     _repository = v;
+    handle = v;
+  }
+
+  @override
+  void onClose() {
+    _reset();
+  }
+
+  @override
+  void onOpen() {
+    if (_cacheList.isEmpty || _cacheListZd.isEmpty) startLoad();
   }
 
   void startLoad() async {
@@ -250,39 +261,39 @@ class _CacheNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  final _cacheList = <Cache>[];
-  final _cacheListZd = <Cache>[];
+  final _cacheList = <int, Cache>{};
+  final _cacheListZd = <int, Cache>{};
   String getName(int bookid, ApiType api) {
-    late List<Cache> dataList;
+    final Map<int, Cache> dataList;
     if (api == ApiType.zhangdu) {
       dataList = _cacheListZd;
     } else {
       dataList = _cacheList;
     }
-    final n = dataList.where((element) => element.bookId == bookid);
-    if (n.isNotEmpty && n.last.name != null) return n.last.name!;
+    final cache = dataList[bookid];
+    if (cache?.name != null) return cache!.name!;
     return '';
   }
 
   void _listen(List<BookCache>? data) {
     assert(Log.e('cache manager'));
     if (data == null) return;
-
-    _cacheList
-      ..clear()
-      ..addAll(data.map((e) => Cache.fromBookCache(e)));
-
+    _cacheList.clear();
+    for (var item in data) {
+      if (item.bookId != null)
+        _cacheList[item.bookId!] = Cache.fromBookCache(item);
+    }
     notifyListeners();
   }
 
   void _listenZd(List<ZhangduCache>? data) {
     assert(Log.e('cache manager'));
     if (data == null) return;
-
-    _cacheListZd
-      ..clear()
-      ..addAll(data.map((e) => Cache.fromZdCache(e)));
-
+    _cacheListZd.clear();
+    for (var item in data) {
+      if (item.bookId != null)
+        _cacheListZd[item.bookId!] = Cache.fromZdCache(item);
+    }
     notifyListeners();
   }
 
@@ -297,13 +308,18 @@ class _CacheNotifier extends ChangeNotifier {
   }
 
   bool _out = false;
-  @override
-  void dispose() {
+
+  void _reset() {
     _out = true;
     _cacheSub?.cancel();
     _cacheSub = null;
     _cacheSubZd?.cancel();
     _cacheSubZd = null;
+  }
+
+  @override
+  void dispose() {
+    _reset();
     super.dispose();
   }
 }

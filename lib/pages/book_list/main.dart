@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -19,7 +20,7 @@ class ListMainPage extends StatelessWidget {
     final light = isLight(context);
     Widget _builder(String text, VoidCallback onTap) {
       return btn1(
-        elevation: 0.5,
+        elevation: 0.05,
         radius: 10.0,
         bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
         splashColor: light ? null : Color.fromRGBO(60, 60, 60, 1),
@@ -101,6 +102,11 @@ class ListMainPage extends StatelessWidget {
               }),
             )
           ]),
+          if (kDebugMode) const SizedBox(height: 5),
+          if (kDebugMode)
+            _builder('clear', () {
+              CacheBinding.instance?.imageRefCache?.clear();
+            }),
         ],
       ),
     );

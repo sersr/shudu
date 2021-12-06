@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:utils/utils.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../data/data.dart';
 import '../event/event.dart';
@@ -142,10 +142,13 @@ class BookIndexsData {
   }
 }
 
-class BookIndexNotifier extends ChangeNotifier {
-  BookIndexNotifier({required this.repository});
+class BookIndexNotifier extends ChangeNotifier
+    with NotifyStateOnChangeNotifier {
+  BookIndexNotifier({required this.repository}) {
+    handle = repository;
+  }
 
-  late Repository repository;
+  final Repository repository;
 
   int lastUpdateTime = 0;
 
@@ -181,10 +184,25 @@ class BookIndexNotifier extends ChangeNotifier {
     EventQueue.runOneTaskOnQueue(this, () {
       if (!listenOn) {
         assert(Log.i('pause'));
-        _watchCurrentCid?.pause();
-        _cids?.pause();
+        _pauseAll();
       }
     });
+  }
+
+  @override
+  void onOpen() {
+    if (_data?.isValid == true) {
+      _listenAll();
+      if (!listenOn) {
+        _pauseAll();
+      }
+    }
+  }
+
+  @override
+  void onClose() {
+    // 如果是暂停状态，`onDone`不会调用
+    _listenerReset();
   }
 
   void _listenerReset() {
@@ -194,7 +212,32 @@ class BookIndexNotifier extends ChangeNotifier {
     _cids = null;
   }
 
+  @override
+  void dispose() {
+    _listenerReset();
+    super.dispose();
+  }
+
+  void _pauseAll() {
+    if (_watchCurrentCid?.isPaused == false) {
+      _watchCurrentCid?.pause();
+    }
+    if (_cids?.isPaused == false) {
+      _cids?.pause();
+    }
+  }
+
+  void _rsumeAll() {
+    if (_watchCurrentCid?.isPaused == true) {
+      _watchCurrentCid?.resume();
+    }
+    if (_cids?.isPaused == true) {
+      _cids?.resume();
+    }
+  }
+
   void _listenAll() {
+    _rsumeAll();
     final d = data;
     if (d != null) {
       switch (d.api) {
@@ -204,7 +247,6 @@ class BookIndexNotifier extends ChangeNotifier {
         case ApiType.zhangdu:
           _listenAllZhangdu();
           break;
-
         default:
       }
     }
@@ -231,6 +273,8 @@ class BookIndexNotifier extends ChangeNotifier {
           }
         }
       });
+    }, onDone: () {
+      _watchCurrentCid = null;
     });
 
     _cids ??= repository.bookEvent.zhangduEvent
@@ -247,9 +291,10 @@ class BookIndexNotifier extends ChangeNotifier {
           notifyListeners();
         }
       });
+    }, onDone: () {
+      _cids = null;
     });
-    _watchCurrentCid?.resume();
-    _cids?.resume();
+    _rsumeAll();
   }
 
   void _listenAllBiquge() {
@@ -259,8 +304,6 @@ class BookIndexNotifier extends ChangeNotifier {
     _watchCurrentCid ??= repository.bookEvent.bookCacheEvent
         .watchCurrentCid(bookid)
         .listen((_bookCaches) {
-      assert(Log.e('_bookCaches cache ids'));
-
       if (_data?.isValidBqg != true) return;
       EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
         if (_bookCaches != null && _bookCaches.isNotEmpty) {
@@ -273,6 +316,8 @@ class BookIndexNotifier extends ChangeNotifier {
           }
         }
       });
+    }, onDone: () {
+      _watchCurrentCid = null;
     });
 
     _cids ??= repository.bookEvent.bookContentEvent
@@ -282,17 +327,16 @@ class BookIndexNotifier extends ChangeNotifier {
       if (listData == null) return;
 
       EventQueue.runOneTaskOnQueue(_cids, () {
-        assert(Log.e('book cache ids'));
+        Log.i('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
         if (_data?.isValidBqg != true) return;
-        Log.e('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
         if (_data?.bookid == bookid) {
           _cacheList = listData;
           notifyListeners();
         }
       });
+    }, onDone: () {
+      _cids = null;
     });
-    _watchCurrentCid?.resume();
-    _cids?.resume();
   }
 
   var _cacheList = Iterable<int>.empty();

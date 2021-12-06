@@ -11,10 +11,10 @@ import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
     with
-        ComplexMixin, // 简单的条件判断可以在主隔离中调用
+        // ComplexMixin, // 简单的条件判断可以在主隔离中调用
         ListenMixin,
-        // SendEventMixin,
-        SendEventPortMixin,
+        SendEventMixin,
+        // SendEventPortMixin,
         SendCacheMixin,
         SendMultiServerMixin,
         MultiBookEventDefaultMessagerMixin // 默认
@@ -24,7 +24,6 @@ class MultiIsolateRepository extends Repository
 
   @override
   FutureOr<void> onInitStart() async {
-    notifiyStateRoot(false);
     args = await initStartArgs();
     Log.i('args: $args', onlyDebug: false);
   }
@@ -44,19 +43,6 @@ class MultiIsolateRepository extends Repository
         await Isolate.spawn(_multiIsolateEntryPoint, [localSendPort, ...?args]);
     return RemoteIsolateServer(isolate);
   }
-
-  @override
-  void onResumeListen() {
-    super.onResumeListen();
-    notifiyStateRoot(true);
-    // args = null; // 安全
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    notifiyStateRoot(false);
-  }
 }
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
@@ -66,13 +52,12 @@ void _multiIsolateEntryPoint(List args) async {
   final cachePath = args[2];
   final useSqflite3 = args[3];
 
-  final db = BookEventMultiIsolate(
+  BookEventMultiIsolate(
     appPath: appPath,
     cachePath: cachePath,
     useSqflite3: useSqflite3,
     remoteSendPort: remoteSendPort,
-  );
-  db.init();
+  ).init();
 }
 
 /// 与 [MultiIsolateRepository] 配合使用
@@ -117,7 +102,7 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
 
   @override
   void onResolvedFailed(message) {
-    Log.e('error: $message', lines: 1, onlyDebug: false);
+    Log.e('error: $message', lines: 2, onlyDebug: false);
   }
 
   @override

@@ -77,7 +77,6 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
       } else {
         timer.cancel();
         frequencyTimer = null;
-        assert(Log.w('frequency: cancel'));
       }
     });
 

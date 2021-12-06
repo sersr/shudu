@@ -13,7 +13,8 @@ import 'package:shudu/event/event.dart';
 import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
 
-class RepositoryTest extends RepositoryBase {
+class RepositoryTest extends Repository
+    with SendEvent, SendCacheMixin, SendEventMixin, SendIsolateMixin {
   @override
   Future<Isolate> onCreateIsolate(SendPort sdPort) async {
     final newIsolate = await Isolate.spawn(singleIsolateEntryPoint,
