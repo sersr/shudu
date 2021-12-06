@@ -5,20 +5,18 @@ import 'package:useful_tools/useful_tools.dart';
 import '../base/book_event.dart';
 import 'base/base.dart';
 
-/// [multiIsolateEvent] 子隔离，处理数据库任务
+// 子隔离，数据库 入口
 void dataBaseEntryPoint(args) async {
   final remoteSendPort = args[0] as SendPort;
   final appPath = args[1] as String;
   // final cachePath = args[2] as String;
   final useSqflite3 = args[3] as bool;
 
-  final db = DatabaseImpl(
+  DatabaseImpl(
     appPath: appPath,
     remoteSendPort: remoteSendPort,
     useSqflite3: useSqflite3,
-  );
-
-  db.run();
+  ).run();
 }
 
 /// 只处理数据库相关操作

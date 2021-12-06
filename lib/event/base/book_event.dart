@@ -62,5 +62,4 @@ abstract class CustomEvent implements ServerNetEvent {
 
   FutureOr<BookListDetailData?> getShudanDetail(int index);
   FutureOr<List<BookCategoryData>?> getCategoryData();
-  FutureOr<int?> updateBookStatus(int id);
 }

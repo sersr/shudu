@@ -35,7 +35,6 @@ class SingleRepository extends Repository
   }
 }
 
-/// 单一隔离\代理
 void singleIsolateEntryPoint(List args) async {
   final remoteSendPort = args[0];
   final appPath = args[1];
@@ -44,16 +43,16 @@ void singleIsolateEntryPoint(List args) async {
 
   Log.i('$appPath | $cachePath | $useSqflite3', onlyDebug: false);
 
-  final db = BookEventIsolate(
+  BookEventIsolate(
     remoteSendPort: remoteSendPort,
     appPath: appPath,
     cachePath: cachePath,
     useSqflite3: useSqflite3,
-  );
-
-  db.run();
+  ).run();
 }
 
+/// single Isolate
+///
 /// 所有的事件都在同一个隔离中运行
 /// 缺点: 随着任务增加，处理消息的速度会变慢
 /// 与[SingleRepository]配合使用

@@ -131,7 +131,6 @@ class BookCacheNotifier extends ChangeNotifier {
     final list = showChildren;
     final futureAny = FutureAny();
     for (var item in list) {
-      if (item.api == ApiType.biquge) {}
       final f = updateBookStatus(item.bookId!, item.api);
       futureAny.add(f);
 
@@ -224,17 +223,15 @@ class BookCacheNotifier extends ChangeNotifier {
     load();
   }
 
-  Future<int> updateBookStatus(int id, ApiType api) async {
+  Future<void> updateBookStatus(int id, ApiType api) async {
     if (api == ApiType.biquge) {
-      return await repository.bookEvent.updateBookStatus(id) ?? 0;
+      await repository.bookEvent.getInfo(id);
     } else {
-      return await updateZdStatus(id);
+      return updateZdStatus(id);
     }
   }
 
-  Future<int> updateZdStatus(int id) async {
-    return await repository.bookEvent.zhangduEvent
-            .updateZhangduMainStatus(id) ??
-        0;
+  Future<void> updateZdStatus(int id) async {
+    await repository.bookEvent.zhangduEvent.updateZhangduMainStatus(id);
   }
 }

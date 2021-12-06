@@ -85,12 +85,6 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
   }
 
   @override
-  Future<int> updateBookStatus(int id) async {
-    await getInfoNet(id);
-    return 0;
-  }
-
-  @override
   Future<Uint8ListType> getImageBytesDynamic(String img) async {
     final data = await getImageBytes(img);
     return Uint8ListType(data);
