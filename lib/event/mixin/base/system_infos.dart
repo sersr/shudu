@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
+
 
 import 'package:android_external_storage/android_external_storage.dart';
 import 'package:bangs/bangs.dart';
@@ -18,29 +18,6 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
 
-/// [SystemInfosPlus]
-mixin SystemInfosPlus on SystemInfos {
-  Future<Isolate> createIsolate(SendPort remoteSendPort, List args) {
-    throw UnimplementedError('未实现');
-  }
-
-  Future<Isolate> initWork(SendPort remoteSendPort) async {
-    final args = await initStartArgs();
-
-    final newIsolate = await createIsolate(remoteSendPort, args);
-
-    if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      final memory = await getMemoryInfo();
-      final freeMem = memory.freeMem;
-      const size = 1.5 * 1024;
-      if (freeMem != null && freeMem < size) {
-        CacheBinding.instance!.imageRefCache!.length = 250;
-      }
-    }
-    return newIsolate;
-  }
-}
 
 /// [Repository]需要的信息
 mixin SystemInfos {

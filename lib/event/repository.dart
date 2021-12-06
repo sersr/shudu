@@ -8,7 +8,7 @@ import 'mixin/multi_Isolate_repository.dart';
 import 'mixin/single_repository.dart';
 
 abstract class Repository extends BookEventMessagerMain
-    with SendInitCloseMixin, NotifyStateMixin, SystemInfos, SystemInfosPlus {
+    with SendInitCloseMixin, NotifyStateMixin, SystemInfos {
   Repository();
 
   late final BookEvent bookEvent = this;
@@ -16,8 +16,9 @@ abstract class Repository extends BookEventMessagerMain
   static Repository? _instance;
 
   factory Repository.create() {
-    _instance ??= MultiIsolateRepository();
+    // 切换顺序使用
     _instance ??= SingleRepository();
+    _instance ??= MultiIsolateRepository();
     return _instance!;
   }
 

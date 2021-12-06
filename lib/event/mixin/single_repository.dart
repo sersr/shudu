@@ -1,5 +1,6 @@
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -14,15 +15,23 @@ class SingleRepository extends Repository
   SingleRepository();
 
   @override
-  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) {
-    return initWork(remoteSendPort);
-  }
+  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) async {
+    final args = await initStartArgs();
 
-  @override
-  Future<Isolate> createIsolate(SendPort remoteSendPort, List args) async {
-    /// Isolate event
-    /// [remoteSendPort, appPath, cachePath, useSqflite3]
-    return Isolate.spawn(singleIsolateEntryPoint, [remoteSendPort, ...args]);
+    // [remoteSendPort, appPath, cachePath, useSqflite3]
+    final newIsolate =
+        await Isolate.spawn(singleIsolateEntryPoint, [remoteSendPort, ...args]);
+
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      final memory = await getMemoryInfo();
+      final freeMem = memory.freeMem;
+      const size = 1.5 * 1024;
+      if (freeMem != null && freeMem < size) {
+        CacheBinding.instance!.imageRefCache!.length = 250;
+      }
+    }
+    return newIsolate;
   }
 }
 
