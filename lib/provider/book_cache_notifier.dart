@@ -8,7 +8,8 @@ import '../event/event.dart';
 import 'book_index_notifier.dart';
 
 class Cache {
-  Cache._({
+  static const none = Cache._();
+  const Cache._({
     this.name,
     this.img,
     this.updateTime,
@@ -56,18 +57,18 @@ class Cache {
     );
   }
 
-  String? name;
-  String? img;
-  String? updateTime;
-  String? lastChapter;
-  int? chapterId;
-  int? bookId;
-  int? page;
-  int? sortKey;
-  bool? isTop;
-  bool? isNew;
-  bool? isShow;
-  ApiType api;
+  final String? name;
+  final String? img;
+  final String? updateTime;
+  final String? lastChapter;
+  final int? chapterId;
+  final int? bookId;
+  final int? page;
+  final int? sortKey;
+  final bool? isTop;
+  final bool? isNew;
+  final bool? isShow;
+  final ApiType api;
 }
 
 class BookCacheNotifier extends ChangeNotifier {
