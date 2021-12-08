@@ -90,12 +90,7 @@ abstract class BookEventMessagerMain extends BookEvent
         ZhangduComplexEventMessager,
         ZhangduNetEventMessager {}
 
-/// implements [CustomEvent]
-mixin CustomEventDynamic {
-  FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
-}
-mixin CustomEventResolve on Resolve
-    implements CustomEvent, ServerNetEvent, CustomEventDynamic {
+mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
   Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
     yield const MapEntry('bookEventDefault', CustomEventMessage);
     yield* super.getResolveProtocols();
@@ -103,35 +98,24 @@ mixin CustomEventResolve on Resolve
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
     yield MapEntry(CustomEventMessage, [
-      _getSearchData_0,
-      _getImageBytes_1,
-      _getHiveShudanLists_2,
-      _getShudanLists_3,
-      _getTopLists_4,
-      _getCategLists_5,
-      _getShudanDetail_6,
-      _getCategoryData_7,
-      _getContentNet_8,
-      _getInfoNet_9,
-      _getIndexsNet_10,
-      _getZhangduContentNet_11
+      getSearchData,
+      getImageBytesDynamic,
+      getHiveShudanLists,
+      (args) => getShudanLists(args[0], args[1]),
+      (args) => getTopLists(args[0], args[1], args[2]),
+      (args) => getCategLists(args[0], args[1], args[2]),
+      getShudanDetail,
+      (args) => getCategoryData(),
+      (args) => getContentNet(args[0], args[1]),
+      getInfoNet,
+      getIndexsNet,
+      getZhangduContentNet
     ]);
     yield* super.resolveFunctionIterable();
   }
 
-  _getSearchData_0(args) => getSearchData(args);
   getImageBytes(String img) => throw NopUseDynamicVersionExection("不要手动调用");
-  _getImageBytes_1(args) => getImageBytesDynamic(args);
-  _getHiveShudanLists_2(args) => getHiveShudanLists(args);
-  _getShudanLists_3(args) => getShudanLists(args[0], args[1]);
-  _getTopLists_4(args) => getTopLists(args[0], args[1], args[2]);
-  _getCategLists_5(args) => getCategLists(args[0], args[1], args[2]);
-  _getShudanDetail_6(args) => getShudanDetail(args);
-  _getCategoryData_7(args) => getCategoryData();
-  _getContentNet_8(args) => getContentNet(args[0], args[1]);
-  _getInfoNet_9(args) => getInfoNet(args);
-  _getIndexsNet_10(args) => getIndexsNet(args);
-  _getZhangduContentNet_11(args) => getZhangduContentNet(args);
+  FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
 }
 
 /// implements [CustomEvent]
@@ -214,24 +198,16 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
     yield MapEntry(BookCacheEventMessage, [
-      _getMainList_0,
-      _watchMainList_1,
-      _updateBook_2,
-      _insertBook_3,
-      _deleteBook_4,
-      _watchCurrentCid_5,
-      _getCacheItems_6
+      (args) => getMainList(),
+      (args) => watchMainList(),
+      (args) => updateBook(args[0], args[1]),
+      insertBook,
+      deleteBook,
+      watchCurrentCid,
+      (args) => getCacheItems()
     ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _getMainList_0(args) => getMainList();
-  _watchMainList_1(args) => watchMainList();
-  _updateBook_2(args) => updateBook(args[0], args[1]);
-  _insertBook_3(args) => insertBook(args);
-  _deleteBook_4(args) => deleteBook(args);
-  _watchCurrentCid_5(args) => watchCurrentCid(args);
-  _getCacheItems_6(args) => getCacheItems();
 }
 
 /// implements [BookCacheEvent]
@@ -287,13 +263,9 @@ mixin BookContentEventResolve on Resolve implements BookContentEvent {
   }
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(
-        BookContentEventMessage, [_watchBookContentCid_0, _deleteCache_1]);
+    yield MapEntry(BookContentEventMessage, [watchBookContentCid, deleteCache]);
     yield* super.resolveFunctionIterable();
   }
-
-  _watchBookContentCid_0(args) => watchBookContentCid(args);
-  _deleteCache_1(args) => deleteCache(args);
 }
 
 /// implements [BookContentEvent]
@@ -324,34 +296,20 @@ mixin ServerEventResolve on Resolve implements ServerEvent {
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
     yield MapEntry(ServerEventMessage, [
-      _getContentDb_0,
-      _insertOrUpdateIndexs_1,
-      _getIndexsDb_2,
-      _insertOrUpdateContent_3,
-      _insertOrUpdateBook_4,
-      _insertOrUpdateZhangduIndex_5,
-      _getZhangduContentDb_6,
-      _getZhangduContentCid_7,
-      _insertOrUpdateZhangduContent_8,
-      _getZhangduIndexDb_9,
-      _insertOrUpdateZhangduBook_10
+      (args) => getContentDb(args[0], args[1]),
+      (args) => insertOrUpdateIndexs(args[0], args[1]),
+      getIndexsDb,
+      insertOrUpdateContent,
+      insertOrUpdateBook,
+      (args) => insertOrUpdateZhangduIndex(args[0], args[1]),
+      (args) => getZhangduContentDb(args[0], args[1]),
+      getZhangduContentCid,
+      insertOrUpdateZhangduContent,
+      getZhangduIndexDb,
+      (args) => insertOrUpdateZhangduBook(args[0], args[1], args[2])
     ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _getContentDb_0(args) => getContentDb(args[0], args[1]);
-  _insertOrUpdateIndexs_1(args) => insertOrUpdateIndexs(args[0], args[1]);
-  _getIndexsDb_2(args) => getIndexsDb(args);
-  _insertOrUpdateContent_3(args) => insertOrUpdateContent(args);
-  _insertOrUpdateBook_4(args) => insertOrUpdateBook(args);
-  _insertOrUpdateZhangduIndex_5(args) =>
-      insertOrUpdateZhangduIndex(args[0], args[1]);
-  _getZhangduContentDb_6(args) => getZhangduContentDb(args[0], args[1]);
-  _getZhangduContentCid_7(args) => getZhangduContentCid(args);
-  _insertOrUpdateZhangduContent_8(args) => insertOrUpdateZhangduContent(args);
-  _getZhangduIndexDb_9(args) => getZhangduIndexDb(args);
-  _insertOrUpdateZhangduBook_10(args) =>
-      insertOrUpdateZhangduBook(args[0], args[1], args[2]);
 }
 
 /// implements [ServerEvent]
@@ -434,16 +392,15 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
   }
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ComplexEventMessage,
-        [_getContent_0, _getIndexs_1, _getInfo_2, _getZhangduContent_3]);
+    yield MapEntry(ComplexEventMessage, [
+      (args) => getContent(args[0], args[1], args[2]),
+      (args) => getIndexs(args[0], args[1]),
+      getInfo,
+      (args) => getZhangduContent(
+          args[0], args[1], args[2], args[3], args[4], args[5])
+    ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _getContent_0(args) => getContent(args[0], args[1], args[2]);
-  _getIndexs_1(args) => getIndexs(args[0], args[1]);
-  _getInfo_2(args) => getInfo(args);
-  _getZhangduContent_3(args) =>
-      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
 }
 
 /// implements [ComplexEvent]
@@ -488,28 +445,18 @@ mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
     yield MapEntry(ZhangduDatabaseEventMessage, [
-      _deleteZhangduContentCache_0,
-      _watchZhangduContentCid_1,
-      _getZhangduMainList_2,
-      _watchZhangduMainList_3,
-      _updateZhangduBook_4,
-      _insertZhangduBook_5,
-      _deleteZhangduBook_6,
-      _watchZhangduCurrentCid_7,
-      _getZhangduCacheItems_8
+      deleteZhangduContentCache,
+      watchZhangduContentCid,
+      (args) => getZhangduMainList(),
+      (args) => watchZhangduMainList(),
+      (args) => updateZhangduBook(args[0], args[1]),
+      insertZhangduBook,
+      deleteZhangduBook,
+      watchZhangduCurrentCid,
+      (args) => getZhangduCacheItems()
     ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _deleteZhangduContentCache_0(args) => deleteZhangduContentCache(args);
-  _watchZhangduContentCid_1(args) => watchZhangduContentCid(args);
-  _getZhangduMainList_2(args) => getZhangduMainList();
-  _watchZhangduMainList_3(args) => watchZhangduMainList();
-  _updateZhangduBook_4(args) => updateZhangduBook(args[0], args[1]);
-  _insertZhangduBook_5(args) => insertZhangduBook(args);
-  _deleteZhangduBook_6(args) => deleteZhangduBook(args);
-  _watchZhangduCurrentCid_7(args) => watchZhangduCurrentCid(args);
-  _getZhangduCacheItems_8(args) => getZhangduCacheItems();
 }
 
 /// implements [ZhangduDatabaseEvent]
@@ -583,19 +530,14 @@ mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
     yield MapEntry(ZhangduComplexEventMessage, [
-      _getZhangduIndex_0,
-      _getZhangduContent_1,
-      _updateZhangduMainStatus_2,
-      _getZhangduDetail_3
+      (args) => getZhangduIndex(args[0], args[1]),
+      (args) => getZhangduContent(
+          args[0], args[1], args[2], args[3], args[4], args[5]),
+      updateZhangduMainStatus,
+      getZhangduDetail
     ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _getZhangduIndex_0(args) => getZhangduIndex(args[0], args[1]);
-  _getZhangduContent_1(args) =>
-      getZhangduContent(args[0], args[1], args[2], args[3], args[4], args[5]);
-  _updateZhangduMainStatus_2(args) => updateZhangduMainStatus(args);
-  _getZhangduDetail_3(args) => getZhangduDetail(args);
 }
 
 /// implements [ZhangduComplexEvent]
@@ -639,14 +581,12 @@ mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
   }
 
   Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ZhangduNetEventMessage,
-        [_getZhangduSameUsersBooks_0, _getZhangduSearchData_1]);
+    yield MapEntry(ZhangduNetEventMessage, [
+      getZhangduSameUsersBooks,
+      (args) => getZhangduSearchData(args[0], args[1], args[2])
+    ]);
     yield* super.resolveFunctionIterable();
   }
-
-  _getZhangduSameUsersBooks_0(args) => getZhangduSameUsersBooks(args);
-  _getZhangduSearchData_1(args) =>
-      getZhangduSearchData(args[0], args[1], args[2]);
 }
 
 /// implements [ZhangduNetEvent]

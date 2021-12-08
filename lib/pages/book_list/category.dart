@@ -165,10 +165,10 @@ class Categories extends StatefulWidget {
 class _CategoriesState extends State<Categories> {
   final _titles = <String>['最热', '最新', '评分', '完结'];
   final _urlKeys = <String>['hot', 'new', 'vote', 'over'];
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   @override
   Widget build(BuildContext context) {
+    bool isLight = Theme.of(context).brightness == Brightness.light;
     return DefaultTabController(
       length: _titles.length,
       child: Scaffold(
@@ -186,10 +186,11 @@ class _CategoriesState extends State<Categories> {
               ),
             ),
             bottom: TabBar(
-              labelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
-              unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
+              unselectedLabelColor: isLight
+                  ? const Color.fromARGB(255, 204, 204, 204)
+                  : const Color.fromARGB(255, 110, 110, 110),
+              labelColor: const Color.fromARGB(255, 255, 255, 255),
+              indicatorColor: const Color.fromARGB(255, 252, 137, 175),
               tabs: _titles
                   .map((e) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),

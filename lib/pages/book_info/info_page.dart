@@ -545,7 +545,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                       color: const Color.fromARGB(
                                           255, 223, 223, 223)),
                                   overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   softWrap: false,
                                 ),
                               ),

@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
-
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../../../provider/provider.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
 import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
-import 'color_picker.dart';
 import 'page_view_controller.dart';
 
 class Pannel extends StatefulWidget {
@@ -718,17 +717,12 @@ class BookSettingsView extends StatefulWidget {
 }
 
 class _BookSettingsViewState extends State<BookSettingsView> {
-  final ValueNotifier<double> bgBrightness = ValueNotifier(1.0);
-  final ValueNotifier<double> ftBrightness = ValueNotifier(1.0);
   final ValueNotifier<double> fontvalue = ValueNotifier(10.0);
   final ValueNotifier<double> fontHvalue = ValueNotifier(1.0);
-  ValueNotifier<HSVColor> bgColor =
-      ValueNotifier(HSVColor.fromColor(Colors.transparent));
-  ValueNotifier<HSVColor> ftColor =
-      ValueNotifier(HSVColor.fromColor(Colors.transparent));
+  ValueNotifier<Color> bgColor = ValueNotifier(Colors.transparent);
+  ValueNotifier<Color> ftColor = ValueNotifier(Colors.transparent);
 
   late ContentNotifier bloc;
-  Widget? _setting;
   // late ChangeNotifierSelector<ContentViewConfig, bool> _audioNotifier;
   @override
   void initState() {
@@ -747,25 +741,12 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     final fcolor = bloc.config.value.fontColor!;
     fontvalue.value = bloc.config.value.fontSize!;
     fontHvalue.value = bloc.config.value.lineTweenHeight!;
-    final hsv = HSVColor.fromColor(color);
-    final hsvf = HSVColor.fromColor(fcolor);
-    bgColor.value = hsv;
-    ftColor.value = hsvf;
-    bgBrightness.value = hsv.value;
-    ftBrightness.value = hsvf.value;
-  }
-
-  void onChange(HSVColor c) {
-    ftColor.value = c;
-  }
-
-  void onChangev(HSVColor c) {
-    bgColor.value = c;
+    bgColor.value = color;
+    ftColor.value = fcolor;
   }
 
   //TODO: 添加配色保存功能
   Widget settings() {
-    if (_setting != null) return _setting!;
     var fontSlider = Row(
       children: [
         Expanded(
@@ -804,71 +785,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
       ],
     );
-    var colorSelector = Row(
-      children: [
-        Expanded(
-          child: RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: bgBrightness,
-              builder: (context, child) {
-                return Slider(
-                  value: bgBrightness.value,
-                  onChanged: (double value) {
-                    bgColor.value = bgColor.value.withValue(value);
-                    bgBrightness.value = value;
-                  },
-                  min: 0.0,
-                  max: 1.0,
-                );
-              },
-            ),
-          ),
-        ),
-        Expanded(
-          child: RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: ftBrightness,
-              builder: (context, child) {
-                return Slider(
-                  value: ftBrightness.value,
-                  onChanged: (double value) {
-                    ftColor.value = ftColor.value.withValue(value);
-                    ftBrightness.value = value;
-                  },
-                  min: 0.0,
-                  max: 1.0,
-                );
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-    var onChangeChild = Row(
-      children: [
-        Expanded(
-          child: Center(
-            child: SelectColor(
-              onChangeUpdate: onChangev,
-              onChangeDown: onChangev,
-              onChangeEnd: onChangev,
-              value: bgBrightness,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: SelectColor(
-              onChangeUpdate: onChange,
-              onChangeDown: onChange,
-              onChangeEnd: onChange,
-              value: ftBrightness,
-            ),
-          ),
-        ),
-      ],
-    );
     var fontSize = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Expanded(
           child: RepaintBoundary(
@@ -950,10 +868,10 @@ class _BookSettingsViewState extends State<BookSettingsView> {
             radius: 40,
             onTap: () {
               bloc.setPrefs(bloc.config.value.copyWith(
-                bgcolor: bgColor.value.toColor(),
+                bgcolor: bgColor.value,
                 fontSize: fontvalue.value.floorToDouble(),
                 lineTweenHeight: fontHvalue.value,
-                fontColor: ftColor.value.toColor(),
+                fontColor: ftColor.value,
               ));
             },
             child: Center(
@@ -976,7 +894,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
             return Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(9),
-                color: bgColor.value.toColor(),
+                color: bgColor.value,
               ),
               child: Center(
                 child: Padding(
@@ -985,7 +903,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                     animation: ftColor,
                     builder: (context, child) {
                       return Text('字体颜色',
-                          style: TextStyle(color: ftColor.value.toColor()));
+                          style: TextStyle(color: ftColor.value));
                     },
                   ),
                 ),
@@ -995,8 +913,9 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
       ),
     );
+    bool isLight = Theme.of(context).brightness == Brightness.light;
 
-    return _setting = Column(
+    return Column(
       children: [
         Expanded(
           child: Padding(
@@ -1007,22 +926,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                 children: [
                   padding2,
                   RepaintBoundary(
-                    child: SizedBox(
-                      height: 150,
-                      child: onChangeChild,
-                    ),
-                  ),
-                  RepaintBoundary(
-                    child: Container(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Column(
-                        children: [
-                          colorSelector,
-                        ],
-                      ),
-                    ),
-                  ),
-                  RepaintBoundary(
                     child: Container(
                       height: 106,
                       padding: const EdgeInsets.only(top: 12.0),
@@ -1030,7 +933,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                         children: [
                           fontSize,
                           fontSlider,
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           RepaintBoundary(
                             child: AnimatedBuilder(
                               animation: bloc.autoValue,
@@ -1074,6 +977,35 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       ],
                     ),
                   )),
+                  Row(
+                    children: [
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: _builder(
+                            isLight,
+                            '选择背景颜色',
+                            () => HueRingPicker(
+                                  onColorChanged: (Color value) {
+                                    bgColor.value = value;
+                                  },
+                                  pickerColor: bgColor.value,
+                                )),
+                      ),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: _builder(
+                            isLight,
+                            '选择字体颜色',
+                            () => HueRingPicker(
+                                  onColorChanged: (Color value) {
+                                    ftColor.value = value;
+                                  },
+                                  pickerColor: ftColor.value,
+                                )),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1081,6 +1013,44 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
         RepaintBoundary(child: bottom)
       ],
+    );
+  }
+
+  Widget _builder(bool light, String text, Widget Function() builder) {
+    return btn1(
+      elevation: 0.5,
+      radius: 10.0,
+      bgColor: light ? null : Color.fromRGBO(25, 25, 25, 1),
+      splashColor: light ? null : Color.fromARGB(255, 99, 99, 99),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Center(
+          child: Text(
+        text,
+        style: TextStyle(
+            color: light ? Colors.grey.shade700 : Colors.grey.shade400),
+      )),
+      onTap: () {
+        showDialog(
+            builder: (BuildContext context) {
+              final isLight = Theme.of(context).brightness == Brightness.light;
+              return Center(
+                  child: RepaintBoundary(
+                child: Material(
+                  color: isLight
+                      ? Color.fromARGB(255, 224, 224, 224)
+                      : Color.fromARGB(255, 41, 41, 41),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IntrinsicWidth(
+                      child: SingleChildScrollView(child: builder()),
+                    ),
+                  ),
+                ),
+              ));
+            },
+            context: context);
+      },
     );
   }
 

@@ -39,7 +39,7 @@ mixin HiveDioMixin on Resolve {
   }
 }
 
-mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
+mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
   var frequency = 0;
 
   late Box imageUpdate;
@@ -94,12 +94,10 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
 
   final _errorLoading = <String, int>{};
 
-  @pragma('vm:prefer-inline')
   Future<T> imageTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 20);
+    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 5);
   }
 
-  @pragma('vm:prefer-inline')
   Future<T> ioTasks<T>(EventCallback<T> task) {
     return EventQueue.runTaskOnQueue(ioTasks, task);
   }
@@ -415,6 +413,7 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
   @override
   Future<Uint8List?> getImageBytes(String img) async {
     final imgResolve = imageUrlResolve(img);
+    final url = imgResolve[0];
     final imgName = imgResolve[1];
 
     final imgPath = join(imageLocalPath, imgName);
@@ -437,16 +436,6 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
     }
 
     if (_bytes != null) return _bytes;
-
-    return getImageBytesFromNet(img, imageKey);
-  }
-
-  Future<Uint8List?> getImageBytesFromNet(String img, String imageKey) async {
-    final imgResolve = imageUrlResolve(img);
-    final url = imgResolve[0];
-    final imgName = imgResolve[1];
-
-    final imgPath = join(imageLocalPath, imgName);
 
     if (_errorLoading.containsKey(imgName)) {
       final time = _errorLoading[imgName]!;
@@ -474,7 +463,7 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
         success = _isValid(data.headers);
       } catch (e) {
         success = false;
-        assert(Log.w(Log.splitString('error: $imgName | $url\n$e', lines: 1)));
+        assert(Log.w('error: $imgName | $url$e', lines: 4));
       } finally {
         if (success)
           _errorLoading.remove(imgName);
@@ -493,12 +482,10 @@ mixin NetworkMixin on HiveDioMixin implements CustomEvent, CustomEventDynamic {
           final o = await temp.open(mode: FileMode.writeOnly);
           const sizes = 1024;
           var start = 0;
-          var end = 0;
           final max = dataBytes.length;
           while (start < max) {
-            end = math.min(start + sizes, max);
-            await o.writeFrom(dataBytes, start, end);
-            await releaseUI;
+            final end = math.min(start + sizes, max);
+            o.writeFromSync(dataBytes, start, end);
             start = end;
           }
 

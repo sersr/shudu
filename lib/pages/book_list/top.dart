@@ -23,10 +23,10 @@ class _TopPageState extends State<TopPage> {
     ts = context.read<TextStyleConfig>();
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
-
   @override
   Widget build(BuildContext context) {
+    bool isLight = Theme.of(context).brightness == Brightness.light;
+
     return DefaultTabController(
       initialIndex: 0,
       length: 3,
@@ -35,12 +35,17 @@ class _TopPageState extends State<TopPage> {
           child: BarLayout(
             title: Text('榜单'),
             bottom: TabBar(
-              labelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
-              unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
+              unselectedLabelColor: isLight
+                  ? const Color.fromARGB(255, 204, 204, 204)
+                  : const Color.fromARGB(255, 110, 110, 110),
+              labelColor: const Color.fromARGB(255, 255, 255, 255),
+              indicatorColor: const Color.fromARGB(255, 252, 137, 175),
               labelStyle: TextStyle(fontSize: 15),
-              tabs: const <Widget>[Text('周榜'), Text('月榜'), Text('总榜')],
+              tabs: ['周榜', '月榜', '总榜']
+                  .map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Text(e)))
+                  .toList(),
             ),
             body: TabBarView(
               children: List.generate(3, (index) => Top(index: index)),
@@ -84,6 +89,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
                           : Colors.grey.shade600
                       : null,
                   child: InkWell(
+                    splashFactory: InkRipple.splashFactory,
                     onTap: () {
                       // if (_currentIndex != index)
                       setState(() => _currentIndex = index);

@@ -227,11 +227,7 @@ class BookCacheNotifier extends ChangeNotifier {
     if (api == ApiType.biquge) {
       await repository.bookEvent.getInfo(id);
     } else {
-      return updateZdStatus(id);
+      await repository.bookEvent.zhangduEvent.updateZhangduMainStatus(id);
     }
-  }
-
-  Future<void> updateZdStatus(int id) async {
-    await repository.bookEvent.zhangduEvent.updateZhangduMainStatus(id);
   }
 }

@@ -17,8 +17,8 @@ abstract class Repository extends BookEventMessagerMain
 
   factory Repository.create() {
     // 切换顺序使用
-    _instance ??= SingleRepository();
     _instance ??= MultiIsolateRepository();
+    _instance ??= SingleRepository();
     return _instance!;
   }
 

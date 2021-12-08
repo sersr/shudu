@@ -49,26 +49,28 @@ class TextAsyncLayout extends StatelessWidget {
             maxLines: bottomLines,
             textDirection: TextDirection.ltr));
 
-    return Selector<OptionsNotifier, bool>(
-        selector: (_, opt) => opt.options.useTextCache ?? false,
-        builder: (context, useTextCache, child) {
-          /// 只有绑定 [CacheBinding] 才能启用
-          if (useTextCache && textCache != null)
-            return LayoutBuilder(builder: (context, constraints) {
-              return _CacheText(
-                  bottom: bottom,
-                  top: top,
-                  topRightScore: topRightScore,
-                  center: center,
-                  centerLines: centerLines,
-                  bottomLines: bottomLines,
-                  height: height,
-                  maxWidth: constraints.maxWidth);
-            });
+    return RepaintBoundary(
+      child: Selector<OptionsNotifier, bool>(
+          selector: (_, opt) => opt.options.useTextCache ?? false,
+          builder: (context, useTextCache, child) {
+            /// 只有绑定 [CacheBinding] 才能启用
+            if (useTextCache && textCache != null)
+              return LayoutBuilder(builder: (context, constraints) {
+                return _CacheText(
+                    bottom: bottom,
+                    top: top,
+                    topRightScore: topRightScore,
+                    center: center,
+                    centerLines: centerLines,
+                    bottomLines: bottomLines,
+                    height: height,
+                    maxWidth: constraints.maxWidth);
+              });
 
-          return child!;
-        },
-        child: child);
+            return child!;
+          },
+          child: child),
+    );
   }
 }
 
@@ -102,7 +104,6 @@ class _CacheTextState extends State<_CacheText> {
   late TextStyleConfig tsConfig;
 
   late List _keys;
-
 
   void _updateKeys() {
     _keys = [
@@ -153,7 +154,7 @@ class _CacheTextState extends State<_CacheText> {
       return _painter(widget.topRightScore, style: trs, maxLines: 1)
         ..layout(maxWidth: widget.maxWidth);
     });
-
+    await releaseUI;
     final _tpWidth = _tpr.painter.width;
 
     final topWidth = widget.maxWidth - _tpWidth;
@@ -190,6 +191,7 @@ class _CacheTextState extends State<_CacheText> {
           style: ts.body3, maxLines: widget.bottomLines)
         ..layout(maxWidth: widget.maxWidth);
     });
+    await releaseUI;
   }
 
   Widget _items(Iterable<TextInfo>? data) {

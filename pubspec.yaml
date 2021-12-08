@@ -69,6 +69,7 @@ dependencies:
   http: ^0.13.4
   android_external_storage: ^0.1.0
   battery_plus: ^2.0.1
+  flutter_colorpicker: ^1.0.2
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

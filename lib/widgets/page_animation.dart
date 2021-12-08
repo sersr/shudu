@@ -17,7 +17,6 @@ mixin PageAnimationMixin<T extends StatefulWidget> on State<T> {
     animation = ModalRoute.of(context)?.animation;
     animation?.addStatusListener(_listenAnimationStatus);
     addListener(initOnceTask);
-    // 初始时status == AnimationStatus.completed
     // 延迟判断
     Timer.run(() => isCompleted ? _run() : null);
   }

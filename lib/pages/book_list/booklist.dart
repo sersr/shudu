@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -19,7 +18,8 @@ class BooklistPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    bool isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
       body: RepaintBoundary(
         child: DefaultTabController(
@@ -27,12 +27,11 @@ class BooklistPage extends StatelessWidget {
           child: BarLayout(
             title: Text('书单'),
             bottom: TabBar(
-              // controller: controller,
-              unselectedLabelColor:
-                  isLight ? TextStyleConfig.blackColor7 : Colors.grey.shade700,
-              labelColor:
-                  isLight ? TextStyleConfig.blackColor2 : Colors.grey.shade400,
-              indicatorColor: Colors.pink.shade200,
+              unselectedLabelColor: isLight
+                  ? const Color.fromARGB(255, 204, 204, 204)
+                  : const Color.fromARGB(255, 110, 110, 110),
+              labelColor: const Color.fromARGB(255, 255, 255, 255),
+              indicatorColor: const Color.fromARGB(255, 252, 137, 175),
               tabs: [
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 5.0),
@@ -333,53 +332,38 @@ class BarLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    final size = MediaQuery.of(context).size;
     final ts = context.read<TextStyleConfig>().data;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
-      child: Material(
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
+    Widget? leading;
+    if (canPop) {
+      leading = Padding(
+        padding: const EdgeInsets.only(left: 8.0),
+        child: BackButton(color: Colors.grey.shade100),
+      );
+    }
+    var middle = DefaultTextStyle(
+        style: ts.bigTitle1.copyWith(fontSize: 20, color: Colors.grey.shade100),
+        child: title);
+
+    return Column(children: [
+      Material(
         color: isLight
-            ? Color.fromARGB(255, 240, 240, 240)
+            ? Color.fromARGB(255, 13, 157, 224)
             : Color.fromRGBO(25, 25, 25, 1),
         child: SafeArea(
           bottom: false,
-          child: Column(children: [
-            RepaintBoundary(
-              child: CustomMultiChildLayout(
-                  delegate: MultLayout(mSize: Size(size.width, 90)),
-                  children: [
-                    LayoutId(
-                        id: 'back',
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 12.0),
-                          child: SizedBox(
-                            height: 56,
-                            width: 56,
-                            child: OverflowBox(
-                              maxHeight: 60,
-                              maxWidth: 60,
-                              child: InkWell(
-                                  borderRadius: BorderRadius.circular(40),
-                                  onTap: () => Navigator.maybePop(context),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Icon(Icons.arrow_back, size: 24),
-                                  )),
-                            ),
-                          ),
-                        )),
-                    LayoutId(
-                        id: 'title',
-                        child: DefaultTextStyle(
-                            style: ts.bigTitle1, child: title)),
-                    LayoutId(id: 'bottom', child: bottom)
-                  ]),
-            ),
-            Expanded(child: RepaintBoundary(child: body))
-          ]),
+          child: Column(
+            children: [
+              SizedBox(
+                  height: kToolbarHeight,
+                  child: NavigationToolbar(leading: leading, middle: middle)),
+              bottom,
+            ],
+          ),
         ),
       ),
-    );
+      Expanded(child: RepaintBoundary(child: body))
+    ]);
   }
 }
 

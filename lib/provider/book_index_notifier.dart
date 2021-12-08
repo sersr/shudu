@@ -201,7 +201,6 @@ class BookIndexNotifier extends ChangeNotifier
 
   @override
   void onClose() {
-    // 如果是暂停状态，`onDone`不会调用
     _listenerReset();
   }
 
