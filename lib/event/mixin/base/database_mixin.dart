@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:file/local.dart';
+import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -15,7 +16,6 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
 
-  bool get useSqflite3 => false;
 
   late final bookCache = db.bookCache;
   late final bookContentDb = db.bookContentDb;
@@ -26,7 +26,7 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
       : join(appPath, name);
 
   @override
-  FutureOr<bool> onClose() async {
+  FutureOr<void> onClose() async {
     await db.dispose();
     return super.onClose();
   }
@@ -38,17 +38,15 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   }
 
   FutureOr<void> _initDb() {
-    if (_url != NopDatabase.memory) {
+    if (_url != NopDatabase.memory && !kIsWeb) {
       const fs = LocalFileSystem();
       final dir = fs.currentDirectory.childDirectory(appPath);
-      if (!dir.existsSync()) {
-        dir.createSync(recursive: true);
-      }
+      dir.createSync(recursive: true);
     }
     return db.initDb();
   }
 
-  late final db = BookDatabase(_url, useSqflite3);
+  late final db = BookDatabase(_url);
 
   @override
   FutureOr<int> updateBook(int id, BookCache book) {
@@ -60,9 +58,7 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   @override
   FutureOr<int> deleteCache(int bookId) {
     final delete = bookContentDb.delete..where.bookId.equalTo(bookId);
-    final d = delete.go;
-    Log.i('delete: $d');
-    return d;
+    return delete.go;
   }
 
   @override
@@ -112,7 +108,8 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   }
 
   @override
-  FutureOr<List<BookCache>> getMainList() => bookCache.query.goToTable;
+  FutureOr<Option<List<BookCache>>> getMainList() =>
+      bookCache.query.goToTable.then((v) => Some(v));
 
   @override
   Stream<List<BookCache>> watchMainList() {

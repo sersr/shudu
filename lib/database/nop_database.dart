@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:nop_db/nop_db.dart';
-import 'package:nop_db_sqflite/nop_db_sqflite.dart';
-import 'package:nop_db_sqlite/nop_db_sqlite.dart';
+// import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+import 'package:nop_db_sqlite/sqlite.dart' as nop;
 import 'package:useful_tools/useful_tools.dart';
 import 'package:utils/future_or_ext.dart';
 
@@ -113,9 +113,7 @@ class BookIndex extends Table {
   ZhangduIndex,
 ])
 class BookDatabase extends _GenBookDatabase {
-  BookDatabase(this.path, this.useSqfite3);
-
-  final bool useSqfite3;
+  BookDatabase(this.path);
 
   final String path;
 
@@ -126,49 +124,66 @@ class BookDatabase extends _GenBookDatabase {
     return _initDb().then((_) {
       return db.rawQuery(
           'select count(*) from sqlite_master where type = ? and name = ?',
-          ['index', index]).then((value) {
+          ['index', index]).then((value) async {
         if (value.first.values.first == 0) {
-          return db.execute(
-              'CREATE INDEX $index on ${bookContentDb.table}(${bookContentDb.cid})');
+          await onCreate(db, version);
+          var count = 10;
+          while (count > 0) {
+            try {
+              await release(const Duration(milliseconds: 100));
+              await db.execute(
+                  'CREATE INDEX $index on ${bookContentDb.table}(${bookContentDb.cid})');
+              break;
+            } catch (e) {
+              count--;
+              Log.e('error>>>> $e');
+            }
+          }
         }
       });
     });
   }
 
+  /// 弃用`sqflite`
+  /// 在执行'PRAGMA user_version'sql 时，会有意外情况发生
+  /// 为了管理更多的内存权限
   FutureOr<void> _initDb() {
-    if (useSqfite3) {
-      return _initSqflitedb().then(setDb);
-    } else {
-      setDb(_initffidb());
-    }
+    // if (useSqfite3) {
+    //   return _initSqflitedb().then(setDb);
+    // } else {
+    return _initffidb().then(setDb);
+    // }
   }
 
-  NopDatabase _initffidb() {
-    return NopDatabaseImpl.open(path,
+  FutureOr<NopDatabase> _initffidb() {
+    return nop.open(path,
         version: version,
         onCreate: onCreate,
         onUpgrade: onUpgrade,
         onDowngrade: onDowngrade);
   }
 
-  Future<NopDatabase> _initSqflitedb() {
-    return NopDatabaseSqflite.openSqfite(path,
-        version: version,
-        onCreate: onCreate,
-        onUpgrade: onUpgrade,
-        onDowngrade: onDowngrade);
-  }
+  // Future<NopDatabase> _initSqflitedb() {
+  //   return NopDatabaseSqflite.openSqfite(path,
+  //       version: version,
+  //       onCreate: onCreate,
+  //       onUpgrade: onUpgrade,
+  //       onDowngrade: onDowngrade);
+  // }
 
   @override
   FutureOr<void> onUpgrade(
       NopDatabase db, int oldVersion, int newVersion) async {
-    Log.i('version: $oldVersion  | $newVersion');
     if (oldVersion <= 1) {
-      final indexTable = bookIndex.table;
-      await db.execute(
-          'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.itemCounts} INTEGER');
-      await db.execute(
-          'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.cacheItemCounts} INTEGER');
+      try {
+        final indexTable = bookIndex.table;
+        await db.execute(
+            'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.itemCounts} INTEGER');
+        await db.execute(
+            'ALTER TABLE $indexTable ADD COLUMN ${bookIndex.cacheItemCounts} INTEGER');
+      } catch (e) {
+        Log.i('error: $e', onlyDebug: false);
+      }
     }
     if (oldVersion <= 2) {
       await db.execute(zhangduCache.createTable());

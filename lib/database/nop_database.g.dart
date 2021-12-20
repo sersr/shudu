@@ -96,10 +96,10 @@ class GenBookCache extends DatabaseTable<BookCache, GenBookCache> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $name TEXT, $img '
-        'TEXT, $updateTime TEXT, $lastChapter TEXT, $chapterId INTEGER, $bookId '
-        'INTEGER, $page INTEGER, $sortKey INTEGER, $isTop INTEGER, $isNew '
-        'INTEGER, $isShow INTEGER)';
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $name '
+        'TEXT, $img TEXT, $updateTime TEXT, $lastChapter TEXT, $chapterId '
+        'INTEGER, $bookId INTEGER, $page INTEGER, $sortKey INTEGER, $isTop '
+        'INTEGER, $isNew INTEGER, $isShow INTEGER)';
   }
 
   static BookCache mapToTable(Map<String, dynamic> map) => BookCache(
@@ -248,9 +248,9 @@ class GenBookContentDb extends DatabaseTable<BookContentDb, GenBookContentDb> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, $cid '
-        'INTEGER, $cname TEXT, $nid INTEGER, $pid INTEGER, $content TEXT, '
-        '$hasContent INTEGER)';
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $bookId '
+        'INTEGER, $cid INTEGER, $cname TEXT, $nid INTEGER, $pid INTEGER, '
+        '$content TEXT, $hasContent INTEGER)';
   }
 
   static BookContentDb mapToTable(Map<String, dynamic> map) => BookContentDb(
@@ -359,8 +359,8 @@ class GenBookIndex extends DatabaseTable<BookIndex, GenBookIndex> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$bIndexs TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $bookId '
+        'INTEGER, $bIndexs TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
   }
 
   static BookIndex mapToTable(Map<String, dynamic> map) => BookIndex(
@@ -481,8 +481,8 @@ class GenZhangduCache extends DatabaseTable<ZhangduCache, GenZhangduCache> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$name TEXT, $pinyin TEXT, $picture TEXT, $chapterId INTEGER, '
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $bookId '
+        'INTEGER, $name TEXT, $pinyin TEXT, $picture TEXT, $chapterId INTEGER, '
         '$chapterName TEXT, $chapterUpdateTime TEXT, $page INTEGER, $sortKey '
         'INTEGER, $isTop INTEGER, $isNew INTEGER, $isShow INTEGER)';
   }
@@ -634,8 +634,8 @@ class GenZhangduContent
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$contentId INTEGER, $name TEXT, $sort INTEGER, $data TEXT)';
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $bookId '
+        'INTEGER, $contentId INTEGER, $name TEXT, $sort INTEGER, $data TEXT)';
   }
 
   static ZhangduContent mapToTable(Map<String, dynamic> map) => ZhangduContent(
@@ -730,8 +730,8 @@ class GenZhangduIndex extends DatabaseTable<ZhangduIndex, GenZhangduIndex> {
 
   @override
   String createTable() {
-    return 'CREATE TABLE $table ($id INTEGER PRIMARY KEY, $bookId INTEGER, '
-        '$data TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
+    return 'CREATE TABLE IF NOT EXISTS $table ($id INTEGER PRIMARY KEY, $bookId '
+        'INTEGER, $data TEXT, $itemCounts INTEGER, $cacheItemCounts INTEGER)';
   }
 
   static ZhangduIndex mapToTable(Map<String, dynamic> map) => ZhangduIndex(

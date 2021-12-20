@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-
 import 'package:android_external_storage/android_external_storage.dart';
 import 'package:bangs/bangs.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -9,8 +8,9 @@ import 'package:device_info/device_info.dart';
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:memory_info/memory_info.dart';
-import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+// import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,13 +18,19 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/provider.dart';
 
-
 /// [Repository]需要的信息
 mixin SystemInfos {
   Future<List> initStartArgs() async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     if (defaultTargetPlatform == TargetPlatform.android) {
       Bangs.bangs.setNavigationChangeCallback(_navState);
+    }
+
+    if (kIsWeb) {
+      final root = windows.current;
+      final appPath = join(root, 'shudu');
+      final cachePath = join(appPath, 'cache');
+      return [appPath, cachePath, false];
     }
     final _waits = FutureAny();
 
@@ -35,7 +41,8 @@ mixin SystemInfos {
       ..add(setOrientation(true))
       ..add(getBatteryLevel);
     bool externalDir = true;
-    if (Platform.isAndroid) {
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
       // 存储在外部，避免重新安装时数据丢失
       _waits.add(getExternalStorageDirectories().then((f) async {
         if (f != null && f.isNotEmpty) {
@@ -75,16 +82,16 @@ mixin SystemInfos {
     }
 
     late Directory appDir;
-    bool useSqflite3 = false;
+    // bool useSqflite3 = false;
     _waits.add(getApplicationDocumentsDirectory().then((dir) => appDir = dir));
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        break;
-      default:
-        _waits.add(
-            OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
-    }
+    // switch (defaultTargetPlatform) {
+    //   case TargetPlatform.linux:
+    //   case TargetPlatform.windows:
+    //     break;
+    //   default:
+    //     _waits.add(
+    //         OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
+    // }
 
     await _waits.wait;
     if (!externalDir) appDirExt = null;
@@ -102,10 +109,10 @@ mixin SystemInfos {
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
-    Log.w('useSqflite3: $useSqflite3', onlyDebug: false);
-    if (useSqflite3) {
-      await SqfliteMainIsolate.initMainDb();
-    }
+
+    // if (useSqflite3) {
+    //   await SqfliteMainIsolate.initMainDb();
+    // }
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {
@@ -116,7 +123,19 @@ mixin SystemInfos {
         CacheBinding.instance!.imageRefCache!.length = 250;
       }
     }
-    return [appPath, cachePath, useSqflite3];
+
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      getMemoryInfo().then((memory) {
+        final freeMem = memory.freeMem;
+        const size = 1.5 * 1024;
+        if (freeMem != null && freeMem < size) {
+          CacheBinding.instance!.imageRefCache!.length = 250;
+        }
+      });
+    }
+    Get.snackbar('repository', 'init');
+    return [appPath, cachePath];
   }
 
   Battery? _battery;

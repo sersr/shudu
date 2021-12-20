@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/change_notifier.dart';
@@ -39,7 +38,9 @@ class _SettingState extends State<Setting> {
 
   Iterable<Widget> _buildChild(ConfigOptions options) sync* {
     final line = Divider(
-        color: isLight ? Colors.grey.shade300 : Color.fromRGBO(25, 25, 25, 1),
+        color: !context.isDarkMode
+            ? Colors.grey.shade300
+            : Color.fromRGBO(25, 25, 25, 1),
         height: 1.0);
 
     yield selector<OptionsNotifier>(
@@ -56,7 +57,7 @@ class _SettingState extends State<Setting> {
       optionsNotifier.options = ConfigOptions(themeMode: updateValue);
       // final isDark = OptionsNotifier.isDarkMode(updateValue);
       // uiStyle(dark: isDark);
-      Navigator.maybePop(context);
+      Get.back();
     }
 
     yield titleMenu(
@@ -121,14 +122,18 @@ class _SettingState extends State<Setting> {
         onChanged: (updateValue) {
           optionsNotifier.options = ConfigOptions(nopResample: updateValue);
         });
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '显示性能图层',
-        select: (_, opt) => opt.options.showPerformanceOverlay ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options =
-              ConfigOptions(showPerformanceOverlay: updateValue);
-        });
+    if (!kDartIsWeb) {
+      yield line;
+    }
+    if (!kDartIsWeb) {
+      yield selector<OptionsNotifier>(
+          title: '显示性能图层',
+          select: (_, opt) => opt.options.showPerformanceOverlay ?? false,
+          onChanged: (updateValue) {
+            optionsNotifier.options =
+                ConfigOptions(showPerformanceOverlay: updateValue);
+          });
+    }
     yield line;
     yield selector<OptionsNotifier>(
         title: '使用图片缓存',
@@ -143,20 +148,21 @@ class _SettingState extends State<Setting> {
         onChanged: (updateValue) {
           optionsNotifier.options = ConfigOptions(useTextCache: updateValue);
         });
-    if (!(Platform.isWindows || Platform.isLinux)) {
-      yield line;
-      yield selector<OptionsNotifier>(
-          title: '使用 sqflite',
-          select: (_, opt) => opt.options.useSqflite ?? false,
-          onChanged: (updateValue) {
-            optionsNotifier.options = ConfigOptions(useSqflite: updateValue);
-          });
-    }
+    // if (!(defaultTargetPlatform == TargetPlatform.windows ||
+    //     defaultTargetPlatform == TargetPlatform.linux)) {
+    //   yield line;
+    //   yield selector<OptionsNotifier>(
+    //       title: '使用 sqflite',
+    //       select: (_, opt) => opt.options.useSqflite ?? false,
+    //       onChanged: (updateValue) {
+    //         optionsNotifier.options = ConfigOptions(useSqflite: updateValue);
+    //       });
+    // }
 
     yield line;
     void update(TargetPlatform? d) {
       optionsNotifier.options = ConfigOptions(platform: d);
-      Navigator.maybePop(context);
+      Get.back();
     }
 
     yield titleMenu(
@@ -203,33 +209,35 @@ class _SettingState extends State<Setting> {
         ]);
     yield line;
     yield ColoredBox(
-      color: Theme.of(context).brightness == Brightness.light
-          ? Colors.white
-          : Colors.grey.shade900,
+      color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: ListTile(
         title: Text('外部存储权限请求',
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade700)),
+            style: TextStyle(
+                fontSize: 15,
+                color: !context.isDarkMode
+                    ? Color.fromARGB(255, 54, 54, 54)
+                    : Color.fromARGB(255, 187, 187, 187))),
         trailing: Icon(Icons.keyboard_arrow_right_outlined),
         onTap: () {
-          Permission.manageExternalStorage.status.then((status) {
-            if (status.isDenied) {
-              Log.w('status denied', onlyDebug: false);
-              Permission.manageExternalStorage.request().then((status) {
-                if (status.isDenied) {
-                  Log.w('request denied', onlyDebug: false);
-                } else if (status.isGranted && mounted) {
-                  ScaffoldMessenger.maybeOf(context)
-                      ?.showSnackBar(SnackBar(content: Text('请求成功！')));
-                }
-              });
-              return;
-            }
-            if (mounted) {
-              _snackBarController ??= ScaffoldMessenger.maybeOf(context)
-                  ?.showSnackBar(SnackBar(content: Text('权限已请求成功！')))
-                ?..closed.whenComplete(() => _snackBarController = null);
-            }
-          });
+          if (defaultTargetPlatform == TargetPlatform.android)
+            Permission.manageExternalStorage.status.then((status) {
+              if (status.isDenied) {
+                Log.w('status denied', onlyDebug: false);
+                Permission.manageExternalStorage.request().then((status) {
+                  if (status.isDenied) {
+                    Log.w('request denied', onlyDebug: false);
+                  } else if (status.isGranted && mounted) {
+                    Get.showSnackbar(GetSnackBar(messageText: Text('请求成功！')));
+                  }
+                });
+                return;
+              }
+              if (mounted) {
+                _snackBarController ??=
+                    Get.showSnackbar(GetSnackBar(messageText: Text('权限已请求成功！')))
+                      ..future.whenComplete(() => _snackBarController = null);
+              }
+            });
         },
       ),
     );
@@ -237,8 +245,7 @@ class _SettingState extends State<Setting> {
     yield line;
   }
 
-  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
-      _snackBarController;
+  static SnackbarController? _snackBarController;
 
   ColoredBox titleMenu<T>(
       {required String title,
@@ -246,37 +253,34 @@ class _SettingState extends State<Setting> {
       Widget? Function(T value)? trailingChild,
       required List<Widget> children}) {
     return ColoredBox(
-      color: Theme.of(context).brightness == Brightness.light
-          ? Colors.white
-          : Colors.grey.shade900,
+      color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: Selector<OptionsNotifier, T>(
         selector: select,
         builder: (context, updateValue, _) {
           return ListTile(
             onTap: () {
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 50),
-                        child: Material(
-                          borderRadius: BorderRadius.circular(5.0),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: children,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  });
+              Get.dialog(Center(
+                  child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50),
+                child: Material(
+                  borderRadius: BorderRadius.circular(5.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: children,
+                    ),
+                  ),
+                ),
+              )));
             },
             visualDensity: VisualDensity.compact,
             leading: Text(title,
-                style: TextStyle(fontSize: 15, color: Colors.grey.shade700)),
+                style: TextStyle(
+                    fontSize: 15,
+                    color: !context.isDarkMode
+                        ? Color.fromARGB(255, 54, 54, 54)
+                        : Color.fromARGB(255, 187, 187, 187))),
             trailing: trailingChild?.call(updateValue),
           );
         },
@@ -289,16 +293,18 @@ class _SettingState extends State<Setting> {
       required bool Function(BuildContext, T) select,
       required void Function(bool updateValue) onChanged}) {
     return ColoredBox(
-      color: Theme.of(context).brightness == Brightness.light
-          ? Colors.white
-          : Colors.grey.shade900,
+      color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: Selector<T, bool>(
           selector: select,
           builder: (context, value, _) {
             return SwitchListTile.adaptive(
                 visualDensity: VisualDensity.compact,
                 title: Text(title,
-                    style: TextStyle(fontSize: 15, color: Colors.grey.shade700),
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: !context.isDarkMode
+                            ? Color.fromARGB(255, 54, 54, 54)
+                            : Color.fromARGB(255, 187, 187, 187)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
                 value: value,
@@ -313,7 +319,7 @@ class _SettingState extends State<Setting> {
     final children = _buildChild(options).toList();
 
     final child = ListViewBuilder(
-      color: isLight ? null : const Color.fromRGBO(20, 20, 20, 1),
+      color: !context.isDarkMode ? null : const Color.fromRGBO(20, 20, 20, 1),
       itemBuilder: (BuildContext context, int index) {
         return children[index];
       },
@@ -322,8 +328,4 @@ class _SettingState extends State<Setting> {
 
     return Scaffold(appBar: AppBar(title: Text('设置')), body: child);
   }
-}
-
-extension GetThemeMode on State {
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
 }

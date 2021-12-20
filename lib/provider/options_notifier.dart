@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +15,7 @@ class ConfigOptions {
       this.useImageCache,
       this.useTextCache,
       this.nopResample,
-      this.useSqflite,
+      // this.useSqflite,
       this.updateOnStart,
       this.themeMode,
       this.extenalStorage,
@@ -28,7 +27,7 @@ class ConfigOptions {
   bool? showPerformanceOverlay;
   bool? useImageCache;
   bool? useTextCache;
-  bool? useSqflite;
+  // bool? useSqflite;
   bool? nopResample;
   bool? updateOnStart;
   ThemeMode? themeMode;
@@ -41,7 +40,7 @@ class ConfigOptions {
       ..resample ??= resample
       ..useImageCache ??= useImageCache
       ..useTextCache ??= useTextCache
-      ..useSqflite ??= useSqflite
+      // ..useSqflite ??= useSqflite
       ..nopResample ??= nopResample
       ..updateOnStart ??= updateOnStart
       ..themeMode ??= themeMode
@@ -61,7 +60,7 @@ class ConfigOptions {
             other.extenalStorage == extenalStorage &&
             other.useImageCache == useImageCache &&
             other.nopResample == nopResample &&
-            other.useSqflite == useSqflite &&
+            // other.useSqflite == useSqflite &&
             other.useTextCache == useTextCache &&
             other.showPerformanceOverlay == showPerformanceOverlay;
   }
@@ -81,7 +80,7 @@ class ConfigOptions {
       themeMode,
       extenalStorage,
       useImageCache,
-      useSqflite,
+      // useSqflite,
       useTextCache,
       showPerformanceOverlay);
 }
@@ -155,22 +154,24 @@ class OptionsNotifier extends ChangeNotifier {
     });
   }
 
-  static Future<bool> get sqfliteBox async {
-    return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
-      final box = await Hive.openBox('_sqfliteBox');
-      final result = box.get('_useSqflite', defaultValue: false);
-      await box.close();
-      return result;
-    });
-  }
+// @Deprecated('为了获得内存的更多权限，弃用sqflite')
+//   static Future<bool> get sqfliteBox async {
+//     return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
+//       final box = await Hive.openBox('_sqfliteBox');
+//       final result = box.get('_useSqflite', defaultValue: false);
+//       await box.close();
+//       return result;
+//     });
+//   }
 
-  static Future<void> setSqfliteBox(bool use) async {
-    return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
-      final box = await Hive.openBox('_sqfliteBox');
-      await box.put('_useSqflite', use);
-      return box.close();
-    });
-  }
+// @Deprecated('为了获得内存的更多权限，弃用sqflite')
+//   static Future<void> setSqfliteBox(bool use) async {
+//     return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
+//       final box = await Hive.openBox('_sqfliteBox');
+//       await box.put('_useSqflite', use);
+//       return box.close();
+//     });
+//   }
 
   static Future<ThemeMode> getThemeModeUnSafe() async {
     final box = await Hive.openBox(_options_);
@@ -219,7 +220,7 @@ class OptionsNotifier extends ChangeNotifier {
 
     final bool resample = box.get(_resample, defaultValue: false);
     final bool useImageCache = box.get(_useImageCache, defaultValue: true);
-    final bool useTextCache = box.get(_useTextCache, defaultValue: true);
+    final bool useTextCache = box.get(_useTextCache, defaultValue: !kDartIsWeb);
     final bool nopResample = box.get(_nopResample, defaultValue: true);
     final bool updateOnStart = box.get(_updateOnStart, defaultValue: true);
     // final bool followSystem = box.get(_followSystem, defaultValue: true);
@@ -235,7 +236,7 @@ class OptionsNotifier extends ChangeNotifier {
       resample: resample,
       useImageCache: useImageCache,
       nopResample: nopResample,
-      useSqflite: await sqfliteBox,
+      // useSqflite: await sqfliteBox,
       useTextCache: useTextCache,
       updateOnStart: updateOnStart,
       themeMode: themeMode,
@@ -251,13 +252,13 @@ class OptionsNotifier extends ChangeNotifier {
 
     final any = FutureAny();
 
-    final useSqflite3 = options.useSqflite;
+    // final useSqflite3 = options.useSqflite;
     final extenalStorage = options.extenalStorage;
 
-    if (useSqflite3 != null && await sqfliteBox != useSqflite3) {
-      any.add(setSqfliteBox(useSqflite3)
-        ..whenComplete(() => repository.close().whenComplete(repository.init)));
-    }
+    // if (useSqflite3 != null && await sqfliteBox != useSqflite3) {
+    //   any.add(setSqfliteBox(useSqflite3)
+    //     ..whenComplete(() => repository.close().whenComplete(repository.init)));
+    // }
     if (extenalStorage != null) any.add(setextenalStorage(extenalStorage));
 
     _updateOptions(box, any, _platform, options.platform);
