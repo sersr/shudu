@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:nop_db/nop_db.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
@@ -33,7 +34,7 @@ abstract class BookContentEvent {
 }
 
 abstract class BookCacheEvent {
-  FutureOr<List<BookCache>?> getMainList();
+  FutureOr<Option<List<BookCache>>> getMainList();
   Stream<List<BookCache>?> watchMainList();
 
   FutureOr<int?> updateBook(int id, BookCache book);

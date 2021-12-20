@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -568,7 +567,8 @@ mixin ContentBrightness {
     if (_brightNess) brightness.value = await ScreenBrightness.current;
   }
 
-  final bool _brightNess = Platform.isAndroid || Platform.isIOS;
+  final bool _brightNess = defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 }
 
 mixin ContentStatus on ContentDataBase, ContentBrightness {

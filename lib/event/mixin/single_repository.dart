@@ -15,23 +15,45 @@ class SingleRepository extends Repository
   SingleRepository();
 
   @override
-  Future<Isolate> onCreateIsolate(SendPort remoteSendPort) async {
+  Future<RemoteServer> onCreateIsolate(SendHandle remoteSendPort) async {
     final args = await initStartArgs();
-
-    // [remoteSendPort, appPath, cachePath, useSqflite3]
-    final newIsolate =
-        await Isolate.spawn(singleIsolateEntryPoint, [remoteSendPort, ...args]);
-
-    if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      final memory = await getMemoryInfo();
-      final freeMem = memory.freeMem;
-      const size = 1.5 * 1024;
-      if (freeMem != null && freeMem < size) {
-        CacheBinding.instance!.imageRefCache!.length = 250;
-      }
+    if (!kIsWeb) {
+      // [remoteSendPort, appPath, cachePath]
+      final newIsolate = await Isolate.spawn(
+          singleIsolateEntryPoint, [remoteSendPort, ...args]);
+      return IsolateRemoteServer(newIsolate);
+    } else {
+      singleIsolateEntryPoint([remoteSendPort, ...args]);
+      return RemoteServer();
     }
-    return newIsolate;
+  }
+}
+
+/// fake
+/// single Isolate
+class SingleRepositoryOnServer extends Repository
+    with SendEventMixin, SendCacheMixin, ListenMixin, SendMultiServerMixin {
+  SingleRepositoryOnServer();
+
+  @override
+  Iterable<MapEntry<String, CreateRemoteServer>>
+      createRemoteServerIterable() sync* {
+    yield MapEntry(bookEventDefault, onCreateIsolate); // 所有任务都由此处理
+    yield MapEntry(database, () async => RemoteServer()); // 提供一个`handle`
+    yield* super.createRemoteServerIterable();
+  }
+
+  Future<RemoteServer> onCreateIsolate() async {
+    final args = await initStartArgs();
+    if (!kIsWeb) {
+      // [remoteSendPort, appPath, cachePath]
+      final newIsolate = await Isolate.spawn(
+          singleIsolateEntryPoint, [localSendPort, ...args]);
+      return IsolateRemoteServer(newIsolate);
+    } else {
+      singleIsolateEntryPoint([localSendPort, ...args]);
+      return RemoteServer();
+    }
   }
 }
 
@@ -39,15 +61,13 @@ void singleIsolateEntryPoint(List args) async {
   final remoteSendPort = args[0];
   final appPath = args[1];
   final cachePath = args[2];
-  final useSqflite3 = args[3];
 
-  Log.i('$appPath | $cachePath | $useSqflite3', onlyDebug: false);
+  Log.i('$appPath | $cachePath', onlyDebug: false);
 
   BookEventIsolate(
     remoteSendPort: remoteSendPort,
     appPath: appPath,
     cachePath: cachePath,
-    useSqflite3: useSqflite3,
   ).run();
 }
 
@@ -75,18 +95,14 @@ class BookEventIsolate extends BookEventResolveMain
     required this.remoteSendPort,
     required this.appPath,
     required this.cachePath,
-    required this.useSqflite3,
   });
 
   @override
-  final SendPort remoteSendPort;
+  final SendHandle remoteSendPort;
   @override
   final String appPath;
   @override
   final String cachePath;
-
-  @override
-  final bool useSqflite3;
 
   @override
   void onError(msg, error) {

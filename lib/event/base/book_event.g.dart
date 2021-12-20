@@ -81,6 +81,7 @@ abstract class BookEventResolveMain extends BookEvent
 abstract class BookEventMessagerMain extends BookEvent
     with
         SendEvent,
+        SendMessage,
         CustomEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
@@ -114,13 +115,13 @@ mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
     yield* super.resolveFunctionIterable();
   }
 
-  getImageBytes(String img) => throw NopUseDynamicVersionExection("不要手动调用");
+  getImageBytes(String img) =>
+      throw NopUseDynamicVersionExection("unused function");
   FutureOr<TransferType<Uint8List?>> getImageBytesDynamic(String img);
 }
 
 /// implements [CustomEvent]
-mixin CustomEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin CustomEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(bookEventDefault, CustomEventMessage);
@@ -128,65 +129,62 @@ mixin CustomEventMessager on SendEvent {
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
-    return sendEvent.sendMessage(CustomEventMessage.getSearchData, key,
+    return sendMessage(CustomEventMessage.getSearchData, key,
         isolateName: bookEventDefault);
   }
 
   FutureOr<Uint8List?> getImageBytes(String img) {
-    return sendEvent.sendMessage(CustomEventMessage.getImageBytes, img,
+    return sendMessage(CustomEventMessage.getImageBytes, img,
         isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookList>?> getHiveShudanLists(String c) {
-    return sendEvent.sendMessage(CustomEventMessage.getHiveShudanLists, c,
+    return sendMessage(CustomEventMessage.getHiveShudanLists, c,
         isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookList>?> getShudanLists(String c, int index) {
-    return sendEvent.sendMessage(CustomEventMessage.getShudanLists, [c, index],
+    return sendMessage(CustomEventMessage.getShudanLists, [c, index],
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookTopData?> getTopLists(String c, String date, int index) {
-    return sendEvent.sendMessage(
-        CustomEventMessage.getTopLists, [c, date, index],
+    return sendMessage(CustomEventMessage.getTopLists, [c, date, index],
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookTopData?> getCategLists(int c, String date, int index) {
-    return sendEvent.sendMessage(
-        CustomEventMessage.getCategLists, [c, date, index],
+    return sendMessage(CustomEventMessage.getCategLists, [c, date, index],
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookListDetailData?> getShudanDetail(int index) {
-    return sendEvent.sendMessage(CustomEventMessage.getShudanDetail, index,
+    return sendMessage(CustomEventMessage.getShudanDetail, index,
         isolateName: bookEventDefault);
   }
 
   FutureOr<List<BookCategoryData>?> getCategoryData() {
-    return sendEvent.sendMessage(CustomEventMessage.getCategoryData, null,
+    return sendMessage(CustomEventMessage.getCategoryData, null,
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookContentDb?> getContentNet(int bookid, int contentid) {
-    return sendEvent.sendMessage(
-        CustomEventMessage.getContentNet, [bookid, contentid],
+    return sendMessage(CustomEventMessage.getContentNet, [bookid, contentid],
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookInfoRoot?> getInfoNet(int id) {
-    return sendEvent.sendMessage(CustomEventMessage.getInfoNet, id,
+    return sendMessage(CustomEventMessage.getInfoNet, id,
         isolateName: bookEventDefault);
   }
 
   FutureOr<String?> getIndexsNet(int id) {
-    return sendEvent.sendMessage(CustomEventMessage.getIndexsNet, id,
+    return sendMessage(CustomEventMessage.getIndexsNet, id,
         isolateName: bookEventDefault);
   }
 
   FutureOr<String?> getZhangduContentNet(String url) {
-    return sendEvent.sendMessage(CustomEventMessage.getZhangduContentNet, url,
+    return sendMessage(CustomEventMessage.getZhangduContentNet, url,
         isolateName: bookEventDefault);
   }
 }
@@ -211,48 +209,45 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
 }
 
 /// implements [BookCacheEvent]
-mixin BookCacheEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin BookCacheEventMessager on SendEvent, SendMessage {
   String get database => 'database';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(database, BookCacheEventMessage);
     yield* super.getProtocols();
   }
 
-  FutureOr<List<BookCache>?> getMainList() {
-    return sendEvent.sendMessage(BookCacheEventMessage.getMainList, null,
+  FutureOr<Option<List<BookCache>>> getMainList() {
+    return sendOption(BookCacheEventMessage.getMainList, null,
         isolateName: database);
   }
 
   Stream<List<BookCache>?> watchMainList() {
-    return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchMainList, null,
+    return sendMessageStream(BookCacheEventMessage.watchMainList, null,
         isolateName: database);
   }
 
   FutureOr<int?> updateBook(int id, BookCache book) {
-    return sendEvent.sendMessage(BookCacheEventMessage.updateBook, [id, book],
+    return sendMessage(BookCacheEventMessage.updateBook, [id, book],
         isolateName: database);
   }
 
   FutureOr<int?> insertBook(BookCache bookCache) {
-    return sendEvent.sendMessage(BookCacheEventMessage.insertBook, bookCache,
+    return sendMessage(BookCacheEventMessage.insertBook, bookCache,
         isolateName: database);
   }
 
   FutureOr<int?> deleteBook(int id) {
-    return sendEvent.sendMessage(BookCacheEventMessage.deleteBook, id,
+    return sendMessage(BookCacheEventMessage.deleteBook, id,
         isolateName: database);
   }
 
   Stream<List<BookCache>?> watchCurrentCid(int id) {
-    return sendEvent.sendMessageStream(
-        BookCacheEventMessage.watchCurrentCid, id,
+    return sendMessageStream(BookCacheEventMessage.watchCurrentCid, id,
         isolateName: database);
   }
 
   FutureOr<List<CacheItem>?> getCacheItems() {
-    return sendEvent.sendMessage(BookCacheEventMessage.getCacheItems, null,
+    return sendMessage(BookCacheEventMessage.getCacheItems, null,
         isolateName: database);
   }
 }
@@ -269,8 +264,7 @@ mixin BookContentEventResolve on Resolve implements BookContentEvent {
 }
 
 /// implements [BookContentEvent]
-mixin BookContentEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin BookContentEventMessager on SendEvent, SendMessage {
   String get database => 'database';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(database, BookContentEventMessage);
@@ -278,13 +272,13 @@ mixin BookContentEventMessager on SendEvent {
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
-    return sendEvent.sendMessageStream(
+    return sendMessageStream(
         BookContentEventMessage.watchBookContentCid, bookid,
         isolateName: database);
   }
 
   FutureOr<int?> deleteCache(int bookId) {
-    return sendEvent.sendMessage(BookContentEventMessage.deleteCache, bookId,
+    return sendMessage(BookContentEventMessage.deleteCache, bookId,
         isolateName: database);
   }
 }
@@ -313,8 +307,7 @@ mixin ServerEventResolve on Resolve implements ServerEvent {
 }
 
 /// implements [ServerEvent]
-mixin ServerEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin ServerEventMessager on SendEvent, SendMessage {
   String get database => 'database';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(database, ServerEventMessage);
@@ -322,65 +315,60 @@ mixin ServerEventMessager on SendEvent {
   }
 
   FutureOr<RawContentLines?> getContentDb(int bookid, int contentid) {
-    return sendEvent.sendMessage(
-        ServerEventMessage.getContentDb, [bookid, contentid],
+    return sendMessage(ServerEventMessage.getContentDb, [bookid, contentid],
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateIndexs(int id, String indexs) {
-    return sendEvent.sendMessage(
-        ServerEventMessage.insertOrUpdateIndexs, [id, indexs],
+    return sendMessage(ServerEventMessage.insertOrUpdateIndexs, [id, indexs],
         isolateName: database);
   }
 
   FutureOr<List<BookIndex>?> getIndexsDb(int bookid) {
-    return sendEvent.sendMessage(ServerEventMessage.getIndexsDb, bookid,
+    return sendMessage(ServerEventMessage.getIndexsDb, bookid,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb) {
-    return sendEvent.sendMessage(
-        ServerEventMessage.insertOrUpdateContent, contentDb,
+    return sendMessage(ServerEventMessage.insertOrUpdateContent, contentDb,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateBook(BookInfo data) {
-    return sendEvent.sendMessage(ServerEventMessage.insertOrUpdateBook, data,
+    return sendMessage(ServerEventMessage.insertOrUpdateBook, data,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ServerEventMessage.insertOrUpdateZhangduIndex, [bookId, data],
         isolateName: database);
   }
 
   FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ServerEventMessage.getZhangduContentDb, [bookId, contentId],
         isolateName: database);
   }
 
   FutureOr<int?> getZhangduContentCid(int bookid) {
-    return sendEvent.sendMessage(
-        ServerEventMessage.getZhangduContentCid, bookid,
+    return sendMessage(ServerEventMessage.getZhangduContentCid, bookid,
         isolateName: database);
   }
 
   FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content) {
-    return sendEvent.sendMessage(
-        ServerEventMessage.insertOrUpdateZhangduContent, content,
+    return sendMessage(ServerEventMessage.insertOrUpdateZhangduContent, content,
         isolateName: database);
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId) {
-    return sendEvent.sendMessage(ServerEventMessage.getZhangduIndexDb, bookId,
+    return sendMessage(ServerEventMessage.getZhangduIndexDb, bookId,
         isolateName: database);
   }
 
   FutureOr<void> insertOrUpdateZhangduBook(
       int bookId, int firstChapterId, ZhangduDetailData data) {
-    return sendEvent.sendMessage(ServerEventMessage.insertOrUpdateZhangduBook,
+    return sendMessage(ServerEventMessage.insertOrUpdateZhangduBook,
         [bookId, firstChapterId, data],
         isolateName: database);
   }
@@ -404,8 +392,7 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
 }
 
 /// implements [ComplexEvent]
-mixin ComplexEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin ComplexEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(bookEventDefault, ComplexEventMessage);
@@ -414,25 +401,24 @@ mixin ComplexEventMessager on SendEvent {
 
   FutureOr<RawContentLines?> getContent(
       int bookid, int contentid, bool update) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ComplexEventMessage.getContent, [bookid, contentid, update],
         isolateName: bookEventDefault);
   }
 
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update) {
-    return sendEvent.sendMessage(
-        ComplexEventMessage.getIndexs, [bookid, update],
+    return sendMessage(ComplexEventMessage.getIndexs, [bookid, update],
         isolateName: bookEventDefault);
   }
 
   FutureOr<BookInfoRoot?> getInfo(int id) {
-    return sendEvent.sendMessage(ComplexEventMessage.getInfo, id,
+    return sendMessage(ComplexEventMessage.getInfo, id,
         isolateName: bookEventDefault);
   }
 
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) {
-    return sendEvent.sendMessage(ComplexEventMessage.getZhangduContent,
+    return sendMessage(ComplexEventMessage.getZhangduContent,
         [bookId, contentId, contentUrl, name, sort, update],
         isolateName: bookEventDefault);
   }
@@ -460,8 +446,7 @@ mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
 }
 
 /// implements [ZhangduDatabaseEvent]
-mixin ZhangduDatabaseEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin ZhangduDatabaseEventMessager on SendEvent, SendMessage {
   String get database => 'database';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(database, ZhangduDatabaseEventMessage);
@@ -469,56 +454,52 @@ mixin ZhangduDatabaseEventMessager on SendEvent {
   }
 
   FutureOr<int?> deleteZhangduContentCache(int bookId) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ZhangduDatabaseEventMessage.deleteZhangduContentCache, bookId,
         isolateName: database);
   }
 
   Stream<List<int>?> watchZhangduContentCid(int bookId) {
-    return sendEvent.sendMessageStream(
+    return sendMessageStream(
         ZhangduDatabaseEventMessage.watchZhangduContentCid, bookId,
         isolateName: database);
   }
 
   FutureOr<List<ZhangduCache>?> getZhangduMainList() {
-    return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.getZhangduMainList, null,
+    return sendMessage(ZhangduDatabaseEventMessage.getZhangduMainList, null,
         isolateName: database);
   }
 
   Stream<List<ZhangduCache>?> watchZhangduMainList() {
-    return sendEvent.sendMessageStream(
+    return sendMessageStream(
         ZhangduDatabaseEventMessage.watchZhangduMainList, null,
         isolateName: database);
   }
 
   FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ZhangduDatabaseEventMessage.updateZhangduBook, [bookId, book],
         isolateName: database);
   }
 
   FutureOr<int?> insertZhangduBook(ZhangduCache book) {
-    return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.insertZhangduBook, book,
+    return sendMessage(ZhangduDatabaseEventMessage.insertZhangduBook, book,
         isolateName: database);
   }
 
   FutureOr<int?> deleteZhangduBook(int bookId) {
-    return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.deleteZhangduBook, bookId,
+    return sendMessage(ZhangduDatabaseEventMessage.deleteZhangduBook, bookId,
         isolateName: database);
   }
 
   Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
-    return sendEvent.sendMessageStream(
+    return sendMessageStream(
         ZhangduDatabaseEventMessage.watchZhangduCurrentCid, bookId,
         isolateName: database);
   }
 
   FutureOr<List<CacheItem>?> getZhangduCacheItems() {
-    return sendEvent.sendMessage(
-        ZhangduDatabaseEventMessage.getZhangduCacheItems, null,
+    return sendMessage(ZhangduDatabaseEventMessage.getZhangduCacheItems, null,
         isolateName: database);
   }
 }
@@ -541,8 +522,7 @@ mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
 }
 
 /// implements [ZhangduComplexEvent]
-mixin ZhangduComplexEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin ZhangduComplexEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(bookEventDefault, ZhangduComplexEventMessage);
@@ -550,27 +530,26 @@ mixin ZhangduComplexEventMessager on SendEvent {
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ZhangduComplexEventMessage.getZhangduIndex, [bookId, update],
         isolateName: bookEventDefault);
   }
 
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) {
-    return sendEvent.sendMessage(ZhangduComplexEventMessage.getZhangduContent,
+    return sendMessage(ZhangduComplexEventMessage.getZhangduContent,
         [bookId, contentId, contentUrl, name, sort, update],
         isolateName: bookEventDefault);
   }
 
   FutureOr<int?> updateZhangduMainStatus(int bookId) {
-    return sendEvent.sendMessage(
+    return sendMessage(
         ZhangduComplexEventMessage.updateZhangduMainStatus, bookId,
         isolateName: bookEventDefault);
   }
 
   FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
-    return sendEvent.sendMessage(
-        ZhangduComplexEventMessage.getZhangduDetail, bookId,
+    return sendMessage(ZhangduComplexEventMessage.getZhangduDetail, bookId,
         isolateName: bookEventDefault);
   }
 }
@@ -590,8 +569,7 @@ mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
 }
 
 /// implements [ZhangduNetEvent]
-mixin ZhangduNetEventMessager on SendEvent {
-  SendEvent get sendEvent;
+mixin ZhangduNetEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
   Iterable<MapEntry<String, Type>> getProtocols() sync* {
     yield MapEntry(bookEventDefault, ZhangduNetEventMessage);
@@ -600,21 +578,19 @@ mixin ZhangduNetEventMessager on SendEvent {
 
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
       String author) {
-    return sendEvent.sendMessage(
-        ZhangduNetEventMessage.getZhangduSameUsersBooks, author,
+    return sendMessage(ZhangduNetEventMessage.getZhangduSameUsersBooks, author,
         isolateName: bookEventDefault);
   }
 
   FutureOr<ZhangduSearchData?> getZhangduSearchData(
       String query, int pageIndex, int pageSize) {
-    return sendEvent.sendMessage(ZhangduNetEventMessage.getZhangduSearchData,
+    return sendMessage(ZhangduNetEventMessage.getZhangduSearchData,
         [query, pageIndex, pageSize],
         isolateName: bookEventDefault);
   }
 }
 mixin MultiBookEventDefaultMessagerMixin
     on SendEvent, ListenMixin, SendMultiServerMixin /*impl*/ {
-  String get defaultSendPortOwnerName => 'bookEventDefault';
   Future<RemoteServer> createRemoteServerBookEventDefault();
   Future<RemoteServer> createRemoteServerDatabase();
   Iterable<MapEntry<String, CreateRemoteServer>>

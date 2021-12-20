@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AppBarHide extends StatefulWidget {
   const AppBarHide(
@@ -28,9 +29,8 @@ class _AppBarHideState extends State<AppBarHide> {
   }
 
   void updateColor() {
-    final light = Theme.of(context).brightness == Brightness.light;
     final begin = widget.begincolor ??
-        (light ? Colors.grey.shade100 : Colors.grey.shade900);
+        (!context.isDarkMode ? Colors.grey.shade100 : Colors.grey.shade900);
     tweenColor = ColorTween(begin: begin, end: begin.withAlpha(0));
   }
 

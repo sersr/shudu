@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../event/event.dart';
 import '../../provider/text_styles.dart';
 import 'booklist.dart';
 import 'top_item.dart';
@@ -13,20 +15,15 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  final colorv = ValueNotifier(HSVColor.fromColor(Colors.black));
-  final change = ValueNotifier(false);
-
   late TextStyleConfig ts;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ts = context.read<TextStyleConfig>();
+    ts = context.read();
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isLight = Theme.of(context).brightness == Brightness.light;
-
     return DefaultTabController(
       initialIndex: 0,
       length: 3,
@@ -35,7 +32,7 @@ class _TopPageState extends State<TopPage> {
           child: BarLayout(
             title: Text('榜单'),
             bottom: TabBar(
-              unselectedLabelColor: isLight
+              unselectedLabelColor: !context.isDarkMode
                   ? const Color.fromARGB(255, 204, 204, 204)
                   : const Color.fromARGB(255, 110, 110, 110),
               labelColor: const Color.fromARGB(255, 255, 255, 255),
@@ -69,11 +66,13 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
   final _urlKeys = <String>['hot', 'over', 'commend', 'new', 'vote', 'collect'];
   final _urlDates = <String>['week', 'month', 'total'];
   var _currentIndex = 0;
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final key = _urlKeys[_currentIndex];
+    final date = _urlDates[widget.index];
+
     return Row(
       children: [
         SizedBox(
@@ -84,7 +83,7 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
               itemBuilder: (context, index) {
                 return Material(
                   color: _currentIndex == index
-                      ? isLight
+                      ? !context.isDarkMode
                           ? Colors.grey.shade400
                           : Colors.grey.shade600
                       : null,
@@ -92,7 +91,9 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
                     splashFactory: InkRipple.splashFactory,
                     onTap: () {
                       // if (_currentIndex != index)
-                      setState(() => _currentIndex = index);
+                      setState(() {
+                        _currentIndex = index;
+                      });
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -106,10 +107,14 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
             )),
         Expanded(
             child: RepaintBoundary(
-          child: TopListView(
-              index: widget.index,
-              ctg: _urlKeys[_currentIndex],
-              date: _urlDates[widget.index]),
+          child: ChangeNotifierProvider(
+            key: ValueKey(key),
+            create: (context) {
+              return TopNotifier<String>(
+                  context.read<Repository>().getTopLists, key, date);
+            },
+            child: TopCtgListView<String>(index: widget.index),
+          ),
         ))
       ],
     );

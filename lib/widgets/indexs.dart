@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -213,7 +214,7 @@ class _IndexsState extends State<_Indexs> {
             );
           } else if (data.api == ApiType.zhangdu) {
             final indexs = data.data!;
-            final isLight = Theme.of(context).brightness == Brightness.light;
+            final isLight = !context.isDarkMode;
             final styleConfig = context.read<TextStyleConfig>().data;
             final title = styleConfig.title3;
             final style = styleConfig.body3;
@@ -314,7 +315,6 @@ class _StickyBody extends StatelessWidget {
   final int bookid;
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
     final styleConfig = context.read<TextStyleConfig>().data;
     final style = styleConfig.body3;
     final title = styleConfig.title2;
@@ -346,7 +346,9 @@ class _StickyBody extends StatelessWidget {
                   )
               ],
             ),
-            splashColor: isLight ? Colors.grey.shade500 : Colors.grey.shade800,
+            splashColor: !context.isDarkMode
+                ? Colors.grey.shade500
+                : Colors.grey.shade800,
             background: false,
             onTap: () {
               final id = l[index].id;

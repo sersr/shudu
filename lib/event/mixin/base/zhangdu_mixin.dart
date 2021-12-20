@@ -134,7 +134,6 @@ mixin ZhangduComplexMixin on HiveDioMixin
   @override
   FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
       String contentUrl, String name, int sort, bool update) async {
-    Log.e('sss...');
     if (update) {
       return await _getContentNet(bookId, contentId, name, sort, contentUrl) ??
           await getZhangduContentDb(bookId, contentId);
@@ -251,8 +250,6 @@ mixin ZhangduComplexMixin on HiveDioMixin
             }
             if (chapterData == null) {
               try {
-                Log.i(file.name);
-
                 chapterData = ZhangduChapter.fromJson(data).data;
                 if (chapterData != null) {
                   indexData = dataString;

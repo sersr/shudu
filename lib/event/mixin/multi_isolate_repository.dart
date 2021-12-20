@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:isolate';
-
+import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
-
+import 'package:dartz/dartz.dart' as dartz;
 import '../base/book_event.dart';
 import '../repository.dart';
 import 'base/base.dart';
@@ -19,7 +19,7 @@ class MultiIsolateRepository extends Repository
         SendMultiServerMixin,
         MultiBookEventDefaultMessagerMixin // 默认
 {
-  // [appPath, cachePath, useSqflite3]
+  // [appPath, cachePath]
   List? args;
 
   @override
@@ -31,17 +31,27 @@ class MultiIsolateRepository extends Repository
   @override
   Future<RemoteServer> createRemoteServerDatabase() async {
     assert(args != null);
-    final isolate =
-        await Isolate.spawn(dataBaseEntryPoint, [localSendPort, ...?args]);
-    return RemoteIsolateServer(isolate);
+    if (!kIsWeb) {
+      final isolate =
+          await Isolate.spawn(dataBaseEntryPoint, [localSendPort, ...?args]);
+      return IsolateRemoteServer(isolate);
+    } else {
+      dataBaseEntryPoint([localSendPort, ...?args]);
+      return RemoteServer();
+    }
   }
 
   @override
   Future<RemoteServer> createRemoteServerBookEventDefault() async {
     assert(args != null);
-    final isolate =
-        await Isolate.spawn(_multiIsolateEntryPoint, [localSendPort, ...?args]);
-    return RemoteIsolateServer(isolate);
+    if (!kIsWeb) {
+      final isolate = await Isolate.spawn(
+          _multiIsolateEntryPoint, [localSendPort, ...?args]);
+      return IsolateRemoteServer(isolate);
+    } else {
+      _multiIsolateEntryPoint([localSendPort, ...?args]);
+      return RemoteServer();
+    }
   }
 }
 
@@ -50,12 +60,10 @@ void _multiIsolateEntryPoint(List args) async {
   final remoteSendPort = args[0];
   final appPath = args[1];
   final cachePath = args[2];
-  final useSqflite3 = args[3];
-
+  dartz.Option;
   BookEventMultiIsolate(
     appPath: appPath,
     cachePath: cachePath,
-    useSqflite3: useSqflite3,
     remoteSendPort: remoteSendPort,
   ).init();
 }
@@ -81,7 +89,6 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
   BookEventMultiIsolate({
     required this.appPath,
     required this.cachePath,
-    required this.useSqflite3,
     required this.remoteSendPort,
   });
 
@@ -90,9 +97,8 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
   @override
   final String cachePath;
 
-  final bool useSqflite3;
   @override
-  final SendPort remoteSendPort;
+  final SendHandle remoteSendPort;
 
   @override
   FutureOr<void> initTask() => run();

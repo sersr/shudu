@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -68,14 +69,21 @@ class _ImageResolveState extends State<ImageResolve> {
                           callback: () => getImageBytes(errorImg))
                       .resize(width: rw);
                   Widget child = FadeInImage(
-                    // width: width,
-                    fit: BoxFit.contain,
+                    width: widget.boxFit == BoxFit.fitWidth ? width : null,
+                    height: widget.boxFit == BoxFit.fitHeight ? height : null,
+                    fit: widget.boxFit,
                     placeholder: plh,
                     image: CallbackWithKeyImage(
                         keys: _img,
                         callback: () => getImageBytes(_img)).resize(width: rw),
                     imageErrorBuilder: (_, o, s) {
-                      return Image(image: plh, fit: BoxFit.contain);
+                      return Image(
+                          image: plh,
+                          width:
+                              widget.boxFit == BoxFit.fitWidth ? width : null,
+                          height:
+                              widget.boxFit == BoxFit.fitHeight ? height : null,
+                          fit: widget.boxFit);
                     },
                     placeholderErrorBuilder: (_, o, s) {
                       return const SizedBox();
@@ -131,7 +139,7 @@ class _ImageResolveState extends State<ImageResolve> {
   Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
     if (hasImage) {
       if (widget.builder != null) child = widget.builder!(child);
-      if (widget.shadow && Theme.of(context).brightness == Brightness.light)
+      if (widget.shadow && !context.isDarkMode)
         child = ImageShadow(child: child);
       child = Center(child: child);
     }

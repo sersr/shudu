@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
@@ -33,7 +34,7 @@ mixin HiveDioMixin on Resolve {
   }
 
   @override
-  FutureOr<bool> onClose() {
+  FutureOr<void> onClose() {
     dio.close(force: true);
     return super.onClose();
   }
@@ -80,7 +81,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
       }
     });
 
-    return _loadContent([bookid, contentid])
+    return _loadContent(bookid, contentid)
         .then((v) => BookContentDb.fromBookContent(v));
   }
 
@@ -105,24 +106,26 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
   String get imageLocalPath => join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
-    final d = Directory(imageLocalPath);
     imageUpdate = await Hive.openBox('imageUpdate');
-    final exists = d.existsSync();
+    if (!kIsWeb) {
+      final d = Directory(imageLocalPath);
+      final exists = d.existsSync();
 
-    if (imageUpdate.get('_version_', defaultValue: -1) == -1) {
-      await imageUpdate.deleteFromDisk();
+      if (imageUpdate.get('_version_', defaultValue: -1) == -1) {
+        await imageUpdate.deleteFromDisk();
 
-      imageUpdate = await Hive.openBox('imageUpdate');
+        imageUpdate = await Hive.openBox('imageUpdate');
 
-      await imageUpdate.put('_version_', 1);
-      if (exists) {
-        d.deleteSync(recursive: true);
+        await imageUpdate.put('_version_', 1);
+        if (exists) {
+          d.deleteSync(recursive: true);
+          d.createSync(recursive: true);
+        }
+      }
+
+      if (!exists) {
         d.createSync(recursive: true);
       }
-    }
-
-    if (!exists) {
-      d.createSync(recursive: true);
     }
   }
 
@@ -150,9 +153,6 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     final url = Api.infoUrl(id);
     return _decode(url, onSuccess: (map) {
       return BookInfoRoot.fromJson(map);
-    }).then((value) => value, onError: (e) {
-      Log.i(e);
-      return const BookInfoRoot();
     });
   }
 
@@ -284,6 +284,12 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
       final data = respone.data!;
 
       return BookTopWrap.fromJson(jsonDecode(data)).data ?? const BookTopData();
+    } on DioError catch (e) {
+      Log.w('statusCode: ${e.response?.statusCode}');
+      if (e.response?.statusCode == 404) {
+        return BookTopData(hasNext: false);
+      }
+      rethrow;
     } catch (e) {
       Log.e('url:$url, $e');
       rethrow;
@@ -303,10 +309,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     return _text;
   }
 
-  Future<BookContent> _loadContent(args) async {
-    final id = args[0];
-    final cid = args[1];
-
+  Future<BookContent> _loadContent(int id, int cid) async {
     final url = Api.contentUrl(id, cid);
 
     return _decode(
@@ -331,7 +334,6 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
         var name = '';
         var nid = -1;
         var pid = -1;
-        final now = Stopwatch()..start();
 
         str.replaceAllMapped(
             RegExp(
@@ -349,8 +351,6 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
 
           return '';
         });
-        now.stop();
-        Log.i('bookContent map : ${now.elapsedMilliseconds}ms ,$args');
 
         if (id != -1 &&
             content.isNotEmpty &&
@@ -425,13 +425,15 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     final outOfDate = imgdateTime == null || imgdateTime + oneDay * 7 < now;
 
     Uint8List? _bytes;
-    final f = File(imgPath);
-    final exits = await f.exists();
-    if (exits) {
-      if (!shouldUpdate) {
-        _bytes = await f.readAsBytes();
-      } else if (outOfDate) {
-        await f.delete(recursive: true);
+    if (!kIsWeb) {
+      final f = File(imgPath);
+      final exits = await f.exists();
+      if (exits) {
+        if (!shouldUpdate) {
+          _bytes = await f.readAsBytes();
+        } else if (outOfDate) {
+          await f.delete(recursive: true);
+        }
       }
     }
 
@@ -475,33 +477,34 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     });
 
     if (success && dataBytes.isNotEmpty) {
-      ioTasks(() async {
-        final temp = File('$imgPath.temp');
-        try {
-          await temp.create(recursive: true);
-          final o = await temp.open(mode: FileMode.writeOnly);
-          const sizes = 1024;
-          var start = 0;
-          final max = dataBytes.length;
-          while (start < max) {
-            final end = math.min(start + sizes, max);
-            o.writeFromSync(dataBytes, start, end);
-            start = end;
-          }
+      if (!kIsWeb)
+        ioTasks(() async {
+          final temp = File('$imgPath.temp');
+          try {
+            await temp.create(recursive: true);
+            final o = await temp.open(mode: FileMode.writeOnly);
+            const sizes = 1024;
+            var start = 0;
+            final max = dataBytes.length;
+            while (start < max) {
+              final end = math.min(start + sizes, max);
+              o.writeFromSync(dataBytes, start, end);
+              start = end;
+            }
 
-          await o.close();
-          await temp.rename(imgPath);
-        } catch (e) {
-          success = false;
-        } finally {
-          if (success) {
-            await imageUpdate.put(
-                imageKey, DateTime.now().millisecondsSinceEpoch);
-          } else {
-            await imageUpdate.delete(imageKey);
+            await o.close();
+            await temp.rename(imgPath);
+          } catch (e) {
+            success = false;
+          } finally {
+            if (success) {
+              await imageUpdate.put(
+                  imageKey, DateTime.now().millisecondsSinceEpoch);
+            } else {
+              await imageUpdate.delete(imageKey);
+            }
           }
-        }
-      });
+        });
       return Uint8List.fromList(dataBytes);
     }
   }

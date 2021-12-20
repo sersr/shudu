@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -349,8 +349,7 @@ class _BottomEndState extends State<BottomEnd> {
     indexBloc = context.read<BookIndexNotifier>();
   }
 
-  bool isLight(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.light;
+
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
   final debx =
       ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
@@ -418,7 +417,7 @@ class _BottomEndState extends State<BottomEnd> {
                                             child: Material(
                                               borderRadius:
                                                   BorderRadius.circular(6.0),
-                                              color: isLight(context)
+                                              color: !context.isDarkMode
                                                   ? Colors.grey.shade300
                                                   : Colors.grey.shade900,
                                               clipBehavior: Clip.hardEdge,
@@ -913,7 +912,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
       ),
     );
-    bool isLight = Theme.of(context).brightness == Brightness.light;
 
     return Column(
       children: [
@@ -982,7 +980,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       const SizedBox(width: 10),
                       Flexible(
                         child: _builder(
-                            isLight,
+                             !context.isDarkMode,
                             '选择背景颜色',
                             () => HueRingPicker(
                                   onColorChanged: (Color value) {
@@ -994,7 +992,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       const SizedBox(width: 10),
                       Flexible(
                         child: _builder(
-                            isLight,
+                            !context.isDarkMode,
                             '选择字体颜色',
                             () => HueRingPicker(
                                   onColorChanged: (Color value) {
@@ -1032,11 +1030,10 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       onTap: () {
         showDialog(
             builder: (BuildContext context) {
-              final isLight = Theme.of(context).brightness == Brightness.light;
               return Center(
                   child: RepaintBoundary(
                 child: Material(
-                  color: isLight
+                  color: !context.isDarkMode
                       ? Color.fromARGB(255, 224, 224, 224)
                       : Color.fromARGB(255, 41, 41, 41),
                   borderRadius: BorderRadius.circular(16),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 
 import '../../data/data.dart';
@@ -15,6 +16,8 @@ class Uint8ListType with TransferTypeMapData<Uint8List?> {
     if (buffer != null) {
       final data = buffer.materialize();
       return data.asUint8List();
+    } else if (list != null) {
+      return list;
     }
   }
 
@@ -22,9 +25,11 @@ class Uint8ListType with TransferTypeMapData<Uint8List?> {
   FutureOr<void> tranEncode() {
     if (list != null) {
       final data = list!;
-      list = null;
-      final typeData = TransferableTypedData.fromList([data]);
-      push('list', typeData);
+      if (!kIsWeb) {
+        list = null;
+        final typeData = TransferableTypedData.fromList([data]);
+        push('list', typeData);
+      }
     }
   }
 }

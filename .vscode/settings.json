@@ -1,4 +1,5 @@
 {
+  "dart.flutterSdkPath": "G:\\versions\\flutter",
   "files.associations": {
     "algorithm": "cpp",
     "any": "cpp",

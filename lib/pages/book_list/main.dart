@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../setting/setting.dart';
@@ -12,12 +13,9 @@ import 'top.dart';
 class ListMainPage extends StatelessWidget {
   const ListMainPage({Key? key}) : super(key: key);
 
-  bool isLight(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.light;
-
   @override
   Widget build(BuildContext context) {
-    final light = isLight(context);
+    final light = !context.isDarkMode;
     Widget _builder(String text, VoidCallback onTap) {
       return btn1(
         elevation: 0.05,

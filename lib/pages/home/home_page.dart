@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
+import 'package:get/get.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -97,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage>
       painterBloc.autoRun.stopSave();
     } else if (initIsolateState) {
       painterBloc.autoRun.stopAutoRun();
+      setState(() {});
     }
   }
 
@@ -215,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage>
         child: AnimatedBuilder(
             animation: notifier,
             builder: (context, _) {
-              final light = isLight;
+              final light = !context.isDarkMode;
               return BottomNavigationBar(
                 iconSize: 18.0,
                 selectedFontSize: 11.0,
@@ -334,8 +336,6 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
-
   Widget buildBlocBuilder() {
     return RefreshIndicator(
       key: _refreshKey,
@@ -356,14 +356,17 @@ class _MyHomePageState extends State<MyHomePage>
             if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
             return Scrollbar(
               child: ListViewBuilder(
-                color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+                color:
+                    !context.isDarkMode ? null : Color.fromRGBO(25, 25, 25, 1),
                 cacheExtent: 100,
                 itemCount: children.length,
                 itemBuilder: (_, index) {
                   final item = children[index];
                   return ListItem(
-                    bgColor: isLight ? null : Colors.grey.shade900,
-                    splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+                    bgColor: !context.isDarkMode ? null : Colors.grey.shade900,
+                    splashColor: !context.isDarkMode
+                        ? null
+                        : Color.fromRGBO(60, 60, 60, 1),
                     onTap: () {
                       BookContentPage.push(context, item.bookId!,
                           item.chapterId!, item.page!, item.api);
@@ -435,7 +438,7 @@ class BookSearchPage extends SearchDelegate<void> {
 
   Widget suggestions(BuildContext context) {
     final bloc = context.read<SearchNotifier>();
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final isLight = !context.isDarkMode;
     final ts = context.read<TextStyleConfig>().data;
     return StatefulBuilder(
       builder: (context, setstate) {
@@ -519,7 +522,7 @@ class BookSearchPage extends SearchDelegate<void> {
   @override
   Widget buildResults(BuildContext context) {
     final search = context.read<SearchNotifier>();
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final isLight = !context.isDarkMode;
 
     return wrap(
         context,
@@ -687,7 +690,7 @@ class BookSearchPage extends SearchDelegate<void> {
 
   @override
   List<Widget> buildActions(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final isLight = !context.isDarkMode;
 
     return [
       InkWell(

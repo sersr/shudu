@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -36,7 +37,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final isLight = !context.isDarkMode;
 
     return Scaffold(
         appBar: AppBar(

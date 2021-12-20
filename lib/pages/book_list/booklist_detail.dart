@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -78,7 +79,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
         );
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
+  bool get isLight => !context.isDarkMode;
   @override
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>().data;
@@ -185,8 +186,6 @@ class TitleWidget extends StatefulWidget {
 
 class _TitleWidgetState extends State<TitleWidget>
     with AutomaticKeepAliveClientMixin {
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -194,7 +193,7 @@ class _TitleWidgetState extends State<TitleWidget>
     final data = widget.data;
     return Container(
       height: 120,
-      color: isLight
+      color: !context.isDarkMode
           ? const Color.fromARGB(255, 250, 250, 250)
           : Colors.grey.shade900,
       padding: const EdgeInsets.all(12.0),

@@ -71,9 +71,6 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     if (bloc.config.value.orientation!) {
       EventQueue.runTaskOnQueue(runtimeType, () async {
         if (!bloc.uiOverlayShow) await uiOverlay();
-        // 状态栏彻底隐藏之后才改变颜色
-        // await release(const Duration(milliseconds: 300));
-        // uiStyle(dark: true);
       });
     }
   }
@@ -85,7 +82,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     Widget child = AnimatedBuilder(
       animation: notifyColor,
       builder: (context, child) {
-        final data  =MediaQuery.of(context);
+        final data = MediaQuery.of(context);
         Log.w('padding: ${data.padding} | size: ${data.size}');
         return Material(color: notifyColor.value, child: child);
       },
@@ -170,12 +167,12 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
     await bloc.dump();
 
+    bloc.addInitEventTask(() => null);
     await blocCache.load();
 
     EventQueue.runTaskOnQueue(runtimeType, () async {
       await uiOverlay(hide: false);
     });
-    bloc.addInitEventTask(() => null);
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
     if (Theme.of(context).platform == TargetPlatform.iOS) {

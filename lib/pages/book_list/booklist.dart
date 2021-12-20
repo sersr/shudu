@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -18,7 +19,6 @@ class BooklistPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isLight = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
       body: RepaintBoundary(
@@ -27,7 +27,7 @@ class BooklistPage extends StatelessWidget {
           child: BarLayout(
             title: Text('书单'),
             bottom: TabBar(
-              unselectedLabelColor: isLight
+              unselectedLabelColor: !context.isDarkMode
                   ? const Color.fromARGB(255, 204, 204, 204)
                   : const Color.fromARGB(255, 110, 110, 110),
               labelColor: const Color.fromARGB(255, 255, 255, 255),
@@ -125,7 +125,7 @@ class _WrapWidgetState extends State<WrapWidget>
     );
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
+  bool get isLight => !context.isDarkMode;
 
   Widget buildListView(List<BookList> list) {
     return Scrollbar(
@@ -330,7 +330,6 @@ class BarLayout extends StatelessWidget {
   final Widget body;
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     final ts = context.read<TextStyleConfig>().data;
     final canPop = ModalRoute.of(context)?.canPop ?? false;
@@ -347,7 +346,7 @@ class BarLayout extends StatelessWidget {
 
     return Column(children: [
       Material(
-        color: isLight
+        color: !context.isDarkMode
             ? Color.fromARGB(255, 13, 157, 224)
             : Color.fromRGBO(25, 25, 25, 1),
         child: SafeArea(

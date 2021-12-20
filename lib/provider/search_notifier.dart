@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../data/biquge/search_data.dart';
 import '../data/zhangdu/zhangdu_search.dart';
@@ -32,13 +33,25 @@ class SearchNotifier extends ChangeNotifier {
 
   Future<void> init() async {
     box = await Hive.openBox('searchHistory');
-    final List<String> _searchHistory =
-        box.get('suggestions', defaultValue: const <String>[]);
-    if (_searchHistory.length > 20) {
-      searchHistory = _searchHistory.sublist(
-          _searchHistory.length - 20, _searchHistory.length);
-    } else {
-      searchHistory = List.of(_searchHistory);
+    try {
+      final se = box.get('suggestions', defaultValue: <String>[]);
+      final List<String> _searchHistory;
+      if (kDartIsWeb) {
+        _searchHistory = [];
+        for (var item in se) {
+          _searchHistory.add(item);
+        }
+      } else {
+        _searchHistory = se;
+      }
+      if (_searchHistory.length > 20) {
+        searchHistory = _searchHistory.sublist(
+            _searchHistory.length - 20, _searchHistory.length);
+      } else {
+        searchHistory = List.of(_searchHistory);
+      }
+    } catch (e) {
+      Log.e('error: $e');
     }
   }
 

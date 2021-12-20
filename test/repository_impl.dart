@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
-import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
@@ -16,29 +15,26 @@ import 'package:utils/utils.dart';
 class RepositoryTest extends Repository
     with SendEvent, SendCacheMixin, SendEventMixin, SendIsolateMixin {
   @override
-  Future<Isolate> onCreateIsolate(SendPort sdPort) async {
+  Future<RemoteServer> onCreateIsolate(SendHandle sdPort) async {
     final newIsolate = await Isolate.spawn(singleIsolateEntryPoint,
         [sdPort, './app', './app/cache', false, false]);
-    return newIsolate;
+    return IsolateRemoteServer(newIsolate);
   }
 }
 
 class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
-  RepositoryImplTest(this.useSqflite);
+  RepositoryImplTest();
   late Server server;
   late Client client;
-  final bool useSqflite;
 
   Future<void> get initRepository async {
     client = Client(this);
     server = Server();
-    if (useSqflite) {
-      SqfliteMainIsolate.initMainDb();
-    }
-    final sendPort = server.receivePort.sendPort;
+
+    final sendPort = server.receivePort.sendHandle;
     sendPortOwner =
         SendPortOwner(localSendPort: sendPort, remoteSendPort: sendPort);
-    return server.init(client.sendSP, useSqflite);
+    return server.init(client.sendSP);
   }
 
   @override
@@ -52,7 +48,6 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
     server.close();
   }
 
-  @override
   late final SendEvent sendEvent = this;
 
   SendPortOwner? sendPortOwner;
@@ -84,21 +79,20 @@ class Server {
     server.add(data);
   }
 
-  final receivePort = ReceivePort();
+  final receivePort = ReceiveHandle();
   StreamSubscription? tranf;
   void _tran(data) {
     sp.add(data);
   }
 
   late BookEventIsolate bookEventIsolate;
-  Future<void> init(EventSink clientSP, bool useSqflite) async {
+  Future<void> init(EventSink clientSP) async {
     sp = clientSP;
 
     tranf?.cancel();
     tranf = receivePort.listen(_tran);
 
-    bookEventIsolate =
-        BookEventIsolateTest(receivePort.sendPort, useSqflite: useSqflite);
+    bookEventIsolate = BookEventIsolateTest(receivePort.sendHandle);
     final list = <Future>[];
     bookEventIsolate.initStateListen((task) {
       if (task is Future) {
@@ -119,12 +113,8 @@ class Server {
 }
 
 class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendPort sp, {bool useSqflite = false})
-      : super(
-            remoteSendPort: sp,
-            appPath: '',
-            cachePath: '',
-            useSqflite3: useSqflite);
+  BookEventIsolateTest(SendHandle sp)
+      : super(remoteSendPort: sp, appPath: '', cachePath: '');
 
   @override
   bool remove(key) {

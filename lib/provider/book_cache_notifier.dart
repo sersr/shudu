@@ -108,19 +108,20 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   FutureOr<List<Cache>> get getList async {
-    final zdf = repository.bookEvent.zhangduEvent.getZhangduMainList();
-    final data = await repository.bookEvent.bookCacheEvent.getMainList();
     final dataList = <Cache>[];
-    if (data != null) {
-      final tran = data.map((e) => Cache.fromBookCache(e));
-      dataList.addAll(tran);
-    }
-    final zdData = await zdf;
-    if (zdData != null) {
-      final tran = zdData.map((e) => Cache.fromZdCache(e));
-      dataList.addAll(tran);
-    }
+    final fn1 = repository.bookEvent.bookCacheEvent.getMainList().mapOption(
+        ifNone: () {},
+        ifSome: (data) =>
+            dataList.addAll(data.map((e) => Cache.fromBookCache(e))));
+    final fn2 = repository.bookEvent.zhangduEvent
+        .getZhangduMainList()
+        .mapOption(
+            ifNone: () {},
+            ifSome: (data) =>
+                dataList.addAll(data.map((e) => Cache.fromZdCache(e))));
 
+    await fn2;
+    await fn1;
     return dataList;
   }
 

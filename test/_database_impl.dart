@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
@@ -72,5 +71,5 @@ class Database with ListenMixin, Resolve, ServerEvent, DatabaseMixin {
   }
 
   @override
-  SendPort? get remoteSendPort => throw UnimplementedError();
+  SendHandle? get remoteSendPort => throw UnimplementedError();
 }

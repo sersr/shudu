@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -320,7 +320,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   Widget background({required Widget child}) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
     final top = MediaQuery.maybeOf(context)?.padding.top ?? 0;
     return GestureDetector(
       onTap: () {
@@ -499,7 +498,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 : BookInfoPage.push(context, l.id!, widget.api));
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
+  bool get isLight => !context.isDarkMode;
 
   Widget header(String? author, String? bookStatus, String? name, double? scroe,
       String? cName, String? img, TextStyleData ts) {

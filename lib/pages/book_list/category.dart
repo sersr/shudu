@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -9,7 +10,6 @@ import '../../event/event.dart';
 import '../../provider/provider.dart';
 import '../../widgets/images.dart';
 import '../../widgets/page_animation.dart';
-import '../book_info/info_page.dart';
 import 'booklist.dart';
 import 'top_item.dart';
 
@@ -45,8 +45,6 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
     removeListener(complete);
   }
 
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,9 +75,6 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                       final e = data[index];
 
                       return Center(
-                        // child: Row(
-                        //   mainAxisSize: MainAxisSize.min,
-                        //   children: [
                         child: btn1(
                           onTap: () {
                             final name = e.name;
@@ -101,8 +96,6 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
                             ],
                           ),
                         ),
-                        //   ],
-                        // ),
                       );
                     },
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -125,6 +118,7 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
 }
 
 class CategoryListNotifier extends ChangeNotifier {
+  CategoryListNotifier();
   Repository? repository;
   List<BookCategoryData>? data;
 
@@ -168,7 +162,6 @@ class _CategoriesState extends State<Categories> {
 
   @override
   Widget build(BuildContext context) {
-    bool isLight = Theme.of(context).brightness == Brightness.light;
     return DefaultTabController(
       length: _titles.length,
       child: Scaffold(
@@ -178,15 +171,17 @@ class _CategoriesState extends State<Categories> {
             body: TabBarView(
               children: List.generate(
                 _titles.length,
-                (index) => CategListView(
-                  ctg: widget.index,
-                  date: _urlKeys[index],
-                  index: index,
+                (index) => ChangeNotifierProvider(
+                  create: (context) => TopNotifier<int>(
+                      context.read<Repository>().getCategLists,
+                      widget.index,
+                      _urlKeys[index]),
+                  child: TopCtgListView<int>(index: index),
                 ),
               ),
             ),
             bottom: TabBar(
-              unselectedLabelColor: isLight
+              unselectedLabelColor: !context.isDarkMode
                   ? const Color.fromARGB(255, 204, 204, 204)
                   : const Color.fromARGB(255, 110, 110, 110),
               labelColor: const Color.fromARGB(255, 255, 255, 255),
@@ -202,185 +197,4 @@ class _CategoriesState extends State<Categories> {
       ),
     );
   }
-}
-
-class CategListView extends StatefulWidget {
-  const CategListView({
-    Key? key,
-    required this.ctg,
-    required this.date,
-    required this.index,
-  }) : super(key: key);
-  final int ctg;
-  final String date;
-  final int index;
-  @override
-  _CategListViewState createState() => _CategListViewState();
-}
-
-class _CategListViewState extends State<CategListView>
-    with AutomaticKeepAliveClientMixin {
-  final _categNotifier = TopNotifier();
-  TabController? controller;
-  bool get isLight => Theme.of(context).brightness == Brightness.light;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final repository = context.read<Repository>();
-    _categNotifier.repository = repository;
-
-    controller?.removeListener(onUpdate);
-    controller = DefaultTabController.of(context);
-    controller?.addListener(onUpdate);
-
-    onUpdate();
-  }
-
-  void onUpdate() {
-    if (widget.index == controller?.index && !_categNotifier.initialized)
-      _categNotifier.getNextData(widget.ctg, widget.date);
-  }
-
-  @override
-  void didUpdateWidget(covariant CategListView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.ctg != widget.ctg || oldWidget.date != widget.date) {
-      _categNotifier.reset();
-      onUpdate();
-    }
-  }
-
-  @override
-  void dispose() {
-    controller?.removeListener(onUpdate);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-          animation: _categNotifier,
-          builder: (context, _) {
-            final _data = _categNotifier.data;
-            if (!_categNotifier.initialized) {
-              if (!_categNotifier.failed)
-                return loadingIndicator();
-              else
-                return reloadBotton(
-                    () => _categNotifier.getNextData(widget.ctg, widget.date));
-            }
-
-            return ListViewBuilder(
-              cacheExtent: 100,
-              color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-              itemCount: _data.length + 1,
-              finishLayout: (first, last) {
-                final length = _data.length;
-                if (length == last) {
-                  if (!_categNotifier.loading && _categNotifier._hasNext) {
-                    _categNotifier.getNextData(widget.ctg, widget.date);
-                  }
-                }
-              },
-              itemBuilder: (context, index) {
-                if (index == _data.length) {
-                  if (!_categNotifier._hasNext)
-                    return SizedBox(
-                        height: 50, child: Center(child: Text('到底了~')));
-                  return SizedBox(height: 50, child: loadingIndicator());
-                }
-                final _item = _data[index];
-                return ListItem(
-                  bgColor: isLight ? null : Colors.grey.shade900,
-                  splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-                  onTap: () => _item.id != null
-                      ? BookInfoPage.push(context, _item.id!, ApiType.biquge)
-                      : null,
-                  child: TopItem(item: _item),
-                );
-              },
-            );
-          }),
-    );
-    // );
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-}
-
-class TopNotifier extends ChangeNotifier {
-  Repository? repository;
-  final _data = <BookTopList>[];
-  List<BookTopList> get data => _data;
-  int? _ctg;
-  String? _date;
-  int _index = 0;
-  bool _hasNext = true;
-  bool _failed = false;
-
-  Future? _task;
-  bool get loading => _task != null;
-  bool get failed => _failed;
-  bool get initialized => _index != 0;
-
-  Future<void> getNextData(int ctg, String date) async {
-    if (_task != null) return;
-    await _task;
-    _task ??= _getNextData(ctg, date)..whenComplete(() => _task = null);
-  }
-
-  Future<void> _getNextData(int ctg, String date) async {
-    if (!isCurrentItem(ctg, date)) {
-      _ctg = ctg;
-      _date = date;
-      _index = 0;
-      _hasNext = true;
-      _data.clear();
-    }
-    if (!_hasNext) {
-      notifyListeners();
-      return;
-    }
-    if (_failed) notifyListeners();
-
-    _failed = false;
-    _index++;
-    await getData(ctg, date, _index);
-    notifyListeners();
-  }
-
-  Future<void> getData(int ctg, String date, int index) async {
-    final _da = await repository!.bookEvent.customEvent
-            .getCategLists(ctg, date, index) ??
-        const BookTopData();
-    if (isCurrentItem(ctg, date) && _index == index) {
-      _hasNext = _da.hasNext ?? true;
-      if (_da.bookList != null) {
-        _data.addAll(_da.bookList!);
-      } else {
-        Log.e('failed');
-        _index--;
-        _failed = true;
-      }
-      await release(const Duration(milliseconds: 100));
-    }
-  }
-
-  @override
-  void notifyListeners() {
-    scheduleMicrotask(super.notifyListeners);
-  }
-
-  void reset() {
-    _ctg = _date = null;
-    _index = 0;
-    _hasNext = true;
-    _data.clear();
-  }
-
-  bool isCurrentItem(int ctg, String date) => ctg == _ctg && date == _date;
 }

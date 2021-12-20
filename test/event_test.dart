@@ -8,7 +8,7 @@ import 'package:shudu/database/database.dart';
 import 'repository_impl.dart';
 
 void main() async {
-  final repository = RepositoryImplTest(true);
+  final repository = RepositoryImplTest();
   await repository.initRepository;
   final watcher = repository.server.bookEventIsolate.db.watcher;
   watcher.sync = true;

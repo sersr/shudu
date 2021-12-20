@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -41,7 +42,6 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +61,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             return ListViewBuilder(
               cacheExtent: 100,
               itemExtent: 60,
-              color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+              color:  !context.isDarkMode? null : Color.fromRGBO(25, 25, 25, 1),
               padding: const EdgeInsets.only(bottom: 12.0),
               itemBuilder: (_, index) => cacheItemBuilder(index),
               itemCount: data.length,
@@ -78,7 +78,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
     final progress =
         _e.isEmpty ? 0.0 : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final isLight = !context.isDarkMode;
 
     return ListItem(
       bgColor: isLight ? null : Colors.grey.shade900,

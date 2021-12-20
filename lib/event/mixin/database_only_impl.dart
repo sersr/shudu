@@ -1,5 +1,4 @@
-import 'dart:isolate';
-
+import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
@@ -7,15 +6,12 @@ import 'base/base.dart';
 
 // 子隔离，数据库 入口
 void dataBaseEntryPoint(args) async {
-  final remoteSendPort = args[0] as SendPort;
+  final remoteSendPort = args[0] as SendHandle;
   final appPath = args[1] as String;
   // final cachePath = args[2] as String;
-  final useSqflite3 = args[3] as bool;
-
   DatabaseImpl(
     appPath: appPath,
     remoteSendPort: remoteSendPort,
-    useSqflite3: useSqflite3,
   ).run();
 }
 
@@ -28,16 +24,13 @@ class DatabaseImpl extends MultiDatabaseResolveMain
         ZhangduComplexOnDatabaseMixin {
   DatabaseImpl({
     required this.appPath,
-    required this.useSqflite3,
     required this.remoteSendPort,
   });
   @override
-  final SendPort remoteSendPort;
+  final SendHandle remoteSendPort;
 
   @override
   final String appPath;
-  @override
-  final bool useSqflite3;
 
   @override
   void onResolvedFailed(message) {

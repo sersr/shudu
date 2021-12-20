@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -83,7 +84,7 @@ class MulProvider extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => TextStyleConfig()),
       ],
-      child: ShuduApp(mode: mode),
+      child: GetMaterialApp(home: ShuduApp(mode: mode)),
     );
   }
 }
