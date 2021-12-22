@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/future_or_ext.dart';
+import 'package:utils/utils.dart';
 
 import '../../../data/data.dart';
 import '../../../database/database.dart';

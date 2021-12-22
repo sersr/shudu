@@ -5,6 +5,7 @@ import 'dart:collection';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  // Queue: 容量只会正增长
   test('ListQueue: 通过位运算突破0边界，当 _head == _tail 时，_table 满了，进行扩充', () {
     final queue = ListQueueTest<String>();
     queue.add('a');
@@ -14,18 +15,13 @@ void main() {
     expect(queue._head, 0);
     expect(queue._tail, 2);
     queue.addFirst('nihal');
-    expect(queue._head, 7);
+    expect(queue._table.length, 8);
+    expect(queue._head, 7); // 突破0边界: _table.length - 1
     expect(queue._tail, 2);
   });
 }
 
-extension Li<E> on ListQueueTest<E> {
-  void prin() {
-    print('head: $_head');
-    print('tail: $_tail');
-  }
-}
-
+// copy from: 'dart:collection'
 class ListQueueTest<E> extends ListQueue<E> {
   // ignore: constant_identifier_names
   static const int _INITIAL_CAPACITY = 8;

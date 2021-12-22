@@ -37,7 +37,7 @@ class MultiIsolateRepository extends Repository
       return IsolateRemoteServer(isolate);
     } else {
       dataBaseEntryPoint([localSendPort, ...?args]);
-      return RemoteServer();
+      return LocalRemoteServer();
     }
   }
 
@@ -50,7 +50,7 @@ class MultiIsolateRepository extends Repository
       return IsolateRemoteServer(isolate);
     } else {
       _multiIsolateEntryPoint([localSendPort, ...?args]);
-      return RemoteServer();
+      return LocalRemoteServer();
     }
   }
 }

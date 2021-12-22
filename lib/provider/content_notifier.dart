@@ -672,7 +672,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   @pragma('vm:prefer-inline')
   Future<T> _run<T>(EventCallback<T> callback) {
-    return EventQueue.runTaskOnQueue(runtimeType, callback);
+    return EventQueue.runTask(runtimeType, callback);
   }
 
   Future<List<ContentMetrics>> _genTextData(
@@ -749,7 +749,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       if (_bookid != bookid) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
-        final allLines = debugTest ? ['debugTest'] : split(lines.source);
+        final allLines = debugTest ? ['debugTest'] : lines.source;
         final pages = await _genTextData(_bookid, allLines, lines.cname!);
 
         if (pages.isEmpty) return;
@@ -984,10 +984,6 @@ mixin ContentEvent
     }
   }
 
-  Future<T?> addInitEventTask<T>(EventCallback<T> callback, {Object? taskKey}) {
-    return callback.pushOneAwait(initQueue, taskKey: taskKey);
-  }
-
   /// 当前章节
   ///
   /// 加载、重载、设置更改等操作需要更新[tData]要调用的函数
@@ -1056,7 +1052,7 @@ mixin ContentEvent
   /// 只有在渲染后才能更改[_innerIndex][controller.pixels]
   void reduceController() {
     if (_innerIndex.abs() > 1000) {
-      EventQueue.runOneTaskOnQueue(_reduce, () {
+      EventQueue.runOne(_reduce, () {
         return SchedulerBinding.instance!.addPostFrameCallback((_) {
           _reduce();
         });
@@ -1215,9 +1211,8 @@ mixin ContentEvent
     if (size != _size || contentLayoutPadding != _contentLayoutPadding) {
       size = _size;
       _contentLayoutPadding = contentLayoutPadding;
-      Log.w(
-          'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}',
-          onlyDebug: false);
+      assert(Log.w(
+          'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}'));
       return true;
     } else {
       return false;
@@ -1515,9 +1510,9 @@ mixin ContentAuto on ContentDataBase, Configs, ContentTasks {
     if (autoRun.value) {
       controller?.setPixels(controller!.pixels + 0.1);
       scheduleTask();
-      EventQueue.runOneTaskOnQueue(_auto, autoRun.start);
+      EventQueue.runOne(_auto, autoRun.start);
     } else {
-      EventQueue.runOneTaskOnQueue(_auto, autoRun.stopTicked);
+      EventQueue.runOne(_auto, autoRun.stopTicked);
     }
   }
 
@@ -1657,7 +1652,7 @@ class AutoRun {
   bool get value => isActive.value;
   set value(bool v) {
     isActive.value = v;
-    EventQueue.runTaskOnQueue('autoRun_wake', () => Wakelock.toggle(enable: v));
+    EventQueue.runTask('autoRun_wake', () => Wakelock.toggle(enable: v));
   }
 
   Ticker? _ticker;

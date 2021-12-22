@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/future_or_ext.dart';
+import 'package:utils/utils.dart';
 
 import '../../../database/database.dart';
 import '../../../pages/book_list/cache_manager.dart';
@@ -15,7 +16,6 @@ import '../../base/book_event.dart';
 mixin DatabaseMixin on Resolve implements DatabaseEvent {
   String get appPath;
   String get name => 'nop_book_database.nopdb';
-
 
   late final bookCache = db.bookCache;
   late final bookContentDb = db.bookContentDb;
@@ -133,29 +133,28 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   }
 
   FutureOr<List<BookContentDb>> contentDb(int bookid, int contentid) {
-    final query = bookContentDb.query..index.by(db.index);
-
-    query.where.cid.equalTo(contentid).and.bookId.equalTo(bookid);
+    final query = bookContentDb.query
+      ..index.by(db.index)
+      ..where.cid.equalTo(contentid).and.bookId.equalTo(bookid);
     return query.goToTable;
   }
 
   @override
   Future<RawContentLines?> getContentDb(int bookid, int contentid) async {
     final queryList = await contentDb(bookid, contentid);
-    if (queryList.isNotEmpty == true) {
+    if (queryList.isNotEmpty) {
       final bookContent = queryList.last;
       if (bookContent.content != null) {
-        // final lines = split(bookContent.content!);
-        // if (lines.isNotEmpty) {
+        final lines = LineSplitter.split(bookContent.content!).toList();
+
         return RawContentLines(
-          source: bookContent.content!,
+          source: lines,
           nid: bookContent.nid,
           pid: bookContent.pid,
           cid: bookContent.cid,
           hasContent: bookContent.hasContent,
           cname: bookContent.cname,
         );
-        // }
       }
     }
     return null;

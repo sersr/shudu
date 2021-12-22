@@ -22,7 +22,7 @@ class ShuduApp extends StatelessWidget {
         ];
       },
       builder: (context, list, _) {
-        //TODO: 国际化 状态栏颜色...
+        //TODO: 国际化
 
         return MaterialApp(
           themeMode: list[0] ?? mode,
@@ -54,7 +54,10 @@ class ShuduApp extends StatelessWidget {
           ),
           showPerformanceOverlay: list[2] ?? false,
           home: const MyHomePage(),
-          navigatorObservers: [context.read<OptionsNotifier>().routeObserver],
+          navigatorObservers: [
+            context.read<OptionsNotifier>().routeObserver,
+            Nav.observer
+          ],
         );
       },
     );

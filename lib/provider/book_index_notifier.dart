@@ -172,7 +172,7 @@ class BookIndexNotifier extends ChangeNotifier
   void addRegisterKey(Object key) {
     _listenOnIds.add(key);
     assert(Log.i('register'));
-    EventQueue.runOneTaskOnQueue(this, () {
+    EventQueue.runOne(this, () {
       if (listenOn && _data?.isValid == true) {
         _listenAll();
       }
@@ -181,7 +181,7 @@ class BookIndexNotifier extends ChangeNotifier
 
   void removeRegisterKey(Object key) {
     _listenOnIds.remove(key);
-    EventQueue.runOneTaskOnQueue(this, () {
+    EventQueue.runOne(this, () {
       if (!listenOn) {
         assert(Log.i('pause'));
         _pauseAll();
@@ -261,7 +261,7 @@ class BookIndexNotifier extends ChangeNotifier
       assert(Log.w('正在监听: $bookid | 当前章节 cid ...'));
 
       if (_data?.isValidZd != true) return;
-      EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
+      EventQueue.runOne(_watchCurrentCid, () {
         if (_bookCaches != null && _bookCaches.isNotEmpty) {
           final _cid = _bookCaches.last.chapterId;
           final _bookid = _data!.bookid!;
@@ -281,7 +281,7 @@ class BookIndexNotifier extends ChangeNotifier
         .listen((listData) {
       if (listData == null) return;
 
-      EventQueue.runOneTaskOnQueue(_cids, () {
+      EventQueue.runOne(_cids, () {
         assert(Log.w('正在监听: $bookid | 缓存章节 ...'));
         if (_data?.isValidZd != true) return;
 
@@ -304,7 +304,7 @@ class BookIndexNotifier extends ChangeNotifier
         .watchCurrentCid(bookid)
         .listen((_bookCaches) {
       if (_data?.isValidBqg != true) return;
-      EventQueue.runOneTaskOnQueue(_watchCurrentCid, () {
+      EventQueue.runOne(_watchCurrentCid, () {
         if (_bookCaches != null && _bookCaches.isNotEmpty) {
           final _cid = _bookCaches.last.chapterId;
           final _bookid = _data!.bookid!;
@@ -325,7 +325,7 @@ class BookIndexNotifier extends ChangeNotifier
         .listen((listData) {
       if (listData == null) return;
 
-      EventQueue.runOneTaskOnQueue(_cids, () {
+      EventQueue.runOne(_cids, () {
         Log.i('book cache ids ${_data?.bookid == bookid}', onlyDebug: false);
         if (_data?.isValidBqg != true) return;
         if (_data?.bookid == bookid) {

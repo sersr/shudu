@@ -9,28 +9,32 @@ import 'package:get/get.dart';
 
 import 'provider/options_notifier.dart';
 
-void main() async {
-  NopWidgetsFlutterBinding.ensureInitialized();
-  uiStyle();
-  uiOverlay(hide: false);
-  try {
-    if (kIsWeb) {
+void main() {
+  Log.logRun(() async {
+    NopWidgetsFlutterBinding.ensureInitialized();
+    uiStyle();
+    uiOverlay(hide: false);
+    try {
+      if (kIsWeb) {
+        hiveInit('shudu/hive');
+      } else {
+        await getApplicationDocumentsDirectory().then((appDir) {
+          if (defaultTargetPlatform == TargetPlatform.windows) {
+            hiveInit(join(appDir.path, 'shudu', 'hive'));
+          } else {
+            hiveInit(join(appDir.path, 'hive'));
+          }
+        });
+      }
+    } catch (e) {
       hiveInit('shudu/hive');
-    } else {
-      await getApplicationDocumentsDirectory().logi(false).then((appDir) {
-        hiveInit(join(appDir.path, 'hive'));
-      });
+      Log.e('error: $e', onlyDebug: false);
     }
-  } catch (e) {
-    hiveInit('shudu/hive');
-    Log.e('error: $e', onlyDebug: false);
-  }
 
-  Get.log = _defaultLog;
-  final mode = await OptionsNotifier.getThemeModeUnSafe();
-
-  runApp(MulProvider(mode: mode));
+    Get.isLogEnable = false;
+    Get.log = _emptyFunction;
+    runApp(MulProvider(mode: await OptionsNotifier.getThemeModeUnSafe()));
+  });
 }
 
-void _defaultLog(String message, {bool isError = false}) {}
-    // Log.log(Log.info, message, stackTrace: StackTrace.current);
+void _emptyFunction(String text, {bool isError = false}) {}

@@ -24,7 +24,7 @@ class SingleRepository extends Repository
       return IsolateRemoteServer(newIsolate);
     } else {
       singleIsolateEntryPoint([remoteSendPort, ...args]);
-      return RemoteServer();
+      return LocalRemoteServer();
     }
   }
 }
@@ -38,22 +38,24 @@ class SingleRepositoryOnServer extends Repository
   @override
   Iterable<MapEntry<String, CreateRemoteServer>>
       createRemoteServerIterable() sync* {
-    yield MapEntry(bookEventDefault, onCreateIsolate); // 所有任务都由此处理
-    yield MapEntry(database, () async => RemoteServer()); // 提供一个`handle`
+    yield MapEntry<String, CreateRemoteServer>(
+        bookEventDefault, Left(onCreateIsolate)); // 所有任务都由此处理
+    yield MapEntry<String, CreateRemoteServer>(
+        database, const Right(NullRemoteServer())); // 提供一个`handle`
     yield* super.createRemoteServerIterable();
   }
 
-  Future<RemoteServer> onCreateIsolate() async {
-    final args = await initStartArgs();
-    if (!kIsWeb) {
-      // [remoteSendPort, appPath, cachePath]
-      final newIsolate = await Isolate.spawn(
-          singleIsolateEntryPoint, [localSendPort, ...args]);
-      return IsolateRemoteServer(newIsolate);
-    } else {
-      singleIsolateEntryPoint([localSendPort, ...args]);
-      return RemoteServer();
-    }
+  Future<RemoteServer> onCreateIsolate() {
+    // [remoteSendPort, appPath, cachePath]
+    return initStartArgs().then((args) {
+      if (!kIsWeb) {
+        return Isolate.spawn(singleIsolateEntryPoint, [localSendPort, ...args])
+            .then(IsolateRemoteServer.wrap);
+      } else {
+        singleIsolateEntryPoint([localSendPort, ...args]);
+        return LocalRemoteServer();
+      }
+    });
   }
 }
 

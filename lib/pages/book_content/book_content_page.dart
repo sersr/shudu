@@ -69,7 +69,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
   void initOnceTask() {
     super.initOnceTask();
     if (bloc.config.value.orientation!) {
-      EventQueue.runTaskOnQueue(runtimeType, () async {
+      EventQueue.runTask(runtimeType, () async {
         if (!bloc.uiOverlayShow) await uiOverlay();
       });
     }
@@ -167,10 +167,9 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
     await bloc.dump();
 
-    bloc.addInitEventTask(() => null);
     await blocCache.load();
 
-    EventQueue.runTaskOnQueue(runtimeType, () async {
+    EventQueue.runTask(runtimeType, () async {
       await uiOverlay(hide: false);
     });
     // 横屏处理

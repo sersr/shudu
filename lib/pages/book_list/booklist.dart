@@ -19,7 +19,6 @@ class BooklistPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: RepaintBoundary(
         child: DefaultTabController(
@@ -256,10 +255,10 @@ class ShudanCategProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    return _loop.awaitOneEventTask(() async {
+    return _loop.awaitOne(() {
       list = null;
       _listCounts = 0;
-      await _load();
+      return _load();
     });
   }
 
@@ -330,7 +329,6 @@ class BarLayout extends StatelessWidget {
   final Widget body;
   @override
   Widget build(BuildContext context) {
-
     final ts = context.read<TextStyleConfig>().data;
     final canPop = ModalRoute.of(context)?.canPop ?? false;
     Widget? leading;

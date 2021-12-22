@@ -9,6 +9,7 @@ import '../../data/data.dart';
 
 class Uint8ListType with TransferTypeMapData<Uint8List?> {
   Uint8ListType(this.list);
+  Uint8ListType.wrap(this.list);
   Uint8List? list;
   @override
   FutureOr<Uint8List?> tranDecode() {
@@ -36,14 +37,14 @@ class Uint8ListType with TransferTypeMapData<Uint8List?> {
 
 class RawContentLines {
   RawContentLines(
-      {this.source = '',
+      {this.source = const [],
       this.cid,
       this.pid,
       this.nid,
       this.cname,
       this.hasContent});
 
-  final String source;
+  final List<String> source;
 
   final int? cid;
   final int? pid;

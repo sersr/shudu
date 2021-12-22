@@ -105,6 +105,18 @@ class ListMainPage extends StatelessWidget {
             _builder('clear', () {
               CacheBinding.instance?.imageRefCache?.clear();
             }),
+          const SizedBox(height: 5),
+          _builder('nav snackbar', () {
+            Nav.snackBar(Container(
+              color: Color.fromARGB(255, 61, 61, 61),
+              height: 56,
+              child: Center(
+                  child: Text(
+                'hello snackbar',
+                style: TextStyle(color: Color.fromARGB(255, 214, 214, 214)),
+              )),
+            ));
+          }),
         ],
       ),
     );

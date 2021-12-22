@@ -595,8 +595,9 @@ mixin MultiBookEventDefaultMessagerMixin
   Future<RemoteServer> createRemoteServerDatabase();
   Iterable<MapEntry<String, CreateRemoteServer>>
       createRemoteServerIterable() sync* {
-    yield MapEntry('bookEventDefault', createRemoteServerBookEventDefault);
-    yield MapEntry('database', createRemoteServerDatabase);
+    yield MapEntry(
+        'bookEventDefault', Left(createRemoteServerBookEventDefault));
+    yield MapEntry('database', Left(createRemoteServerDatabase));
     yield* super.createRemoteServerIterable();
   }
 

@@ -144,7 +144,7 @@ class BookCacheNotifier extends ChangeNotifier {
 
   Future<void> load({bool update = false}) async {
     final runner =
-        update ? EventQueue.runTaskOnQueue : EventQueue.runOneTaskOnQueue;
+        update ? EventQueue.runTask : EventQueue.runOne;
     return runner(_load, () => _load(update: update));
   }
 

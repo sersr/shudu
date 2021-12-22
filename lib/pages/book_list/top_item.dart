@@ -8,10 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../pattern/pattern.dart';
 import '../../provider/provider.dart';
-import '../../widgets/image_text.dart';
-import '../../widgets/images.dart' show ImageResolve;
-import '../../widgets/images.dart';
-import '../../widgets/text_builder.dart';
+import '../../widgets/image_text_layout.dart';
 import '../book_info/info_page.dart';
 
 class TopItem extends StatelessWidget {
@@ -27,37 +24,12 @@ class TopItem extends StatelessWidget {
     final desc = item.desc;
     final topRightScore = '${item.score}分';
     final center = '$cname | $author';
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 112, minHeight: 112),
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 72),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: ImageResolve(img: img),
-              ),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: TextAsyncLayout(
-                    topRightScore: topRightScore,
-                    top: name ?? '',
-                    center: center,
-                    bottom: desc ?? ''),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
+    return ImageTextLayout(
+        img: img,
+        name: name,
+        center: center,
+        topRightScore: topRightScore,
+        desc: desc);
   }
 }
 
@@ -191,8 +163,7 @@ class TopNotifier<T> extends ChangeNotifier {
   final T ctg;
   final String date;
 
-  Future<void> getNextData() =>
-      EventQueue.runOneTaskOnQueue(this, _getNextData);
+  Future<void> getNextData() => EventQueue.runOne(this, _getNextData);
 
   // 是数据，也是状态
   CtgDataResolve? dataResolve;
@@ -218,7 +189,8 @@ class TopNotifier<T> extends ChangeNotifier {
 
           final bookList = _da.bookList;
           final hasNext = _da.hasNext;
-          if (bookList != null) { // success
+          if (bookList != null) {
+            // success
             dataSource.addAll(bookList);
             dataResolve = CtgDataResolve(dataSource, nextIndex);
           } else if (hasNext == false) {
@@ -242,7 +214,7 @@ class TopNotifier<T> extends ChangeNotifier {
           //   final newData = DataResolve(data.data, data.index);
           //   return _getNextData(newDatResolve: newData);
           // }
-          // EventQueue.runOneTaskOnQueue(_doneReloadKey,() => release(const Duration(milliseconds: 5000)));
+          // EventQueue.runOne(_doneReloadKey,() => release(const Duration(milliseconds: 5000)));
         });
     return work;
   }

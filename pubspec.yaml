@@ -76,6 +76,7 @@ dependencies:
   freezed_annotation: ^0.15.0
   js: ^0.6.3
   logging: ^1.0.2
+  scrollable_positioned_list: ^0.2.3
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

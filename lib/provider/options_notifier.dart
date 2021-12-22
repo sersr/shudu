@@ -104,7 +104,7 @@ class OptionsNotifier extends ChangeNotifier {
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    if (_initDone) EventQueue.runOneTaskOnQueue(OptionsNotifier, saveOptions);
+    if (_initDone) EventQueue.runOne(OptionsNotifier, saveOptions);
     notifyListeners();
   }
 
@@ -138,7 +138,7 @@ class OptionsNotifier extends ChangeNotifier {
   // }
 
   static Future<bool> get extenalStorage async {
-    return EventQueue.runTaskOnQueue(setextenalStorage, () async {
+    return EventQueue.runTask(setextenalStorage, () async {
       final box = await Hive.openBox('setextenalStorage');
       final result = box.get('extenalStorage', defaultValue: true);
       await box.close();
@@ -147,7 +147,7 @@ class OptionsNotifier extends ChangeNotifier {
   }
 
   static Future<void> setextenalStorage(bool use) async {
-    return EventQueue.runTaskOnQueue(setextenalStorage, () async {
+    return EventQueue.runTask(setextenalStorage, () async {
       final box = await Hive.openBox('setextenalStorage');
       await box.put('extenalStorage', use);
       return box.close();
@@ -156,7 +156,7 @@ class OptionsNotifier extends ChangeNotifier {
 
 // @Deprecated('为了获得内存的更多权限，弃用sqflite')
 //   static Future<bool> get sqfliteBox async {
-//     return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
+//     return EventQueue.runTask(setSqfliteBox, () async {
 //       final box = await Hive.openBox('_sqfliteBox');
 //       final result = box.get('_useSqflite', defaultValue: false);
 //       await box.close();
@@ -166,7 +166,7 @@ class OptionsNotifier extends ChangeNotifier {
 
 // @Deprecated('为了获得内存的更多权限，弃用sqflite')
 //   static Future<void> setSqfliteBox(bool use) async {
-//     return EventQueue.runTaskOnQueue(setSqfliteBox, () async {
+//     return EventQueue.runTask(setSqfliteBox, () async {
 //       final box = await Hive.openBox('_sqfliteBox');
 //       await box.put('_useSqflite', use);
 //       return box.close();
@@ -180,7 +180,7 @@ class OptionsNotifier extends ChangeNotifier {
 
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.runTaskOnQueue(OptionsNotifier, _init);
+  Future<void> init() => EventQueue.runTask(OptionsNotifier, _init);
   bool _initDone = false;
   Future<void> _init() async {
     if (_initDone) return;

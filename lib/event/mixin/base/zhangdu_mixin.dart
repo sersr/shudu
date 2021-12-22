@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/future_or_ext.dart';
+import 'package:utils/utils.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';
@@ -183,8 +183,8 @@ mixin ZhangduComplexMixin on HiveDioMixin
   final _caches = <int, ZhangduDetailChapterCache>{};
   static const int updateInterval = 1000 * 30;
 
-  ZhangduDetailChapterCache addArchive(int bookId,
-      ZhangduDetailData detailData, List<ZhangduChapterData> chapterData) {
+  ZhangduDetailChapterCache addArchive(int bookId, ZhangduDetailData detailData,
+      List<ZhangduChapterData> chapterData) {
     final now = DateTime.now().millisecondsSinceEpoch;
     final data = ZhangduDetailChapterCache(detailData, chapterData, now);
     autoClear();
@@ -215,7 +215,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
 
   /// 相同的[bookId]在一个队列中
   Future<ZhangduDetailChapterCache?> autoUpdate(int bookId) {
-    return EventQueue.runTaskOnQueue(
+    return EventQueue.runTask(
         [_autoUpdate, bookId], () => _autoUpdate(bookId));
   }
 
@@ -311,8 +311,6 @@ mixin ZhangduComplexMixin on HiveDioMixin
     return getZhangduIndexDb(bookId);
   }
 }
-
- 
 
 mixin ZhangduNetMixin on HiveDioMixin
     implements ZhangduNetEvent, ServerNetEvent {

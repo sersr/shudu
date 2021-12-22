@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print
 
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
+import 'package:shudu/event/base/book_event.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import 'repository_impl.dart';
 
@@ -11,11 +11,10 @@ void main() async {
   final repository = RepositoryImplTest();
   await repository.initRepository;
   final watcher = repository.server.bookEventIsolate.db.watcher;
-  watcher.sync = true;
-  final bookEvent = repository;
-  test('event', () async {
+  BookEvent bookEvent = repository;
+
+  Future<void> _innerTest() async {
     const bookid = 10111;
-    await Future.delayed(Duration(milliseconds: 1000));
 
     /// insertBook
     var x = await bookEvent.insertBook(BookCache(
@@ -34,17 +33,17 @@ void main() async {
     expect(x, 1);
 
     var c1 = bookEvent.watchCurrentCid(bookid).listen((event) {
-      print('watchBookCacheCid: ${event.hashCode}| $event');
+      print('___c1___: ${event.hashCode}| $event');
     });
     var c2 = bookEvent.watchCurrentCid(bookid).listen((event) {
-      print('watchBookCacheCid_2: ${event.hashCode}| $event');
+      print('___c2___: ${event.hashCode}| $event');
     });
 
     var m1 = bookEvent.watchMainList().listen((event) {
-      print('watchMainBookListDb: $event');
+      print('___m1___: $event');
     });
     print('first send');
-    // await wait;
+
     x = await bookEvent.updateBook(
         bookid, BookCache(chapterId: 999, page: 101));
     expect(x, 1);
@@ -55,10 +54,14 @@ void main() async {
 
     x = await bookEvent.updateBook(bookid, BookCache(chapterId: 777, page: 11));
     expect(x, 1);
+    // 异步的行为不可测
+    // await wait;
     c2.pause();
     c1.pause();
     x = await bookEvent.updateBook(bookid, BookCache(chapterId: 101, page: 11));
     expect(x, 1);
+    Log.i('resume...');
+    c1.resume();
     c2.resume();
     await wait;
 
@@ -68,45 +71,51 @@ void main() async {
     expect(watcher.listeners.length, 2);
     await c1.cancel();
 
+    await wait;
+
     /// `watchBookCacheCid` 已取消监听
     expect(watcher.listeners.length, 1);
 
     final m2 = bookEvent.watchMainList().listen((event) {
-      print('watchMainBookListDb22131: $event');
+      print('___m2___: $event');
     });
 
+    await wait;
     expect(watcher.listeners.length, 1);
+    await wait;
 
     await m1.cancel();
+    await wait;
+
     expect(watcher.listeners.length, 1);
 
     final m3 = bookEvent.watchMainList().listen((event) {
-      print('watchMainBookListDdadadb: $event');
+      print('___m3___: $event');
     });
 
     /// 已经存在 `watchMainBookListDb` 监听
     expect(watcher.listeners.length, 1);
     await m2.cancel();
 
+    // 如果没有等待,`event_sync`测试中`m3`不会接收到数据
+    // await wait;
     expect(watcher.listeners.length, 1);
     await m3.cancel();
+    await wait;
 
     /// `watchMainBookListDb` 已取消监听
     expect(watcher.listeners.isEmpty, true);
+  }
+
+  test('event', _innerTest);
+  test('event_sync', () async {
+    bookEvent = repository.server.bookEventIsolate;
+    await _innerTest();
   });
   test('event content', () async {
     await bookEvent.getContent(326671, 1873701, false);
     await bookEvent.getContent(326671, 1873701, false);
   });
-
-  test('sub cancel', () async {
-    final sub = Stream.empty().listen((event) {
-      print('...');
-    });
-    await sub.cancel();
-    await wait;
-    print(sub.isPaused);
-  });
 }
 
-Future<void> get wait => Future.delayed(const Duration(milliseconds: 600));
+Future<void> get wait => Future.delayed(const Duration(milliseconds: 100));

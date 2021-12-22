@@ -2,27 +2,16 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/book_event.dart';
-import 'package:shudu/event/event.dart';
 import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
 
-class RepositoryTest extends Repository
-    with SendEvent, SendCacheMixin, SendEventMixin, SendIsolateMixin {
-  @override
-  Future<RemoteServer> onCreateIsolate(SendHandle sdPort) async {
-    final newIsolate = await Isolate.spawn(singleIsolateEntryPoint,
-        [sdPort, './app', './app/cache', false, false]);
-    return IsolateRemoteServer(newIsolate);
-  }
-}
-
-class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
+class RepositoryImplTest extends BookEventMessagerMain
+    with SendCacheMixin, SendEventPortMixin {
   RepositoryImplTest();
   late Server server;
   late Client client;
@@ -31,15 +20,10 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
     client = Client(this);
     server = Server();
 
-    final sendPort = server.receivePort.sendHandle;
-    sendPortOwner =
-        SendPortOwner(localSendPort: sendPort, remoteSendPort: sendPort);
-    return server.init(client.sendSP);
-  }
-
-  @override
-  void send(message) {
-    server.send(message);
+    final remoteSendHandle = server.sendHandle;
+    sendPortOwner = SendPortOwner(
+        localSendPort: remoteSendHandle, remoteSendPort: client.sendHandle);
+    return server.init();
   }
 
   @override
@@ -47,8 +31,6 @@ class RepositoryImplTest extends BookEventMessagerMain with SendEventPortMixin {
     super.dispose();
     server.close();
   }
-
-  late final SendEvent sendEvent = this;
 
   SendPortOwner? sendPortOwner;
 
@@ -63,36 +45,23 @@ class Client {
 
   final SendEventPortMixin repositoryImpl;
 
-  final client = StreamController();
-  StreamSubscription? clientListen;
+  final client = ReceiveHandle();
 
-  EventSink get sendSP => client.sink;
+  SendHandle get sendHandle => client.sendHandle;
 }
 
 class Server {
-  final server = StreamController(sync: true);
-  StreamSubscription? serverListen;
-
-  late EventSink sp;
+  final serverHandle = ReceiveHandle();
 
   void send(data) {
-    server.add(data);
+    sendHandle.send(data);
   }
 
-  final receivePort = ReceiveHandle();
-  StreamSubscription? tranf;
-  void _tran(data) {
-    sp.add(data);
-  }
+  SendHandle get sendHandle => serverHandle.sendHandle;
 
   late BookEventIsolate bookEventIsolate;
-  Future<void> init(EventSink clientSP) async {
-    sp = clientSP;
-
-    tranf?.cancel();
-    tranf = receivePort.listen(_tran);
-
-    bookEventIsolate = BookEventIsolateTest(receivePort.sendHandle);
+  Future<void> init() async {
+    bookEventIsolate = BookEventIsolateTest(serverHandle.sendHandle);
     final list = <Future>[];
     bookEventIsolate.initStateListen((task) {
       if (task is Future) {
@@ -101,14 +70,13 @@ class Server {
     });
     await Future.wait(list);
 
-    serverListen?.cancel();
-    serverListen = server.stream.listen((event) {
+    serverHandle.listen((event) {
       if (bookEventIsolate.listen(event)) return;
     });
   }
 
   void close() {
-    serverListen?.cancel();
+    serverHandle.close();
   }
 }
 

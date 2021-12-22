@@ -4,7 +4,7 @@ import 'package:nop_db/nop_db.dart';
 // import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/sqlite.dart' as nop;
 import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/future_or_ext.dart';
+import 'package:utils/utils.dart';
 
 import '../data/data.dart';
 
@@ -121,55 +121,27 @@ class BookDatabase extends _GenBookDatabase {
   final String index = 'book_content_index';
 
   FutureOr<void> initDb() {
-    return _initDb().then((_) {
+    return _initDb().whenComplete(() {
       return db.rawQuery(
           'select count(*) from sqlite_master where type = ? and name = ?',
-          ['index', index]).then((value) async {
+          ['index', index]).then((value) {
         if (value.first.values.first == 0) {
-          await onCreate(db, version);
-          var count = 10;
-          while (count > 0) {
-            try {
-              await release(const Duration(milliseconds: 100));
-              await db.execute(
-                  'CREATE INDEX $index on ${bookContentDb.table}(${bookContentDb.cid})');
-              break;
-            } catch (e) {
-              count--;
-              Log.e('error>>>> $e');
-            }
-          }
+          return db.execute(
+              'CREATE INDEX $index on ${bookContentDb.table}(${bookContentDb.cid})');
         }
       });
     });
   }
 
-  /// 弃用`sqflite`
-  /// 在执行'PRAGMA user_version'sql 时，会有意外情况发生
-  /// 为了管理更多的内存权限
   FutureOr<void> _initDb() {
-    // if (useSqfite3) {
-    //   return _initSqflitedb().then(setDb);
-    // } else {
-    return _initffidb().then(setDb);
-    // }
+    return nop
+        .open(path,
+            version: version,
+            onCreate: onCreate,
+            onUpgrade: onUpgrade,
+            onDowngrade: onDowngrade)
+        .then(setDb);
   }
-
-  FutureOr<NopDatabase> _initffidb() {
-    return nop.open(path,
-        version: version,
-        onCreate: onCreate,
-        onUpgrade: onUpgrade,
-        onDowngrade: onDowngrade);
-  }
-
-  // Future<NopDatabase> _initSqflitedb() {
-  //   return NopDatabaseSqflite.openSqfite(path,
-  //       version: version,
-  //       onCreate: onCreate,
-  //       onUpgrade: onUpgrade,
-  //       onDowngrade: onDowngrade);
-  // }
 
   @override
   FutureOr<void> onUpgrade(
@@ -191,13 +163,4 @@ class BookDatabase extends _GenBookDatabase {
       await db.execute(zhangduIndex.createTable());
     }
   }
-
-  // @override
-  // FutureOr<void> dispose() {
-  //   // super.dispose();
-  //   Log.i('....');
-  //   if (db is NopDatabaseSqflite) {
-  //     db.disposeNop();
-  //   }
-  // }
 }

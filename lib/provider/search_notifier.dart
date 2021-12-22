@@ -37,10 +37,9 @@ class SearchNotifier extends ChangeNotifier {
       final se = box.get('suggestions', defaultValue: <String>[]);
       final List<String> _searchHistory;
       if (kDartIsWeb) {
-        _searchHistory = [];
-        for (var item in se) {
-          _searchHistory.add(item);
-        }
+        final dynamicList = se as List;
+        _searchHistory =
+            List.generate(dynamicList.length, (index) => dynamicList[index]);
       } else {
         _searchHistory = se;
       }

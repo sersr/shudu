@@ -81,14 +81,12 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
       }
     });
 
-    return _loadContent(bookid, contentid)
-        .then((v) => BookContentDb.fromBookContent(v));
+    return _loadContent(bookid, contentid).then(BookContentDb.fromBookContent);
   }
 
   @override
   Future<Uint8ListType> getImageBytesDynamic(String img) async {
-    final data = await getImageBytes(img);
-    return Uint8ListType(data);
+    return getImageBytes(img).then(Uint8ListType.wrap);
   }
 
   LazyBox? box;
@@ -96,14 +94,14 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
   final _errorLoading = <String, int>{};
 
   Future<T> imageTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTaskOnQueue(imageTasks, task, channels: 5);
+    return EventQueue.runTask(imageTasks, task, channels: 5);
   }
 
   Future<T> ioTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTaskOnQueue(ioTasks, task);
+    return EventQueue.runTask(ioTasks, task);
   }
 
-  String get imageLocalPath => join(cachePath, 'shudu', 'images');
+  late final String imageLocalPath = join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
     imageUpdate = await Hive.openBox('imageUpdate');
@@ -254,31 +252,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     }
   }
 
-  @override
-  Future<BookTopData> getTopLists(String c, String date, int index) async {
-    final url = Api.topUrl(c, date, index);
-    try {
-      var respone = await dio.get(url);
-      final data = respone.data!;
-
-      return BookTopWrap.fromJson(jsonDecode(data)).data ?? const BookTopData();
-    } on DioError catch (e, _) {
-      if (e.type == DioErrorType.response) {
-        Log.e('url:$url, $e');
-        // error: return null;
-        rethrow;
-      }
-      // failed
-      return const BookTopData();
-    } catch (e) {
-      // failed
-      return const BookTopData();
-    }
-  }
-
-  @override
-  Future<BookTopData> getCategLists(int c, String date, int index) async {
-    final url = Api.categUrl(c, date, index);
+  Future<BookTopData> _getTopLists(String url) async {
     try {
       var respone = await dio.get(url);
       final data = respone.data!;
@@ -291,9 +265,21 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
       }
       rethrow;
     } catch (e) {
-      Log.e('url:$url, $e');
-      rethrow;
+      // failed
+      return const BookTopData();
     }
+  }
+
+  @override
+  Future<BookTopData> getTopLists(String c, String date, int index) {
+    final url = Api.topUrl(c, date, index);
+    return _getTopLists(url);
+  }
+
+  @override
+  Future<BookTopData> getCategLists(int c, String date, int index) {
+    final url = Api.categUrl(c, date, index);
+    return _getTopLists(url);
   }
 
   String trim(String text) {

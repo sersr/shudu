@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:useful_tools/change_notifier.dart';
-import 'package:useful_tools/widgets.dart';
-import 'package:utils/utils.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/options_notifier.dart';
 
@@ -219,6 +217,8 @@ class _SettingState extends State<Setting> {
                     : Color.fromARGB(255, 187, 187, 187))),
         trailing: Icon(Icons.keyboard_arrow_right_outlined),
         onTap: () {
+          final style = TextStyle(
+              fontSize: 15, color: Color.fromARGB(255, 187, 187, 187));
           if (defaultTargetPlatform == TargetPlatform.android)
             Permission.manageExternalStorage.status.then((status) {
               if (status.isDenied) {
@@ -227,15 +227,22 @@ class _SettingState extends State<Setting> {
                   if (status.isDenied) {
                     Log.w('request denied', onlyDebug: false);
                   } else if (status.isGranted && mounted) {
-                    Get.showSnackbar(GetSnackBar(messageText: Text('请求成功！')));
+                    Nav.snackBar(Container(
+                      color: Color.fromARGB(255, 61, 61, 61),
+                      height: 56,
+                      child: Center(child: Text('请求成功!', style: style)),
+                    ));
                   }
                 });
                 return;
               }
               if (mounted) {
-                _snackBarController ??=
-                    Get.showSnackbar(GetSnackBar(messageText: Text('权限已请求成功！')))
-                      ..future.whenComplete(() => _snackBarController = null);
+                _snackBarController ??= Nav.snackBar(Container(
+                  color: Color.fromARGB(255, 61, 61, 61),
+                  height: 56,
+                  child: Center(child: Text('权限已请求成功!', style: style)),
+                ))
+                  ..whenComplete(() => _snackBarController = null);
               }
             });
         },
@@ -245,7 +252,7 @@ class _SettingState extends State<Setting> {
     yield line;
   }
 
-  static SnackbarController? _snackBarController;
+  Object? _snackBarController;
 
   ColoredBox titleMenu<T>(
       {required String title,

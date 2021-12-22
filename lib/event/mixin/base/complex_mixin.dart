@@ -78,19 +78,17 @@ mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
     final bookContent = await getContentNet(bookid, contentid);
 
     if (bookContent?.content != null) {
-      // final lines = split(bookContent.content!);
+      final lines = LineSplitter.split(bookContent!.content!).toList();
 
-      // if (lines.isNotEmpty) {
-      insertOrUpdateContent(bookContent!);
+      insertOrUpdateContent(bookContent);
       return RawContentLines(
-        source: bookContent.content!,
+        source: lines,
         nid: bookContent.nid,
         pid: bookContent.pid,
         cid: bookContent.cid,
         hasContent: bookContent.hasContent,
         cname: bookContent.cname,
       );
-      // }
     }
     return null;
   }
