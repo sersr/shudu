@@ -14,8 +14,12 @@ class SearchNotifier extends ChangeNotifier {
   late Box box;
   SearchList? list;
   ZhangduSearchData? data;
-  Future<void> load(String key) async {
+  void load(String key) {
     if (key.isEmpty) return;
+    EventQueue.pushOne(_load, () => _load(key));
+  }
+
+  Future<void> _load(String key) async {
     list = null;
     data = null;
 
@@ -28,10 +32,17 @@ class SearchNotifier extends ChangeNotifier {
       ..remove(key)
       ..add(key);
     notifyListeners();
-    await save();
+    final ignore = EventQueue.currentTask?.canDiscard ?? false;
+    if (!ignore) {
+      await save();
+    }
   }
 
   Future<void> init() async {
+    return EventQueue.runTask(this, _init);
+  }
+
+  Future<void> _init() async {
     box = await Hive.openBox('searchHistory');
     try {
       final se = box.get('suggestions', defaultValue: <String>[]);
@@ -55,6 +66,10 @@ class SearchNotifier extends ChangeNotifier {
   }
 
   Future<void> save() async {
+    return EventQueue.pushOne(this, _save);
+  }
+
+  Future<void> _save() async {
     if (searchHistory.length > 20) {
       searchHistory = searchHistory.sublist(
           searchHistory.length - 16, searchHistory.length);

@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 import '../../../provider/text_data.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../../provider/constansts.dart';
+import '../../../provider/constants.dart';
 
 class ContentView extends SingleChildRenderObjectWidget {
   const ContentView({

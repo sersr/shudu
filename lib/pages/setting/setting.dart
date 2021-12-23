@@ -236,14 +236,13 @@ class _SettingState extends State<Setting> {
                 });
                 return;
               }
-              if (mounted) {
-                _snackBarController ??= Nav.snackBar(Container(
-                  color: Color.fromARGB(255, 61, 61, 61),
-                  height: 56,
-                  child: Center(child: Text('权限已请求成功!', style: style)),
-                ))
-                  ..whenComplete(() => _snackBarController = null);
-              }
+
+              handle ??= Nav.snackBar(Container(
+                color: Color.fromARGB(255, 61, 61, 61),
+                height: 56,
+                child: Center(child: Text('权限已请求成功!', style: style)),
+              ))
+                ..future.whenComplete(() => handle = null);
             });
         },
       ),
@@ -252,7 +251,7 @@ class _SettingState extends State<Setting> {
     yield line;
   }
 
-  Object? _snackBarController;
+  SnackbarDelagate? handle;
 
   ColoredBox titleMenu<T>(
       {required String title,

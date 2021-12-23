@@ -43,20 +43,19 @@ class BookSearchPage extends SearchDelegate<void> {
           child: Icon(Icons.arrow_back, size: 30)));
   @override
   Widget buildSuggestions(BuildContext context) {
-    return wrap(context, suggestions(context));
+    return wrap(context, SingleChildScrollView(child: suggestions(context)));
   }
 
   Widget suggestions(BuildContext context) {
     final bloc = context.read<SearchNotifier>();
     final isLight = !context.isDarkMode;
     final ts = context.read<TextStyleConfig>().data;
-    return StatefulBuilder(
-      builder: (context, setstate) {
-        return Padding(
-          padding: const EdgeInsets.all(6.0),
-          child: SingleChildScrollView(
-            primary: false,
-            child: Wrap(
+    return Padding(
+      padding: const EdgeInsets.only(top: 6.0),
+      child: SingleChildScrollView(
+        child: StatefulBuilder(
+          builder: (context, setstate) {
+            return Wrap(
               children: [
                 for (var i in bloc.searchHistory.reversed)
                   Padding(
@@ -85,10 +84,10 @@ class BookSearchPage extends SearchDelegate<void> {
                     ),
                   )
               ],
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -146,6 +145,7 @@ class BookSearchPage extends SearchDelegate<void> {
             }
             final searchLength = searchResult?.length ?? 0;
             final zhangduLength = zhangduData?.length ?? 0;
+
             return DefaultTabController(
               length: 2,
               child: Column(
@@ -173,70 +173,41 @@ class BookSearchPage extends SearchDelegate<void> {
                   ),
                   Expanded(
                     child: TabBarView(children: [
-                      Scrollbar(
-                        interactive: true,
-                        thickness: 8,
-                        child: ListViewBuilder(
-                            scrollController: ScrollController(),
-                            itemCount: searchLength,
-                            padding: const EdgeInsets.only(bottom: 60.0),
-                            color:
-                                isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-                            itemBuilder: (context, index) {
-                              var _currentIndex = index;
-                              final data = searchResult![_currentIndex];
-                              return ListItem(
-                                height: 108,
-                                bgColor: isLight ? null : Colors.grey.shade900,
-                                splashColor: isLight
-                                    ? null
-                                    : Color.fromRGBO(60, 60, 60, 1),
-                                onTap: () => BookInfoPage.push(context,
-                                    int.parse(data.id!), ApiType.biquge),
-                                child: ImageTextLayout(
-                                    img: data.img,
-                                    topRightScore: '${data.bookStatus}',
-                                    name: data.name,
-                                    center: '${data.cName} | ${data.author}',
-                                    desc: data.desc ?? ''),
-                              );
-                            }),
+                      SearchPage(
+                        length: searchLength,
+                        onTap: (index) {
+                          final data = searchResult![index];
+                          final id = int.tryParse('${data.id}');
+                          if (id != null)
+                            BookInfoPage.push(context, id, ApiType.biquge);
+                        },
+                        builder: (context, index) {
+                          final data = searchResult![index];
+                          return ImageTextLayout(
+                              img: data.img,
+                              topRightScore: '${data.bookStatus}',
+                              name: data.name,
+                              center: '${data.cName} | ${data.author}',
+                              desc: data.desc ?? '');
+                        },
                       ),
-                      Scrollbar(
-                        interactive: true,
-                        thickness: 8,
-                        child: ListViewBuilder(
-                            scrollController: ScrollController(),
-                            itemCount: zhangduLength,
-                            padding: const EdgeInsets.only(bottom: 60.0),
-                            color:
-                                isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-                            itemBuilder: (context, index) {
-                              var _currentIndex = index;
-
-                              assert(_currentIndex >= 0);
-                              final data = zhangduData![_currentIndex];
-                              return ListItem(
-                                height: 108,
-                                bgColor: isLight ? null : Colors.grey.shade900,
-                                splashColor: isLight
-                                    ? null
-                                    : Color.fromRGBO(60, 60, 60, 1),
-                                onTap: () {
-                                  if (data.bookId != null)
-                                    BookInfoPage.push(
-                                        context, data.bookId!, ApiType.zhangdu);
-                                },
-                                child: ImageTextLayout(
-                                    img: data.picture,
-                                    topRightScore: '${data.bookStatus}',
-                                    name: data.name,
-                                    center:
-                                        '${data.categoryName} | ${data.author}',
-                                    desc: data.intro ?? ''),
-                              );
-                            }),
-                      ),
+                      SearchPage(
+                          length: zhangduLength,
+                          onTap: (index) {
+                            final data = zhangduData![index];
+                            if (data.bookId != null)
+                              BookInfoPage.push(
+                                  context, data.bookId!, ApiType.zhangdu);
+                          },
+                          builder: (context, index) {
+                            final data = zhangduData![index];
+                            return ImageTextLayout(
+                                img: data.picture,
+                                topRightScore: '${data.bookStatus}',
+                                name: data.name,
+                                center: '${data.categoryName} | ${data.author}',
+                                desc: data.intro ?? '');
+                          })
                     ]),
                   )
                 ],
@@ -273,8 +244,63 @@ class BookSearchPage extends SearchDelegate<void> {
   @override
   void showResults(BuildContext context) {
     if (query.isEmpty) return;
-    final search = context.read<SearchNotifier>();
-    search.load(query);
+    context.read<SearchNotifier>().load(query);
     super.showResults(context);
   }
+}
+
+class SearchPage extends StatefulWidget {
+  const SearchPage({
+    Key? key,
+    required this.length,
+    required this.onTap,
+    required this.builder,
+  }) : super(key: key);
+
+  final int length;
+  final void Function(int index) onTap;
+  final Widget Function(BuildContext context, int index) builder;
+  @override
+  _SearchPageState createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage>
+    with AutomaticKeepAliveClientMixin {
+  final controller = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final isLight = !context.isDarkMode;
+    if (widget.length == 0) {
+      return const SizedBox();
+    }
+    return Scrollbar(
+      interactive: true,
+      thickness: 8,
+      controller: controller,
+      child: ListViewBuilder(
+          primary: false,
+          scrollController: controller,
+          itemCount: widget.length,
+          padding: const EdgeInsets.only(bottom: 60.0),
+          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+          itemBuilder: (context, index) {
+            final child = widget.builder(context, index);
+
+            return ListItem(
+              height: 108,
+              bgColor: isLight ? null : Colors.grey.shade900,
+              splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+              onTap: () {
+                widget.onTap(index);
+              },
+              child: child,
+            );
+          }),
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }

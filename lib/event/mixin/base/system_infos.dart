@@ -8,9 +8,7 @@ import 'package:device_info/device_info.dart';
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:memory_info/memory_info.dart';
-// import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -30,7 +28,7 @@ mixin SystemInfos {
       final root = windows.current;
       final appPath = join(root, 'shudu');
       final cachePath = join(appPath, 'cache');
-      return [appPath, cachePath, false];
+      return [appPath, cachePath];
     }
     final _waits = FutureAny();
 
@@ -82,16 +80,8 @@ mixin SystemInfos {
     }
 
     late Directory appDir;
-    // bool useSqflite3 = false;
+
     _waits.add(getApplicationDocumentsDirectory().then((dir) => appDir = dir));
-    // switch (defaultTargetPlatform) {
-    //   case TargetPlatform.linux:
-    //   case TargetPlatform.windows:
-    //     break;
-    //   default:
-    //     _waits.add(
-    //         OptionsNotifier.sqfliteBox.then((value) => useSqflite3 = value));
-    // }
 
     await _waits.wait;
     if (!externalDir) appDirExt = null;
@@ -108,11 +98,6 @@ mixin SystemInfos {
     final cachePath = cacheDirs?.isNotEmpty == true
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
-
-
-    // if (useSqflite3) {
-    //   await SqfliteMainIsolate.initMainDb();
-    // }
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {
@@ -134,7 +119,7 @@ mixin SystemInfos {
         }
       });
     }
-    Get.snackbar('repository', 'init');
+
     return [appPath, cachePath];
   }
 

@@ -49,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage>
     super.didChangeDependencies();
     painterBloc = context.read();
     opts = context.read();
-    final search = context.read<SearchNotifier>();
     cache = context.read();
     config = context.read();
     final brightness = Theme.of(context).brightness;
@@ -58,22 +57,16 @@ class _MyHomePageState extends State<MyHomePage>
     });
 
     final data = MediaQuery.of(context);
-    if (_future == null) {
-      final any = FutureAny();
-      cache.load();
-      any
-        ..add(opts.init())
-        ..add(painterBloc.initConfigs())
-        ..add(search.init());
-      _future = Future.value(any.wait).whenComplete(() {
-        painterBloc.metricsChange(data);
-        Timer.run(() {
-          if (opts.options.updateOnStart == true && mounted) {
-            _refreshKey.currentState!.show();
-          }
-        });
+    painterBloc.metricsChange(data);
+
+    _future ??= opts.init().whenComplete(() {
+      Timer.run(() {
+        if (opts.options.updateOnStart == true && mounted) {
+          _refreshKey.currentState!.show();
+        }
       });
-    }
+      return context.read<SearchNotifier>().init();
+    });
   }
 
   @override

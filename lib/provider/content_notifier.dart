@@ -15,7 +15,7 @@ import '../database/database.dart';
 import '../event/event.dart';
 import '../pages/book_content/widgets/page_view_controller.dart';
 import 'book_index_notifier.dart';
-import 'constansts.dart';
+import 'constants.dart';
 import 'text_data.dart';
 
 enum Status { ignore, error, done }
@@ -526,14 +526,14 @@ mixin ContentLayout on ContentDataBase, Configs {
 
 mixin ContentBrightness {
   /// --------- brightness
-  final _brightness = EventQueue();
+
   final brightness = ValueNotifier(0.0);
 
   double? _lastBrightness;
 
   void setBrightness(double v) {
     final _clamp = v.clamp(0.0, 1.0);
-    _brightness.addOneEventTask(() async {
+    EventQueue.pushOne(brightness, () async {
       brightness.value = _clamp;
       _lastBrightness = _clamp;
       follow.value = false;
@@ -545,7 +545,7 @@ mixin ContentBrightness {
   void setFollow(bool? v) {
     if (follow.value == v || v == null) return;
     follow.value = v;
-    _brightness.addOneEventTask(() async {
+    EventQueue.pushOne(brightness, () async {
       if (v) {
         if (_brightNess) await ScreenBrightness.resetScreenBrightness();
       } else {
@@ -560,7 +560,7 @@ mixin ContentBrightness {
   }
 
   void reloadBrightness() {
-    _brightness.addOneEventTask(() => _fo());
+    EventQueue.pushOne(brightness, () => _fo());
   }
 
   Future<void> _fo() async {
@@ -585,7 +585,7 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
     assert((debugTest = false) || true);
     _notifyCustom();
     if (_brightNess)
-      _brightness.addOneEventTask(() async {
+      EventQueue.pushOne(brightness, () async {
         await ScreenBrightness.resetScreenBrightness();
 
         return _fo();
@@ -672,7 +672,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   @pragma('vm:prefer-inline')
   Future<T> _run<T>(EventCallback<T> callback) {
-    return EventQueue.runTask(runtimeType, callback);
+    return EventQueue.runTask(this, callback);
   }
 
   Future<List<ContentMetrics>> _genTextData(
@@ -791,7 +791,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   }
 
   Future<void>? taskRunner() {
-    return EventQueue.getQueueRunner([runtimeType, key]);
+    return EventQueue.getQueueRunner(this);
   }
 
   bool _scheduled = false;
@@ -800,6 +800,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
     if (_scheduled || !inBook) return;
     Timer(const Duration(milliseconds: 100), () {
       _scheduled = false;
+      if (initQueue.actived) return;
       _loadResolve();
       _loadAuto();
     });
@@ -818,8 +819,8 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
 
     _reloadIds.add(contentId);
 
-    Future.delayed(
-        const Duration(seconds: 10), () => _reloadIds.remove(contentId));
+    Timer(Duration(seconds: tData.hasContent ? 30 : 10),
+        () => _reloadIds.remove(contentId));
     return false;
   }
 
@@ -933,9 +934,7 @@ mixin ContentEvent
   Future<void> shadow() async {
     showrect = !showrect;
     if (inBook && tData.cid != null) {
-      /// 缓存数据过时
-      initQueue.addEventTask(reset);
-      return startFirstEvent();
+      return startFirstEvent(clear: true);
     }
   }
 
@@ -989,7 +988,7 @@ mixin ContentEvent
   /// 加载、重载、设置更改等操作需要更新[tData]要调用的函数
   /// 每一次调用对会添加一次到队列中
   ///
-  /// [only]：本次任务是否可被抛弃
+  /// [only]: 本次任务是否可被抛弃
   @override
   Future<void> startFirstEvent({
     bool clear = true,
@@ -1104,16 +1103,14 @@ mixin ContentEvent
   }
   // 同步----
 
-  Future? _willGoF;
-
-  Future goNext() {
-    return _willGoF ??= _willGoPreOrNext(isPid: false)
-      ..whenComplete(() => _willGoF = null);
+  Future<void> goNext() {
+    return EventQueue.runOne(
+        _willGoPreOrNext, () => _willGoPreOrNext(isPid: false));
   }
 
-  Future goPre() {
-    return _willGoF ??= _willGoPreOrNext(isPid: true)
-      ..whenComplete(() => _willGoF = null);
+  Future<void> goPre() {
+    return EventQueue.runOne(
+        _willGoPreOrNext, () => _willGoPreOrNext(isPid: true));
   }
 
   Future<void> _willGoPreOrNext({bool isPid = false}) async {
@@ -1203,6 +1200,7 @@ mixin ContentEvent
       contentLayoutPadding = EdgeInsets.only(
         left: _p.left + 16,
         right: _p.right + 16,
+        top: _p.top,
       );
     }
 
@@ -1548,7 +1546,7 @@ mixin ContentAuto on ContentDataBase, Configs, ContentTasks {
 class ContentBoundary {
   static int addLeft = 1;
   static const int addRight = 2;
-  static const int empty = 3;
+  static const int empty = 0;
   static bool hasLeft(int i) => i & addLeft != 0;
   static bool hasRight(int i) => i & addRight != 0;
 }

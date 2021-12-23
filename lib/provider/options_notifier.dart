@@ -104,7 +104,7 @@ class OptionsNotifier extends ChangeNotifier {
   set options(ConfigOptions o) {
     if (o == options) return;
     _options = _options.coveredWith(o);
-    if (_initDone) EventQueue.runOne(OptionsNotifier, saveOptions);
+    if (_initDone) EventQueue.pushOne(this, saveOptions);
     notifyListeners();
   }
 
@@ -118,24 +118,8 @@ class OptionsNotifier extends ChangeNotifier {
   static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
   static const _updateOnStart = 'updateOnStart';
-  // static const _followSystem = 'followSystem';
+
   static const _themeMode = 'themeMode';
-
-  // static void autoSetStatus(BuildContext context) {
-  //   // final mode = context.read<OptionsNotifier>().options.themeMode;
-
-  //   // uiStyle(dark: isDarkMode(mode));
-  // }
-
-  // static bool isDarkMode(ThemeMode? mode) {
-  //   var dark = false;
-  //   if (mode == ThemeMode.system) {
-  //     dark = window.platformBrightness == Brightness.dark;
-  //   } else {
-  //     dark = mode == ThemeMode.dark;
-  //   }
-  //   return dark;
-  // }
 
   static Future<bool> get extenalStorage async {
     return EventQueue.runTask(setextenalStorage, () async {
@@ -154,25 +138,6 @@ class OptionsNotifier extends ChangeNotifier {
     });
   }
 
-// @Deprecated('为了获得内存的更多权限，弃用sqflite')
-//   static Future<bool> get sqfliteBox async {
-//     return EventQueue.runTask(setSqfliteBox, () async {
-//       final box = await Hive.openBox('_sqfliteBox');
-//       final result = box.get('_useSqflite', defaultValue: false);
-//       await box.close();
-//       return result;
-//     });
-//   }
-
-// @Deprecated('为了获得内存的更多权限，弃用sqflite')
-//   static Future<void> setSqfliteBox(bool use) async {
-//     return EventQueue.runTask(setSqfliteBox, () async {
-//       final box = await Hive.openBox('_sqfliteBox');
-//       await box.put('_useSqflite', use);
-//       return box.close();
-//     });
-//   }
-
   static Future<ThemeMode> getThemeModeUnSafe() async {
     final box = await Hive.openBox(_options_);
     return box.get(_themeMode, defaultValue: ThemeMode.system);
@@ -180,7 +145,7 @@ class OptionsNotifier extends ChangeNotifier {
 
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.runTask(OptionsNotifier, _init);
+  Future<void> init() => EventQueue.runTask(this, _init);
   bool _initDone = false;
   Future<void> _init() async {
     if (_initDone) return;
@@ -251,14 +216,8 @@ class OptionsNotifier extends ChangeNotifier {
     final box = await Hive.openBox(_options_);
 
     final any = FutureAny();
-
-    // final useSqflite3 = options.useSqflite;
     final extenalStorage = options.extenalStorage;
 
-    // if (useSqflite3 != null && await sqfliteBox != useSqflite3) {
-    //   any.add(setSqfliteBox(useSqflite3)
-    //     ..whenComplete(() => repository.close().whenComplete(repository.init)));
-    // }
     if (extenalStorage != null) any.add(setextenalStorage(extenalStorage));
 
     _updateOptions(box, any, _platform, options.platform);
@@ -276,7 +235,12 @@ class OptionsNotifier extends ChangeNotifier {
       NopGestureBinding.instance!.nopResamplingEnabled = options.nopResample!;
 
     await any.wait;
-    await box.close();
+    if (kDebugMode) await release(const Duration(milliseconds: 200));
+    final ignore = EventQueue.currentTask?.canDiscard ?? false;
+    assert(Log.e('ignore: $ignore'));
+    if (!ignore) {
+      await box.close();
+    }
     assert(any.isEmpty);
     assert(Log.i('$options'));
   }

@@ -170,7 +170,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                   ),
                 ),
                 Material(
-                  color: Colors.blue.shade300,
+                  color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
                   child: AnimatedBuilder(
                     animation: cache,
                     builder: (context, _) {
@@ -196,7 +196,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                         children: [
                           Expanded(
                             child: btn1(
-                              splashColor: Color.fromARGB(255, 179, 208, 218),
+                              splashColor: isLight
+                                  ? Color.fromARGB(255, 110, 188, 248)
+                                  : Color.fromARGB(255, 107, 108, 109),
                               child: Padding(
                                 padding: EdgeInsets.only(
                                     bottom: bottom > 0.0 &&
@@ -239,7 +241,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                           Expanded(
                             child: btn1(
                               background: false,
-                              splashColor: Color.fromARGB(255, 179, 208, 218),
+                              splashColor: isLight
+                                  ? Color.fromARGB(255, 110, 188, 248)
+                                  : Color.fromARGB(255, 107, 108, 109),
                               onTap: () =>
                                   cache.updateShow(bookId, !show, widget.api),
                               child: Padding(
