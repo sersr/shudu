@@ -186,7 +186,7 @@ class OptionsNotifier extends ChangeNotifier {
     final bool resample = box.get(_resample, defaultValue: false);
     final bool useImageCache = box.get(_useImageCache, defaultValue: true);
     final bool useTextCache = box.get(_useTextCache, defaultValue: !kDartIsWeb);
-    final bool nopResample = box.get(_nopResample, defaultValue: true);
+    final bool nopResample = box.get(_nopResample, defaultValue: false);
     final bool updateOnStart = box.get(_updateOnStart, defaultValue: true);
     // final bool followSystem = box.get(_followSystem, defaultValue: true);
     final ThemeMode themeMode =

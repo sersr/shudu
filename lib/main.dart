@@ -20,9 +20,9 @@ void main() {
           height: 56,
           child: Center(child: Text('init!', style: style))),
       duration: const Duration(milliseconds: 1500),
-      delayDuration: const Duration(milliseconds: 2000),
     );
-    
+    await releaseUI;
+    Log.w('init');
     NopWidgetsFlutterBinding.ensureInitialized();
 
     uiStyle();

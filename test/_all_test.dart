@@ -210,4 +210,31 @@ void main() async {
     wait();
     print('end');
   });
+
+  test('extension dynamic test', () {
+    // 动态类型无法调用扩展方法
+    dynamic dy = DynamicTest();
+    var failed = false;
+    try {
+      // dynamic 只能调用实例方法，字段
+      dy.dynamicTest();
+    } on NoSuchMethodError catch (_) {
+      failed = true;
+    }
+    expect(failed, true);
+  });
+}
+
+class DynamicTest {}
+
+extension Dt on DynamicTest {
+  void dynamicTest() {}
+}
+
+extension D on Object? {
+  void dynamicTest() {}
+}
+
+extension on dynamic {
+  void dynamicTest() {}
 }

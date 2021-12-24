@@ -2,7 +2,7 @@ import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
-import 'base/base.dart';
+import 'base/export.dart';
 
 // 子隔离，数据库 入口
 void dataBaseEntryPoint(args) async {

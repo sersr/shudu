@@ -6,7 +6,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
 import '../repository.dart';
-import 'base/base.dart';
+import 'base/export.dart';
 
 /// 单一 隔离
 /// 主隔离(native)

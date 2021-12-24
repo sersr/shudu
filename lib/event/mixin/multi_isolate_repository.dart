@@ -6,7 +6,7 @@ import 'package:useful_tools/useful_tools.dart';
 import 'package:dartz/dartz.dart' as dartz;
 import '../base/book_event.dart';
 import '../repository.dart';
-import 'base/base.dart';
+import 'base/export.dart';
 import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
@@ -104,7 +104,7 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
   FutureOr<void> initTask() => run();
 
   @override
-  FutureOr<void> closeTask() => onClose();
+  FutureOr<void> closeTask() => null;
 
   @override
   void onResolvedFailed(message) {

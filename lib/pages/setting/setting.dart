@@ -294,28 +294,31 @@ class _SettingState extends State<Setting> {
     );
   }
 
-  Widget selector<T>(
-      {required String title,
-      required bool Function(BuildContext, T) select,
-      required void Function(bool updateValue) onChanged}) {
+  Widget selector<T>({
+    required String title,
+    required bool Function(BuildContext, T) select,
+    required void Function(bool updateValue) onChanged,
+  }) {
     return ColoredBox(
       color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: Selector<T, bool>(
-          selector: select,
-          builder: (context, value, _) {
-            return SwitchListTile.adaptive(
-                visualDensity: VisualDensity.compact,
-                title: Text(title,
-                    style: TextStyle(
-                        fontSize: 15,
-                        color: !context.isDarkMode
-                            ? Color.fromARGB(255, 54, 54, 54)
-                            : Color.fromARGB(255, 187, 187, 187)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                value: value,
-                onChanged: onChanged);
-          }),
+        selector: select,
+        builder: (context, value, _) {
+          return SwitchListTile.adaptive(
+            visualDensity: VisualDensity.compact,
+            title: Text(title,
+                style: TextStyle(
+                    fontSize: 15,
+                    color: !context.isDarkMode
+                        ? Color.fromARGB(255, 54, 54, 54)
+                        : Color.fromARGB(255, 187, 187, 187)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+            value: value,
+            onChanged: onChanged,
+          );
+        },
+      ),
     );
   }
 
