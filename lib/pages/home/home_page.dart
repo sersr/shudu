@@ -105,39 +105,23 @@ class _MyHomePageState extends State<MyHomePage>
     super.dispose();
   }
 
-  Timer? _exitTimer;
   @override
   Future<bool> didPopRoute() async {
-    final inTime = _exitTimer?.isActive == true;
-    if (inTime) {
-      // 退出 app
-      return false;
-    }
-    final entry = OverlayEntry(builder: (context) {
-      return Positioned(
-        bottom: 70,
-        left: 0.0,
-        right: 0.0,
-        child: Center(
-          child: Material(
-            borderRadius: BorderRadius.circular(6.0),
-            color: Colors.grey.shade900.withAlpha(210),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-              child: Text(
-                '再按一次退出~',
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 15.0),
-              ),
-            ),
-          ),
-        ),
-      );
-    });
-    Overlay.of(context)!.insert(entry);
-    _exitTimer = Timer(const Duration(seconds: 2), entry.remove);
+    if (_exitToast != null) return false;
+
+    _exitToast = Nav.toast(
+      Center(child: Text('再按一次退出~', style: TextStyle(color: Colors.white))),
+      color: Colors.grey.shade900.withAlpha(210),
+      radius: BorderRadius.circular(10),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10.0),
+      bottomPadding: 100,
+      duration: const Duration(seconds: 2),
+    )..future.whenComplete(() => _exitToast = null);
+
     return true;
   }
+
+  ToastDelegate? _exitToast;
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -35,6 +33,7 @@ class ListMainPage extends StatelessWidget {
       );
     }
 
+    var count = 0;
     return Container(
       color: light ? Color.fromARGB(255, 231, 231, 231) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -109,15 +108,32 @@ class ListMainPage extends StatelessWidget {
             }),
           const SizedBox(height: 5),
           _builder('nav snackbar', () {
-            Nav.snackBar(Container(
-              color: Color.fromARGB(255, 61, 61, 61),
-              height: 56,
-              child: Center(
+            // ScaffoldMessenger.of(context)
+            //     .showSnackBar(SnackBar(content: Text('.hello')));
+
+            // Nav.snackBar(Container(
+            //   // color: Color.fromARGB(255, 61, 61, 61),
+            //   padding: const EdgeInsets.symmetric(horizontal: 24),
+            //   height: 48,
+            //   child: Align(
+            //       alignment: Alignment.centerLeft,
+            //       child: Text('hello snackbar')),
+            // ));
+            count++;
+            final color = count.isOdd ? Colors.blue : Colors.red;
+            final value = count.isOdd ? 'blue' : 'red';
+            Nav.toast(
+              Center(
                   child: Text(
-                'hello snackbar',
-                style: TextStyle(color: Color.fromARGB(255, 214, 214, 214)),
+                'toast: $value',
+                style: TextStyle(color: Colors.white),
               )),
-            ));
+              color: color,
+              radius: BorderRadius.circular(30),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12.0),
+              bottomPadding: 100,
+            );
           }),
         ],
       ),

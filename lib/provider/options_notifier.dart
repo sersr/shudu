@@ -237,10 +237,8 @@ class OptionsNotifier extends ChangeNotifier {
     await any.wait;
     if (kDebugMode) await release(const Duration(milliseconds: 200));
     final ignore = EventQueue.currentTask?.canDiscard ?? false;
-    assert(Log.e('ignore: $ignore'));
-    if (!ignore) {
-      await box.close();
-    }
+    if (!ignore) await box.close();
+
     assert(any.isEmpty);
     assert(Log.i('$options'));
   }

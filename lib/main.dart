@@ -21,8 +21,7 @@ void main() {
           child: Center(child: Text('init!', style: style))),
       duration: const Duration(milliseconds: 1500),
     );
-    await releaseUI;
-    Log.w('init');
+
     NopWidgetsFlutterBinding.ensureInitialized();
 
     uiStyle();
