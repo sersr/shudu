@@ -236,5 +236,6 @@ extension D on Object? {
 }
 
 extension on dynamic {
+  // ignore: unused_element
   void dynamicTest() {}
 }

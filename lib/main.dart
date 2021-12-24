@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:useful_tools/useful_tools.dart';
+
 import 'event/base/type_adapter.dart';
 import 'pages/app.dart';
-import 'package:get/get.dart';
-
 import 'provider/options_notifier.dart';
 
 void main() {
@@ -20,6 +19,7 @@ void main() {
           height: 56,
           child: Center(child: Text('init!', style: style))),
       duration: const Duration(milliseconds: 1500),
+      delayDuration: const Duration(milliseconds: 3000),
     );
 
     NopWidgetsFlutterBinding.ensureInitialized();
