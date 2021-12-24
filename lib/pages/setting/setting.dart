@@ -251,7 +251,7 @@ class _SettingState extends State<Setting> {
     yield line;
   }
 
-  SnackbarDelagate? handle;
+  SnackbarDelegate? handle;
 
   ColoredBox titleMenu<T>(
       {required String title,

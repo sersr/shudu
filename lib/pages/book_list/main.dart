@@ -40,103 +40,103 @@ class ListMainPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _builder('书单', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
-                    return BooklistPage();
-                  }));
-                }),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: _builder('分类', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: ListCatetoryPage());
-                  }));
-                }),
-              ),
-            ],
+          row(
+            left: _builder('书单', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return BooklistPage();
+              }));
+            }),
+            right: _builder('分类', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return RepaintBoundary(child: ListCatetoryPage());
+              }));
+            }),
           ),
           const SizedBox(height: 5),
-          Row(children: [
-            Expanded(
-              child: _builder('缓存管理', () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return RepaintBoundary(child: CacheManager());
-                }));
-              }),
-            ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: _builder('浏览历史', () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return RepaintBoundary(child: BookHistory());
-                }));
-              }),
-            ),
-          ]),
+          row(
+            left: _builder('缓存管理', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return RepaintBoundary(child: CacheManager());
+              }));
+            }),
+            right: _builder('浏览历史', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return RepaintBoundary(child: BookHistory());
+              }));
+            }),
+          ),
           const SizedBox(height: 5),
-          Row(children: [
-            Expanded(
-              child: _builder('榜单', () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return RepaintBoundary(child: TopPage());
-                }));
-              }),
-            ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: _builder('设置', () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return Setting();
-                }));
-              }),
-            )
-          ]),
+          row(
+            left: _builder('榜单', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return RepaintBoundary(child: TopPage());
+              }));
+            }),
+            right: _builder('设置', () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return Setting();
+              }));
+            }),
+          ),
+          const SizedBox(height: 5),
+          row(
+            left: _builder('nav snackbar', () {
+              // ScaffoldMessenger.of(context)
+              //     .showSnackBar(SnackBar(content: Text('.hello')));
+
+              Nav.snackBar(Container(
+                // color: Color.fromARGB(255, 61, 61, 61),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                height: 48,
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('hello snackbar')),
+              ));
+              count++;
+              final color = count.isOdd ? Colors.blue : Colors.red;
+              final value = count.isOdd ? 'blue' : 'red';
+              Nav.toast(
+                Center(
+                    child: Text(
+                  'toast: $value',
+                  style: TextStyle(color: Colors.white),
+                )),
+                color: color,
+                radius: BorderRadius.circular(30),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12.0),
+                bottomPadding: 100,
+              );
+            }),
+            right: _builder('nav banner', () {
+              Nav.banner(Container(
+                // color: Color.fromARGB(255, 61, 61, 61),
+                padding: const EdgeInsets.all(8),
+                height: 76,
+                child: Text('hello banner'),
+              ));
+            }),
+          ),
           if (kDebugMode) const SizedBox(height: 5),
           if (kDebugMode)
             _builder('clear', () {
               CacheBinding.instance?.imageRefCache?.clear();
             }),
-          const SizedBox(height: 5),
-          _builder('nav snackbar', () {
-            // ScaffoldMessenger.of(context)
-            //     .showSnackBar(SnackBar(content: Text('.hello')));
-
-            // Nav.snackBar(Container(
-            //   // color: Color.fromARGB(255, 61, 61, 61),
-            //   padding: const EdgeInsets.symmetric(horizontal: 24),
-            //   height: 48,
-            //   child: Align(
-            //       alignment: Alignment.centerLeft,
-            //       child: Text('hello snackbar')),
-            // ));
-            count++;
-            final color = count.isOdd ? Colors.blue : Colors.red;
-            final value = count.isOdd ? 'blue' : 'red';
-            Nav.toast(
-              Center(
-                  child: Text(
-                'toast: $value',
-                style: TextStyle(color: Colors.white),
-              )),
-              color: color,
-              radius: BorderRadius.circular(30),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12.0),
-              bottomPadding: 100,
-            );
-          }),
         ],
       ),
     );
+  }
+
+  Widget row({Widget? left, Widget? right}) {
+    return Row(
+      children: [...ig(left), ...ig(right)],
+    );
+  }
+
+  Iterable<Widget> ig(Widget? child) sync* {
+    if (child != null) {
+      yield const SizedBox(width: 5);
+      yield Expanded(child: child);
+    }
   }
 }
