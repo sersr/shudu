@@ -114,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage>
       color: Colors.grey.shade900.withAlpha(210),
       radius: BorderRadius.circular(10),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10.0),
-      bottomPadding: 100,
+      bottomPadding: 90,
       duration: const Duration(seconds: 2),
     )..future.whenComplete(() => _exitToast = null);
 

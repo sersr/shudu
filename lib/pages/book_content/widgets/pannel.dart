@@ -349,7 +349,6 @@ class _BottomEndState extends State<BottomEnd> {
     indexBloc = context.read<BookIndexNotifier>();
   }
 
-
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
   final debx =
       ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
@@ -480,10 +479,17 @@ class _BottomEndState extends State<BottomEnd> {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-        child: Padding(
-      padding: const EdgeInsets.only(top: 6.0, bottom: 2.0),
-      child: Row(
+    return AnimatedBuilder(
+      animation: bloc.pannelPaddingNotifier,
+      builder: (context, child) {
+        return Padding(
+          padding: EdgeInsets.only(
+              top: 6.0, bottom: 2.0 + bloc.pannelPadding.bottom),
+          child: child,
+        );
+      },
+      child: RepaintBoundary(
+        child: Row(
         children: [
           Expanded(
             child: bottomButton(
@@ -595,7 +601,8 @@ class _BottomEndState extends State<BottomEnd> {
           ),
         ],
       ),
-    ));
+      ),
+    );
   }
 }
 
@@ -980,7 +987,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                       const SizedBox(width: 10),
                       Flexible(
                         child: _builder(
-                             !context.isDarkMode,
+                            !context.isDarkMode,
                             '选择背景颜色',
                             () => HueRingPicker(
                                   onColorChanged: (Color value) {

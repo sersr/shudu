@@ -1177,17 +1177,17 @@ mixin ContentEvent
     var _size = data.size;
     var _p = data.padding;
 
-    /// 状态栏遮挡高度，由`statusHeight`值决定是否可占用状态栏
-    final statusHeight = repository.statusHeight;
-    // 从上下文中取得固定的状态栏高度
-    if (_safeTop == 0 && _p.top != 0) {
-      _safeTop = _p.top;
-    }
     var _pannelPadding = _p;
     var contentLayoutPadding = _p;
 
     /// 竖屏模式下，需要处理 顶部UI面板、状态栏、挖空遮挡之间的关系
     if (_size.height >= _size.width) {
+      /// 状态栏遮挡高度，由`statusHeight`值决定是否可占用状态栏
+      final statusHeight = repository.statusHeight;
+      // 从上下文中取得固定的状态栏高度
+      if (_safeTop == 0 && _p.top != 0) {
+        _safeTop = _p.top;
+      }
       // 顶部UI面板相关，面板的高度显/隐一致，不管有没有遮挡
       _pannelPadding = _p.copyWith(top: _safeTop);
       // 文本布局关系密切
@@ -1204,13 +1204,14 @@ mixin ContentEvent
       );
     }
 
-    pannelPadding = _pannelPadding;
+    scheduleMicrotask(() {
+      pannelPadding = _pannelPadding.copyWith(bottom: repository.height);
+    });
 
     if (size != _size || contentLayoutPadding != _contentLayoutPadding) {
       size = _size;
       _contentLayoutPadding = contentLayoutPadding;
-      assert(Log.w(
-          'size: $_size | $_pannelPadding | $statusHeight | $_safeTop | ${_p.top}'));
+      assert(Log.w('size: $_size | $_pannelPadding | $_safeTop | ${_p.top}'));
       return true;
     } else {
       return false;

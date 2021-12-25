@@ -84,28 +84,24 @@ class ListMainPage extends StatelessWidget {
               // ScaffoldMessenger.of(context)
               //     .showSnackBar(SnackBar(content: Text('.hello')));
 
-              Nav.snackBar(Container(
-                // color: Color.fromARGB(255, 61, 61, 61),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                height: 48,
-                child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('hello snackbar')),
-              ));
+              Nav.snackBar(
+                Container(
+                  // color: Color.fromARGB(255, 61, 61, 61),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  height: 48,
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('hello snackbar')),
+                ),
+              );
               count++;
-              final color = count.isOdd ? Colors.blue : Colors.red;
+
               final value = count.isOdd ? 'blue' : 'red';
               Nav.toast(
-                Center(
-                    child: Text(
-                  'toast: $value',
-                  style: TextStyle(color: Colors.white),
-                )),
-                color: color,
-                radius: BorderRadius.circular(30),
+                Center(child: Text('toast: $value')),
+                radius: const BorderRadius.all(Radius.circular(30)),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12.0),
-                bottomPadding: 100,
               );
             }),
             right: _builder('nav banner', () {
@@ -129,7 +125,7 @@ class ListMainPage extends StatelessWidget {
 
   Widget row({Widget? left, Widget? right}) {
     return Row(
-      children: [...ig(left), ...ig(right)],
+      children: [if (left != null) Expanded(child: left), ...ig(right)],
     );
   }
 
