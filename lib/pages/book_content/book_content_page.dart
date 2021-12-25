@@ -4,6 +4,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -30,7 +32,9 @@ class BookContentPage extends StatefulWidget {
     _lock = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return const RepaintBoundary(child: BookContentPage());
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+          child: const RepaintBoundary(child: BookContentPage()));
     }));
   }
 

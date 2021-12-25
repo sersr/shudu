@@ -24,7 +24,7 @@ void main() {
 
     NopWidgetsFlutterBinding.ensureInitialized();
 
-    uiStyle();
+    // uiStyle();
     uiOverlay(hide: false);
     try {
       if (kIsWeb) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -342,25 +343,32 @@ class BarLayout extends StatelessWidget {
         style: ts.bigTitle1.copyWith(fontSize: 20, color: Colors.grey.shade100),
         child: title);
 
-    return Column(children: [
-      Material(
-        color: !context.isDarkMode
-            ? Color.fromARGB(255, 13, 157, 224)
-            : Color.fromRGBO(25, 25, 25, 1),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              SizedBox(
-                  height: kToolbarHeight,
-                  child: NavigationToolbar(leading: leading, middle: middle)),
-              bottom,
-            ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+      child: Column(children: [
+        Material(
+          color: !context.isDarkMode
+              ? Color.fromARGB(255, 13, 157, 224)
+              : Color.fromRGBO(25, 25, 25, 1),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                SizedBox(
+                    height: kToolbarHeight,
+                    child: NavigationToolbar(leading: leading, middle: middle)),
+                bottom,
+              ],
+            ),
           ),
         ),
-      ),
-      Expanded(child: RepaintBoundary(child: body))
-    ]);
+        Expanded(
+            child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: RepaintBoundary(child: body)))
+      ]),
+    );
   }
 }
 

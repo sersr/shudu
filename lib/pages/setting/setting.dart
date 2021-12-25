@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -335,6 +336,8 @@ class _SettingState extends State<Setting> {
       itemCount: children.length,
     );
 
-    return Scaffold(appBar: AppBar(title: Text('设置')), body: child);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+        child: Scaffold(appBar: AppBar(title: Text('设置')), body: child));
   }
 }

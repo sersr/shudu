@@ -92,39 +92,41 @@ class BookSearchPage extends SearchDelegate<void> {
   }
 
   Widget wrap(BuildContext context, Widget child) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        child,
-        Positioned(
-          left: 16.0,
-          bottom: 16.0,
-          child: Material(
-            color: Colors.grey[200],
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(50.0),
-            child: InkWell(
+    return SafeArea(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          child,
+          Positioned(
+            left: 16.0,
+            bottom: 16.0,
+            child: Material(
+              color: Colors.grey[200],
+              elevation: 4.0,
               borderRadius: BorderRadius.circular(50.0),
-              splashColor: Colors.grey[400],
-              onTap: () {
-                close(context, null);
-              },
-              child: Container(
-                height: 40,
-                width: 70,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(50.0),
+                splashColor: Colors.grey[400],
+                onTap: () {
+                  close(context, null);
+                },
+                child: Container(
+                  height: 40,
+                  width: 70,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50.0),
+                  ),
+                  child: Center(
+                      child: Text(
+                    '返回',
+                    style: TextStyle(color: Colors.grey.shade800),
+                  )),
                 ),
-                child: Center(
-                    child: Text(
-                  '返回',
-                  style: TextStyle(color: Colors.grey.shade800),
-                )),
               ),
             ),
-          ),
-        )
-      ],
+          )
+        ],
+      ),
     );
   }
 
