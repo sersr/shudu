@@ -309,3 +309,203 @@ class PanSlideController {
   /// controll state
   void hideAll() => _pan.hideAll();
 }
+
+typedef ChildBuilder = Widget Function(
+    BuildContext, Animation<double>, _PannelSlideState);
+
+class PannelSlide extends StatefulWidget {
+  const PannelSlide(
+      {Key? key,
+      this.middleChild,
+      this.botChild,
+      this.topChild,
+      this.leftChild,
+      this.rightChild,
+      this.modal = false,
+      this.ignoreBottomHeight = 0.0,
+      required this.controller,
+      this.useDefault = true})
+      : assert(botChild != null ||
+            topChild != null ||
+            leftChild != null ||
+            rightChild != null ||
+            middleChild != null),
+        super(key: key);
+  final bool modal;
+  final double ignoreBottomHeight;
+  final PanSlideController controller;
+  final ChildBuilder? botChild;
+  final ChildBuilder? topChild;
+  final ChildBuilder? leftChild;
+  final ChildBuilder? rightChild;
+  final ChildBuilder? middleChild;
+  final bool useDefault;
+  @override
+  _PannelSlideState createState() => _PannelSlideState();
+}
+
+class _PannelSlideState extends State<PannelSlide> {
+  late PanSlideController panSlideController;
+  CurvedAnimation? curvedAnimation;
+
+  final _topInOffset =
+      Tween<Offset>(begin: const Offset(0.0, -1), end: Offset.zero);
+  final _botInOffset =
+      Tween<Offset>(begin: const Offset(0.0, 1), end: Offset.zero);
+  final _leftInOffset =
+      Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero);
+  final _rightInOffset =
+      Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero);
+  final modalTween = Tween<double>(begin: 0.0, end: 1.0);
+  @override
+  void initState() {
+    super.initState();
+    updateState();
+  }
+
+  @override
+  void didUpdateWidget(covariant PannelSlide oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    updateState();
+  }
+
+  void updateState() {
+    panSlideController = widget.controller;
+    final controller = panSlideController.controller;
+    // final _curve = CurvedAnimation(parent: controller, curve: Curves.ease);
+    // final _curveAnimation = _curve;
+    curvedAnimation?.dispose();
+    curvedAnimation = CurvedAnimation(parent: controller, curve: Curves.ease);
+
+    controller.removeStatusListener(statusListen);
+    controller.addStatusListener(statusListen);
+    statusListen(controller.status);
+  }
+
+  @override
+  void dispose() {
+    panSlideController.controller.removeStatusListener(statusListen);
+    super.dispose();
+  }
+
+  void statusListen(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed) {
+      hide.value = true;
+    } else {
+      hide.value = false;
+    }
+  }
+
+  final debx =
+      ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
+
+  final hide = ValueNotifier(true);
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[];
+    final botPositions = curvedAnimation!.drive(_botInOffset);
+    final topPositions = curvedAnimation!.drive(_topInOffset);
+    final leftPositions = curvedAnimation!.drive(_leftInOffset);
+    final rightPositions = curvedAnimation!.drive(_rightInOffset);
+    final modalAnimation = curvedAnimation!.drive(modalTween);
+    final colorsAnimation = debx.animate(modalAnimation);
+
+    if (widget.modal) {
+      children.add(Positioned.fill(
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: colorsAnimation,
+            builder: (context, child) {
+              if (hide.value) return const SizedBox();
+
+              return child!;
+            },
+            child: ColoredBox(
+              color: colorsAnimation.value ?? Colors.transparent,
+              child: widget.ignoreBottomHeight == 0.0
+                  ? GestureDetector(
+                      onTap: panSlideController.hideOnCallback,
+                      child: const SizedBox.expand())
+                  : Column(
+                      children: [
+                        GestureDetector(
+                            onTap: panSlideController.hideOnCallback,
+                            child: Expanded(child: const SizedBox())),
+                        SizedBox(height: widget.ignoreBottomHeight)
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ));
+    }
+    if (widget.botChild != null) {
+      var bot = widget.botChild!(context, panSlideController.controller, this);
+      if (widget.useDefault) {
+        bot = SlideTransition(position: botPositions, child: bot);
+      }
+      children.add(Positioned(bottom: 0.0, left: 0.0, right: 0.0, child: bot));
+    }
+    if (widget.topChild != null) {
+      var top = widget.topChild!(context, panSlideController.controller, this);
+      if (widget.useDefault) {
+        top = SlideTransition(position: topPositions, child: top);
+      }
+      children.add(Positioned(top: 0.0, left: 0.0, right: 0.0, child: top));
+    }
+    if (widget.rightChild != null) {
+      var right =
+          widget.rightChild!(context, panSlideController.controller, this);
+      if (widget.useDefault) {
+        right = SlideTransition(position: rightPositions, child: right);
+      }
+      children.add(Positioned(top: 0.0, bottom: 0.0, right: 0.0, child: right));
+    }
+
+    if (widget.leftChild != null) {
+      var left =
+          widget.leftChild!(context, panSlideController.controller, this);
+      if (widget.useDefault) {
+        left = SlideTransition(position: leftPositions, child: left);
+      }
+      children.add(Positioned(top: 0.0, left: 0.0, bottom: 0.0, child: left));
+    }
+    if (widget.middleChild != null) {
+      var milldle =
+          widget.middleChild!(context, panSlideController.controller, this);
+      if (widget.useDefault) {
+        milldle = SlideTransition(position: leftPositions, child: milldle);
+      }
+      children.add(Positioned.fill(child: RepaintBoundary(child: milldle)));
+    }
+    return Stack(children: children);
+  }
+}
+
+class ModalPart extends MultiChildLayoutDelegate {
+  ModalPart(this.bottom);
+  final double bottom;
+
+  @override
+  void performLayout(Size size) {
+    const _body = 'body';
+    const _bottom = 'bottom';
+    final height = size.height;
+    final width = size.width;
+
+    final constraints =
+        BoxConstraints.tightFor(width: width, height: height - bottom);
+    layoutChild(_body, constraints);
+    positionChild(_body, Offset.zero);
+    final bottomConstraints =
+        BoxConstraints.tightFor(width: width, height: bottom);
+    layoutChild(_bottom, bottomConstraints);
+    positionChild(_bottom, Offset(0, height - bottom));
+  }
+
+  @override
+  bool shouldRelayout(covariant ModalPart oldDelegate) {
+    return bottom != oldDelegate.bottom;
+  }
+}

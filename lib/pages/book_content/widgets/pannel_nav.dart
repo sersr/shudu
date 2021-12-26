@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'package:get/get.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 import '../../../provider/provider.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
@@ -337,7 +339,7 @@ Widget _topButton(
 class _BottomEndState extends State<BottomEnd> {
   late ContentNotifier bloc;
   late BookIndexNotifier indexBloc;
-  PanSlideController? controller;
+
   final ValueNotifier<SettingView> showSettings =
       ValueNotifier(SettingView.none);
   Size bsize = const Size(0.0, 10);
@@ -353,77 +355,74 @@ class _BottomEndState extends State<BottomEnd> {
   final debx =
       ColorTween(begin: Colors.transparent, end: Colors.black87.withAlpha(100));
 
-  PanSlideController getController() {
-    // 只要不被释放，就意味着还可用
-    if (controller != null && !controller!.close) return controller!;
-    context;
-    controller = PanSlideController.showPan(
-      this,
-      onhideEnd: onhideEnd,
-      onshowEnd: onshowEnd,
-      builder: (contxt, _controller) {
-        return RepaintBoundary(
-          child: PannelSlide(
-            useDefault: false,
-            controller: _controller,
-            middleChild: (context, animation, state) {
-              // return Center(child: Container(color: Colors.blue, height: 100, width: 100));
+  OverlayVerticalPannels? _pannels;
 
-              final curve =
-                  CurveTween(curve: Curves.easeInOut).animate(animation);
-              final position = curve.drive(op);
-              final colors = debx.animate(animation);
-              final padding = EdgeInsets.only(
-                  top: 10.0 + bloc.pannelPadding.top,
-                  left: 24.0 + bloc.pannelPadding.left,
-                  right: 24.0 + bloc.pannelPadding.right,
-                  bottom: 0);
-              // if (state.hide.value) return const SizedBox();
+  OverlayVerticalPannels get pannels {
+    if (_pannels != null) return _pannels!;
+    late OverlayVerticalPannels pannel;
+    return _pannels = pannel = OverlayVerticalPannels(builders: [
+      (context) {
+        return Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0,
+          child: OverlayPannelWidget(
+              controller: pannel.controller,
+              curve: Curves.easeInOut,
+              builder: (context, animation) {
+                final position = animation.drive(op);
+                final colors = debx.animate(animation);
+                final padding = EdgeInsets.only(
+                    top: 10.0 + bloc.pannelPadding.top,
+                    left: 24.0 + bloc.pannelPadding.left,
+                    right: 24.0 + bloc.pannelPadding.right,
+                    bottom: 0);
+                // if (state.hide.value) return const SizedBox();
 
-              final bottom = 30 + bsize.height;
-              return RepaintBoundary(
-                child: CustomMultiChildLayout(
-                  delegate: ModalPart(bottom),
-                  children: [
-                    LayoutId(
-                      id: 'body',
-                      child: RepaintBoundary(
-                        child: AnimatedBuilder(
-                          animation: state.hide,
-                          builder: (context, _) {
-                            return IgnorePointer(
-                              ignoring: state.hide.value,
-                              child: GestureDetector(
-                                onTap: _controller.hideOnCallback,
-                                child: RepaintBoundary(
-                                  child: AnimatedBuilder(
-                                    animation: colors,
-                                    builder: (context, child) {
-                                      return ColoredBox(
-                                        color:
-                                            colors.value ?? Colors.transparent,
-                                        child: GestureDetector(
-                                            onTap: () {}, child: child),
-                                      );
-                                    },
-                                    child: RepaintBoundary(
-                                      child: SlideTransition(
-                                        position: position,
-                                        child: FadeTransition(
-                                          opacity: curve,
-                                          child: Padding(
-                                            padding: padding,
-                                            child: Material(
-                                              borderRadius:
-                                                  BorderRadius.circular(6.0),
-                                              color: !context.isDarkMode
-                                                  ? Colors.grey.shade300
-                                                  : Colors.grey.shade900,
-                                              clipBehavior: Clip.hardEdge,
-                                              child: BookSettingsView(
-                                                showSettings: showSettings,
-                                                close:
-                                                    _controller.hideOnCallback,
+                final bottom = 30 + bsize.height;
+                return RepaintBoundary(
+                  child: CustomMultiChildLayout(
+                    delegate: ModalPart(bottom),
+                    children: [
+                      LayoutId(
+                        id: 'body',
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
+                            animation: _hide,
+                            builder: (context, _) {
+                              return IgnorePointer(
+                                ignoring: _hide.value,
+                                child: GestureDetector(
+                                  onTap: hide,
+                                  child: RepaintBoundary(
+                                    child: AnimatedBuilder(
+                                      animation: colors,
+                                      builder: (context, child) {
+                                        return ColoredBox(
+                                          color: colors.value ??
+                                              Colors.transparent,
+                                          child: GestureDetector(
+                                              onTap: () {}, child: child),
+                                        );
+                                      },
+                                      child: RepaintBoundary(
+                                        child: SlideTransition(
+                                          position: position,
+                                          child: FadeTransition(
+                                            opacity: animation,
+                                            child: Padding(
+                                              padding: padding,
+                                              child: Material(
+                                                borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                color: !context.isDarkMode
+                                                    ? Colors.grey.shade300
+                                                    : Colors.grey.shade900,
+                                                clipBehavior: Clip.hardEdge,
+                                                child: BookSettingsView(
+                                                    showSettings: showSettings,
+                                                    close: callbackOnHide),
                                               ),
                                             ),
                                           ),
@@ -432,36 +431,87 @@ class _BottomEndState extends State<BottomEnd> {
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    LayoutId(
-                      id: 'bottom',
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: AnimatedBuilder(
-                              animation: colors,
-                              builder: (context, _) {
-                                return Container(
-                                  color: colors.value ?? Colors.transparent,
-                                  height: bottom,
-                                );
-                              }),
+                      LayoutId(
+                        id: 'bottom',
+                        child: IgnorePointer(
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                                animation: colors,
+                                builder: (context, _) {
+                                  return Container(
+                                    color: colors.value ?? Colors.transparent,
+                                    height: bottom,
+                                  );
+                                }),
+                          ),
                         ),
-                      ),
-                    )
-                  ],
-                ),
-              );
-            },
-          ),
+                      )
+                    ],
+                  ),
+                );
+              }),
         );
-      },
-    );
-    return controller!;
+      }
+    ]);
+  }
+
+  OverlayMixinDelegate? _delegate;
+  OverlayMixinDelegate get delegate {
+    if (_delegate != null) {
+      return _delegate!;
+    }
+    return _delegate =
+        OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
+          ..overlay = context.read<OverlayObserver>()
+          ..init();
+  }
+
+  VoidCallback? _callback;
+  void callbackOnHide([VoidCallback? callback]) {
+    _callback = callback;
+    hide();
+  }
+
+  final _hide = ValueNotifier(false);
+
+  void toggle() {
+    if (_fut != null) return;
+    if (!delegate.done) {
+      delegate.init();
+      return;
+    }
+    if (delegate.hided) {
+      _fut = show();
+    } else {
+      _fut = hide();
+    }
+  }
+
+  FutureOr<bool>? _fut;
+
+  FutureOr<bool> show() {
+    return delegate.show()
+      ..whenComplete(() {
+        onshowEnd();
+        _hide.value = false;
+        _fut = null;
+      });
+  }
+
+  FutureOr<bool> hide() {
+    return delegate.hide()
+      ..whenComplete(() {
+        _hide.value = true;
+        _callback?.call();
+        _callback = null;
+        onhideEnd();
+        _fut = null;
+      });
   }
 
   void onhideEnd() => showSettings.value = SettingView.none;
@@ -474,7 +524,6 @@ class _BottomEndState extends State<BottomEnd> {
   @override
   void dispose() {
     super.dispose();
-    controller?.dispose();
   }
 
   @override
@@ -490,117 +539,122 @@ class _BottomEndState extends State<BottomEnd> {
       },
       child: RepaintBoundary(
         child: Row(
-        children: [
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
+          children: [
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  bsize = context.size ?? bsize;
+                  if (showSettings.value != SettingView.indexs) {
+                    show();
 
-                  bloc.showCname.value = false;
-                  // context
-                  //     .read<BookIndexNotifier>()
-                  //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              onLongPress: () {
-                bsize = context.size ?? bsize;
+                    bloc.showCname.value = false;
+                    // context
+                    //     .read<BookIndexNotifier>()
+                    //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
+                    showSettings.value = SettingView.indexs;
+                  } else {
+                    toggle();
+                  }
+                },
+                onLongPress: () {
+                  bsize = context.size ?? bsize;
 
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  indexBloc
-                    ..bookUpDateTime.remove(bloc.bookid)
-                    ..loadIndexs(bloc.bookid, bloc.tData.cid,
-                        api: bloc.api, restore: true);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '目录',
-              icon: Icons.menu_book_outlined,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.setting) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  showSettings.value = SettingView.setting;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '设置',
-              icon: Icons.settings_rounded,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: bloc.auto,
-              child: AnimatedBuilder(
-                animation: bloc.autoRun.isActive,
-                builder: (context, child) {
-                  return Text(
-                    '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+                  if (showSettings.value != SettingView.indexs) {
+                    show();
+                    bloc.showCname.value = false;
+                    indexBloc
+                      ..bookUpDateTime.remove(bloc.bookid)
+                      ..loadIndexs(bloc.bookid, bloc.tData.cid,
+                          api: bloc.api, restore: true);
+                    showSettings.value = SettingView.indexs;
+                  } else {
+                    toggle();
+                  }
                 },
+                text: '目录',
+                icon: Icons.menu_book_outlined,
               ),
-              icon: Icons.auto_stories,
             ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                getController().hide();
-                final portrait = !bloc.config.value.orientation!;
-                bloc.setPrefs(
-                    bloc.config.value.copyWith(orientation: portrait));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    '切换${bloc.config.value.orientation! ? '横屏' : '竖屏'}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  bsize = context.size ?? bsize;
+                  if (showSettings.value != SettingView.setting) {
+                    show();
+                    bloc.showCname.value = false;
+                    showSettings.value = SettingView.setting;
+                  } else {
+                    toggle();
+                  }
                 },
+                text: '设置',
+                icon: Icons.settings_rounded,
               ),
-              icon: Icons.screen_rotation_outlined,
             ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                final _axis = widget.controller.axis == Axis.horizontal
-                    ? Axis.vertical
-                    : Axis.horizontal;
+            Expanded(
+              child: bottomButton(
+                onTap: bloc.auto,
+                child: AnimatedBuilder(
+                  animation: bloc.autoRun.isActive,
+                  builder: (context, child) {
+                    return Text(
+                      '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.auto_stories,
+              ),
+            ),
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  hide();
+                  final portrait = !bloc.config.value.orientation!;
+                  bloc.setPrefs(
+                      bloc.config.value.copyWith(orientation: portrait));
+                },
+                child: AnimatedBuilder(
+                  animation: bloc.config,
+                  builder: (context, _) {
+                    return Text(
+                      '切换${bloc.config.value.orientation! ? '横屏' : '竖屏'}',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.screen_rotation_outlined,
+              ),
+            ),
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  final _axis = widget.controller.axis == Axis.horizontal
+                      ? Axis.vertical
+                      : Axis.horizontal;
 
-                bloc.autoRun.stopTicked();
-                bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+                  bloc.autoRun.stopTicked();
+                  bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
                 },
+                child: AnimatedBuilder(
+                  animation: bloc.config,
+                  builder: (context, _) {
+                    return Text(
+                      bloc.config.value.axis == Axis.horizontal
+                          ? '上下滚动'
+                          : '左右滑动',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.swap_vert_circle_rounded,
               ),
-              icon: Icons.swap_vert_circle_rounded,
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -1095,4 +1149,3 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         child: RepaintBoundary(child: child));
   }
 }
- 

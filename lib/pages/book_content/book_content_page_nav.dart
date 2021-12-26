@@ -14,9 +14,8 @@ import '../../provider/content_notifier.dart';
 import '../../provider/options_notifier.dart';
 import '../../provider/provider.dart';
 import '../../widgets/page_animation.dart';
-import '../../widgets/pan_slide.dart';
-import 'widgets/page_view.dart';
-import 'book_content_page_nav.dart' as nav;
+// import '../../widgets/pan_slide.dart';
+import 'widgets/page_view_nav.dart';
 
 enum SettingView { indexs, setting, none }
 
@@ -35,7 +34,7 @@ class BookContentPage extends StatefulWidget {
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return AnnotatedRegion<SystemUiOverlayStyle>(
           value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-          child: const RepaintBoundary(child: nav.BookContentPage()));
+          child: const RepaintBoundary(child: BookContentPage()));
     }));
   }
 
@@ -43,16 +42,18 @@ class BookContentPage extends StatefulWidget {
   BookContentPageState createState() => BookContentPageState();
 }
 
-class BookContentPageState extends PanSlideState<BookContentPage>
+class BookContentPageState extends State<BookContentPage>
     with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
   late OptionsNotifier notifier;
+  late OverlayObserver observer;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
+    observer = OverlayObserver(overlayGetter: overlayGetter, insert: insert);
   }
 
   @override
@@ -82,7 +83,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
   Timer? errorTimer;
   @override
-  Widget wrapOverlay(context, overlay) {
+  Widget build(context) {
     bloc.metricsChange(MediaQuery.of(context));
     Widget child = AnimatedBuilder(
       animation: notifyColor,
@@ -148,7 +149,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
                 ),
               ),
             ),
-            Positioned.fill(child: RepaintBoundary(child: overlay)),
+            Positioned.fill(child: RepaintBoundary(child: Overlay(key: key))),
           ],
         ),
       ),
@@ -157,14 +158,58 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     return WillPopScope(
         onWillPop: onWillPop,
         child: MediaQuery.removePadding(
-            context: context, removeTop: true, child: child));
+            context: context,
+            removeTop: true,
+            child: Provider.value(value: observer, child: child)));
+  }
+
+  final key = GlobalKey<OverlayState>();
+
+  OverlayState? get getOverlay {
+    return key.currentState;
+  }
+
+  List<OverlayMixin> entries = [];
+
+  void insert(OverlayMixin entry) {
+    entries.add(entry);
+  }
+
+  OverlayState? overlayGetter() {
+    return getOverlay;
+  }
+
+  int getLength() {
+    if (entries.isEmpty) return 0;
+    final e = List.of(entries);
+    var length = 0;
+    for (var item in e) {
+      if (item.closed) {
+        entries.remove(item);
+        continue;
+      }
+      if (item.hided && item.active) {
+        length++;
+      }
+    }
+    return length;
+  }
+
+  OverlayMixin? getLast() {
+    if (entries.isNotEmpty) {
+      for (var item in entries.reversed) {
+        if (item.active) {
+          return item;
+        }
+      }
+    }
   }
 
   Future<bool> onWillPop() async {
     bloc.showCname.value = false;
 
-    if (showEntries.length > 1) {
-      hideLast();
+    if (getLength() > 1) {
+      getLast()?.close();
       return false;
     }
 

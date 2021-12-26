@@ -1244,20 +1244,18 @@ mixin ContentGetter on ContentDataBase, ContentTasks {
   }
 
   int hasContent() {
-    var _r = 0;
+    var bound = 0;
     if (tData.contentIsNotEmpty) {
       final hasRight = hasNext();
       final hasLeft = hasPre();
 
-      if (hasRight) _r |= ContentBoundary.addRight;
-      if (hasLeft) _r |= ContentBoundary.addLeft;
-    } else {
-      return ContentBoundary.empty;
+      if (hasRight) bound |= ContentBoundary.addRight;
+      if (hasLeft) bound |= ContentBoundary.addLeft;
     }
 
     scheduleTask();
 
-    return _r;
+    return bound;
   }
 
   bool hasPre() {
@@ -1726,9 +1724,7 @@ extension FutureTasksMap<T, E> on Map<T, Future<E>> {
     void Function(Future<E>)? solveTask,
   }) {
     assert(Log.i('addTask: $key'));
-    if (containsKey(key)) {
-      return;
-    }
+    assert(!containsKey(key));
     this[key] = f;
 
     f.whenComplete(() {
