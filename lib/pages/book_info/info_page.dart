@@ -91,6 +91,8 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     final bottom = MediaQuery.of(context).padding.bottom;
     final child = Scaffold(
         body: SafeArea(
+      left: false,
+      right: false,
       top: false,
       child: AnimatedBuilder(
         animation: info,
@@ -165,118 +167,125 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                 Column(
                   children: [
                     Expanded(
-                      child: NotificationListener<ScrollNotification>(
-                        onNotification: onScrollNotification,
-                        child: ListViewBuilder(
-                          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-                          cacheExtent: 100,
-                          itemBuilder: (context, index) {
-                            return children[index];
-                          },
-                          itemCount: children.length,
+                      child: SafeArea(
+                        top: false,
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: onScrollNotification,
+                          child: ListViewBuilder(
+                            color:
+                                isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+                            cacheExtent: 100,
+                            itemBuilder: (context, index) {
+                              return children[index];
+                            },
+                            itemCount: children.length,
+                          ),
                         ),
                       ),
                     ),
                     Material(
                       color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
-                      child: AnimatedBuilder(
-                        animation: cache,
-                        builder: (context, _) {
-                          var show = false;
-                          int? cid;
-                          int? currentPage;
-                          final list = cache.sortChildren;
+                      child: SafeArea(
+                        top: false,
+                        child: AnimatedBuilder(
+                          animation: cache,
+                          builder: (context, _) {
+                            var show = false;
+                            int? cid;
+                            int? currentPage;
+                            final list = cache.sortChildren;
 
-                          for (var l in list) {
-                            if (l.bookId == bookId) {
-                              if (l.isShow ?? false) {
-                                show = true;
-                                cid = l.chapterId;
-                                currentPage = l.page;
+                            for (var l in list) {
+                              if (l.bookId == bookId) {
+                                if (l.isShow ?? false) {
+                                  show = true;
+                                  cid = l.chapterId;
+                                  currentPage = l.page;
+                                }
+                                break;
                               }
-                              break;
                             }
-                          }
 
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Expanded(
-                                child: btn1(
-                                  splashColor: isLight
-                                      ? Color.fromARGB(255, 110, 188, 248)
-                                      : Color.fromARGB(255, 107, 108, 109),
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                        bottom: bottom > 0.0 &&
-                                                defaultTargetPlatform ==
-                                                    TargetPlatform.iOS
-                                            ? 10.0
-                                            : 0.0),
-                                    child: SizedBox(
-                                      height: 56,
-                                      child: Center(
-                                        child: Text(
-                                          show ? '阅读' : '试读',
-                                          style: TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 224, 224, 224),
-                                              fontSize: 15),
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Expanded(
+                                  child: btn1(
+                                    splashColor: isLight
+                                        ? Color.fromARGB(255, 110, 188, 248)
+                                        : Color.fromARGB(255, 107, 108, 109),
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          bottom: bottom > 0.0 &&
+                                                  defaultTargetPlatform ==
+                                                      TargetPlatform.iOS
+                                              ? 10.0
+                                              : 0.0),
+                                      child: SizedBox(
+                                        height: 56,
+                                        child: Center(
+                                          child: Text(
+                                            show ? '阅读' : '试读',
+                                            style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 224, 224, 224),
+                                                fontSize: 15),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  onTap: () async {
-                                    final _list = await cache.getList;
-                                    int? _cid, _page;
-                                    for (final bookCache in _list) {
-                                      if (bookCache.bookId == bookId) {
-                                        _cid = bookCache.chapterId;
-                                        _page = bookCache.page;
-                                        break;
+                                    onTap: () async {
+                                      final _list = await cache.getList;
+                                      int? _cid, _page;
+                                      for (final bookCache in _list) {
+                                        if (bookCache.bookId == bookId) {
+                                          _cid = bookCache.chapterId;
+                                          _page = bookCache.page;
+                                          break;
+                                        }
                                       }
-                                    }
-                                    _cid ??= cid ?? firstChapterId!;
-                                    _page ??= currentPage ?? 1;
+                                      _cid ??= cid ?? firstChapterId!;
+                                      _page ??= currentPage ?? 1;
 
-                                    BookContentPage.push(context, bookId, _cid,
-                                        _page, widget.api);
-                                  },
-                                  background: false,
-                                ),
-                              ),
-                              Expanded(
-                                child: btn1(
-                                  background: false,
-                                  splashColor: isLight
-                                      ? Color.fromARGB(255, 110, 188, 248)
-                                      : Color.fromARGB(255, 107, 108, 109),
-                                  onTap: () => cache.updateShow(
-                                      bookId, !show, widget.api),
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                        bottom: bottom > 0.0 &&
-                                                defaultTargetPlatform ==
-                                                    TargetPlatform.iOS
-                                            ? 10.0
-                                            : 0.0),
-                                    child: SizedBox(
-                                        height: 56,
-                                        child: Center(
-                                            child: Text(
-                                          '${show ? '移除' : '添加到'}书架',
-                                          style: TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 224, 224, 224),
-                                              fontSize: 15),
-                                        ))),
+                                      BookContentPage.push(context, bookId,
+                                          _cid, _page, widget.api);
+                                    },
+                                    background: false,
                                   ),
                                 ),
-                              ),
-                            ],
-                          );
-                        },
+                                Expanded(
+                                  child: btn1(
+                                    background: false,
+                                    splashColor: isLight
+                                        ? Color.fromARGB(255, 110, 188, 248)
+                                        : Color.fromARGB(255, 107, 108, 109),
+                                    onTap: () => cache.updateShow(
+                                        bookId, !show, widget.api),
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          bottom: bottom > 0.0 &&
+                                                  defaultTargetPlatform ==
+                                                      TargetPlatform.iOS
+                                              ? 10.0
+                                              : 0.0),
+                                      child: SizedBox(
+                                          height: 56,
+                                          child: Center(
+                                              child: Text(
+                                            '${show ? '移除' : '添加到'}书架',
+                                            style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 224, 224, 224),
+                                                fontSize: 15),
+                                          ))),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],

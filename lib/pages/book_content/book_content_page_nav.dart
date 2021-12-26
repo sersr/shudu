@@ -48,12 +48,12 @@ class BookContentPageState extends State<BookContentPage>
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
   late OptionsNotifier notifier;
-  late OverlayObserver observer;
+  late OverlayObserverState observer;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    observer = OverlayObserver(overlayGetter: overlayGetter, insert: insert);
+    observer = OverlayObserverState(overlayGetter: overlayGetter);
   }
 
   @override
@@ -160,56 +160,35 @@ class BookContentPageState extends State<BookContentPage>
         child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: Provider.value(value: observer, child: child)));
+            child: Provider<OverlayObserver>.value(
+                value: observer, child: child)));
   }
 
   final key = GlobalKey<OverlayState>();
 
   OverlayState? get getOverlay {
+    if (!mounted) {
+      throw OverlayGetterError('退出');
+    }
     return key.currentState;
   }
 
-  List<OverlayMixin> entries = [];
-
-  void insert(OverlayMixin entry) {
-    entries.add(entry);
-  }
 
   OverlayState? overlayGetter() {
     return getOverlay;
   }
 
   int getLength() {
-    if (entries.isEmpty) return 0;
-    final e = List.of(entries);
-    var length = 0;
-    for (var item in e) {
-      if (item.closed) {
-        entries.remove(item);
-        continue;
-      }
-      if (item.hided && item.active) {
-        length++;
-      }
-    }
-    return length;
+    return observer.entriesState.length;
   }
 
-  OverlayMixin? getLast() {
-    if (entries.isNotEmpty) {
-      for (var item in entries.reversed) {
-        if (item.active) {
-          return item;
-        }
-      }
-    }
-  }
+
 
   Future<bool> onWillPop() async {
     bloc.showCname.value = false;
 
     if (getLength() > 1) {
-      getLast()?.close();
+      observer.hideLast();
       return false;
     }
 

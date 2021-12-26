@@ -70,63 +70,68 @@ class ContentPageViewState extends State<ContentPageView>
   OverlayVerticalPannels get pannels {
     if (_pannels != null) return _pannels!;
     late OverlayVerticalPannels pannel;
-    return _pannels = pannel = OverlayVerticalPannels(builders: [
-      (context) {
-        return Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: OverlayPannelWidget(
-            controller: pannel.controller,
-            curve: Curves.ease,
-            reverseCurve: Curves.ease.flipped,
-            builder: (context, animation) {
-              final op =
-                  Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
-
-              final position = animation.drive(op);
-              return SlideTransition(
-                position: position,
-                child: FadeTransition(
-                  opacity: animation.drive(Tween<double>(begin: 0, end: 0.9)),
-                  child: Pannel(controller: offsetPosition),
-                ),
-              );
-            },
-          ),
-        );
-      },
-      (context) {
-        return Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          child: OverlayPannelWidget(
+    return _pannels = pannel = OverlayVerticalPannels(
+      onShowEnd: onshow,
+      onHideEnd: onhide,
+      builders: [
+        (context) {
+          return Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: OverlayPannelWidget(
               controller: pannel.controller,
               curve: Curves.ease,
               reverseCurve: Curves.ease.flipped,
               builder: (context, animation) {
                 final op =
-                    Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
+                    Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
 
                 final position = animation.drive(op);
                 return SlideTransition(
                   position: position,
                   child: FadeTransition(
                     opacity: animation.drive(Tween<double>(begin: 0, end: 0.9)),
-                    child: TopPannel(),
+                    child: Pannel(controller: offsetPosition),
                   ),
                 );
-              }),
-        );
-      }
-    ]);
+              },
+            ),
+          );
+        },
+        (context) {
+          return Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: OverlayPannelWidget(
+                controller: pannel.controller,
+                curve: Curves.ease,
+                reverseCurve: Curves.ease.flipped,
+                builder: (context, animation) {
+                  final op = Tween<Offset>(
+                      begin: const Offset(0, -1), end: Offset.zero);
+
+                  final position = animation.drive(op);
+                  return SlideTransition(
+                    position: position,
+                    child: FadeTransition(
+                      opacity:
+                          animation.drive(Tween<double>(begin: 0, end: 0.9)),
+                      child: TopPannel(),
+                    ),
+                  );
+                }),
+          );
+        }
+      ],
+    );
   }
 
   OverlayMixinDelegate? _delegate;
   OverlayMixinDelegate get delegate {
     if (_delegate != null) {
-      return _delegate!;
+      if (!_delegate!.closed) return _delegate!;
     }
     if (bloc.initQueue.runner != null) {
       bloc.initQueue.runner?.whenComplete(() {
@@ -137,32 +142,26 @@ class ContentPageViewState extends State<ContentPageView>
     }
     return _delegate =
         OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
-          ..overlay = context.read<OverlayObserver>()
-          ..init();
+          ..overlay = context.read<OverlayObserver>();
   }
 
-  FutureOr<bool>? _fut;
+  FutureOr? _fut;
   void toggle() {
     if (_fut != null) return;
-    if (!delegate.done) {
-      delegate.init();
-      return;
-    }
 
     if (delegate.hided) {
-      _fut = delegate.show()
-        ..whenComplete(() {
-          onshow();
-          _fut = null;
-        });
+      show();
     } else {
-      _fut = delegate.hide()
-        ..whenComplete(() {
-          onhide();
-          _fut = null;
-        });
+      hide();
     }
-    // getController().trigger(immediate: false);
+  }
+
+  void show() {
+    _fut ??= delegate.show()..whenComplete(() => _fut = null);
+  }
+
+  void hide() {
+    _fut ??= delegate.hide()..whenComplete(() => _fut = null);
   }
 
   @override

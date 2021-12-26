@@ -90,35 +90,37 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
         elevation: 1,
         title: Text('书单详情'),
       ),
-      body: AnimatedBuilder(
-        animation: provider,
-        builder: (context, child) {
-          final data = provider.data;
-          if (data == null) {
-            return loadingIndicator();
-          } else if (data.listId == null) {
-            return reloadBotton(() => provider.load(widget.index));
-          }
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: provider,
+          builder: (context, child) {
+            final data = provider.data;
+            if (data == null) {
+              return loadingIndicator();
+            } else if (data.listId == null) {
+              return reloadBotton(() => provider.load(widget.index));
+            }
 
-          final children = _getChildren(data, ts);
-          return Stack(
-            children: [
-              RepaintBoundary(
-                child: ListViewBuilder(
-                  color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+            final children = _getChildren(data, ts);
+            return Stack(
+              children: [
+                RepaintBoundary(
+                  child: ListViewBuilder(
+                    color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
 
-                  refreshDelegate: refreshDelegate2,
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  // cacheExtent: 100,
-                  itemBuilder: (context, index) {
-                    return children.elementAt(index);
-                  },
-                  itemCount: children.length,
+                    refreshDelegate: refreshDelegate2,
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    // cacheExtent: 100,
+                    itemBuilder: (context, index) {
+                      return children.elementAt(index);
+                    },
+                    itemCount: children.length,
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

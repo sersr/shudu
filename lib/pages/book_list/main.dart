@@ -37,88 +37,103 @@ class ListMainPage extends StatelessWidget {
     return Container(
       color: light ? Color.fromARGB(255, 231, 231, 231) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          row(
-            left: _builder('书单', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return BooklistPage();
-              }));
-            }),
-            right: _builder('分类', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return RepaintBoundary(child: ListCatetoryPage());
-              }));
-            }),
-          ),
-          const SizedBox(height: 5),
-          row(
-            left: _builder('缓存管理', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return RepaintBoundary(child: CacheManager());
-              }));
-            }),
-            right: _builder('浏览历史', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return RepaintBoundary(child: BookHistory());
-              }));
-            }),
-          ),
-          const SizedBox(height: 5),
-          row(
-            left: _builder('榜单', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return RepaintBoundary(child: TopPage());
-              }));
-            }),
-            right: _builder('设置', () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return Setting();
-              }));
-            }),
-          ),
-          const SizedBox(height: 5),
-          row(
-            left: _builder('nav snackbar', () {
-              // ScaffoldMessenger.of(context)
-              //     .showSnackBar(SnackBar(content: Text('.hello')));
+      child: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              row(
+                left: _builder('书单', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return BooklistPage();
+                  }));
+                }),
+                right: _builder('分类', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: ListCatetoryPage());
+                  }));
+                }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder('缓存管理', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: CacheManager());
+                  }));
+                }),
+                right: _builder('浏览历史', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: BookHistory());
+                  }));
+                }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder('榜单', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return RepaintBoundary(child: TopPage());
+                  }));
+                }),
+                right: _builder('设置', () {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return Setting();
+                  }));
+                }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder('nav snackbar', () {
+                  // setOrientation(false);
+                  // Timer(const Duration(seconds: 5), () {
+                  //   ScaffoldMessenger.of(context)
+                  //       .showSnackBar(SnackBar(content: Text('.hello')));
+                  // });
 
-              Nav.snackBar(
-                Container(
-                  // color: Color.fromARGB(255, 61, 61, 61),
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  height: 48,
-                  child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('hello snackbar')),
-                ),
-              );
-              count++;
+                  Nav.snackBar(
+                    Container(
+                      // color: Color.fromARGB(255, 61, 61, 61),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      height: 50,
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('hello snackbar')),
+                    ),
+                  );
+                  count++;
 
-              final value = count.isOdd ? 'blue' : 'red';
-              Nav.toast(
-                Center(child: Text('toast: $value')),
-                radius: const BorderRadius.all(Radius.circular(30)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12.0),
-              );
-            }),
-            right: _builder('nav banner', () {
-              Nav.banner(Container(
-                // color: Color.fromARGB(255, 61, 61, 61),
-                padding: const EdgeInsets.all(8),
-                height: 76,
-                child: Text('hello banner'),
-              ));
-            }),
+                  final value = count.isOdd ? 'blue' : 'red';
+                  Nav.toast(
+                    Center(child: Text('toast: $value')),
+                    radius: const BorderRadius.all(Radius.circular(30)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12.0),
+                  );
+                }),
+                right: _builder('nav banner', () {
+                  Nav.banner(
+                    Container(
+                      // color: Color.fromARGB(255, 61, 61, 61),
+                      padding: const EdgeInsets.all(8),
+                      height: 76,
+                      child: Text('hello banner'),
+                    ),
+                  );
+                }),
+              ),
+              if (kDebugMode) const SizedBox(height: 5),
+              if (kDebugMode)
+                _builder('clear', () {
+                  CacheBinding.instance?.imageRefCache?.clear();
+                }),
+            ],
           ),
-          if (kDebugMode) const SizedBox(height: 5),
-          if (kDebugMode)
-            _builder('clear', () {
-              CacheBinding.instance?.imageRefCache?.clear();
-            }),
-        ],
+        ),
       ),
     );
   }

@@ -27,6 +27,4 @@ dart run ../sync_projects/bin/sync_projects.dart
 ## web平台可能有跨域问题：  
 可以在`flutter/packages/flutter_tools/lib/web/chrome.dart`下添加`--disable-web-security`启动参数
 
-声明：本项目仅供学习参考
-
-
+声明：本项目仅供学习参考，请支持书籍原作者

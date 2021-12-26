@@ -75,30 +75,32 @@ class _TopCtgListViewState<T> extends State<TopCtgListView<T>>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-          animation: _categNotifier,
-          builder: (context, _) {
-            final data = _categNotifier.dataResolve;
-            if (data == null) {
-              return loadingIndicator();
-            } else {
-              return data.map((data) {
-                // 如果任务完成，数据没有加载进来，
-                // 加载指示器会显示在顶部而不是在屏幕中间
-                if (data.data?.isEmpty == true) {
-                  return loadingIndicator();
-                }
-                return wrapWidget(data.data);
-              }, loading: (data) {
-                return wrapWidget(data.data, loading: true);
-              }, failed: (data) {
-                return wrapWidget(data.data, failed: true);
-              }, done: (data) {
-                return wrapWidget(data.data, hasNext: false);
-              });
-            }
-          }),
+    return SafeArea(
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+            animation: _categNotifier,
+            builder: (context, _) {
+              final data = _categNotifier.dataResolve;
+              if (data == null) {
+                return loadingIndicator();
+              } else {
+                return data.map((data) {
+                  // 如果任务完成，数据没有加载进来，
+                  // 加载指示器会显示在顶部而不是在屏幕中间
+                  if (data.data?.isEmpty == true) {
+                    return loadingIndicator();
+                  }
+                  return wrapWidget(data.data);
+                }, loading: (data) {
+                  return wrapWidget(data.data, loading: true);
+                }, failed: (data) {
+                  return wrapWidget(data.data, failed: true);
+                }, done: (data) {
+                  return wrapWidget(data.data, hasNext: false);
+                });
+              }
+            }),
+      ),
     );
   }
 

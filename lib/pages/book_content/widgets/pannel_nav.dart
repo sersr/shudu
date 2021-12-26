@@ -360,69 +360,75 @@ class _BottomEndState extends State<BottomEnd> {
   OverlayVerticalPannels get pannels {
     if (_pannels != null) return _pannels!;
     late OverlayVerticalPannels pannel;
-    return _pannels = pannel = OverlayVerticalPannels(builders: [
-      (context) {
-        return Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: OverlayPannelWidget(
-              controller: pannel.controller,
-              curve: Curves.easeInOut,
-              builder: (context, animation) {
-                final position = animation.drive(op);
-                final colors = debx.animate(animation);
-                final padding = EdgeInsets.only(
-                    top: 10.0 + bloc.pannelPadding.top,
-                    left: 24.0 + bloc.pannelPadding.left,
-                    right: 24.0 + bloc.pannelPadding.right,
-                    bottom: 0);
-                // if (state.hide.value) return const SizedBox();
+    return _pannels = pannel = OverlayVerticalPannels(
+      onShowEnd: onshowEnd,
+      onHideEnd: onhideEnd,
+      builders: [
+        (context) {
+          return Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: OverlayPannelWidget(
+                controller: pannel.controller,
+                curve: Curves.easeInOut,
+                builder: (context, animation) {
+                  final position = animation.drive(op);
+                  final colors = debx.animate(animation);
+                  final padding = EdgeInsets.only(
+                      top: 10.0 + bloc.pannelPadding.top,
+                      left: 24.0 + bloc.pannelPadding.left,
+                      right: 24.0 + bloc.pannelPadding.right,
+                      bottom: 0);
+                  // if (state.hide.value) return const SizedBox();
 
-                final bottom = 30 + bsize.height;
-                return RepaintBoundary(
-                  child: CustomMultiChildLayout(
-                    delegate: ModalPart(bottom),
-                    children: [
-                      LayoutId(
-                        id: 'body',
-                        child: RepaintBoundary(
-                          child: AnimatedBuilder(
-                            animation: _hide,
-                            builder: (context, _) {
-                              return IgnorePointer(
-                                ignoring: _hide.value,
-                                child: GestureDetector(
-                                  onTap: hide,
-                                  child: RepaintBoundary(
-                                    child: AnimatedBuilder(
-                                      animation: colors,
-                                      builder: (context, child) {
-                                        return ColoredBox(
-                                          color: colors.value ??
-                                              Colors.transparent,
-                                          child: GestureDetector(
-                                              onTap: () {}, child: child),
-                                        );
-                                      },
-                                      child: RepaintBoundary(
-                                        child: SlideTransition(
-                                          position: position,
-                                          child: FadeTransition(
-                                            opacity: animation,
-                                            child: Padding(
-                                              padding: padding,
-                                              child: Material(
-                                                borderRadius:
-                                                    BorderRadius.circular(6.0),
-                                                color: !context.isDarkMode
-                                                    ? Colors.grey.shade300
-                                                    : Colors.grey.shade900,
-                                                clipBehavior: Clip.hardEdge,
-                                                child: BookSettingsView(
-                                                    showSettings: showSettings,
-                                                    close: callbackOnHide),
+                  final bottom = 30 + bsize.height;
+                  return RepaintBoundary(
+                    child: CustomMultiChildLayout(
+                      delegate: ModalPart(bottom),
+                      children: [
+                        LayoutId(
+                          id: 'body',
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: _hide,
+                              builder: (context, _) {
+                                return IgnorePointer(
+                                  ignoring: _hide.value,
+                                  child: GestureDetector(
+                                    onTap: hide,
+                                    child: RepaintBoundary(
+                                      child: AnimatedBuilder(
+                                        animation: colors,
+                                        builder: (context, child) {
+                                          return ColoredBox(
+                                            color: colors.value ??
+                                                Colors.transparent,
+                                            child: GestureDetector(
+                                                onTap: () {}, child: child),
+                                          );
+                                        },
+                                        child: RepaintBoundary(
+                                          child: SlideTransition(
+                                            position: position,
+                                            child: FadeTransition(
+                                              opacity: animation,
+                                              child: Padding(
+                                                padding: padding,
+                                                child: Material(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          6.0),
+                                                  color: !context.isDarkMode
+                                                      ? Colors.grey.shade300
+                                                      : Colors.grey.shade900,
+                                                  clipBehavior: Clip.hardEdge,
+                                                  child: BookSettingsView(
+                                                      showSettings:
+                                                          showSettings,
+                                                      close: callbackOnHide),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -430,46 +436,40 @@ class _BottomEndState extends State<BottomEnd> {
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
-                      LayoutId(
-                        id: 'bottom',
-                        child: IgnorePointer(
-                          child: RepaintBoundary(
-                            child: AnimatedBuilder(
-                                animation: colors,
-                                builder: (context, _) {
-                                  return Container(
-                                    color: colors.value ?? Colors.transparent,
-                                    height: bottom,
-                                  );
-                                }),
+                        LayoutId(
+                          id: 'bottom',
+                          child: IgnorePointer(
+                            child: RepaintBoundary(
+                              child: AnimatedBuilder(
+                                  animation: colors,
+                                  builder: (context, _) {
+                                    return Container(
+                                      color: colors.value ?? Colors.transparent,
+                                      height: bottom,
+                                    );
+                                  }),
+                            ),
                           ),
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              }),
-        );
-      }
-    ]);
+                        )
+                      ],
+                    ),
+                  );
+                }),
+          );
+        }
+      ],
+    );
   }
 
   OverlayMixinDelegate? _delegate;
-  OverlayMixinDelegate get delegate {
-    if (_delegate != null) {
-      return _delegate!;
-    }
-    return _delegate =
-        OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
-          ..overlay = context.read<OverlayObserver>()
-          ..init();
-  }
+  OverlayMixinDelegate get delegate => _delegate ??=
+      OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
+        ..overlay = context.read<OverlayObserver>();
 
   VoidCallback? _callback;
   void callbackOnHide([VoidCallback? callback]) {
@@ -481,41 +481,33 @@ class _BottomEndState extends State<BottomEnd> {
 
   void toggle() {
     if (_fut != null) return;
-    if (!delegate.done) {
-      delegate.init();
-      return;
-    }
     if (delegate.hided) {
-      _fut = show();
+      show();
     } else {
-      _fut = hide();
+      hide();
     }
   }
 
-  FutureOr<bool>? _fut;
+  FutureOr? _fut;
 
-  FutureOr<bool> show() {
-    return delegate.show()
-      ..whenComplete(() {
-        onshowEnd();
-        _hide.value = false;
-        _fut = null;
-      });
+  void show() {
+    _fut ??= delegate.show()..whenComplete(() => _fut = null);
   }
 
-  FutureOr<bool> hide() {
-    return delegate.hide()
-      ..whenComplete(() {
-        _hide.value = true;
-        _callback?.call();
-        _callback = null;
-        onhideEnd();
-        _fut = null;
-      });
+  void hide() {
+    _fut ??= delegate.hide()..whenComplete(() => _fut = null);
   }
 
-  void onhideEnd() => showSettings.value = SettingView.none;
+  void onhideEnd() {
+    _callback?.call();
+    _callback = null;
+    _hide.value = true;
+
+    showSettings.value = SettingView.none;
+  }
+
   void onshowEnd() {
+    _hide.value = false;
     bloc.reloadBrightness();
     indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid,
         api: bloc.api, restore: true);
