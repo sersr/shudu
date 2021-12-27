@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -10,7 +9,6 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../../provider/constants.dart';
 import '../../../provider/export.dart';
 import '../../../provider/text_data.dart';
-
 import 'battery_view.dart';
 import 'content_view.dart';
 import 'page_view_controller.dart';
@@ -119,10 +117,7 @@ class ContentPageViewState extends State<ContentPageView>
           ..overlay = context.read<OverlayObserver>();
   }
 
-  FutureOr? _fut;
   void toggle() {
-    if (_fut != null) return;
-
     if (delegate.hided) {
       show();
     } else {
@@ -131,11 +126,11 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   void show() {
-    _fut ??= delegate.show()..whenComplete(() => _fut = null);
+    EventQueue.pushOne(toggle, delegate.show);
   }
 
   void hide() {
-    _fut ??= delegate.hide()..whenComplete(() => _fut = null);
+    EventQueue.pushOne(toggle, delegate.hide);
   }
 
   @override

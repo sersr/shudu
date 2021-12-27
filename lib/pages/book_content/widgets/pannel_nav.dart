@@ -403,7 +403,6 @@ class _BottomEndState extends State<BottomEnd> {
   final _hide = ValueNotifier(false);
 
   void toggle() {
-    if (_fut != null) return;
     if (delegate.hided) {
       show();
     } else {
@@ -411,14 +410,12 @@ class _BottomEndState extends State<BottomEnd> {
     }
   }
 
-  FutureOr? _fut;
-
   void show() {
-    _fut ??= delegate.show()..whenComplete(() => _fut = null);
+    EventQueue.pushOne(toggle, delegate.show);
   }
 
   void hide() {
-    _fut ??= delegate.hide()..whenComplete(() => _fut = null);
+    EventQueue.pushOne(toggle, delegate.hide);
   }
 
   void onhideEnd() {
@@ -432,6 +429,7 @@ class _BottomEndState extends State<BottomEnd> {
   void onshowEnd() {
     _hide.value = false;
     bloc.reloadBrightness();
+    Log.w('${bloc.tData.cid}');
     indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid,
         api: bloc.api, restore: true);
   }
