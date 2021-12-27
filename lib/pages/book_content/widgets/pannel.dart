@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../../../provider/provider.dart';
+import '../../../provider/export.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
 import '../../book_info/info_page.dart';

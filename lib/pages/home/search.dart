@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/image_text_layout.dart';
 import '../book_info/info_page.dart';
 

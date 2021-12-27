@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:utils/utils.dart';
 
-import '../../../provider/provider.dart';
+import '../../../provider/export.dart';
 
 class EditText extends StatefulWidget {
   const EditText({Key? key}) : super(key: key);

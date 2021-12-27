@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:vector_math/vector_math.dart' as vec4;
 
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
 import '../../widgets/text_builder.dart';

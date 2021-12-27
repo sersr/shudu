@@ -14,7 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../../provider/provider.dart';
+import '../../../provider/export.dart';
 
 /// [Repository]需要的信息
 mixin SystemInfos {

@@ -7,7 +7,7 @@ import 'package:nop_db/nop_db.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../book_content/book_content_page.dart';
 import '../book_info/info_page.dart';
 import '../book_list/main.dart';

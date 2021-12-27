@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:shudu/provider/provider.dart';
 import 'package:utils/utils.dart';
 
 void main() async {
@@ -186,11 +185,6 @@ void main() async {
     print('0');
     Timer.run(() => print('1'));
     print(2);
-  });
-
-  test('content boundary', () {
-    expect(ContentBoundary.hasLeft(ContentBoundary.empty), false);
-    expect(ContentBoundary.hasRight(ContentBoundary.empty), false);
   });
 
   test('await null', () async {

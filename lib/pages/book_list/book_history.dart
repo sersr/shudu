@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';
 

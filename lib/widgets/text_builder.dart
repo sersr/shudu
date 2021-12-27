@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../provider/provider.dart';
+import '../provider/export.dart';
 
 class TextAsyncLayout extends StatelessWidget {
   const TextAsyncLayout({

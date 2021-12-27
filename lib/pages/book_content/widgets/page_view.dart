@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/constants.dart';
-import '../../../provider/provider.dart';
+import '../../../provider/export.dart';
 import '../../../provider/text_data.dart';
 import '../../../widgets/pan_slide.dart';
 import 'battery_view.dart';
@@ -37,7 +37,7 @@ class ContentPageViewState extends State<ContentPageView>
     offsetPosition = NopPageViewController(
       vsync: this,
       scrollingNotify: scrollingNotify,
-      getBounds: isBoundary,
+      getContentDimension: getContentDimension,
       canDrag: canDrag,
     );
   }
@@ -150,8 +150,8 @@ class ContentPageViewState extends State<ContentPageView>
     setState(() {});
   }
 
-  void isBoundary() {
-    return bloc.hasContent();
+  void getContentDimension() {
+    return bloc.getContentDimension();
   }
 
   void scrollingNotify(bool isScrolling) {

@@ -5,7 +5,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../event/event.dart';
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
 import '../../widgets/text_builder.dart';

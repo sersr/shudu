@@ -12,7 +12,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../provider/book_cache_notifier.dart';
 import '../../provider/content_notifier.dart';
 import '../../provider/options_notifier.dart';
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/page_animation.dart';
 // import '../../widgets/pan_slide.dart';
 import 'widgets/page_view_nav.dart';

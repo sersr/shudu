@@ -12,7 +12,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     required this.scrollingNotify,
     required this.vsync,
     required this.canDrag, // required this.getDragState,
-    required this.getBounds,
+    required this.getContentDimension,
   })  : _maxExtent = 1,
         _minExtent = 0 {
     _activity = IdleActivity(this);
@@ -22,7 +22,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   // BoolCallback getDragState;
   void Function(bool) scrollingNotify;
-  void Function() getBounds;
+  void Function() getContentDimension;
   bool Function() canDrag;
   Activity? _activity;
 
@@ -57,21 +57,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     return pixels / viewPortDimension!;
   }
 
-  bool _reset = false;
-  void needLayout() {
-    _reset = true;
-
-    getBounds();
-    notifyListeners();
-  }
-
-  void resetDone(VoidCallback? reset) {
-    if (_reset && reset != null) {
-      reset();
-    }
-    _reset = false;
-  }
-
   double? _viewPortDimension;
   double? get viewPortDimension => _viewPortDimension;
 
@@ -80,6 +65,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
       _pixels = page.toInt() * dimension;
     }
     _viewPortDimension = dimension;
+    getContentDimension();
   }
 
   static final SpringDescription kDefaultSpring =
@@ -121,8 +107,9 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
   @override
   void goIdle() {
-    scrollingnotifier(false);
     beginActivity(IdleActivity(this));
+    scrollingnotifier(false);
+    getContentDimension();
   }
 
   @override
@@ -202,7 +189,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   double get minExtent => _minExtent;
   double get maxExtent => _maxExtent;
 
-  void applyConentDimension({double? minExtent, double? maxExtent}) {
+  void applyContentDimension({double? minExtent, double? maxExtent}) {
     if (minExtent != null && _minExtent != minExtent) {
       _minExtent = minExtent;
     }
@@ -508,8 +495,6 @@ class ContentPreNextRenderObject extends RenderBox {
       extent = size.height;
     }
     nopController.applyViewPortDimension(extent);
-
-    nopController.resetDone(_element?.removeAll);
 
     _layout(nopController.pixels, extent);
 

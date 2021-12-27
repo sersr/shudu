@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../data/data.dart';
-import '../provider/provider.dart';
+import '../provider/export.dart';
 
 class IndexsWidget extends StatelessWidget {
   const IndexsWidget({Key? key, required this.onTap}) : super(key: key);

@@ -11,7 +11,7 @@ import '../../../api/api.dart';
 import '../../../data/data.dart';
 import '../../../database/database.dart';
 import '../../../pages/book_list/cache_manager.dart';
-import '../../../provider/provider.dart';
+import '../../../provider/export.dart';
 import '../../base/book_event.dart';
 import '../../base/zhangdu_event.dart';
 import 'database_mixin.dart';

@@ -7,7 +7,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
 import '../../pattern/pattern.dart';
-import '../../provider/provider.dart';
+import '../../provider/export.dart';
 import '../../widgets/image_text_layout.dart';
 import '../book_info/info_page.dart';
 
