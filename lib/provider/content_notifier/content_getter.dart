@@ -12,7 +12,7 @@ mixin ContentGetter on ContentDataBase, ContentTasks {
   @override
   Future<void> dump() async {
     final cid = tData.cid;
-    final _bookid = bookid;
+    final _bookid = bookId;
     final api = this.api;
     if (cid == null || _bookid == -1) return;
     final _currentPage = currentPage;

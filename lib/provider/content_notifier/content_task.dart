@@ -17,16 +17,16 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
     return futures.awaitKey(key);
   }
 
-  void loadTasks(int _bookid, int? contentid) {
+  void loadTasks(int localBookId, int? contentId) {
     if (!inBook) return;
 
-    if (_bookid == bookid &&
-        _bookid != -1 &&
-        contentid != null &&
-        contentid != -1 &&
-        !containsKeyText(contentid) &&
-        !futures.isLoading(contentid)) {
-      futures.addTask(contentid, load(_bookid, contentid),
+    if (localBookId == bookId &&
+        localBookId != -1 &&
+        contentId != null &&
+        contentId != -1 &&
+        !containsKeyText(contentId) &&
+        !futures.isLoading(contentId)) {
+      futures.addTask(contentId, load(localBookId, contentId),
           callback: applyConentDimension);
     }
   }
@@ -52,7 +52,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
     getCurrentIds().where((e) => !containsKeyText(e)).forEach(_loadWithId);
   }
 
-  void _loadWithId(int? id) => loadTasks(bookid, id);
+  void _loadWithId(int? id) => loadTasks(bookId, id);
   bool canReload(int id) => !reloadIds.contains(id);
   bool _autoAddReloadIds(int contentId) {
     if (reloadIds.contains(contentId)) return true;
@@ -93,7 +93,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
 
       if (_autoAddReloadIds(updateCid)) return;
       if ((currentPage == tData.content.length || currentPage == 1)) {
-        await load(bookid, updateCid, update: true);
+        await load(bookId, updateCid, update: true);
         _getdata();
       }
     }
@@ -109,7 +109,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   }
 
   Future<void> _reloadId() async {
-    await load(bookid, tData.cid!, update: true);
+    await load(bookId, tData.cid!, update: true);
     final _data = getTextData(tData.cid);
     if (_data != null && _data.contentIsNotEmpty) {
       tData = _data;

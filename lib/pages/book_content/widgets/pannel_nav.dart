@@ -432,7 +432,7 @@ class _BottomEndState extends State<BottomEnd> {
   void onshowEnd() {
     _hide.value = false;
     bloc.reloadBrightness();
-    indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid,
+    indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid,
         api: bloc.api, restore: true);
   }
 
@@ -478,8 +478,8 @@ class _BottomEndState extends State<BottomEnd> {
                     show();
                     bloc.showCname.value = false;
                     indexBloc
-                      ..bookUpDateTime.remove(bloc.bookid)
-                      ..loadIndexs(bloc.bookid, bloc.tData.cid,
+                      ..bookUpDateTime.remove(bloc.bookId)
+                      ..loadIndexs(bloc.bookId, bloc.tData.cid,
                           api: bloc.api, restore: true);
                     showSettings.value = SettingView.indexs;
                   } else {
@@ -774,7 +774,7 @@ class _TopPannelState extends State<TopPannel> {
                                 contentNtf.controller?.goIdle();
                                 var cid = contentNtf.tData.cid!;
                                 var page = contentNtf.currentPage;
-                                var bookid = contentNtf.bookid;
+                                var bookid = contentNtf.bookId;
 
                                 contentNtf
                                   ..dump()

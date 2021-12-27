@@ -9,7 +9,7 @@ import '../text_data.dart';
 
 mixin ContentDataBase on ChangeNotifier {
   Repository get repository;
-  int bookid = -1;
+  int bookId = -1;
   int currentPage = 1;
   int innerIndex = 0;
 

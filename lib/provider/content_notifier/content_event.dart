@@ -44,7 +44,7 @@ mixin ContentEvent
   Future<void> updateCurrent() => reload().then((_) => notify());
 
   /// 进入阅读页面前，必须调用的方法
-  Future<void> touchBook(int newBookid, int cid, int page,
+  Future<void> touchBook(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) async {
     if (!inBook) resetController();
 
@@ -55,28 +55,28 @@ mixin ContentEvent
     await setOrientation(config.value.orientation!);
 
     inbook();
-    newBookOrCid(newBookid, cid, page, api: api);
+    newBookOrCid(newBookId, cid, page, api: api);
   }
 
-  bool _shouldUpdate(int newBookid, int cid, int page, ApiType api) {
-    return tData.cid != cid || bookid != newBookid || this.api != api;
+  bool _shouldUpdate(int newBookId, int cid, int page, ApiType api) {
+    return tData.cid != cid || bookId != newBookId || this.api != api;
   }
 
-  Future<void> _getStateOrSetBook(int newBookid, int cid, int page,
+  Future<void> _getStateOrSetBook(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) async {
-    if (_shouldUpdate(newBookid, cid, page, api)) {
+    if (_shouldUpdate(newBookId, cid, page, api)) {
       notify();
       notifyState(notEmptyOrIgnore: true, loading: false);
-      final update = bookid != newBookid;
+      final update = bookId != newBookId;
       tData.dispose();
       resetData(TextData(cid: cid, api: api));
       this.api = api;
       currentPage = page;
-      bookid = newBookid;
+      bookId = newBookId;
       // indexData.clear();
       if ((rawIndexData.isEmpty || update) && api == ApiType.zhangdu) {
         rawIndexData = await repository.bookEvent.zhangduEvent
-                .getZhangduIndex(bookid, false) ??
+                .getZhangduIndex(bookId, false) ??
             [];
         final d =
             rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
@@ -108,20 +108,20 @@ mixin ContentEvent
       await onStart?.call();
       final _key = key;
 
-      final _bookid = bookid;
-      final _cid = tData.cid;
-      if (_cid != null) {
-        loadTasks(_bookid, _cid);
+      final localBookId = bookId;
+      final localCid = tData.cid;
+      if (localCid != null) {
+        loadTasks(localBookId, localCid);
 
-        await awaitKey(_cid);
+        await awaitKey(localCid);
         if (debugTest) await release(const Duration(milliseconds: 500));
 
-        final _currentText = getTextData(_cid);
-        if (_bookid == bookid &&
-            _currentText != null &&
-            _currentText.contentIsNotEmpty &&
-            _cid == _currentText.cid) {
-          tData = _currentText;
+        final currentText = getTextData(localCid);
+        if (localBookId == bookId &&
+            currentText != null &&
+            currentText.contentIsNotEmpty &&
+            localCid == currentText.cid) {
+          tData = currentText;
 
           if (currentPage > tData.content.length)
             currentPage = tData.content.length;
@@ -166,17 +166,17 @@ mixin ContentEvent
     }
   }
 
-  Future<void> newBookOrCid(int newBookid, int cid, int page,
+  Future<void> newBookOrCid(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) async {
     if (!inBook) return;
 
     if (cid == -1) return;
-    final clear = bookid != newBookid;
+    final clear = bookId != newBookId;
     if (clear) {
       footer.value = '';
       header.value = '';
     }
-    final _reset = _shouldUpdate(newBookid, cid, page, api);
+    final _reset = _shouldUpdate(newBookId, cid, page, api);
     // assert(_reset || tData.contentIsNotEmpty);
     if (_reset || tData.contentIsEmpty) {
       final _t = Timer(
@@ -185,7 +185,7 @@ mixin ContentEvent
       await startFirstEvent(
           only: false,
           clear: clear,
-          onStart: () => _getStateOrSetBook(newBookid, cid, page, api: api),
+          onStart: () => _getStateOrSetBook(newBookId, cid, page, api: api),
           onDone: resetController);
 
       _t.cancel();
@@ -196,20 +196,18 @@ mixin ContentEvent
     notifyState(loading: true, notEmptyOrIgnore: true);
     return startFirstEvent(clear: false);
   }
-  // 同步----
 
   Future<void> goNext() {
     return EventQueue.runOne(
-        _willGoPreOrNext, () => _willGoPreOrNext(isPid: false));
+        _willGoPreOrNext, () => _willGoPreOrNext(preEvent: false));
   }
 
   Future<void> goPre() {
     return EventQueue.runOne(
-        _willGoPreOrNext, () => _willGoPreOrNext(isPid: true));
+        _willGoPreOrNext, () => _willGoPreOrNext(preEvent: true));
   }
 
-  Future<void> _willGoPreOrNext({bool isPid = false}) async {
-    /// 当前章节可能会发生变化
+  Future<void> _willGoPreOrNext({bool preEvent = false}) async {
     if (tData.contentIsEmpty || initQueue.actived) return;
     notifyState(error: NotifyMessage.hide);
 
@@ -218,19 +216,19 @@ mixin ContentEvent
       notifyState(loading: true);
     });
 
-    var getid = -1;
+    var getId = -1;
 
-    if (isPid) {
-      getid = tData.pid!;
+    if (preEvent) {
+      getId = tData.pid!;
     } else {
       await resolveId();
-      getid = tData.nid!;
-      if (getid == -1)
+      getId = tData.nid!;
+      if (getId == -1)
         notifyState(loading: false, error: NotifyMessage.noNextError);
     }
 
-    if (getid != -1) {
-      final success = await getContent(getid);
+    if (getId != -1) {
+      final success = await getContent(getId);
       if (!success) notifyState(error: NotifyMessage.netWorkError);
     }
     timer.cancel();

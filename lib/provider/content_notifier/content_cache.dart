@@ -10,9 +10,9 @@ import 'content_base.dart';
 import 'content_layout.dart';
 
 mixin ContentLoad on ContentDataBase, ContentLayout {
-  /// 文本加载-----------------
   final _caches = <int, TextData>{};
 
+  /// 与 [_caches]直接交互的方法
   bool containsKeyText(Object? key) {
     return _caches.containsKey(key);
   }
@@ -26,9 +26,40 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     _caches[key] = data;
   }
 
+  @override
+  void reset() {
+    if (_caches.isNotEmpty) {
+      var _c = List.of(_caches.values);
+      _caches.clear();
+      for (var t in _c) {
+        t.dispose();
+      }
+    }
+  }
+
+  TextData? getTextData(int? key) {
+    final data = _caches[key];
+    assert(data == null || data.contentIsNotEmpty);
+    return data;
+  }
+
+  @override
+  void updateCaches(TextData data) {
+    final keys = getCurrentIds();
+
+    if (_caches.length > keys.length + 1) {
+      _caches.removeWhere((key, data) {
+        final remove = !keys.contains(key);
+        if (remove) data.dispose();
+        return remove;
+      });
+    }
+  }
+  // ----------------
+
   int get preLength {
     var length = currentPage - 1;
-    final preData = _caches[tData.pid];
+    final preData = getTextData(tData.pid);
     length += preData?.content.length ?? 0;
     return math.max(0, length);
   }
@@ -36,7 +67,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   int get nextLength {
     var length = tData.content.length;
     length -= currentPage;
-    final nextData = _caches[tData.nid];
+    final nextData = getTextData(tData.nid);
     length += nextData?.content.length ?? 0;
     return math.max(0, length);
   }
@@ -63,36 +94,6 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     }
   }
 
-  @override
-  void reset() {
-    if (_caches.isNotEmpty) {
-      var _c = List.of(_caches.values);
-      _caches.clear();
-      for (var t in _c) {
-        t.dispose();
-      }
-    }
-  }
-
-  TextData? getTextData(int? key) {
-    final data = _caches[key];
-    assert(data == null || data.contentIsNotEmpty);
-    return data;
-  }
-
-  @override
-  void updateCaches(TextData data) {
-    final _keys = getCurrentIds();
-
-    if (_caches.length > _keys.length + 1) {
-      _caches.removeWhere((key, data) {
-        final remove = !_keys.contains(key);
-        if (remove) data.dispose();
-        return remove;
-      });
-    }
-  }
-
   // 根据当前章节更新存活章节
   // 任务顺序与添加顺序一致
   Iterable<int> getCurrentIds() {
@@ -110,8 +111,8 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   }
 
   @pragma('vm:prefer-inline')
-  Future<void> load(int _bookid, int contentid, {update = false}) {
-    return _run(() => _load(_bookid, contentid, update));
+  Future<void> load(int localBookId, int contentId, {update = false}) {
+    return _run(() => _load(localBookId, contentId, update));
   }
 
   @pragma('vm:prefer-inline')
@@ -124,7 +125,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     final _key = key;
     final pages = await asyncLayout(data, cname);
 
-    if (_key != key || oldBookId != bookid) {
+    if (_key != key || oldBookId != bookId) {
       for (final p in pages) {
         // 释放picture资源
         p.dispose();
@@ -141,25 +142,25 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   /// 通过`lastIndexOf`找到index
   List<ZhangduChapterData> rawIndexData = [];
-  Future<void> _load(int _bookid, int contentid, bool update) async {
-    if (_bookid == -1 || contentid == -1) return;
-    TextData? _cnpid;
+  Future<void> _load(int localBookId, int contentId, bool update) async {
+    if (localBookId == -1 || contentId == -1) return;
+    TextData? newText;
     if (api == ApiType.zhangdu) {
-      final current = indexData[contentid];
+      final current = indexData[contentId];
       if (current == null) {
         Log.e('error...', onlyDebug: false);
         return;
       }
-      final _index = rawIndexData.lastIndexOf(current);
+      final index = rawIndexData.lastIndexOf(current);
 
       var pid = -1;
       var nid = -1;
-      if (_index > 0) {
-        final p = rawIndexData.elementAt(_index - 1);
+      if (index > 0) {
+        final p = rawIndexData.elementAt(index - 1);
         if (p.id != null) pid = p.id!;
       }
-      if (_index < rawIndexData.length - 1) {
-        final n = rawIndexData.elementAt(_index + 1);
+      if (index < rawIndexData.length - 1) {
+        final n = rawIndexData.elementAt(index + 1);
         if (n.id != null) nid = n.id!;
       }
       final url = current.contentUrl;
@@ -169,16 +170,16 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
       if (url != null && name != null && sort != null) {
         final lines = await repository.bookEvent
-            .getZhangduContent(_bookid, contentid, url, name, sort, update);
-        if (_bookid != bookid) return;
+            .getZhangduContent(localBookId, contentId, url, name, sort, update);
+        if (localBookId != bookId) return;
 
         if (lines != null) {
           final hasContent = lines.isNotEmpty;
           final data = hasContent ? lines : const ['没有章节内容，稍后重试。'];
-          final pages = await _genTextData(_bookid, data, name);
+          final pages = await _genTextData(localBookId, data, name);
           if (pages.isEmpty) return;
-          _cnpid = TextData(
-            cid: contentid,
+          newText = TextData(
+            cid: contentId,
             nid: nid,
             pid: pid,
             content: pages,
@@ -189,15 +190,15 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       }
     } else {
       final lines =
-          await repository.bookEvent.getContent(_bookid, contentid, update);
-      if (_bookid != bookid) return;
+          await repository.bookEvent.getContent(localBookId, contentId, update);
+      if (localBookId != bookId) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
         final allLines = debugTest ? ['debugTest'] : lines.source;
-        final pages = await _genTextData(_bookid, allLines, lines.cname!);
+        final pages = await _genTextData(localBookId, allLines, lines.cname!);
 
         if (pages.isEmpty) return;
-        _cnpid = TextData(
+        newText = TextData(
           content: pages,
           nid: lines.nid,
           pid: lines.pid,
@@ -208,12 +209,12 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
         debugTest = false;
       }
     }
-    if (_cnpid != null) {
-      final old = _caches.remove(_cnpid.cid);
+    if (newText != null) {
+      final old = removeText(newText.cid);
       old?.dispose();
-      addText(_cnpid.cid!, _cnpid.clone());
+      addText(newText.cid!, newText.clone());
       applyConentDimension();
-      _cnpid.dispose();
+      newText.dispose();
     }
   }
 }

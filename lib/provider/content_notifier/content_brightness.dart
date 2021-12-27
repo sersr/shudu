@@ -9,6 +9,7 @@ mixin ContentBrightness {
 
   double? _lastBrightness;
 
+  // 恢复用户设置亮度
   void brightnessResetUser() {
     if (!follow.value) {
       final _old = _lastBrightness;
@@ -18,6 +19,7 @@ mixin ContentBrightness {
     }
   }
 
+  // 恢复系统亮度
   void outResetDefault() {
     if (brightnessSup)
       EventQueue.pushOne(brightness, () async {

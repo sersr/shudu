@@ -109,10 +109,10 @@ class ContentPageViewState extends State<ContentPageView>
     }
     if (bloc.initQueue.runner != null) {
       bloc.initQueue.runner?.whenComplete(() {
-        indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
+        indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid, api: bloc.api);
       });
     } else {
-      indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
+      indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid, api: bloc.api);
     }
     return _delegate =
         OverlayMixinDelegate(pannels, const Duration(milliseconds: 350))
