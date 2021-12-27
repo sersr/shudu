@@ -79,23 +79,10 @@ class ContentPageViewState extends State<ContentPageView>
             left: 0,
             right: 0,
             bottom: 0,
-            child: OverlayPannelWidget(
+            child: PannelTransition(
               controller: pannel.controller,
-              curve: Curves.ease,
-              reverseCurve: Curves.ease.flipped,
-              builder: (context, animation) {
-                final op =
-                    Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero);
-
-                final position = animation.drive(op);
-                return SlideTransition(
-                  position: position,
-                  child: FadeTransition(
-                    opacity: animation.drive(Tween<double>(begin: 0, end: 0.9)),
-                    child: Pannel(controller: offsetPosition),
-                  ),
-                );
-              },
+              begin: const Offset(0, 1),
+              child: Pannel(controller: offsetPosition),
             ),
           );
         },
@@ -104,24 +91,11 @@ class ContentPageViewState extends State<ContentPageView>
             left: 0,
             right: 0,
             top: 0,
-            child: OverlayPannelWidget(
-                controller: pannel.controller,
-                curve: Curves.ease,
-                reverseCurve: Curves.ease.flipped,
-                builder: (context, animation) {
-                  final op = Tween<Offset>(
-                      begin: const Offset(0, -1), end: Offset.zero);
-
-                  final position = animation.drive(op);
-                  return SlideTransition(
-                    position: position,
-                    child: FadeTransition(
-                      opacity:
-                          animation.drive(Tween<double>(begin: 0, end: 0.9)),
-                      child: TopPannel(),
-                    ),
-                  );
-                }),
+            child: PannelTransition(
+              controller: pannel.controller,
+              begin: const Offset(0, -1),
+              child: const TopPannel(),
+            ),
           );
         }
       ],
@@ -141,7 +115,7 @@ class ContentPageViewState extends State<ContentPageView>
       indexBloc.loadIndexs(bloc.bookid, bloc.tData.cid, api: bloc.api);
     }
     return _delegate =
-        OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
+        OverlayMixinDelegate(pannels, const Duration(milliseconds: 350))
           ..overlay = context.read<OverlayObserver>();
   }
 
@@ -183,8 +157,8 @@ class ContentPageViewState extends State<ContentPageView>
     setState(() {});
   }
 
-  int isBoundary() {
-    return bloc.hasContent();
+  void isBoundary() {
+    bloc.hasContent();
   }
 
   void scrollingNotify(bool isScrolling) {

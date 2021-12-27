@@ -370,106 +370,29 @@ class _BottomEndState extends State<BottomEnd> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: OverlayPannelWidget(
-                controller: pannel.controller,
-                curve: Curves.easeInOut,
-                builder: (context, animation) {
-                  final position = animation.drive(op);
-                  final colors = debx.animate(animation);
-                  final padding = EdgeInsets.only(
-                      top: 10.0 + bloc.pannelPadding.top,
-                      left: 24.0 + bloc.pannelPadding.left,
-                      right: 24.0 + bloc.pannelPadding.right,
-                      bottom: 0);
-                  // if (state.hide.value) return const SizedBox();
-
-                  final bottom = 30 + bsize.height;
-                  return RepaintBoundary(
-                    child: CustomMultiChildLayout(
-                      delegate: ModalPart(bottom),
-                      children: [
-                        LayoutId(
-                          id: 'body',
-                          child: RepaintBoundary(
-                            child: AnimatedBuilder(
-                              animation: _hide,
-                              builder: (context, _) {
-                                return IgnorePointer(
-                                  ignoring: _hide.value,
-                                  child: GestureDetector(
-                                    onTap: hide,
-                                    child: RepaintBoundary(
-                                      child: AnimatedBuilder(
-                                        animation: colors,
-                                        builder: (context, child) {
-                                          return ColoredBox(
-                                            color: colors.value ??
-                                                Colors.transparent,
-                                            child: GestureDetector(
-                                                onTap: () {}, child: child),
-                                          );
-                                        },
-                                        child: RepaintBoundary(
-                                          child: SlideTransition(
-                                            position: position,
-                                            child: FadeTransition(
-                                              opacity: animation,
-                                              child: Padding(
-                                                padding: padding,
-                                                child: Material(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          6.0),
-                                                  color: !context.isDarkMode
-                                                      ? Colors.grey.shade300
-                                                      : Colors.grey.shade900,
-                                                  clipBehavior: Clip.hardEdge,
-                                                  child: BookSettingsView(
-                                                      showSettings:
-                                                          showSettings,
-                                                      close: callbackOnHide),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        LayoutId(
-                          id: 'bottom',
-                          child: IgnorePointer(
-                            child: RepaintBoundary(
-                              child: AnimatedBuilder(
-                                  animation: colors,
-                                  builder: (context, _) {
-                                    return Container(
-                                      color: colors.value ?? Colors.transparent,
-                                      height: bottom,
-                                    );
-                                  }),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  );
-                }),
+            child: SettingsTransition(
+              onTap: hide,
+              hide: _hide,
+              height: bsize.height,
+              showSettings: showSettings,
+              controller: pannel.controller,
+              callbackOnHide: callbackOnHide,
+            ),
           );
-        }
+        },
       ],
     );
   }
 
   OverlayMixinDelegate? _delegate;
-  OverlayMixinDelegate get delegate => _delegate ??=
-      OverlayMixinDelegate(pannels, const Duration(milliseconds: 300))
-        ..overlay = context.read<OverlayObserver>();
+  OverlayMixinDelegate get delegate {
+    if (_delegate != null) {
+      if (!_delegate!.closed) return _delegate!;
+    }
+    return _delegate =
+        OverlayMixinDelegate(pannels, const Duration(milliseconds: 350))
+          ..overlay = context.read<OverlayObserver>();
+  }
 
   VoidCallback? _callback;
   void callbackOnHide([VoidCallback? callback]) {
@@ -649,6 +572,156 @@ class _BottomEndState extends State<BottomEnd> {
         ),
       ),
     );
+  }
+}
+
+class SettingsTransition extends StatelessWidget {
+  const SettingsTransition({
+    Key? key,
+    required this.height,
+    required this.hide,
+    required this.onTap,
+    required this.controller,
+    required this.callbackOnHide,
+    required this.showSettings,
+  }) : super(key: key);
+
+  final double height;
+  final ValueNotifier hide;
+  final VoidCallback onTap;
+  final AnimationController controller;
+  final void Function([VoidCallback? callback]) callbackOnHide;
+  final ValueNotifier<SettingView> showSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
+    final debx = ColorTween(
+        begin: Colors.transparent, end: Colors.black87.withAlpha(100));
+    final bottom = 30 + height;
+
+    return CurvedAnimationWidget(
+        controller: controller,
+        curve: Curves.easeInOut,
+        builder: (context, animation) {
+          final position = animation.drive(op);
+          final colors = debx.animate(animation);
+          final bloc = context.read<ContentNotifier>();
+
+          final bottomChild = LayoutId(
+            id: 'bottom',
+            child: IgnorePointer(
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                    animation: colors,
+                    builder: (context, _) {
+                      return Container(
+                        color: colors.value ?? Colors.transparent,
+                        height: bottom,
+                      );
+                    }),
+              ),
+            ),
+          );
+
+          Widget body;
+          body = SlideTransition(
+            position: position,
+            child: FadeTransition(
+              opacity: animation,
+              child: Material(
+                borderRadius: BorderRadius.circular(6.0),
+                color: !context.isDarkMode
+                    ? Colors.grey.shade300
+                    : Colors.grey.shade900,
+                clipBehavior: Clip.hardEdge,
+                child: BookSettingsView(
+                    showSettings: showSettings, close: callbackOnHide),
+              ),
+            ),
+          );
+
+          body = AnimatedBuilder(
+            animation: bloc.pannelPaddingNotifier,
+            builder: (context, child) {
+              final padding = EdgeInsets.only(
+                  top: 10.0 + bloc.pannelPadding.top,
+                  left: 24.0 + bloc.pannelPadding.left,
+                  right: 24.0 + bloc.pannelPadding.right,
+                  bottom: 0);
+              return Padding(padding: padding, child: child);
+            },
+            child: body,
+          );
+
+          body = GestureDetector(
+            onTap: onTap,
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: colors,
+                builder: (context, child) {
+                  return ColoredBox(
+                    color: colors.value ?? Colors.transparent,
+                    child: GestureDetector(onTap: () {}, child: child),
+                  );
+                },
+                child: RepaintBoundary(child: body),
+              ),
+            ),
+          );
+
+          body = LayoutId(
+            id: 'body',
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: hide,
+                builder: (context, child) {
+                  return IgnorePointer(ignoring: hide.value, child: child);
+                },
+                child: body,
+              ),
+            ),
+          );
+
+          return RepaintBoundary(
+            child: CustomMultiChildLayout(
+              delegate: ModalPart(bottom),
+              children: [body, bottomChild],
+            ),
+          );
+        });
+  }
+}
+
+class PannelTransition extends StatelessWidget {
+  const PannelTransition({
+    Key? key,
+    required this.child,
+    required this.controller,
+    this.begin = const Offset(0, -1),
+  }) : super(key: key);
+
+  final Widget child;
+  final Offset begin;
+  final AnimationController controller;
+  @override
+  Widget build(BuildContext context) {
+    return CurvedAnimationWidget(
+        controller: controller,
+        curve: Curves.ease,
+        reverseCurve: Curves.ease.flipped,
+        builder: (context, animation) {
+          final op = Tween<Offset>(begin: begin, end: Offset.zero);
+
+          final position = animation.drive(op);
+          return SlideTransition(
+            position: position,
+            child: FadeTransition(
+              opacity: animation.drive(Tween<double>(begin: 0, end: 0.9)),
+              child: child,
+            ),
+          );
+        });
   }
 }
 

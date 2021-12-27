@@ -150,7 +150,7 @@ class ContentPageViewState extends State<ContentPageView>
     setState(() {});
   }
 
-  int isBoundary() {
+  void isBoundary() {
     return bloc.hasContent();
   }
 

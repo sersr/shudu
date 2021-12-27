@@ -28,6 +28,7 @@ mixin ContentDataBase on ChangeNotifier {
   void resetController() {
     controller?.goIdle();
     _innerIndex = 0;
+    controller?.applyConentDimension(minExtent: 0, maxExtent: 1);
     controller?.correct(0.0);
   }
 
@@ -610,6 +611,41 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   /// 文本加载-----------------
   final _caches = <int, TextData>{};
 
+  int get preLength {
+    var length = currentPage - 1;
+    final preData = _caches[tData.pid];
+    length += preData?.content.length ?? 0;
+    return math.max(0, length);
+  }
+
+  int get nextLength {
+    var length = tData.content.length;
+    length -= currentPage;
+    final nextData = _caches[tData.nid];
+    length += nextData?.content.length ?? 0;
+    return math.max(0, length);
+  }
+
+  bool _applySuccess = false;
+  void applyConentDimension() {
+    final pLength = preLength;
+    final nLength = nextLength;
+
+    final extent = controller?.viewPortDimension;
+    final page = controller?.page.round();
+
+    if (extent != null && page != null) {
+      _applySuccess = true;
+      final p = -pLength + page;
+      final n = nLength + page;
+      Log.w('$p, $n');
+      controller?.applyConentDimension(
+          minExtent: p * extent, maxExtent: n * extent);
+    } else {
+      _applySuccess = false;
+    }
+  }
+
   @override
   void reset() {
     if (_caches.isNotEmpty) {
@@ -768,6 +804,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       final old = _caches.remove(_cnpid.cid);
       old?.dispose();
       _caches[_cnpid.cid!] = _cnpid.clone();
+      applyConentDimension();
       _cnpid.dispose();
     }
   }
@@ -786,7 +823,8 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
         contentid != -1 &&
         !_caches.containsKey(contentid) &&
         !_futures.isLoading(contentid)) {
-      _futures.addTask(contentid, load(_bookid, contentid));
+      _futures.addTask(contentid, load(_bookid, contentid),
+          callback: applyConentDimension);
     }
   }
 
@@ -1041,32 +1079,29 @@ mixin ContentEvent
   }
 
   void _currentTextWasChanged() {
-    controller?.applyConentDimension(
-        minExtent: hasPre() ? double.negativeInfinity : null,
-        maxExtent: hasNext() ? double.infinity : null);
     _notify();
   }
 
   /// 由滚动状态调用
   /// 只有在渲染后才能更改[_innerIndex][controller.pixels]
   void reduceController() {
-    if (_innerIndex.abs() > 1000) {
+    if (_innerIndex.abs() > 100) {
       EventQueue.runOne(_reduce, () {
-        return SchedulerBinding.instance!.addPostFrameCallback((_) {
-          _reduce();
-        });
+        if (_innerIndex.abs() > 10) {
+          return SchedulerBinding.instance!.addPostFrameCallback(_reduce);
+        }
       });
     }
   }
 
-  void _reduce() {
+  void _reduce([_]) {
     final extent = controller?.viewPortDimension;
     if (controller?.isScrolling == false && extent != null) {
       final pages = controller!.page.truncate();
       Log.w('lenght: $pages ${extent * pages} | ${controller?.pixels}',
           onlyDebug: false);
-      controller?.correctBy(-pages * extent);
-      _innerIndex = controller?.page.round() ?? 0;
+      resetController();
+      applyConentDimension();
       _notify();
     }
   }
@@ -1243,19 +1278,9 @@ mixin ContentGetter on ContentDataBase, ContentTasks {
     }
   }
 
-  int hasContent() {
-    var bound = 0;
-    if (tData.contentIsNotEmpty) {
-      final hasRight = hasNext();
-      final hasLeft = hasPre();
-
-      if (hasRight) bound |= ContentBoundary.addRight;
-      if (hasLeft) bound |= ContentBoundary.addLeft;
-    }
-
+  void hasContent() {
     scheduleTask();
-
-    return bound;
+    if (!_applySuccess) applyConentDimension();
   }
 
   bool hasPre() {
