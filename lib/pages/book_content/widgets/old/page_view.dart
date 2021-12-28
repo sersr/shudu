@@ -6,13 +6,13 @@ import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../../provider/constants.dart';
-import '../../../provider/export.dart';
-import '../../../provider/text_data.dart';
-import '../../../widgets/pan_slide.dart';
-import 'battery_view.dart';
-import 'content_view.dart';
-import 'page_view_controller.dart';
+import '../../../../provider/constants.dart';
+import '../../../../provider/export.dart';
+import '../../../../provider/text_data.dart';
+import '../../../../widgets/pan_slide.dart';
+import '../battery_view.dart';
+import '../content_view.dart';
+import '../page_view_controller.dart';
 import 'pannel.dart';
 
 class ContentPageView extends StatefulWidget {

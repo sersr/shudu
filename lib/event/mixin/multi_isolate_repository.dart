@@ -3,15 +3,14 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:dartz/dartz.dart' as dartz;
 import '../base/book_event.dart';
 import '../repository.dart';
 import 'base/export.dart';
+import 'base/system_infos.dart';
 import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
     with
-        // ComplexMixin, // 简单的条件判断可以在主隔离中调用
         ListenMixin,
         SendEventMixin,
         // SendEventPortMixin,
@@ -20,23 +19,22 @@ class MultiIsolateRepository extends Repository
         MultiBookEventDefaultMessagerMixin // 默认
 {
   // [appPath, cachePath]
-  List? args;
+  IsolateArgs? args;
 
   @override
   FutureOr<void> onInitStart() async {
     args = await initStartArgs();
-    Log.i('args: $args', onlyDebug: false);
   }
 
   @override
   Future<RemoteServer> createRemoteServerDatabase() async {
     assert(args != null);
+    final localArgs = args!.copyWith(localSendPort);
     if (!kIsWeb) {
-      final isolate =
-          await Isolate.spawn(dataBaseEntryPoint, [localSendPort, ...?args]);
+      final isolate = await Isolate.spawn(dataBaseEntryPoint, localArgs);
       return IsolateRemoteServer(isolate);
     } else {
-      dataBaseEntryPoint([localSendPort, ...?args]);
+      dataBaseEntryPoint(localArgs);
       return LocalRemoteServer();
     }
   }
@@ -44,27 +42,23 @@ class MultiIsolateRepository extends Repository
   @override
   Future<RemoteServer> createRemoteServerBookEventDefault() async {
     assert(args != null);
+    final localArgs = args!.copyWith(localSendPort);
     if (!kIsWeb) {
-      final isolate = await Isolate.spawn(
-          _multiIsolateEntryPoint, [localSendPort, ...?args]);
+      final isolate = await Isolate.spawn(_multiIsolateEntryPoint, localArgs);
       return IsolateRemoteServer(isolate);
     } else {
-      _multiIsolateEntryPoint([localSendPort, ...?args]);
+      _multiIsolateEntryPoint(localArgs);
       return LocalRemoteServer();
     }
   }
 }
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
-void _multiIsolateEntryPoint(List args) async {
-  final remoteSendPort = args[0];
-  final appPath = args[1];
-  final cachePath = args[2];
-  dartz.Option;
+void _multiIsolateEntryPoint(IsolateArgs args) {
   BookEventMultiIsolate(
-    appPath: appPath,
-    cachePath: cachePath,
-    remoteSendPort: remoteSendPort,
+    appPath: args.appPath,
+    cachePath: args.cachePath,
+    remoteSendPort: args.sendHandle,
   ).init();
 }
 

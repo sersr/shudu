@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../event/event.dart';
+import '../event/export.dart';
 import 'content_notifier/export.dart';
 
 export 'content_notifier/export.dart';

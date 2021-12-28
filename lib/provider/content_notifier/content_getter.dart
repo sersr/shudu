@@ -9,32 +9,11 @@ import 'content_base.dart';
 import 'content_task.dart';
 
 mixin ContentGetter on ContentDataBase, ContentTasks {
-  @override
-  Future<void> dump() async {
-    final cid = tData.cid;
-    final _bookid = bookId;
-    final api = this.api;
-    if (cid == null || _bookid == -1) return;
-    final _currentPage = currentPage;
-    if (api == ApiType.biquge) {
-      final u = BookCache(
-        page: _currentPage,
-        isNew: false,
-        chapterId: cid,
-        sortKey: sortKey,
-      );
 
-      await repository.bookEvent.bookCacheEvent.updateBook(_bookid, u);
-    } else {
-      final book = ZhangduCache(
-          page: _currentPage, isNew: false, chapterId: cid, sortKey: sortKey);
-      await repository.bookEvent.zhangduEvent.updateZhangduBook(_bookid, book);
-    }
-  }
 
   void getContentDimension() {
     scheduleTask();
-    applyConentDimension(force: false);
+    applyContentDimension(force: false);
   }
 
   // 首先确定当前章节首页位置
@@ -58,7 +37,7 @@ mixin ContentGetter on ContentDataBase, ContentTasks {
         if (changeState) {
           assert(controller == null || controller!.page.round() == page);
 
-          innerIndex = page;
+          setInnerIndex(page);
           currentPage = _currentPage;
           tData = text;
           dump();

@@ -3,15 +3,13 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../base/book_event.dart';
 import 'base/export.dart';
+import 'base/system_infos.dart';
 
 // 子隔离，数据库 入口
-void dataBaseEntryPoint(args) async {
-  final remoteSendPort = args[0] as SendHandle;
-  final appPath = args[1] as String;
-  // final cachePath = args[2] as String;
+void dataBaseEntryPoint(IsolateArgs args) {
   DatabaseImpl(
-    appPath: appPath,
-    remoteSendPort: remoteSendPort,
+    appPath: args.appPath,
+    remoteSendPort: args.sendHandle,
   ).run();
 }
 

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../data/data.dart';
-import '../event/event.dart';
+import '../event/export.dart';
 
 enum ApiType {
   biquge,

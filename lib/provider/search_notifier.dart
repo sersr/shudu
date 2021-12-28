@@ -4,7 +4,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../data/biquge/search_data.dart';
 import '../data/zhangdu/zhangdu_search.dart';
-import '../event/event.dart';
+import '../event/export.dart';
 
 class SearchNotifier extends ChangeNotifier {
   SearchNotifier(this.repository);

@@ -5,9 +5,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';
-import '../../../database/database.dart';
 import '../../base/book_event.dart';
-import 'zhangdu_mixin.dart';
 
 /// 可以处理跨隔离任务
 mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
@@ -94,33 +92,33 @@ mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
   }
 
   // zhangdu
-  @override
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update) async {
-    if (update) {
-      return await _getZhangduContentNet(
-              bookId, contentId, name, sort, contentUrl) ??
-          await getZhangduContentDb(bookId, contentId);
-    } else {
-      return await getZhangduContentDb(bookId, contentId) ??
-          await _getZhangduContentNet(
-              bookId, contentId, name, sort, contentUrl);
-    }
-  }
+  // @override
+  // FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
+  //     String contentUrl, String name, int sort, bool update) async {
+  //   if (update) {
+  //     return await _getZhangduContentNet(
+  //             bookId, contentId, name, sort, contentUrl) ??
+  //         await getZhangduContentDb(bookId, contentId);
+  //   } else {
+  //     return await getZhangduContentDb(bookId, contentId) ??
+  //         await _getZhangduContentNet(
+  //             bookId, contentId, name, sort, contentUrl);
+  //   }
+  // }
 
-  Future<List<String>?> _getZhangduContentNet(int bookId, int contentId,
-      String name, int sort, String contentUrl) async {
-    final result = await getZhangduContentNet(contentUrl);
-    if (result != null) {
-      final _raw = ZhangduComplexMixin.replaceAll(result);
-      insertOrUpdateZhangduContent(ZhangduContent(
-        bookId: bookId,
-        contentId: contentId,
-        name: name,
-        data: result,
-        sort: sort,
-      ));
-      return split(_raw);
-    }
-  }
+  // Future<List<String>?> _getZhangduContentNet(int bookId, int contentId,
+  //     String name, int sort, String contentUrl) async {
+  //   final result = await getZhangduContentNet(contentUrl);
+  //   if (result != null) {
+  //     final _raw = ZhangduComplexMixin.replaceAll(result);
+  //     insertOrUpdateZhangduContent(ZhangduContent(
+  //       bookId: bookId,
+  //       contentId: contentId,
+  //       name: name,
+  //       data: result,
+  //       sort: sort,
+  //     ));
+  //     return split(_raw);
+  //   }
+  // }
 }

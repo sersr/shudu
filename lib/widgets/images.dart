@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../event/event.dart';
+import '../event/export.dart';
 import '../provider/export.dart';
 import 'image_shadow.dart';
 

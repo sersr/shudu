@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
+import '../../database/database.dart';
 import '../book_index_notifier.dart';
 import '../text_data.dart';
 import 'content_base.dart';
@@ -74,8 +75,15 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   bool _applySuccess = false;
   @override
-  void applyConentDimension({bool force = true}) {
-    if (!force && _applySuccess) return;
+  void applyContentDimension({bool force = true}) {
+    if (!force) {
+      if (_applySuccess) {
+        // 如果处在边界上,应该更新
+        final atEdge = controller?.atEdge ?? false;
+        if (!atEdge) return;
+      }
+    }
+
     final pLength = preLength;
     final nLength = nextLength;
 
@@ -213,8 +221,43 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       final old = removeText(newText.cid);
       old?.dispose();
       addText(newText.cid!, newText.clone());
-      applyConentDimension();
+      applyContentDimension();
       newText.dispose();
+    }
+  }
+
+  @override
+  Future<void> dump() {
+    /// 立即获取数据
+    /// 如果在异步中获取，数据可能会丢失
+    final api = this.api;
+    final cid = tData.cid;
+    final localBookId = bookId;
+    final localCurrentPage = currentPage;
+    return EventQueue.runOne(
+        _dump, () => _dump(localBookId, cid, localCurrentPage, api));
+  }
+
+  Future<void> _dump(
+      int localBookId, int? cid, int localCurrentPage, ApiType api) async {
+    if (cid == null || localBookId == -1) return;
+    if (api == ApiType.biquge) {
+      final u = BookCache(
+        isNew: false,
+        chapterId: cid,
+        sortKey: sortKey,
+        page: localCurrentPage,
+      );
+
+      await repository.bookCacheEvent.updateBook(localBookId, u);
+    } else {
+      final book = ZhangduCache(
+        isNew: false,
+        chapterId: cid,
+        sortKey: sortKey,
+        page: localCurrentPage,
+      );
+      await repository.zhangduEvent.updateZhangduBook(localBookId, book);
     }
   }
 }

@@ -11,7 +11,7 @@ import 'category.dart';
 import 'top.dart';
 
 class ListMainPage extends StatelessWidget {
-  const ListMainPage({Key? key}) : super(key: key);
+  ListMainPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -131,12 +131,25 @@ class ListMainPage extends StatelessWidget {
                 _builder('clear', () {
                   CacheBinding.instance?.imageRefCache?.clear();
                 }),
+              const SizedBox(height: 5),
+              row(
+                  left: AnimatedBuilder(
+                      animation: _eventQueueLength,
+                      builder: (context, child) {
+                        return _builder(
+                          'EventQueue length: ${_eventQueueLength.value}',
+                          () => _eventQueueLength.value =
+                              EventQueue.checkTempQueueLength(),
+                        );
+                      })),
             ],
           ),
         ),
       ),
     );
   }
+
+  final _eventQueueLength = ValueNotifier(0);
 
   Widget row({Widget? left, Widget? right}) {
     return Row(

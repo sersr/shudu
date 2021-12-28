@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:flutter/services.dart';
-import '../event/event.dart';
+import '../event/export.dart';
 import '../provider/export.dart';
 import 'home/home_page.dart';
 

@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_import
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -7,9 +9,14 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../provider/export.dart';
-import '../../widgets/page_animation.dart';
-import 'widgets/page_view_nav.dart';
+import '../../../../provider/book_cache_notifier.dart';
+import '../../../../provider/content_notifier.dart';
+import '../../../../provider/options_notifier.dart';
+import '../../../../provider/export.dart';
+import '../../../../widgets/page_animation.dart';
+import '../../../../widgets/pan_slide.dart';
+import 'page_view.dart';
+import '../../book_content_page_nav.dart' as nav;
 
 enum SettingView { indexs, setting, none }
 
@@ -28,7 +35,7 @@ class BookContentPage extends StatefulWidget {
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return AnnotatedRegion<SystemUiOverlayStyle>(
           value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-          child: const RepaintBoundary(child: BookContentPage()));
+          child: const RepaintBoundary(child: nav.BookContentPage()));
     }));
   }
 
@@ -36,18 +43,16 @@ class BookContentPage extends StatefulWidget {
   BookContentPageState createState() => BookContentPageState();
 }
 
-class BookContentPageState extends State<BookContentPage>
+class BookContentPageState extends PanSlideState<BookContentPage>
     with WidgetsBindingObserver, PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
   late OptionsNotifier notifier;
-  late OverlayObserverState observer;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    observer = OverlayObserverState(overlayGetter: overlayGetter);
   }
 
   @override
@@ -69,7 +74,7 @@ class BookContentPageState extends State<BookContentPage>
   void initOnceTask() {
     super.initOnceTask();
     if (bloc.config.value.orientation!) {
-      EventQueue.pushOne(this, () async {
+      EventQueue.runTask(this, () async {
         if (!bloc.uiOverlayShow) await uiOverlay();
       });
     }
@@ -77,7 +82,7 @@ class BookContentPageState extends State<BookContentPage>
 
   Timer? errorTimer;
   @override
-  Widget build(context) {
+  Widget wrapOverlay(context, overlay) {
     bloc.metricsChange(MediaQuery.of(context));
     Widget child = AnimatedBuilder(
       animation: notifyColor,
@@ -143,7 +148,7 @@ class BookContentPageState extends State<BookContentPage>
                 ),
               ),
             ),
-            Positioned.fill(child: RepaintBoundary(child: Overlay(key: key))),
+            Positioned.fill(child: RepaintBoundary(child: overlay)),
           ],
         ),
       ),
@@ -152,34 +157,14 @@ class BookContentPageState extends State<BookContentPage>
     return WillPopScope(
         onWillPop: onWillPop,
         child: MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: Provider<OverlayObserver>.value(
-                value: observer, child: child)));
-  }
-
-  final key = GlobalKey<OverlayState>();
-
-  OverlayState? get getOverlay {
-    if (!mounted) {
-      throw OverlayGetterError('退出');
-    }
-    return key.currentState;
-  }
-
-  OverlayState? overlayGetter() {
-    return getOverlay;
-  }
-
-  int getLength() {
-    return observer.entriesState.length;
+            context: context, removeTop: true, child: child));
   }
 
   Future<bool> onWillPop() async {
     bloc.showCname.value = false;
 
-    if (getLength() > 1) {
-      observer.hideLast();
+    if (showEntries.length > 1) {
+      hideLast();
       return false;
     }
 
@@ -189,7 +174,7 @@ class BookContentPageState extends State<BookContentPage>
 
     await blocCache.load();
 
-    EventQueue.pushOne(this, () => uiOverlay(hide: false));
+    EventQueue.runTask(this, () => uiOverlay(hide: false));
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
     if (Theme.of(context).platform == TargetPlatform.iOS) {

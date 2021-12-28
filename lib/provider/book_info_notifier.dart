@@ -4,7 +4,7 @@ import 'package:utils/utils.dart';
 import '../api/api.dart';
 import '../data/data.dart';
 
-import '../event/event.dart';
+import '../event/export.dart';
 import 'book_index_notifier.dart';
 
 class BookInfoProvider extends ChangeNotifier {

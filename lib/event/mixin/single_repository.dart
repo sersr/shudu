@@ -7,6 +7,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../base/book_event.dart';
 import '../repository.dart';
 import 'base/export.dart';
+import 'base/system_infos.dart';
 
 /// 单一 隔离
 /// 主隔离(native)
@@ -17,13 +18,14 @@ class SingleRepository extends Repository
   @override
   Future<RemoteServer> onCreateIsolate(SendHandle remoteSendPort) async {
     final args = await initStartArgs();
+    final localArgs = args.copyWith(remoteSendPort);
+
     if (!kIsWeb) {
-      // [remoteSendPort, appPath, cachePath]
-      final newIsolate = await Isolate.spawn(
-          singleIsolateEntryPoint, [remoteSendPort, ...args]);
+      final newIsolate =
+          await Isolate.spawn(singleIsolateEntryPoint, localArgs);
       return IsolateRemoteServer(newIsolate);
     } else {
-      singleIsolateEntryPoint([remoteSendPort, ...args]);
+      singleIsolateEntryPoint(localArgs);
       return LocalRemoteServer();
     }
   }
@@ -46,30 +48,27 @@ class SingleRepositoryOnServer extends Repository
   }
 
   Future<RemoteServer> onCreateIsolate() {
-    // [remoteSendPort, appPath, cachePath]
     return initStartArgs().then((args) {
+      final localArgs = args.copyWith(localSendPort);
+
       if (!kIsWeb) {
-        return Isolate.spawn(singleIsolateEntryPoint, [localSendPort, ...args])
+        return Isolate.spawn(singleIsolateEntryPoint, localArgs)
             .then(IsolateRemoteServer.wrap);
       } else {
-        singleIsolateEntryPoint([localSendPort, ...args]);
+        singleIsolateEntryPoint(localArgs);
         return LocalRemoteServer();
       }
     });
   }
 }
 
-void singleIsolateEntryPoint(List args) async {
-  final remoteSendPort = args[0];
-  final appPath = args[1];
-  final cachePath = args[2];
-
-  Log.i('$appPath | $cachePath', onlyDebug: false);
+void singleIsolateEntryPoint(IsolateArgs args) {
+  Log.i(args, onlyDebug: false);
 
   BookEventIsolate(
-    remoteSendPort: remoteSendPort,
-    appPath: appPath,
-    cachePath: cachePath,
+    remoteSendPort: args.sendHandle,
+    appPath: args.appPath,
+    cachePath: args.cachePath,
   ).run();
 }
 

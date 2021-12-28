@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../../../provider/export.dart';
-import '../../../widgets/indexs.dart';
-import '../../../widgets/pan_slide.dart';
-import '../../book_info/info_page.dart';
-import '../book_content_page.dart';
-import 'page_view_controller.dart';
+import '../../../../provider/export.dart';
+import '../../../../widgets/indexs.dart';
+import '../../../../widgets/pan_slide.dart';
+import '../../../book_info/info_page.dart';
+import '../../book_content_page.dart';
+import '../page_view_controller.dart';
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
@@ -279,6 +279,7 @@ Widget bottomButton(
   assert(child != null || text != null);
   return Center(
     child: InkWell(
+      splashFactory: InkRipple.splashFactory,
       onTap: onTap,
       onLongPress: onLongPress,
       borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -490,117 +491,122 @@ class _BottomEndState extends State<BottomEnd> {
       },
       child: RepaintBoundary(
         child: Row(
-        children: [
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
+          children: [
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  bsize = context.size ?? bsize;
+                  if (showSettings.value != SettingView.indexs) {
+                    getController().show();
 
-                  bloc.showCname.value = false;
-                  // context
-                  //     .read<BookIndexNotifier>()
-                  //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              onLongPress: () {
-                bsize = context.size ?? bsize;
+                    bloc.showCname.value = false;
+                    // context
+                    //     .read<BookIndexNotifier>()
+                    //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
+                    showSettings.value = SettingView.indexs;
+                  } else {
+                    getController().trigger();
+                  }
+                },
+                onLongPress: () {
+                  bsize = context.size ?? bsize;
 
-                if (showSettings.value != SettingView.indexs) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  indexBloc
+                  if (showSettings.value != SettingView.indexs) {
+                    getController().show();
+                    bloc.showCname.value = false;
+                    indexBloc
                       ..bookUpDateTime.remove(bloc.bookId)
                       ..loadIndexs(bloc.bookId, bloc.tData.cid,
-                        api: bloc.api, restore: true);
-                  showSettings.value = SettingView.indexs;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '目录',
-              icon: Icons.menu_book_outlined,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                bsize = context.size ?? bsize;
-                if (showSettings.value != SettingView.setting) {
-                  getController().show();
-                  bloc.showCname.value = false;
-                  showSettings.value = SettingView.setting;
-                } else {
-                  getController().trigger();
-                }
-              },
-              text: '设置',
-              icon: Icons.settings_rounded,
-            ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: bloc.auto,
-              child: AnimatedBuilder(
-                animation: bloc.autoRun.isActive,
-                builder: (context, child) {
-                  return Text(
-                    '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+                          api: bloc.api, restore: true);
+                    showSettings.value = SettingView.indexs;
+                  } else {
+                    getController().trigger();
+                  }
                 },
+                text: '目录',
+                icon: Icons.menu_book_outlined,
               ),
-              icon: Icons.auto_stories,
             ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                getController().hide();
-                final portrait = !bloc.config.value.orientation!;
-                bloc.setPrefs(
-                    bloc.config.value.copyWith(orientation: portrait));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    '切换${bloc.config.value.orientation! ? '横屏' : '竖屏'}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  bsize = context.size ?? bsize;
+                  if (showSettings.value != SettingView.setting) {
+                    getController().show();
+                    bloc.showCname.value = false;
+                    showSettings.value = SettingView.setting;
+                  } else {
+                    getController().trigger();
+                  }
                 },
+                text: '设置',
+                icon: Icons.settings_rounded,
               ),
-              icon: Icons.screen_rotation_outlined,
             ),
-          ),
-          Expanded(
-            child: bottomButton(
-              onTap: () {
-                final _axis = widget.controller.axis == Axis.horizontal
-                    ? Axis.vertical
-                    : Axis.horizontal;
+            Expanded(
+              child: bottomButton(
+                onTap: bloc.auto,
+                child: AnimatedBuilder(
+                  animation: bloc.autoRun.isActive,
+                  builder: (context, child) {
+                    return Text(
+                      '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.auto_stories,
+              ),
+            ),
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  getController().hide();
+                  final portrait = !bloc.config.value.orientation!;
+                  bloc.setPrefs(
+                      bloc.config.value.copyWith(orientation: portrait));
+                },
+                child: AnimatedBuilder(
+                  animation: bloc.config,
+                  builder: (context, _) {
+                    return Text(
+                      '切换${bloc.config.value.orientation! ? '横屏' : '竖屏'}',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.screen_rotation_outlined,
+              ),
+            ),
+            Expanded(
+              child: bottomButton(
+                onTap: () {
+                  final _axis = widget.controller.axis == Axis.horizontal
+                      ? Axis.vertical
+                      : Axis.horizontal;
 
-                bloc.autoRun.stopTicked();
-                bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
-              },
-              child: AnimatedBuilder(
-                animation: bloc.config,
-                builder: (context, _) {
-                  return Text(
-                    bloc.config.value.axis == Axis.horizontal ? '上下滚动' : '左右滑动',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade300),
-                  );
+                  bloc.autoRun.stopTicked();
+                  bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
                 },
+                child: AnimatedBuilder(
+                  animation: bloc.config,
+                  builder: (context, _) {
+                    return Text(
+                      bloc.config.value.axis == Axis.horizontal
+                          ? '上下滚动'
+                          : '左右滑动',
+                      style:
+                          TextStyle(fontSize: 10, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
+                icon: Icons.swap_vert_circle_rounded,
               ),
-              icon: Icons.swap_vert_circle_rounded,
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -1095,4 +1101,3 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         child: RepaintBoundary(child: child));
   }
 }
- 

@@ -9,6 +9,7 @@ import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:memory_info/memory_info.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,9 +17,25 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/export.dart';
 
+class IsolateArgs {
+  final String appPath;
+  final String cachePath;
+  late final SendHandle sendHandle;
+
+  IsolateArgs(this.appPath, this.cachePath);
+  IsolateArgs copyWith(SendHandle sendHandle) {
+    return IsolateArgs(appPath, cachePath)..sendHandle = sendHandle;
+  }
+
+  @override
+  String toString() {
+    return 'appPath: $appPath | cachePath: $cachePath';
+  }
+}
+
 /// [Repository]需要的信息
 mixin SystemInfos {
-  Future<List> initStartArgs() async {
+  Future<IsolateArgs> initStartArgs() async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     if (defaultTargetPlatform == TargetPlatform.android) {
       Bangs.bangs.setNavigationChangeCallback(_navState);
@@ -28,7 +45,7 @@ mixin SystemInfos {
       final root = windows.current;
       final appPath = join(root, 'shudu');
       final cachePath = join(appPath, 'cache');
-      return [appPath, cachePath];
+      return IsolateArgs(appPath, cachePath);
     }
     final _waits = FutureAny();
 
@@ -120,7 +137,7 @@ mixin SystemInfos {
       });
     }
 
-    return [appPath, cachePath];
+    return IsolateArgs(appPath, cachePath);
   }
 
   Battery? _battery;

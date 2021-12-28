@@ -10,17 +10,21 @@ import 'pages/app.dart';
 import 'provider/options_notifier.dart';
 
 void main() {
+  var printEvent = false;
+  // assert(printEvent = true);
+
   Log.logRun(() async {
-    final style =
-        TextStyle(fontSize: 15, color: Color.fromARGB(255, 187, 187, 187));
-    Nav.snackBar(
-      Container(
-          color: Color.fromARGB(255, 61, 61, 61),
-          height: 56,
-          child: Center(child: Text('init!', style: style))),
-      duration: const Duration(milliseconds: 1500),
-      delayDuration: const Duration(milliseconds: 3000),
-    );
+    // 异步
+    // final style =
+    //     TextStyle(fontSize: 15, color: Color.fromARGB(255, 187, 187, 187));
+    // Nav.snackBar(
+    //   Container(
+    //       color: Color.fromARGB(255, 61, 61, 61),
+    //       height: 56,
+    //       child: Center(child: Text('init!', style: style))),
+    //   duration: const Duration(milliseconds: 1500),
+    //   delayDuration: const Duration(milliseconds: 3000),
+    // );
 
     NopWidgetsFlutterBinding.ensureInitialized();
 
@@ -46,7 +50,7 @@ void main() {
     Get.isLogEnable = false;
     Get.log = _emptyFunction;
     runApp(MulProvider(mode: await OptionsNotifier.getThemeModeUnSafe()));
-  });
+  }, printEventQueue: printEvent);
 }
 
 void _emptyFunction(String text, {bool isError = false}) {}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
-import '../../event/event.dart';
+import '../../event/export.dart';
 import '../../provider/text_styles.dart';
 import 'booklist.dart';
 import 'top_item.dart';

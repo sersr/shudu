@@ -11,15 +11,20 @@ mixin ContentDataBase on ChangeNotifier {
   Repository get repository;
   int bookId = -1;
   int currentPage = 1;
-  int innerIndex = 0;
+  int _innerIndex = 0;
+  int get innerIndex => _innerIndex;
+
+  void setInnerIndex(int newIndex) {
+    _innerIndex = newIndex;
+  }
 
   // _innerIndex == page == 0
   void resetController() {
     controller?.goIdle();
-    innerIndex = 0;
+    _innerIndex = 0;
     controller?.applyContentDimension(minExtent: 0, maxExtent: 1);
     controller?.correct(0.0);
-    applyConentDimension();
+    applyContentDimension();
   }
 
   TextData _tData = TextData();
@@ -78,7 +83,7 @@ mixin ContentDataBase on ChangeNotifier {
 
   void reset();
   Future<void> dump();
-  void applyConentDimension({bool force = true});
+  void applyContentDimension({bool force = true});
 
   // 更新队列
   void updateCaches(TextData data);

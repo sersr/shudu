@@ -403,19 +403,15 @@ class _BottomEndState extends State<BottomEnd> {
   final _hide = ValueNotifier(false);
 
   void toggle() {
-    if (delegate.hided) {
-      show();
-    } else {
-      hide();
-    }
+    delegate.toggle();
   }
 
   void show() {
-    EventQueue.pushOne(toggle, delegate.show);
+    delegate.showToggle();
   }
 
   void hide() {
-    EventQueue.pushOne(toggle, delegate.hide);
+    delegate.hideToggle();
   }
 
   void onhideEnd() {

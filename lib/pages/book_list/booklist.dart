@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../data/data.dart';
-import '../../event/event.dart';
+import '../../event/export.dart';
 import '../../provider/text_styles.dart';
 import 'booklist_detail.dart';
 import 'booklist_item.dart';

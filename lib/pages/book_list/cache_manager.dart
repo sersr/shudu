@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../database/database.dart';
-import '../../event/event.dart';
+import '../../event/export.dart';
 import '../../provider/export.dart';
 import '../../widgets/page_animation.dart';
 import '../book_info/info_page.dart';

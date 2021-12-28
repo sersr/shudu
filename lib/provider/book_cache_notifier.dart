@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:utils/utils.dart';
 
 import '../database/nop_database.dart';
-import '../event/event.dart';
+import '../event/export.dart';
 import 'book_index_notifier.dart';
 
 class Cache {
