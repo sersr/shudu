@@ -7,10 +7,10 @@ import 'base/system_infos.dart';
 
 // 子隔离，数据库 入口
 void dataBaseEntryPoint(IsolateArgs args) {
-  DatabaseImpl(
+  OneFile.runZoned(DatabaseImpl(
     appPath: args.appPath,
     remoteSendPort: args.sendHandle,
-  ).run();
+  ).run);
 }
 
 /// 只处理数据库相关操作

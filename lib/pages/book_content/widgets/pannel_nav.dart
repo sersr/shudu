@@ -281,16 +281,18 @@ Widget bottomButton(
   assert(child != null || text != null);
   return Center(
     child: InkWell(
+      splashFactory: InkRipple.splashFactory,
       onTap: onTap,
+      splashColor: const Color.fromARGB(255, 99, 99, 99),
       onLongPress: onLongPress,
-      borderRadius: BorderRadius.all(Radius.circular(8.0)),
+      borderRadius: const BorderRadius.all(Radius.circular(8.0)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) Icon(icon, color: Colors.grey.shade400),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             child ??
                 Text(text!,
                     style:
@@ -449,7 +451,7 @@ class _BottomEndState extends State<BottomEnd> {
       child: RepaintBoundary(
         child: Row(
           children: [
-            Expanded(
+            Flexible(
               child: bottomButton(
                 onTap: () {
                   bsize = context.size ?? bsize;
@@ -484,7 +486,7 @@ class _BottomEndState extends State<BottomEnd> {
                 icon: Icons.menu_book_outlined,
               ),
             ),
-            Expanded(
+            Flexible(
               child: bottomButton(
                 onTap: () {
                   bsize = context.size ?? bsize;
@@ -500,7 +502,7 @@ class _BottomEndState extends State<BottomEnd> {
                 icon: Icons.settings_rounded,
               ),
             ),
-            Expanded(
+            Flexible(
               child: bottomButton(
                 onTap: bloc.auto,
                 child: AnimatedBuilder(
@@ -516,7 +518,7 @@ class _BottomEndState extends State<BottomEnd> {
                 icon: Icons.auto_stories,
               ),
             ),
-            Expanded(
+            Flexible(
               child: bottomButton(
                 onTap: () {
                   hide();
@@ -537,7 +539,7 @@ class _BottomEndState extends State<BottomEnd> {
                 icon: Icons.screen_rotation_outlined,
               ),
             ),
-            Expanded(
+            Flexible(
               child: bottomButton(
                 onTap: () {
                   final _axis = widget.controller.axis == Axis.horizontal

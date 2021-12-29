@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -97,10 +96,6 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     return EventQueue.runTask(imageTasks, task, channels: 5);
   }
 
-  Future<T> ioTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTask(ioTasks, task);
-  }
-
   late final String imageLocalPath = join(cachePath, 'shudu', 'images');
 
   Future<void> _init() async {
@@ -141,7 +136,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
       Log.i(Log.splitString('$e, $url', lines: 1).first);
       throw str;
     } catch (e) {
-      /// 可能的错误：json 解码错误
+      /// 可能的错误: json 解码错误
       throw str;
     }
   }
@@ -463,34 +458,24 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
     });
 
     if (success && dataBytes.isNotEmpty) {
-      if (!kIsWeb)
-        ioTasks(() async {
-          final temp = File('$imgPath.temp');
-          try {
-            await temp.create(recursive: true);
-            final o = await temp.open(mode: FileMode.writeOnly);
-            const sizes = 1024;
-            var start = 0;
-            final max = dataBytes.length;
-            while (start < max) {
-              final end = math.min(start + sizes, max);
-              o.writeFromSync(dataBytes, start, end);
-              start = end;
-            }
-
-            await o.close();
-            await temp.rename(imgPath);
-          } catch (e) {
-            success = false;
-          } finally {
-            if (success) {
-              await imageUpdate.put(
-                  imageKey, DateTime.now().millisecondsSinceEpoch);
-            } else {
-              await imageUpdate.delete(imageKey);
-            }
+      if (!kIsWeb) {
+        final temp = File('$imgPath.temp');
+        try {
+          await temp.create(recursive: true);
+          await temp.writeAsBytes(dataBytes);
+          await temp.rename(imgPath);
+        } catch (e) {
+          success = false;
+        } finally {
+          if (success) {
+            await imageUpdate.put(
+                imageKey, DateTime.now().millisecondsSinceEpoch);
+          } else {
+            await imageUpdate.delete(imageKey);
           }
-        });
+        }
+      }
+
       return Uint8List.fromList(dataBytes);
     }
   }

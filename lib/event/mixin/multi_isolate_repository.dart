@@ -55,11 +55,11 @@ class MultiIsolateRepository extends Repository
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
 void _multiIsolateEntryPoint(IsolateArgs args) {
-  BookEventMultiIsolate(
+  OneFile.runZoned(BookEventMultiIsolate(
     appPath: args.appPath,
     cachePath: args.cachePath,
     remoteSendPort: args.sendHandle,
-  ).init();
+  ).init);
 }
 
 /// 与 [MultiIsolateRepository] 配合使用

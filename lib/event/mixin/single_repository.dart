@@ -64,12 +64,11 @@ class SingleRepositoryOnServer extends Repository
 
 void singleIsolateEntryPoint(IsolateArgs args) {
   Log.i(args, onlyDebug: false);
-
-  BookEventIsolate(
+  OneFile.runZoned(BookEventIsolate(
     remoteSendPort: args.sendHandle,
     appPath: args.appPath,
     cachePath: args.cachePath,
-  ).run();
+  ).run);
 }
 
 /// single Isolate

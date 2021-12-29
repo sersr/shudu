@@ -147,6 +147,6 @@ class _ImageResolveState extends State<ImageResolve> {
     return AnimatedOpacity(
         opacity: hasImage ? 1 : 0,
         duration: const Duration(milliseconds: 300),
-        child: child);
+        child: RepaintBoundary(child: child));
   }
 }
