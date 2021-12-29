@@ -21,8 +21,11 @@ class BookContentPage extends StatefulWidget {
       ApiType api) async {
     if (_lock != null) return;
     _lock = const Object();
-    final bloc = context.read<ContentNotifier>();
-    await bloc.touchBook(newBookid, cid, page, api: api);
+    try {
+      final bloc = context.read<ContentNotifier>();
+      await bloc.touchBook(newBookid, cid, page, api: api);
+      // ignore: empty_catches
+    } catch (e) {}
     _lock = null;
 
     return Navigator.of(context).push(MaterialPageRoute(builder: (context) {

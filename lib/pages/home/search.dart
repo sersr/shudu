@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/export.dart';
-import '../../widgets/image_text_layout.dart';
+import '../../widgets/image_text.dart';
 import '../book_info/info_page.dart';
 
 class BookSearchPage extends SearchDelegate<void> {
@@ -188,9 +188,9 @@ class BookSearchPage extends SearchDelegate<void> {
                           return ImageTextLayout(
                               img: data.img,
                               topRightScore: '${data.bookStatus}',
-                              name: data.name,
+                              top: data.name,
                               center: '${data.cName} | ${data.author}',
-                              desc: data.desc ?? '');
+                              bottom: data.desc ?? '');
                         },
                       ),
                       SearchPage(
@@ -206,9 +206,9 @@ class BookSearchPage extends SearchDelegate<void> {
                             return ImageTextLayout(
                                 img: data.picture,
                                 topRightScore: '${data.bookStatus}',
-                                name: data.name,
+                                top: data.name,
                                 center: '${data.categoryName} | ${data.author}',
-                                desc: data.intro ?? '');
+                                bottom: data.intro ?? '');
                           })
                     ]),
                   )

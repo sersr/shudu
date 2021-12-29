@@ -1,5 +1,6 @@
 // ignore_for_file: unused_import
 
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -103,121 +104,136 @@ class _CacheText extends StatefulWidget {
 class _CacheTextState extends State<_CacheText> {
   late TextStyleConfig tsConfig;
 
-  late List _keys;
-
-  void _updateKeys() {
-    _keys = [
-      runtimeType, // 以[runtimeType]区分布局方式
-      widget.maxWidth,
-      widget.topRightScore,
-      widget.top,
-      widget.center,
-      widget.bottom,
-      1,
-      1,
-      widget.centerLines,
-      widget.bottomLines,
-      tsConfig.brightness,
-    ];
-  }
-
   @override
   void didUpdateWidget(covariant _CacheText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _updateKeys();
+    _layoutText();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     tsConfig = context.read<TextStyleConfig>();
-    _updateKeys();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _layoutText();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TextBuilder(
-      keys: _keys,
-      layout: _layoutText,
-      builder: (infos, error) {
-        return _items(infos);
-      },
-    );
+    return _items();
   }
 
-  // 如果是一个匿名函数每次重建都会新建一个对象
-  Future<void> _layoutText(PutIfAbsentText putIfAbsent) async {
+  TextPainter? dataTopR;
+  TextPainter? dataTop;
+  List<TextPainter>? dataCenter;
+  List<TextPainter>? dataBottom;
+
+  Future<void> _layoutText() async {
+    await releaseUI;
+
+    final topR = widget.topRightScore;
+    final width = widget.maxWidth;
     final ts = tsConfig.data;
     final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
-    final topRightKey = [widget.maxWidth, widget.topRightScore, 1, trs];
-    final _tpr = putIfAbsent(topRightKey, () {
-      return _painter(widget.topRightScore, style: trs, maxLines: 1)
-        ..layout(maxWidth: widget.maxWidth);
-    });
+    TextPainter? topRText;
+    if (topR != null) {
+      final t = await TextCache.textPainter(
+          text: topR,
+          width: width,
+          dir: TextDirection.ltr,
+          style: trs,
+          maxLines: 1,
+          ellipsis: '...');
+      topRText = t.first;
+    }
+
     await releaseUI;
-    final _tpWidth = _tpr.painter.width;
+    final _tpWidth = topRText?.width ?? 0;
 
     final topWidth = widget.maxWidth - _tpWidth;
     final style = ts.title2;
-    final topKey = [topWidth, widget.top, 1, style];
+    final topText = await TextCache.textPainter(
+        text: widget.top,
+        width: topWidth,
+        dir: TextDirection.ltr,
+        style: style,
+        maxLines: 1,
+        ellipsis: '...');
 
-    putIfAbsent(topKey, () {
-      return _painter(widget.top, style: style, maxLines: 1)
-        ..layout(maxWidth: topWidth);
-    });
+    await releaseUI;
+    final centerText = await TextCache.textPainter(
+        text: widget.center,
+        width: width,
+        dir: TextDirection.ltr,
+        style: ts.body2,
+        maxLines: widget.centerLines,
+        ellipsis: '...');
+
+    await releaseUI;
+    final bottomText = await TextCache.textPainter(
+        text: widget.bottom,
+        width: width,
+        dir: TextDirection.ltr,
+        style: ts.body3,
+        maxLines: widget.bottomLines,
+        ellipsis: '...');
+
     await releaseUI;
 
-    final centerKey = [
-      widget.maxWidth,
-      widget.center,
-      widget.centerLines,
-      ts.body2
-    ];
-    putIfAbsent(centerKey, () {
-      return _painter(widget.center,
-          style: ts.body2, maxLines: widget.centerLines)
-        ..layout(maxWidth: widget.maxWidth);
-    });
-    await releaseUI;
-
-    final bottomKey = [
-      widget.maxWidth,
-      widget.bottom,
-      widget.bottomLines,
-      ts.body3
-    ];
-    putIfAbsent(bottomKey, () {
-      return _painter(widget.bottom,
-          style: ts.body3, maxLines: widget.bottomLines)
-        ..layout(maxWidth: widget.maxWidth);
-    });
-    await releaseUI;
+    if (mounted) {
+      setState(() {
+        dataTopR = topRText;
+        dataTop = topText.first;
+        dataCenter = centerText;
+        dataBottom = bottomText;
+      });
+    }
   }
 
-  Widget _items(Iterable<TextInfo>? data) {
-    final length = data?.length;
+  Widget item(TextPainter text) {
+    return AsyncText.async(text);
+  }
+
+  Widget _items() {
     Widget child;
-    if (data != null && length! >= 4) {
+    Widget? top;
+    Widget? topR;
+    Widget? center;
+    Widget? bottom;
+    if (dataTop != null) {
+      top = item(dataTop!);
+    }
+    if (dataTopR != null) {
+      topR = item(dataTopR!);
+    }
+    if (dataCenter != null) {
+      center = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: dataCenter!.map(item).toList());
+    }
+    if (dataBottom != null) {
+      bottom = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: dataBottom!.map(item).toList());
+    }
+
+    if (top != null && center != null && bottom != null) {
       child = ItemWidget(
           height: widget.height,
-          topRight: AsyncText.async(data.elementAt(0).painter),
-          top: AsyncText.async(data.elementAt(1).painter),
-          center: AsyncText.async(data.elementAt(2).painter),
-          bottom: AsyncText.async(data.elementAt(3).painter));
+          topRight: topR,
+          top: top,
+          center: center,
+          bottom: bottom);
     } else {
-      if (length != null) Log.e('data: $length');
       child = ItemWidget(height: widget.height);
     }
     return child;
-  }
-
-  TextPainter _painter(String? text,
-      {required TextStyle style, int maxLines = 1}) {
-    return TextPainter(
-        text: TextSpan(text: text, style: style),
-        maxLines: maxLines,
-        ellipsis: '...',
-        textDirection: TextDirection.ltr);
   }
 }
 

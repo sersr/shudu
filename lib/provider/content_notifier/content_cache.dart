@@ -79,7 +79,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     if (!force) {
       if (_applySuccess) {
         // 如果处在边界上,应该更新
-        final atEdge = controller?.atEdge ?? false;
+        final atEdge = controller?.atEdge ?? true;
         if (!atEdge) return;
       }
     }
@@ -228,8 +228,6 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   @override
   Future<void> dump() {
-    /// 立即获取数据
-    /// 如果在异步中获取，数据可能会丢失
     final api = this.api;
     final cid = tData.cid;
     final localBookId = bookId;
@@ -242,14 +240,14 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       int localBookId, int? cid, int localCurrentPage, ApiType api) async {
     if (cid == null || localBookId == -1) return;
     if (api == ApiType.biquge) {
-      final u = BookCache(
+      final book = BookCache(
         isNew: false,
         chapterId: cid,
         sortKey: sortKey,
         page: localCurrentPage,
       );
 
-      await repository.bookCacheEvent.updateBook(localBookId, u);
+      await repository.bookCacheEvent.updateBook(localBookId, book);
     } else {
       final book = ZhangduCache(
         isNew: false,

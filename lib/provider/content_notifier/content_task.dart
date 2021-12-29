@@ -39,7 +39,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
 
   void scheduleTask() {
     if (_scheduled || !inBook) return;
-    Timer(const Duration(milliseconds: 200), () {
+    Timer(const Duration(milliseconds: 500), () {
       _scheduled = false;
       if (initQueue.actived) return;
       loadResolve();

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -369,39 +368,5 @@ class BarLayout extends StatelessWidget {
                 child: RepaintBoundary(child: body)))
       ]),
     );
-  }
-}
-
-class MultLayout extends MultiChildLayoutDelegate {
-  MultLayout({required this.mSize});
-  final Size mSize;
-  @override
-  void performLayout(Size size) {
-    final boxConstraints = BoxConstraints.loose(size);
-    final _backSize = layoutChild('back', boxConstraints);
-    final _titleSize = layoutChild('title', boxConstraints);
-    final _bottomSize = layoutChild('bottom', boxConstraints);
-    var height = _backSize.height;
-
-    final _backOffset =
-        Offset(0, (size.height - _bottomSize.height - _backSize.height) / 2);
-    positionChild('back', _backOffset);
-    if (_titleSize.height > height) height = _titleSize.height;
-
-    final _offset = Offset(math.max(0, (size.width - _titleSize.width) / 2),
-        (size.height - _bottomSize.height - _titleSize.height) / 2);
-
-    positionChild('title', _offset);
-    positionChild('bottom', Offset(0, size.height - _bottomSize.height));
-  }
-
-  @override
-  Size getSize(BoxConstraints constraints) {
-    return constraints.constrain(mSize);
-  }
-
-  @override
-  bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) {
-    return false;
   }
 }

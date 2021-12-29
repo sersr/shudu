@@ -8,7 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../pattern/pattern.dart';
 import '../../provider/export.dart';
-import '../../widgets/image_text_layout.dart';
+import '../../widgets/image_text.dart';
 import '../book_info/info_page.dart';
 
 class TopItem extends StatelessWidget {
@@ -26,10 +26,10 @@ class TopItem extends StatelessWidget {
     final center = '$cname | $author';
     return ImageTextLayout(
         img: img,
-        name: name,
+        top: name,
         center: center,
         topRightScore: topRightScore,
-        desc: desc);
+        bottom: desc);
   }
 }
 

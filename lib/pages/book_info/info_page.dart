@@ -15,7 +15,6 @@ import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
 import '../../widgets/indexs.dart';
 import '../../widgets/page_animation.dart';
-import '../../widgets/text_builder.dart';
 import '../book_content/book_content_page.dart';
 import 'app_bar.dart';
 
@@ -579,13 +578,13 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceAround,
                                   children: [
-                                    _wrapText('作者：$author'),
-                                    _wrapText('类型：$cName'),
-                                    _wrapText('状态：$bookStatus'),
+                                    _wrapText('作者: $author'),
+                                    _wrapText('类型: $cName'),
+                                    _wrapText('状态: $bookStatus'),
                                     Padding(
                                       padding:
                                           const EdgeInsets.only(bottom: 2.0),
-                                      child: _wrapText('评分：$scroe分'),
+                                      child: _wrapText('评分: $scroe分'),
                                     ),
                                   ],
                                 ),
@@ -628,38 +627,13 @@ class _BookInfoSameItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nText = api == ApiType.biquge ? '最新: ' : '';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+    return ImageTextLayout(
       height: 108,
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 72),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: RepaintBoundary(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: ImageResolve(img: l.img),
-              ),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: TextAsyncLayout(
-                  height: 108,
-                  top: l.name ?? '',
-                  center: '作者：$author',
-                  bottom: '$nText${l.lastChapter}',
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      // ),
+      img: l.img,
+      top: l.name ?? '',
+      center: '作者: $author',
+      bottom: '$nText${l.lastChapter}',
+      bottomLines: 1,
     );
   }
 }

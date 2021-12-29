@@ -6,8 +6,6 @@ import 'package:vector_math/vector_math.dart' as vec4;
 
 import '../../provider/export.dart';
 import '../../widgets/image_text.dart';
-import '../../widgets/images.dart';
-import '../../widgets/text_builder.dart';
 
 class BookItem extends StatelessWidget {
   const BookItem(
@@ -31,45 +29,18 @@ class BookItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 98, minHeight: 98),
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 68),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: RepaintBoundary(
-              child: Container(
-                // constraints: const BoxConstraints.tightFor(width: 68, height: 98),
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: ImageResolve(
-                  img: img,
-                  builder: (child) {
-                    return UpdateIcon(isNew: isNew, isTop: isTop, child: child);
-                  },
-                ),
-              ),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: TextAsyncLayout(
-                    height: 98,
-                    top: bookName ?? '',
-                    topRightScore: api == ApiType.zhangdu ? '_' : null,
-                    center: '最新：$bookUdateItem',
-                    bottom: bookUpdateTime ?? ''),
-              ),
-            ),
-          ),
-          // ),
-        ],
-      ),
+    return ImageTextLayout(
+      height: 98,
+      img: img,
+      top: bookName ?? '',
+      topRightScore: api == ApiType.zhangdu ? '_' : null,
+      center: '最新: $bookUdateItem',
+      bottom: bookUpdateTime ?? '',
+      bottomLines: 1,
+      builder: (child) {
+        return UpdateIcon(
+            isNew: isNew, isTop: isTop, child: RepaintBoundary(child: child));
+      },
     );
   }
 }

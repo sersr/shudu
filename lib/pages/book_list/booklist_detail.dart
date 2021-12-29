@@ -8,7 +8,6 @@ import '../../event/export.dart';
 import '../../provider/export.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
-import '../../widgets/text_builder.dart';
 import '../book_info/info_page.dart';
 
 /// 书单详情页面
@@ -253,34 +252,12 @@ class ShudanListDetailItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 108,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: CustomMultiChildLayout(
-        delegate: ImageLayout(width: 72),
-        children: [
-          LayoutId(
-            id: ImageLayout.image,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: ImageResolve(img: l.bookIamge),
-            ),
-          ),
-          LayoutId(
-            id: ImageLayout.text,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14.0),
-              child: TextAsyncLayout(
-                  height: 108,
-                  topRightScore: '${l.score}分',
-                  top: l.bookName ?? '',
-                  center: '${l.categoryName} | ${l.author}',
-                  bottom: l.description ?? ''),
-            ),
-          ),
-        ],
-      ),
-    );
+    return ImageTextLayout(
+        img: l.bookIamge,
+        topRightScore: '${l.score}分',
+        top: l.bookName ?? '',
+        center: '${l.categoryName} | ${l.author}',
+        bottom: l.description ?? '');
   }
 }
 

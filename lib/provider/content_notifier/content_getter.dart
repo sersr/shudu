@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/Material.dart';
 
-import '../../database/nop_database.dart';
-import '../book_index_notifier.dart';
 import '../text_data.dart';
 import 'content_base.dart';
 import 'content_task.dart';
