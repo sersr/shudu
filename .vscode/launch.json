@@ -43,7 +43,8 @@
                 "--local-engine-src-path=/Volumes/mbp/macos/engine/src",
                 "--local-engine=host_release",
             ]
-        },{
+        },
+        {
             "name": "release_host_win_engine",
             "type": "dart",
             "request": "launch",
@@ -66,6 +67,17 @@
             "request": "launch",
             "program": "lib/main.dart",
             "flutterMode": "profile",
+        },
+        {
+            "name": "profile get sksl",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "profile",
+            "args": [
+                "--cache-sksl",
+                "--purge-persistent-cache"
+            ]
         },
         {
             "name": "Flutter: Run all Tests",

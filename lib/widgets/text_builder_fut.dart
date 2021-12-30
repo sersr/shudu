@@ -57,7 +57,7 @@ class TextAsyncLayout extends StatelessWidget {
             /// 只有绑定 [CacheBinding] 才能启用
             if (useTextCache && textCache != null)
               return LayoutBuilder(builder: (context, constraints) {
-                return _CacheText(
+                return ItemAsyncLayout(
                     bottom: bottom,
                     top: top,
                     topRightScore: topRightScore,
@@ -75,8 +75,8 @@ class TextAsyncLayout extends StatelessWidget {
   }
 }
 
-class _CacheText extends StatefulWidget {
-  const _CacheText({
+class ItemAsyncLayout extends StatelessWidget {
+  const ItemAsyncLayout({
     Key? key,
     this.topRightScore,
     required this.top,
@@ -96,144 +96,115 @@ class _CacheText extends StatefulWidget {
   final int centerLines;
   final int bottomLines;
   final double maxWidth;
-
-  @override
-  State<_CacheText> createState() => _CacheTextState();
-}
-
-class _CacheTextState extends State<_CacheText> {
-  late TextStyleConfig tsConfig;
-
-  @override
-  void didUpdateWidget(covariant _CacheText oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _layoutText();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    tsConfig = context.read<TextStyleConfig>();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _layoutText();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return _items();
-  }
+    return AsyncTextBuilder(builder: (_, List<List<TextPainter>?> data) {
+      Widget child;
+      Widget? top;
+      Widget? topR;
+      Widget? center;
+      Widget? bottom;
+      Widget item(TextPainter text) {
+        return AsyncText.async(text);
+      }
 
-  TextPainter? dataTopR;
-  TextPainter? dataTop;
-  List<TextPainter>? dataCenter;
-  List<TextPainter>? dataBottom;
+      Widget wrap(List<TextPainter> data) {
+        return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: data.map(item).toList());
+      }
 
-  Future<void> _layoutText() async {
-    await releaseUI;
+      if (data.length != 4) {
+        return const SizedBox();
+      }
+      final dataTopR = data[0];
+      final dataTop = data[1];
+      final dataCenter = data[2];
+      final dataBottom = data[3];
 
-    final topR = widget.topRightScore;
-    final width = widget.maxWidth;
-    final ts = tsConfig.data;
-    final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
-    TextPainter? topRText;
-    if (topR != null) {
-      final t = await TextCache.textPainter(
-          text: topR,
-          width: width,
+      if (dataTop != null) {
+        top = wrap(dataTop);
+      }
+      if (dataTopR != null) {
+        topR = wrap(dataTopR);
+      }
+      if (dataCenter != null) {
+        center = wrap(dataCenter);
+      }
+      if (dataBottom != null) {
+        bottom = wrap(dataBottom);
+      }
+
+      if (top != null && center != null && bottom != null) {
+        child = ItemWidget(
+            height: height,
+            topRight: topR,
+            top: top,
+            center: center,
+            bottom: bottom);
+      } else {
+        child = ItemWidget(height: height);
+      }
+      return child;
+    }, layout: (BuildContext context, mounted) async {
+      await releaseUI;
+      if (!mounted()) return const [];
+
+      final topR = topRightScore;
+      final width = maxWidth;
+      final ts = context.read<TextStyleConfig>().data;
+      final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
+      List<TextPainter>? topRText;
+      if (topR != null) {
+        topRText = await TextCache.textPainter(
+            text: topR,
+            width: width,
+            dir: TextDirection.ltr,
+            style: trs,
+            maxLines: 1,
+            ellipsis: '...');
+      }
+
+      await releaseUI;
+      final _tpWidth = topRText?.first.width ?? 0;
+
+      final topWidth = maxWidth - _tpWidth;
+      final style = ts.title2;
+      if (!mounted()) return const [];
+
+      final topText = await TextCache.textPainter(
+          text: top,
+          width: topWidth,
           dir: TextDirection.ltr,
-          style: trs,
+          style: style,
           maxLines: 1,
           ellipsis: '...');
-      topRText = t.first;
-    }
 
-    await releaseUI;
-    final _tpWidth = topRText?.width ?? 0;
+      await releaseUI;
+      if (!mounted()) return const [];
 
-    final topWidth = widget.maxWidth - _tpWidth;
-    final style = ts.title2;
-    final topText = await TextCache.textPainter(
-        text: widget.top,
-        width: topWidth,
-        dir: TextDirection.ltr,
-        style: style,
-        maxLines: 1,
-        ellipsis: '...');
+      final centerText = await TextCache.textPainter(
+          text: center,
+          width: width,
+          dir: TextDirection.ltr,
+          style: ts.body2,
+          maxLines: centerLines,
+          ellipsis: '...');
 
-    await releaseUI;
-    final centerText = await TextCache.textPainter(
-        text: widget.center,
-        width: width,
-        dir: TextDirection.ltr,
-        style: ts.body2,
-        maxLines: widget.centerLines,
-        ellipsis: '...');
+      await releaseUI;
+      if (!mounted()) return const [];
+      final bottomText = await TextCache.textPainter(
+          text: bottom,
+          width: width,
+          dir: TextDirection.ltr,
+          style: ts.body3,
+          maxLines: bottomLines,
+          ellipsis: '...');
 
-    await releaseUI;
-    final bottomText = await TextCache.textPainter(
-        text: widget.bottom,
-        width: width,
-        dir: TextDirection.ltr,
-        style: ts.body3,
-        maxLines: widget.bottomLines,
-        ellipsis: '...');
-
-    await releaseUI;
-
-    if (mounted) {
-      setState(() {
-        dataTopR = topRText;
-        dataTop = topText.first;
-        dataCenter = centerText;
-        dataBottom = bottomText;
-      });
-    }
-  }
-
-  Widget item(TextPainter text) {
-    return AsyncText.async(text);
-  }
-
-  Widget _items() {
-    Widget child;
-    Widget? top;
-    Widget? topR;
-    Widget? center;
-    Widget? bottom;
-    if (dataTop != null) {
-      top = item(dataTop!);
-    }
-    if (dataTopR != null) {
-      topR = item(dataTopR!);
-    }
-    if (dataCenter != null) {
-      center = Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: dataCenter!.map(item).toList());
-    }
-    if (dataBottom != null) {
-      bottom = Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: dataBottom!.map(item).toList());
-    }
-
-    if (top != null && center != null && bottom != null) {
-      child = ItemWidget(
-          height: widget.height,
-          topRight: topR,
-          top: top,
-          center: center,
-          bottom: bottom);
-    } else {
-      child = ItemWidget(height: widget.height);
-    }
-    return child;
+      await releaseUI;
+      return [topRText, topText, centerText, bottomText];
+    });
   }
 }
 

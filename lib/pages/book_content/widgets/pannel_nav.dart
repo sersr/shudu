@@ -427,7 +427,6 @@ class _BottomEndState extends State<BottomEnd> {
   void onshowEnd() {
     _hide.value = false;
     bloc.reloadBrightness();
-    Log.w('${bloc.tData.cid}');
     indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid,
         api: bloc.api, restore: true);
   }
@@ -1150,25 +1149,44 @@ class _BookSettingsViewState extends State<BookSettingsView> {
             color: light ? Colors.grey.shade700 : Colors.grey.shade400),
       )),
       onTap: () {
-        showDialog(
-            builder: (BuildContext context) {
-              return Center(
-                  child: RepaintBoundary(
-                child: Material(
-                  color: !context.isDarkMode
-                      ? Color.fromARGB(255, 224, 224, 224)
-                      : Color.fromARGB(255, 41, 41, 41),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IntrinsicWidth(
-                      child: SingleChildScrollView(child: builder()),
-                    ),
+        final value = ValueNotifier(EdgeInsets.zero);
+        final child = RepaintBoundary(
+          child: Center(
+            child: IntrinsicWidth(
+              child: Material(
+                color: !context.isDarkMode
+                    ? Color.fromARGB(255, 224, 224, 224)
+                    : Color.fromARGB(255, 41, 41, 41),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IntrinsicWidth(
+                    child: RepaintBoundary(
+                        child: SingleChildScrollView(child: builder())),
                   ),
                 ),
-              ));
+              ),
+            ),
+          ),
+        );
+        Get.dialog(Builder(builder: (context) {
+          final data = MediaQuery.of(context);
+
+          release(const Duration(milliseconds: 300))
+              .whenComplete(() => value.value = data.viewInsets);
+
+          return AnimatedBuilder(
+            animation: value,
+            builder: (context, child) {
+              return AnimatedContainer(
+                padding: value.value,
+                duration: const Duration(milliseconds: 100),
+                child: child,
+              );
             },
-            context: context);
+            child: child,
+          );
+        }));
       },
     );
   }

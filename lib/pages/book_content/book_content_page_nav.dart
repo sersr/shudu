@@ -85,8 +85,6 @@ class BookContentPageState extends State<BookContentPage>
     Widget child = AnimatedBuilder(
       animation: notifyColor,
       builder: (context, child) {
-        final data = MediaQuery.of(context);
-        Log.w('padding: ${data.padding} | size: ${data.size}');
         return Material(color: notifyColor.value, child: child);
       },
       child: RepaintBoundary(
@@ -188,8 +186,7 @@ class BookContentPageState extends State<BookContentPage>
 
     bloc.out();
 
-    await bloc.dump();
-
+    await bloc.dumpIgnore();
     await blocCache.load();
 
     EventQueue.pushOne(this, () => uiOverlay(hide: false));

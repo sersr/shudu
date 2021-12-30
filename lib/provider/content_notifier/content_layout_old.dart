@@ -21,10 +21,6 @@ mixin ContentLayout on ContentDataBase, Configs {
   }
 
   var _contentLayoutPadding = EdgeInsets.zero;
-  bool _addText(int end, Characters paragraph, String current) {
-    return end != paragraph.length ||
-        current.replaceAll(regexpEmpty, '').isNotEmpty;
-  }
 
   Future<List<ContentMetrics>> asyncLayout(
       List<String> paragraphs, String cname) async {
@@ -34,8 +30,9 @@ mixin ContentLayout on ContentDataBase, Configs {
 
     final fontSize = style.fontSize!;
 
-    final _config = config.value;
-    final isHorizontal = _config.axis == Axis.horizontal;
+    final config = this.config.value.copyWith();
+
+    final words = (size.width - _contentLayoutPadding.horizontal) ~/ fontSize;
 
     final _size = _contentLayoutPadding.deflateSize(size);
     final width = _size.width;
@@ -46,7 +43,7 @@ mixin ContentLayout on ContentDataBase, Configs {
     final contentHeight = _size.height - contentWhiteHeight;
 
     // 配置行高
-    final lineHeight = _config.lineTweenHeight! * fontSize;
+    final lineHeight = config.lineTweenHeight! * fontSize;
 
     final _allExtraHeight = contentHeight % lineHeight;
 
@@ -87,27 +84,58 @@ mixin ContentLayout on ContentDataBase, Configs {
       await releaseUI;
     }
 
-    final lines = <TextPainter>[];
-    paragraphs.removeWhere((element) =>
-        element.isEmpty || element.replaceAll(regexpEmpty, '').isEmpty);
+    final _oneHalf = fontSize * 1.6;
 
-    if (paragraphs.isNotEmpty) {
-      var first = paragraphs.first;
-      if (!first.startsWith('\u3000\u3000')) {
-        if (first.startsWith(regexpEmpty)) {
-          first = first.replaceFirst(regexpEmpty, '\u3000\u3000');
-        } else {
-          first = '\u3000\u3000$first';
-        }
-        paragraphs[0] = first;
-      }
-    }
+    final lines = <TextPainter>[];
+
+    final _t = TextPainter(textDirection: TextDirection.ltr);
+    // 只需要最小的位移，会自动计算位置
+    final _offset = Offset(width, 0.1);
     // 分行布局
     for (var i = 0; i < paragraphs.length; i++) {
       if (_key != key) return const [];
-      final para = await TextCache.textPainter(
-          text: paragraphs[i], width: width, style: style, addText: _addText);
-      lines.addAll(para);
+
+      // character 版本
+      final pc = paragraphs[i].characters;
+      var start = 0;
+      while (start < pc.length) {
+        var end = math.min(start + words, pc.length);
+        await releaseUI;
+
+        // 确定每一行的字数
+        while (true) {
+          if (end >= pc.length) break;
+
+          end++;
+          final s = pc.getRange(start, end).toString();
+          _t
+            ..text = TextSpan(text: s, style: style)
+            ..layout(maxWidth: width);
+
+          await releaseUI;
+
+          if (_t.height > _oneHalf) {
+            final endOffset = _t.getPositionForOffset(_offset).offset;
+            final _s = s.substring(0, endOffset).characters;
+            assert(endOffset == _s.length ||
+                Log.i('no: $_s |$start, ${pc.length}'));
+            end = start + _s.length;
+            break;
+          }
+        }
+
+        await releaseUI;
+        final _s = pc.getRange(start, end).toString();
+        if (end == pc.length && _s.replaceAll(regexpEmpty, '').isEmpty) break;
+
+        final _text = TextPainter(
+            text: TextSpan(text: _s, style: style),
+            textDirection: TextDirection.ltr)
+          ..layout(maxWidth: width);
+
+        start = end;
+        lines.add(_text);
+      }
     }
 
     await releaseUI;
@@ -130,6 +158,7 @@ mixin ContentLayout on ContentDataBase, Configs {
       }
 
     var extraHeight = lineHeightAndExtra - fontSize;
+    final isHorizontal = config.axis == Axis.horizontal;
     await releaseUI;
     if (_key != key) {
       return const [];

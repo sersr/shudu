@@ -236,6 +236,18 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
         _dump, () => _dump(localBookId, cid, localCurrentPage, api));
   }
 
+  Future<void> awaitDump() {
+    return EventQueue.getQueueRunner(_dump);
+  }
+
+  Future<void> dumpIgnore() {
+    final api = this.api;
+    final cid = tData.cid;
+    final localBookId = bookId;
+    final localCurrentPage = currentPage;
+    return _dump(localBookId, cid, localCurrentPage, api);
+  }
+
   Future<void> _dump(
       int localBookId, int? cid, int localCurrentPage, ApiType api) async {
     if (cid == null || localBookId == -1) return;
