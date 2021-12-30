@@ -124,7 +124,7 @@ class CategoryListNotifier extends ChangeNotifier {
 
   Future<void> getCategories() async {
     if (repository == null && data != null && data!.isNotEmpty) return;
-    final _data = await repository!.bookEvent.customEvent.getCategoryData();
+    final _data = await repository!.customEvent.getCategoryData();
     data = _data ?? const [];
     notifyListeners();
   }

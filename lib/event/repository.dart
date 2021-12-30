@@ -11,7 +11,6 @@ abstract class Repository extends BookEventMessagerMain
     with SendInitCloseMixin, NotifyStateMixin, SystemInfos {
   Repository();
 
-  late final BookEvent bookEvent = this;
 
   static Repository? _instance;
 

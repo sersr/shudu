@@ -177,7 +177,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
       assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
       if (url != null && name != null && sort != null) {
-        final lines = await repository.bookEvent
+        final lines = await repository
             .getZhangduContent(localBookId, contentId, url, name, sort, update);
         if (localBookId != bookId) return;
 
@@ -198,7 +198,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       }
     } else {
       final lines =
-          await repository.bookEvent.getContent(localBookId, contentId, update);
+          await repository.getContent(localBookId, contentId, update);
       if (localBookId != bookId) return;
 
       if (lines != null && lines.contentIsNotEmpty) {

@@ -62,7 +62,7 @@ class _ImageResolveState extends State<ImageResolve> {
                 if (!useImageCache) {
                   final repository = context.read<Repository>();
 
-                  final getImageBytes = repository.bookEvent.getImageBytes;
+                  final getImageBytes = repository.getImageBytes;
                   final rw = (width * ratio).toInt();
                   final plh = CallbackWithKeyImage(
                           keys: errorImg,
@@ -101,7 +101,7 @@ class _ImageResolveState extends State<ImageResolve> {
   }
 
   Widget _useMemoryImage(String _img, double height, double width) {
-    final bookEvent = repository.bookEvent;
+    final bookEvent = repository;
     final callback = bookEvent.getImageBytes;
     // final image = _errorBuilder(true, width, height);
 
@@ -121,7 +121,7 @@ class _ImageResolveState extends State<ImageResolve> {
       if (widget.errorBuilder != null) {
         return widget.errorBuilder!(context);
       } else {
-        final callback = repository.bookEvent.getImageBytes;
+        final callback = repository.getImageBytes;
         return ImageFuture.memory(
           imageKey: [errorImg, callback],
           width: width,

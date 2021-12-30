@@ -279,7 +279,7 @@ class ShudanProvider extends ChangeNotifier {
     }
 
     data =
-        await repository!.bookEvent.customEvent.getShudanDetail(index) ?? _none;
+        await repository!.customEvent.getShudanDetail(index) ?? _none;
 
     if (!_isEmpty) lastIndex = index;
 

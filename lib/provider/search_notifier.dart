@@ -24,8 +24,8 @@ class SearchNotifier extends ChangeNotifier {
     data = null;
 
     notifyListeners();
-    list = await repository.bookEvent.customEvent.getSearchData(key);
-    data = await repository.bookEvent.zhangduEvent
+    list = await repository.customEvent.getSearchData(key);
+    data = await repository.zhangduEvent
         .getZhangduSearchData(key, 1, 20);
 
     searchHistory

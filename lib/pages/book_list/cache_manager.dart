@@ -224,15 +224,15 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     _out = false;
     _cacheSub?.cancel();
     _cacheSub =
-        repository!.bookEvent.bookCacheEvent.watchMainList().listen(_listen);
+        repository!.bookCacheEvent.watchMainList().listen(_listen);
     _cacheSubZd?.cancel();
-    _cacheSubZd = _repository!.bookEvent.zhangduEvent
+    _cacheSubZd = _repository!.zhangduEvent
         .watchZhangduMainList()
         .listen(_listenZd);
-    final remoteItems = await repository!.bookEvent.getCacheItems() ?? const [];
+    final remoteItems = await repository!.getCacheItems() ?? const [];
     if (_out) return;
     final zhangduItems =
-        await repository!.bookEvent.zhangduEvent.getZhangduCacheItems() ??
+        await repository!.zhangduEvent.getZhangduCacheItems() ??
             const [];
     if (_out) return;
 
@@ -253,10 +253,10 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     if (repository == null) return;
     _items.remove(item);
     if (item.api == ApiType.zhangdu) {
-      await repository!.bookEvent.zhangduEvent
+      await repository!.zhangduEvent
           .deleteZhangduContentCache(item.id);
     } else {
-      await repository!.bookEvent.bookContentEvent.deleteCache(item.id);
+      await repository!.bookContentEvent.deleteCache(item.id);
     }
     notifyListeners();
   }
@@ -301,9 +301,9 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     if (repository == null) return;
     await deleteCache(item);
     if (item.api == ApiType.zhangdu) {
-      await repository!.bookEvent.zhangduEvent.deleteZhangduBook(item.id);
+      await repository!.zhangduEvent.deleteZhangduBook(item.id);
     } else {
-      await repository!.bookEvent.bookCacheEvent.deleteBook(item.id);
+      await repository!.bookCacheEvent.deleteBook(item.id);
     }
   }
 

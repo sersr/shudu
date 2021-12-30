@@ -23,15 +23,15 @@ class BookInfoProvider extends ChangeNotifier {
     }
     lastId = id;
     if (api == ApiType.biquge) {
-      _data = await repository!.bookEvent.getInfo(id) ?? const BookInfoRoot();
+      _data = await repository!.getInfo(id) ?? const BookInfoRoot();
     } else {
-      _data = await repository!.bookEvent.zhangduEvent.getZhangduDetail(id) ??
+      _data = await repository!.zhangduEvent.getZhangduDetail(id) ??
           const ZhangduDetailData();
       var rawIndexData =
-          await repository!.bookEvent.zhangduEvent.getZhangduIndex(id, false) ??
+          await repository!.zhangduEvent.getZhangduIndex(id, false) ??
               [];
       if (zhangduData?.author != null) {
-        sameUsers = await repository!.bookEvent.zhangduEvent
+        sameUsers = await repository!.zhangduEvent
             .getZhangduSameUsersBooks(zhangduData!.author!);
       }
       if (rawIndexData.isNotEmpty) {

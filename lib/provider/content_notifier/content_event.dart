@@ -75,7 +75,8 @@ mixin ContentEvent
       bookId = newBookId;
       // indexData.clear();
       if ((rawIndexData.isEmpty || update) && api == ApiType.zhangdu) {
-        rawIndexData = await repository.bookEvent.zhangduEvent
+        rawIndexData =
+            await repository.zhangduEvent
                 .getZhangduIndex(bookId, false) ??
             [];
         final d =

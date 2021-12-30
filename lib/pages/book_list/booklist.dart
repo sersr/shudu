@@ -279,21 +279,21 @@ class ShudanCategProvider extends ChangeNotifier {
     final _list = list;
     if (_list == null) {
       var data =
-          await _repository.bookEvent.customEvent.getHiveShudanLists(key);
+          await _repository.customEvent.getHiveShudanLists(key);
       Timer? timer;
       if (data?.isNotEmpty == true) {
         list = data;
         _listCounts = 1;
         timer = Timer(const Duration(milliseconds: 300), notifyListeners);
       }
-      data = await _repository.bookEvent.customEvent.getShudanLists(key, 1);
+      data = await _repository.customEvent.getShudanLists(key, 1);
       if (data != null && data.isNotEmpty) {
         list = data;
         _listCounts = 1;
       }
       timer?.cancel();
     } else {
-      final data = await _repository.bookEvent.customEvent
+      final data = await _repository.customEvent
           .getShudanLists(key, _listCounts + 1);
 
       if (data != null && data.isNotEmpty) {

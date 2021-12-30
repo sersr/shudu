@@ -109,11 +109,11 @@ class BookCacheNotifier extends ChangeNotifier {
 
   FutureOr<List<Cache>> get getList async {
     final dataList = <Cache>[];
-    final fn1 = repository.bookEvent.bookCacheEvent.getMainList().mapOption(
+    final fn1 = repository.bookCacheEvent.getMainList().mapOption(
         ifNone: () {},
         ifSome: (data) =>
             dataList.addAll(data.map((e) => Cache.fromBookCache(e))));
-    final fn2 = repository.bookEvent.zhangduEvent
+    final fn2 = repository.zhangduEvent
         .getZhangduMainList()
         .mapOption(
             ifNone: () {},
@@ -163,12 +163,12 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   Future<void> addBook(BookCache bookCache) async {
-    await repository.bookEvent.bookCacheEvent.insertBook(bookCache);
+    await repository.bookCacheEvent.insertBook(bookCache);
     load();
   }
 
   Future<void> addZdBook(ZhangduCache book) async {
-    await repository.bookEvent.zhangduEvent.insertZhangduBook(book);
+    await repository.zhangduEvent.insertZhangduBook(book);
     load();
   }
 
@@ -190,7 +190,7 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   Future<void> _updateBook(int id, BookCache book) async {
-    await repository.bookEvent.bookCacheEvent.updateBook(id, book);
+    await repository.bookCacheEvent.updateBook(id, book);
     return load();
   }
 
@@ -203,31 +203,31 @@ class BookCacheNotifier extends ChangeNotifier {
   }
 
   Future<void> _updateZdBook(int id, ZhangduCache book) async {
-    await repository.bookEvent.zhangduEvent.updateZhangduBook(id, book);
+    await repository.zhangduEvent.updateZhangduBook(id, book);
     return load();
   }
 
   Future<void> deleteBook(int? id, ApiType api) async {
     if (id == null) return;
     if (api == ApiType.biquge) {
-      await repository.bookEvent.bookCacheEvent.deleteBook(id);
+      await repository.bookCacheEvent.deleteBook(id);
     } else {
-      await repository.bookEvent.zhangduEvent.deleteZhangduBook(id);
+      await repository.zhangduEvent.deleteZhangduBook(id);
     }
     load();
   }
 
   Future<void> deleteZdBook(int? id) async {
     if (id == null) return;
-    await repository.bookEvent.zhangduEvent.deleteZhangduBook(id);
+    await repository.zhangduEvent.deleteZhangduBook(id);
     load();
   }
 
   Future<void> updateBookStatus(int id, ApiType api) async {
     if (api == ApiType.biquge) {
-      await repository.bookEvent.getInfo(id);
+      await repository.getInfo(id);
     } else {
-      await repository.bookEvent.zhangduEvent.updateZhangduMainStatus(id);
+      await repository.zhangduEvent.updateZhangduMainStatus(id);
     }
   }
 }
