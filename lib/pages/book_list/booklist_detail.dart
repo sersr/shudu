@@ -48,40 +48,16 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
     provider.load(widget.index);
   }
 
-  Iterable<Widget> _getChildren(
-      BookListDetailData data, TextStyleData ts) sync* {
-    // header
-    yield TitleWidget(data: data, total: widget.total);
-    yield const SizedBox(height: 6);
-    // intro
-    yield buildIntro(ts, data.description);
-    // body
-    yield const SizedBox(height: 6);
-
-    yield Container(
-      color:
-          isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900,
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0),
-      child: Text('书单列表', style: ts.title2),
-    );
-
-    yield const SizedBox(height: 3);
-
-    if (data.bookList != null)
-      for (var l in data.bookList!)
-        yield ListItem(
-          bgColor: isLight ? null : Colors.grey.shade900,
-          splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-          height: 108,
-          onTap: () => BookInfoPage.push(context, l.bookId!, ApiType.biquge),
-          child: ShudanListDetailItemWidget(l: l),
-        );
-  }
-
   bool get isLight => !context.isDarkMode;
   @override
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>().data;
+    final listColor = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+    final titleColor =
+        isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900;
+
+    final bgColor = isLight ? null : Colors.grey.shade900;
+    final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
 
     return Scaffold(
       appBar: AppBar(
@@ -100,20 +76,51 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
               return reloadBotton(() => provider.load(widget.index));
             }
 
-            final children = _getChildren(data, ts);
+            var length = 6;
+            final bookList = data.bookList;
+            if (bookList != null) {
+              length += bookList.length;
+            }
+
             return Stack(
               children: [
                 RepaintBoundary(
                   child: ListViewBuilder(
-                    color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-
+                    color: listColor,
                     refreshDelegate: refreshDelegate2,
                     padding: const EdgeInsets.only(bottom: 12.0),
                     // cacheExtent: 100,
                     itemBuilder: (context, index) {
-                      return children.elementAt(index);
+                      if (index == 0) {
+                        return TitleWidget(data: data, total: widget.total);
+                      } else if (index == 1 || index == 3) {
+                        return const SizedBox(height: 6);
+                      } else if (index == 2) {
+                        return buildIntro(ts, data.description);
+                      } else if (index == 4) {
+                        return Container(
+                          color: titleColor,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4.0, horizontal: 10.0),
+                          child: Text('书单列表', style: ts.title2),
+                        );
+                      } else if (index == 5) {
+                        return const SizedBox(height: 3);
+                      }
+                      final dataIndex = index - 6;
+                      final item = bookList![dataIndex];
+                      return ListItem(
+                        bgColor: bgColor,
+                        splashColor: splashColor,
+                        height: 108,
+                        onTap: () => BookInfoPage.push(
+                            context, item.bookId!, ApiType.biquge),
+                        child: RepaintBoundary(
+                          child: ShudanListDetailItemWidget(item: item),
+                        ),
+                      );
                     },
-                    itemCount: children.length,
+                    itemCount: length,
                   ),
                 ),
               ],
@@ -245,19 +252,19 @@ class _TitleWidgetState extends State<TitleWidget>
 class ShudanListDetailItemWidget extends StatelessWidget {
   const ShudanListDetailItemWidget({
     Key? key,
-    required this.l,
+    required this.item,
   }) : super(key: key);
 
-  final BookListDetail l;
+  final BookListDetail item;
 
   @override
   Widget build(BuildContext context) {
     return ImageTextLayout(
-        img: l.bookIamge,
-        topRightScore: '${l.score}分',
-        top: l.bookName ?? '',
-        center: '${l.categoryName} | ${l.author}',
-        bottom: l.description ?? '');
+        img: item.bookIamge,
+        topRightScore: '${item.score}分',
+        top: item.bookName ?? '',
+        center: '${item.categoryName} | ${item.author}',
+        bottom: item.description ?? '');
   }
 }
 
@@ -278,8 +285,7 @@ class ShudanProvider extends ChangeNotifier {
       notifyListeners();
     }
 
-    data =
-        await repository!.customEvent.getShudanDetail(index) ?? _none;
+    data = await repository!.customEvent.getShudanDetail(index) ?? _none;
 
     if (!_isEmpty) lastIndex = index;
 

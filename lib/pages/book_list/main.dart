@@ -152,15 +152,13 @@ class ListMainPage extends StatelessWidget {
   final _eventQueueLength = ValueNotifier(0);
 
   Widget row({Widget? left, Widget? right}) {
+    final hasChild = right != null;
     return Row(
-      children: [if (left != null) Expanded(child: left), ...ig(right)],
+      children: [
+        if (left != null) Expanded(child: left),
+        if (hasChild) const SizedBox(width: 5),
+        if (hasChild) Expanded(child: right)
+      ],
     );
-  }
-
-  Iterable<Widget> ig(Widget? child) sync* {
-    if (child != null) {
-      yield const SizedBox(width: 5);
-      yield Expanded(child: child);
-    }
   }
 }

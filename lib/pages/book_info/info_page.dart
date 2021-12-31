@@ -88,64 +88,106 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
-    final child = Scaffold(
-        body: SafeArea(
-      left: false,
-      right: false,
-      top: false,
-      child: AnimatedBuilder(
-        animation: info,
-        builder: (context, child) {
-          final infoData = info.get(widget.id);
-          if (infoData == null) {
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: getOverlayStyle(dark: context.isDarkMode),
-              child: loadingIndicator(),
+
+    final appBar = Positioned(
+      top: 0.0,
+      left: 0.0,
+      right: 0.0,
+      height: 56 + (MediaQuery.maybeOf(context)?.padding.top ?? 0),
+      child: AppBarHide(
+        values: notifierValue,
+        begincolor: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
+        title: Text(
+          '书籍详情',
+          style: TextStyle(color: Colors.grey.shade100, fontSize: 20),
+        ),
+      ),
+    );
+
+    final indexView = Positioned.fill(
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([showIndexs, showSecondary]),
+          builder: (_, child) {
+            final show = showIndexs.value;
+            if (show) showSecondary.value = true;
+            return AnimatedOpacity(
+              opacity: show ? 1 : 0,
+              onEnd: () {
+                if (!show) showSecondary.value = false;
+              },
+              duration: const Duration(milliseconds: 300),
+              child: showSecondary.value
+                  ? background(
+                      child: IndexsWidget(
+                        onTap: (_, id, cid) {
+                          BookContentPage.push(context, id, cid, 1, widget.api);
+                          showIndexs.value = false;
+                        },
+                      ),
+                    )
+                  : const SizedBox(),
             );
-          }
-          var children = <Widget>[];
-          int bookId = 0;
-          int? firstChapterId = -1;
-          if (widget.api == ApiType.biquge) {
-            final _infoData = infoData as BookInfoRoot;
-            final _bookId = _infoData.data?.id;
+          },
+        ),
+      ),
+    );
 
-            if ((_infoData.data == null || _bookId == null)) {
-              return reloadBotton(() => info.reload(widget.id, widget.api));
+    final child = Scaffold(
+      body: SafeArea(
+        left: false,
+        right: false,
+        top: false,
+        child: AnimatedBuilder(
+          animation: info,
+          builder: (context, child) {
+            final infoData = info.get(widget.id);
+            if (infoData == null) {
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: getOverlayStyle(dark: context.isDarkMode),
+                child: loadingIndicator(),
+              );
             }
-            bookId = _bookId;
-            final infos = _infoData.data!;
-            firstChapterId = infos.firstChapterId;
-            children.add(header(infos.author, infos.bookStatus, infos.name,
-                infos.bookVote?.scroe, infos.cName, infos.img, ts));
+            var children = <Widget>[];
+            int bookId = 0;
+            int? firstChapterId = -1;
+            List<SameUserBook>? sameUserBooks;
+            String? author;
 
-            children.addAll(desc(
-                infos.id,
-                infos.author,
-                infos.desc,
-                infos.firstChapterId,
-                infos.lastChapter,
-                infos.lastTime,
-                infos.sameUserBooks,
-                ts));
-          } else if (widget.api == ApiType.zhangdu) {
-            final data = infoData as ZhangduDetailData?;
-            final _bookId = data?.id;
-            if (data == null || _bookId == null) {
-              return reloadBotton(() => info.reload(widget.id, widget.api));
-            }
-            bookId = _bookId;
-            firstChapterId = info.firstCid ?? data.chapterId ?? firstChapterId;
-            children.add(header(data.author, data.bookStatus, data.name,
-                data.score, data.categoryName, data.picture, ts));
-            children.addAll(desc(
-              data.id,
-              data.author,
-              data.intro,
-              firstChapterId,
-              data.chapterName,
-              data.updatedTime,
-              info.sameUsers
+            if (widget.api == ApiType.biquge) {
+              final _infoData = infoData as BookInfoRoot;
+              final _bookId = _infoData.data?.id;
+
+              if ((_infoData.data == null || _bookId == null)) {
+                return reloadBotton(() => info.reload(widget.id, widget.api));
+              }
+              bookId = _bookId;
+              final infos = _infoData.data!;
+              firstChapterId = infos.firstChapterId;
+
+              children.add(header(infos.author, infos.bookStatus, infos.name,
+                  infos.bookVote?.scroe, infos.cName, infos.img, ts));
+
+              sameUserBooks = infos.sameUserBooks;
+              author = infos.author;
+
+              children.addAll(desc(infos.id, infos.author, infos.desc,
+                  infos.firstChapterId, infos.lastChapter, infos.lastTime, ts));
+            } else if (widget.api == ApiType.zhangdu) {
+              final data = infoData as ZhangduDetailData?;
+              final _bookId = data?.id;
+              if (data == null || _bookId == null) {
+                return reloadBotton(() => info.reload(widget.id, widget.api));
+              }
+              bookId = _bookId;
+              firstChapterId =
+                  info.firstCid ?? data.chapterId ?? firstChapterId;
+
+              children.add(header(data.author, data.bookStatus, data.name,
+                  data.score, data.categoryName, data.picture, ts));
+
+              author = data.author;
+              sameUserBooks = info.sameUsers
                   ?.map((e) => SameUserBook(
                         id: e.id,
                         img: e.picture,
@@ -153,193 +195,171 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                         name: e.name,
                         score: e.score,
                       ))
-                  .toList(),
-              ts,
-              api: ApiType.zhangdu,
-            ));
-          }
+                  .toList();
 
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    Expanded(
-                      child: SafeArea(
-                        top: false,
-                        child: NotificationListener<ScrollNotification>(
-                          onNotification: onScrollNotification,
-                          child: ListViewBuilder(
-                            color:
-                                isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-                            cacheExtent: 100,
-                            itemBuilder: (context, index) {
-                              return children[index];
+              children.addAll(desc(
+                data.id,
+                data.author,
+                data.intro,
+                firstChapterId,
+                data.chapterName,
+                data.updatedTime,
+                // sameUserBooks,
+                ts,
+              ));
+            }
+
+            final headLength = children.length;
+            var length = headLength;
+            final hasSameUserBook = sameUserBooks != null;
+            if (hasSameUserBook) {
+              length += sameUserBooks.length;
+            }
+
+            final bgColor = isLight ? null : Colors.grey.shade900;
+            final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
+            final color = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+
+            final bottomBar = Material(
+              color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
+              child: SafeArea(
+                top: false,
+                child: AnimatedBuilder(
+                  animation: cache,
+                  builder: (context, _) {
+                    var show = false;
+                    int? cid;
+                    int? currentPage;
+                    final list = cache.sortChildren;
+
+                    for (var l in list) {
+                      if (l.bookId == bookId) {
+                        if (l.isShow ?? false) {
+                          show = true;
+                          cid = l.chapterId;
+                          currentPage = l.page;
+                        }
+                        break;
+                      }
+                    }
+
+                    final splashColor = isLight
+                        ? Color.fromARGB(255, 110, 188, 248)
+                        : Color.fromARGB(255, 107, 108, 109);
+
+                    final ios = bottom > 0.0 &&
+                        defaultTargetPlatform == TargetPlatform.iOS;
+
+                    final padding = EdgeInsets.only(bottom: ios ? 10.0 : 0.0);
+                    final style = TextStyle(
+                        color: Color.fromARGB(255, 224, 224, 224),
+                        fontSize: 15);
+
+                    Widget child = Text(show ? '阅读' : '试读', style: style);
+                    Widget rightChild =
+                        Text('${show ? '移除' : '添加到'}书架', style: style);
+
+                    child = SizedBox(height: 56, child: Center(child: child));
+
+                    rightChild =
+                        SizedBox(height: 56, child: Center(child: rightChild));
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Expanded(
+                          child: btn1(
+                            background: false,
+                            splashColor: splashColor,
+                            child: Padding(padding: padding, child: child),
+                            onTap: () async {
+                              final _list = await cache.getList;
+                              int? _cid, _page;
+                              for (final bookCache in _list) {
+                                if (bookCache.bookId == bookId) {
+                                  _cid = bookCache.chapterId;
+                                  _page = bookCache.page;
+                                  break;
+                                }
+                              }
+                              _cid ??= cid ?? firstChapterId!;
+                              _page ??= currentPage ?? 1;
+
+                              BookContentPage.push(
+                                  context, bookId, _cid, _page, widget.api);
                             },
-                            itemCount: children.length,
+                          ),
+                        ),
+                        Expanded(
+                          child: btn1(
+                            background: false,
+                            splashColor: splashColor,
+                            onTap: () =>
+                                cache.updateShow(bookId, !show, widget.api),
+                            child: Padding(padding: padding, child: rightChild),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            );
+
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value:
+                  getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: SafeArea(
+                          top: false,
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: onScrollNotification,
+                            child: ListViewBuilder(
+                              color: color,
+                              cacheExtent: 100,
+                              itemCount: length,
+                              itemBuilder: (context, index) {
+                                if (index < headLength) {
+                                  return children[index];
+                                }
+                                final bookIndex = index - headLength;
+                                final data = sameUserBooks![bookIndex];
+
+                                return ListItem(
+                                  height: 108,
+                                  bgColor: bgColor,
+                                  splashColor: splashColor,
+                                  onTap: () {
+                                    if (data.id != null) {
+                                      BookInfoPage.push(
+                                          context, data.id!, widget.api);
+                                    }
+                                  },
+                                  child: _BookInfoSameItemWidget(
+                                      l: data, author: author, api: widget.api),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Material(
-                      color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
-                      child: SafeArea(
-                        top: false,
-                        child: AnimatedBuilder(
-                          animation: cache,
-                          builder: (context, _) {
-                            var show = false;
-                            int? cid;
-                            int? currentPage;
-                            final list = cache.sortChildren;
-
-                            for (var l in list) {
-                              if (l.bookId == bookId) {
-                                if (l.isShow ?? false) {
-                                  show = true;
-                                  cid = l.chapterId;
-                                  currentPage = l.page;
-                                }
-                                break;
-                              }
-                            }
-
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Expanded(
-                                  child: btn1(
-                                    splashColor: isLight
-                                        ? Color.fromARGB(255, 110, 188, 248)
-                                        : Color.fromARGB(255, 107, 108, 109),
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          bottom: bottom > 0.0 &&
-                                                  defaultTargetPlatform ==
-                                                      TargetPlatform.iOS
-                                              ? 10.0
-                                              : 0.0),
-                                      child: SizedBox(
-                                        height: 56,
-                                        child: Center(
-                                          child: Text(
-                                            show ? '阅读' : '试读',
-                                            style: TextStyle(
-                                                color: Color.fromARGB(
-                                                    255, 224, 224, 224),
-                                                fontSize: 15),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    onTap: () async {
-                                      final _list = await cache.getList;
-                                      int? _cid, _page;
-                                      for (final bookCache in _list) {
-                                        if (bookCache.bookId == bookId) {
-                                          _cid = bookCache.chapterId;
-                                          _page = bookCache.page;
-                                          break;
-                                        }
-                                      }
-                                      _cid ??= cid ?? firstChapterId!;
-                                      _page ??= currentPage ?? 1;
-
-                                      BookContentPage.push(context, bookId,
-                                          _cid, _page, widget.api);
-                                    },
-                                    background: false,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: btn1(
-                                    background: false,
-                                    splashColor: isLight
-                                        ? Color.fromARGB(255, 110, 188, 248)
-                                        : Color.fromARGB(255, 107, 108, 109),
-                                    onTap: () => cache.updateShow(
-                                        bookId, !show, widget.api),
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          bottom: bottom > 0.0 &&
-                                                  defaultTargetPlatform ==
-                                                      TargetPlatform.iOS
-                                              ? 10.0
-                                              : 0.0),
-                                      child: SizedBox(
-                                          height: 56,
-                                          child: Center(
-                                              child: Text(
-                                            '${show ? '移除' : '添加到'}书架',
-                                            style: TextStyle(
-                                                color: Color.fromARGB(
-                                                    255, 224, 224, 224),
-                                                fontSize: 15),
-                                          ))),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: 0.0,
-                  left: 0.0,
-                  right: 0.0,
-                  height: 56 + (MediaQuery.maybeOf(context)?.padding.top ?? 0),
-                  child: AppBarHide(
-                    values: notifierValue,
-                    begincolor:
-                        isLight ? Color.fromARGB(255, 13, 157, 224) : null,
-                    title: Text(
-                      '书籍详情',
-                      style:
-                          TextStyle(color: Colors.grey.shade100, fontSize: 20),
-                    ),
+                      bottomBar,
+                    ],
                   ),
-                ),
-                Positioned.fill(
-                  child: RepaintBoundary(
-                    child: AnimatedBuilder(
-                      animation: Listenable.merge([showIndexs, showSecondary]),
-                      builder: (_, child) {
-                        final show = showIndexs.value;
-                        if (show) showSecondary.value = true;
-                        return AnimatedOpacity(
-                            opacity: show ? 1 : 0,
-                            onEnd: () {
-                              if (!show) showSecondary.value = false;
-                            },
-                            duration: const Duration(milliseconds: 300),
-                            child: showSecondary.value
-                                ? background(
-                                    child: IndexsWidget(
-                                      onTap: (_, id, cid) {
-                                        BookContentPage.push(
-                                            context, id, cid, 1, widget.api);
-                                        showIndexs.value = false;
-                                      },
-                                    ),
-                                    // child: Container(),
-                                  )
-                                : const SizedBox());
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-          );
-        },
+                  appBar,
+                  indexView,
+                ],
+              ),
+            );
+          },
+        ),
       ),
-    ));
+    );
     return child;
   }
 
@@ -372,154 +392,139 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   }
 
   var hide = true;
-  Iterable<Widget> desc(
-      int? bookid,
-      String? author,
-      String? desc,
-      int? firstChapterId,
-      String? lastChapter,
-      String? lastTime,
-      List<SameUserBook>? sameUserBooks,
-      TextStyleData ts,
-      {ApiType api = ApiType.biquge}) sync* {
-    yield const SizedBox(height: 6);
-    yield Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      color: isLight
-          ? const Color.fromRGBO(250, 250, 250, 1)
-          : Colors.grey.shade900,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('简介', style: ts.title2),
-          Padding(
-            padding: const EdgeInsets.only(top: 2.0),
-            child: StatefulBuilder(builder: (context, setstate) {
-              return InkWell(
-                onTap: () => setstate(() => hide = !hide),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      desc ?? '',
-                      style: ts.body3,
-                      maxLines: hide ? 2 : null,
-                    ),
-                    Center(
-                        child: Icon(
-                      hide
-                          ? Icons.keyboard_arrow_down_rounded
-                          : Icons.keyboard_arrow_up_rounded,
-                      color: Colors.grey[700],
-                    )),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-
-    yield const SizedBox(height: 6);
-    yield ColoredBox(
-      color: isLight
-          ? const Color.fromRGBO(250, 250, 250, 1)
-          : Colors.grey.shade900,
-      child: AnimatedBuilder(
-        animation: cache,
-        builder: (context, _) {
-          int? cid;
-          final list = cache.sortChildren;
-
-          list.any((e) {
-            if (e.bookId == bookid) {
-              cid = e.chapterId;
-              return true;
-            }
-            return false;
-          });
-
-          return btn1(
-            onTap: () {
-              final _cid = cid ?? firstChapterId;
-
-              context
-                  .read<BookIndexNotifier>()
-                  .loadIndexs(bookid, _cid, api: widget.api);
-              showIndexs.value = !showIndexs.value;
-            },
-            bgColor: isLight ? null : Colors.grey.shade900,
-            splashColor: isLight
-                ? const Color.fromRGBO(225, 225, 225, 1)
-                : Color.fromRGBO(60, 60, 60, 1),
-
-            // bgColor: Color.fromARGB(255, 250, 250, 250),
-            // splashColor: Colors.grey[300],
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
-            child: Row(
-              children: [
-                Expanded(
+  List<Widget> desc(
+    int? bookid,
+    String? author,
+    String? desc,
+    int? firstChapterId,
+    String? lastChapter,
+    String? lastTime,
+    TextStyleData ts,
+  ) {
+    return [
+      const SizedBox(height: 6),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        color: isLight
+            ? const Color.fromRGBO(250, 250, 250, 1)
+            : Colors.grey.shade900,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('简介', style: ts.title2),
+            Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: StatefulBuilder(builder: (context, setstate) {
+                return InkWell(
+                  onTap: () => setstate(() => hide = !hide),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text('目录 最近更新 ', style: ts.title2),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                lastTime ?? '',
-                                softWrap: false,
-                                style: ts.body3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                        ],
+                      Text(
+                        desc ?? '',
+                        style: ts.body3,
+                        maxLines: hide ? 2 : null,
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Text(
-                          lastChapter ?? '',
-                          style: ts.body2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                      ),
+                      Center(
+                          child: Icon(
+                        hide
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_up_rounded,
+                        color: Colors.grey[700],
+                      )),
                     ],
                   ),
-                ),
-                Icon(Icons.arrow_forward_ios, color: Colors.grey[600])
-              ],
+                );
+              }),
             ),
-          );
-        },
+          ],
+        ),
       ),
-    );
-    yield const SizedBox(height: 6);
+      const SizedBox(height: 6),
+      ColoredBox(
+        color: isLight
+            ? const Color.fromRGBO(250, 250, 250, 1)
+            : Colors.grey.shade900,
+        child: AnimatedBuilder(
+          animation: cache,
+          builder: (context, _) {
+            int? cid;
+            final list = cache.sortChildren;
 
-    yield Container(
-      color: isLight
-          ? const Color.fromRGBO(250, 250, 250, 1)
-          : Colors.grey.shade900,
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-      child: Text('$author 还写过', style: ts.body1),
-    );
+            list.any((e) {
+              if (e.bookId == bookid) {
+                cid = e.chapterId;
+                return true;
+              }
+              return false;
+            });
 
-    yield const SizedBox(height: 3);
+            return btn1(
+              onTap: () {
+                final _cid = cid ?? firstChapterId;
 
-    if (sameUserBooks != null)
-      for (var l in sameUserBooks)
-        yield ListItem(
-            height: 108,
-            bgColor: isLight ? null : Colors.grey.shade900,
-            splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-            child: _BookInfoSameItemWidget(l: l, author: author, api: api),
-            onTap: () => l.id == null
-                ? null
-                : BookInfoPage.push(context, l.id!, widget.api));
+                context
+                    .read<BookIndexNotifier>()
+                    .loadIndexs(bookid, _cid, api: widget.api);
+                showIndexs.value = !showIndexs.value;
+              },
+              bgColor: isLight ? null : Colors.grey.shade900,
+              splashColor: isLight
+                  ? const Color.fromRGBO(225, 225, 225, 1)
+                  : Color.fromRGBO(60, 60, 60, 1),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('目录 最近更新 ', style: ts.title2),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  lastTime ?? '',
+                                  softWrap: false,
+                                  style: ts.body3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.only(top: 6.0),
+                          child: Text(
+                            lastChapter ?? '',
+                            style: ts.body2,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, color: Colors.grey[600])
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      const SizedBox(height: 6),
+      Container(
+        color: isLight
+            ? const Color.fromRGBO(250, 250, 250, 1)
+            : Colors.grey.shade900,
+        padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+        child: Text('$author 还写过', style: ts.body1),
+      ),
+      const SizedBox(height: 3),
+    ];
   }
 
   bool get isLight => !context.isDarkMode;

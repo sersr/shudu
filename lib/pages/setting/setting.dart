@@ -35,221 +35,9 @@ class _SettingState extends State<Setting> {
     }
   }
 
-  Iterable<Widget> _buildChild(ConfigOptions options) sync* {
-    final line = Divider(
-        color: !context.isDarkMode
-            ? Colors.grey.shade300
-            : Color.fromRGBO(25, 25, 25, 1),
-        height: 1.0);
-
-    yield selector<OptionsNotifier>(
-        title: 'app启动时刷新列表',
-        select: (_, opt) => opt.options.updateOnStart ?? false,
-        onChanged: (tap) {
-          optionsNotifier.options = ConfigOptions(updateOnStart: tap);
-        });
-
-    yield line;
-    final mode = optionsNotifier
-        .selector((parent) => parent.options.themeMode ?? ThemeMode.system);
-    void _onChanged(ThemeMode? updateValue) {
-      optionsNotifier.options = ConfigOptions(themeMode: updateValue);
-      // final isDark = OptionsNotifier.isDarkMode(updateValue);
-      // uiStyle(dark: isDark);
-      Get.back();
-    }
-
-    yield titleMenu(
-        title: '主题配色',
-        select: (_, opt) => opt.options.themeMode ?? ThemeMode.system,
-        trailingChild: (ThemeMode updateValue) {
-          return Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  getThemeName(updateValue),
-                  style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade500,
-                      leadingDistribution: TextLeadingDistribution.even),
-                ),
-                Icon(Icons.keyboard_arrow_right_outlined)
-              ]);
-        },
-        children: [
-          AnimatedBuilder(
-              animation: mode,
-              builder: (context, child) {
-                return RadioListTile(
-                    title: Text('亮色'),
-                    value: ThemeMode.light,
-                    groupValue: mode.value,
-                    onChanged: _onChanged);
-              }),
-          AnimatedBuilder(
-              animation: mode,
-              builder: (context, child) {
-                return RadioListTile(
-                    title: Text('暗色'),
-                    value: ThemeMode.dark,
-                    groupValue: mode.value,
-                    onChanged: _onChanged);
-              }),
-          AnimatedBuilder(
-              animation: mode,
-              builder: (context, child) {
-                return RadioListTile(
-                    title: Text('跟随系统'),
-                    value: ThemeMode.system,
-                    groupValue: mode.value,
-                    onChanged: _onChanged);
-              })
-        ]);
-
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '指针采样',
-        select: (_, opt) => opt.options.resample ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options = ConfigOptions(resample: updateValue);
-        });
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '指针采样(修改版，最好不要同时使用)',
-        select: (_, opt) => opt.options.nopResample ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options = ConfigOptions(nopResample: updateValue);
-        });
-    if (!kDartIsWeb) {
-      yield line;
-    }
-    if (!kDartIsWeb) {
-      yield selector<OptionsNotifier>(
-          title: '显示性能图层',
-          select: (_, opt) => opt.options.showPerformanceOverlay ?? false,
-          onChanged: (updateValue) {
-            optionsNotifier.options =
-                ConfigOptions(showPerformanceOverlay: updateValue);
-          });
-    }
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '使用图片缓存',
-        select: (_, opt) => opt.options.useImageCache ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options = ConfigOptions(useImageCache: updateValue);
-        });
-    yield line;
-    yield selector<OptionsNotifier>(
-        title: '使用文本缓存',
-        select: (_, opt) => opt.options.useTextCache ?? false,
-        onChanged: (updateValue) {
-          optionsNotifier.options = ConfigOptions(useTextCache: updateValue);
-        });
-    // if (!(defaultTargetPlatform == TargetPlatform.windows ||
-    //     defaultTargetPlatform == TargetPlatform.linux)) {
-    //   yield line;
-    //   yield selector<OptionsNotifier>(
-    //       title: '使用 sqflite',
-    //       select: (_, opt) => opt.options.useSqflite ?? false,
-    //       onChanged: (updateValue) {
-    //         optionsNotifier.options = ConfigOptions(useSqflite: updateValue);
-    //       });
-    // }
-
-    yield line;
-    void update(TargetPlatform? d) {
-      optionsNotifier.options = ConfigOptions(platform: d);
-      Get.back();
-    }
-
-    yield titleMenu(
-        title: '平台',
-        select: (_, opt) => opt.options.platform ?? defaultTargetPlatform,
-        trailingChild: (updateValue) {
-          return Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  updateValue == TargetPlatform.android ? 'android' : 'ios',
-                  style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade500,
-                      leadingDistribution: TextLeadingDistribution.even),
-                ),
-                Icon(Icons.keyboard_arrow_right_outlined)
-              ]);
-        },
-        children: [
-          Selector<OptionsNotifier, TargetPlatform>(
-              selector: (_, opt) =>
-                  opt.options.platform ?? defaultTargetPlatform,
-              builder: (context, updateValue, _) {
-                return RadioListTile(
-                  title: Text('android'),
-                  value: TargetPlatform.android,
-                  onChanged: update,
-                  groupValue: updateValue,
-                );
-              }),
-          Selector<OptionsNotifier, TargetPlatform>(
-              selector: (_, opt) =>
-                  opt.options.platform ?? defaultTargetPlatform,
-              builder: (context, updateValue, _) {
-                return RadioListTile(
-                  title: Text('ios'),
-                  value: TargetPlatform.iOS,
-                  onChanged: update,
-                  groupValue: updateValue,
-                );
-              }),
-        ]);
-    yield line;
-    yield ColoredBox(
-      color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
-      child: ListTile(
-        title: Text('外部存储权限请求',
-            style: TextStyle(
-                fontSize: 15,
-                color: !context.isDarkMode
-                    ? Color.fromARGB(255, 54, 54, 54)
-                    : Color.fromARGB(255, 187, 187, 187))),
-        trailing: Icon(Icons.keyboard_arrow_right_outlined),
-        onTap: () {
-          final style = TextStyle(
-              fontSize: 15, color: Color.fromARGB(255, 187, 187, 187));
-          if (defaultTargetPlatform == TargetPlatform.android)
-            Permission.manageExternalStorage.status.then((status) {
-              if (status.isDenied) {
-                Log.w('status denied', onlyDebug: false);
-                Permission.manageExternalStorage.request().then((status) {
-                  if (status.isDenied) {
-                    Log.w('request denied', onlyDebug: false);
-                  } else if (status.isGranted && mounted) {
-                    Nav.snackBar(Container(
-                      color: Color.fromARGB(255, 61, 61, 61),
-                      height: 56,
-                      child: Center(child: Text('请求成功!', style: style)),
-                    ));
-                  }
-                });
-                return;
-              }
-
-              handle ??= Nav.snackBar(Container(
-                color: Color.fromARGB(255, 61, 61, 61),
-                height: 56,
-                child: Center(child: Text('权限已请求成功!', style: style)),
-              ))
-                ..future.whenComplete(() => handle = null);
-            });
-        },
-      ),
-    );
-
-    yield line;
+  void update(TargetPlatform? d) {
+    optionsNotifier.options = ConfigOptions(platform: d);
+    Get.back();
   }
 
   SnackbarDelegate? handle;
@@ -323,19 +111,200 @@ class _SettingState extends State<Setting> {
     );
   }
 
+  void _onChanged(ThemeMode? updateValue) {
+    optionsNotifier.options = ConfigOptions(themeMode: updateValue);
+    Get.back();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final options = optionsNotifier.options;
-    final children = _buildChild(options).toList();
+    final mode = optionsNotifier
+        .selector((parent) => parent.options.themeMode ?? ThemeMode.system);
 
-    final child = ListViewBuilder(
+    final line = Divider(
+        color: !context.isDarkMode
+            ? Colors.grey.shade300
+            : Color.fromRGBO(25, 25, 25, 1),
+        height: 1.0);
+
+    final children = <Widget>[
+      selector<OptionsNotifier>(
+          title: 'app启动时刷新列表',
+          select: (_, opt) => opt.options.updateOnStart ?? false,
+          onChanged: (tap) {
+            optionsNotifier.options = ConfigOptions(updateOnStart: tap);
+          }),
+      line,
+      titleMenu(
+          title: '主题配色',
+          select: (_, opt) => opt.options.themeMode ?? ThemeMode.system,
+          trailingChild: (ThemeMode updateValue) {
+            return Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    getThemeName(updateValue),
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade500,
+                        leadingDistribution: TextLeadingDistribution.even),
+                  ),
+                  Icon(Icons.keyboard_arrow_right_outlined)
+                ]);
+          },
+          children: [
+            AnimatedBuilder(
+                animation: mode,
+                builder: (context, child) {
+                  return RadioListTile(
+                      title: Text('亮色'),
+                      value: ThemeMode.light,
+                      groupValue: mode.value,
+                      onChanged: _onChanged);
+                }),
+            AnimatedBuilder(
+                animation: mode,
+                builder: (context, child) {
+                  return RadioListTile(
+                      title: Text('暗色'),
+                      value: ThemeMode.dark,
+                      groupValue: mode.value,
+                      onChanged: _onChanged);
+                }),
+            AnimatedBuilder(
+                animation: mode,
+                builder: (context, child) {
+                  return RadioListTile(
+                      title: Text('跟随系统'),
+                      value: ThemeMode.system,
+                      groupValue: mode.value,
+                      onChanged: _onChanged);
+                })
+          ]),
+      line,
+      selector<OptionsNotifier>(
+          title: '指针采样',
+          select: (_, opt) => opt.options.nopResample ?? false,
+          onChanged: (updateValue) {
+            optionsNotifier.options = ConfigOptions(nopResample: updateValue);
+          }),
+      if (!kDartIsWeb) line,
+      if (!kDartIsWeb)
+        selector<OptionsNotifier>(
+            title: '显示性能图层',
+            select: (_, opt) => opt.options.showPerformanceOverlay ?? false,
+            onChanged: (updateValue) {
+              optionsNotifier.options =
+                  ConfigOptions(showPerformanceOverlay: updateValue);
+            }),
+      line,
+      selector<OptionsNotifier>(
+          title: '使用图片缓存',
+          select: (_, opt) => opt.options.useImageCache ?? false,
+          onChanged: (updateValue) {
+            optionsNotifier.options = ConfigOptions(useImageCache: updateValue);
+          }),
+      line,
+      selector<OptionsNotifier>(
+          title: '使用文本缓存',
+          select: (_, opt) => opt.options.useTextCache ?? false,
+          onChanged: (updateValue) {
+            optionsNotifier.options = ConfigOptions(useTextCache: updateValue);
+          }),
+      line,
+      titleMenu(
+          title: '平台',
+          select: (_, opt) => opt.options.platform ?? defaultTargetPlatform,
+          trailingChild: (updateValue) {
+            return Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    updateValue == TargetPlatform.android ? 'android' : 'ios',
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade500,
+                        leadingDistribution: TextLeadingDistribution.even),
+                  ),
+                  Icon(Icons.keyboard_arrow_right_outlined)
+                ]);
+          },
+          children: [
+            Selector<OptionsNotifier, TargetPlatform>(
+                selector: (_, opt) =>
+                    opt.options.platform ?? defaultTargetPlatform,
+                builder: (context, updateValue, _) {
+                  return RadioListTile(
+                    title: Text('android'),
+                    value: TargetPlatform.android,
+                    onChanged: update,
+                    groupValue: updateValue,
+                  );
+                }),
+            Selector<OptionsNotifier, TargetPlatform>(
+                selector: (_, opt) =>
+                    opt.options.platform ?? defaultTargetPlatform,
+                builder: (context, updateValue, _) {
+                  return RadioListTile(
+                    title: Text('ios'),
+                    value: TargetPlatform.iOS,
+                    onChanged: update,
+                    groupValue: updateValue,
+                  );
+                }),
+          ]),
+      line,
+      ColoredBox(
+        color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
+        child: ListTile(
+          title: Text('外部存储权限请求',
+              style: TextStyle(
+                  fontSize: 15,
+                  color: !context.isDarkMode
+                      ? Color.fromARGB(255, 54, 54, 54)
+                      : Color.fromARGB(255, 187, 187, 187))),
+          trailing: Icon(Icons.keyboard_arrow_right_outlined),
+          onTap: () {
+            final style = TextStyle(
+                fontSize: 15, color: Color.fromARGB(255, 187, 187, 187));
+            if (defaultTargetPlatform == TargetPlatform.android)
+              Permission.manageExternalStorage.status.then((status) {
+                if (status.isDenied) {
+                  Log.w('status denied', onlyDebug: false);
+                  Permission.manageExternalStorage.request().then((status) {
+                    if (status.isDenied) {
+                      Log.w('request denied', onlyDebug: false);
+                    } else if (status.isGranted && mounted) {
+                      Nav.snackBar(Container(
+                        color: Color.fromARGB(255, 61, 61, 61),
+                        height: 56,
+                        child: Center(child: Text('请求成功!', style: style)),
+                      ));
+                    }
+                  });
+                  return;
+                }
+
+                handle ??= Nav.snackBar(Container(
+                  color: Color.fromARGB(255, 61, 61, 61),
+                  height: 56,
+                  child: Center(child: Text('权限已请求成功!', style: style)),
+                ))
+                  ..future.whenComplete(() => handle = null);
+              });
+          },
+        ),
+      ),
+      line,
+    ];
+
+    Widget child = ListView(children: children);
+    child = Container(
       color: !context.isDarkMode ? null : const Color.fromRGBO(20, 20, 20, 1),
-      itemBuilder: (BuildContext context, int index) {
-        return children[index];
-      },
-      itemCount: children.length,
+      child: child,
     );
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
         value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
         child: Scaffold(appBar: AppBar(title: Text('设置')), body: child));

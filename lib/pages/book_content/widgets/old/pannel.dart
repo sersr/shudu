@@ -757,7 +757,6 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     ftColor.value = fcolor;
   }
 
-  //TODO: 添加配色保存功能
   Widget settings() {
     var fontSlider = Row(
       children: [
