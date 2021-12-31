@@ -20,6 +20,7 @@ class Uint8ListType with TransferTypeMapData<Uint8List?> {
     } else if (list != null) {
       return list;
     }
+    return null;
   }
 
   @override

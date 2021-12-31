@@ -23,7 +23,7 @@ mixin ContentBrightness {
   void outResetDefault() {
     if (brightnessSup)
       EventQueue.pushOne(brightness, () async {
-        await ScreenBrightness.resetScreenBrightness();
+        await ScreenBrightness().resetScreenBrightness();
 
         return reloadBrightnessTask();
       });
@@ -35,7 +35,7 @@ mixin ContentBrightness {
       brightness.value = _clamp;
       _lastBrightness = _clamp;
       follow.value = false;
-      if (brightnessSup) return ScreenBrightness.setScreenBrightness(_clamp);
+      if (brightnessSup) return ScreenBrightness().setScreenBrightness(_clamp);
     });
   }
 
@@ -45,13 +45,13 @@ mixin ContentBrightness {
     follow.value = v;
     EventQueue.pushOne(brightness, () async {
       if (v) {
-        if (brightnessSup) await ScreenBrightness.resetScreenBrightness();
+        if (brightnessSup) await ScreenBrightness().resetScreenBrightness();
       } else {
         final _old = _lastBrightness;
         if (_old != null) {
           final _v = _old.clamp(0.0, 1.0);
           brightness.value = _v;
-          if (brightnessSup) await ScreenBrightness.setScreenBrightness(_v);
+          if (brightnessSup) await ScreenBrightness().setScreenBrightness(_v);
         }
       }
     });
@@ -62,7 +62,7 @@ mixin ContentBrightness {
   }
 
   Future<void> reloadBrightnessTask() async {
-    if (brightnessSup) brightness.value = await ScreenBrightness.current;
+    if (brightnessSup) brightness.value = await ScreenBrightness().current;
   }
 
   final bool brightnessSup = defaultTargetPlatform == TargetPlatform.android ||

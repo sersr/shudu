@@ -63,6 +63,7 @@ mixin ComplexOnDatabaseMixin on DatabaseMixin, ServerEvent {
       updateBook(bookId, book);
       // assert(Log.w('update ${await x}'));
     }
+    return null;
   }
 
   @override
@@ -213,6 +214,7 @@ mixin ZhangduComplexOnDatabaseMixin
           return chapterData;
         }
       }
+      return null;
     });
   }
 

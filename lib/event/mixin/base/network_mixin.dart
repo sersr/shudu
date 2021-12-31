@@ -478,5 +478,6 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
 
       return Uint8List.fromList(dataBytes);
     }
+    return null;
   }
 }

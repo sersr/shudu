@@ -62,6 +62,7 @@ mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
       insertOrUpdateIndexs(bookid, str);
       return getIndexsDecodeLists(str);
     }
+    return null;
   }
 
   Future<NetBookIndex> _getIndexsDb(bookid) async {

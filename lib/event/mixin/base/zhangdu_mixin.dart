@@ -178,6 +178,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
       ));
       return splitSource(_raw);
     }
+    return null;
   }
 
   final _caches = <int, ZhangduDetailChapterCache>{};
@@ -274,6 +275,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
     } catch (e) {
       Log.w('error: $e');
     }
+    return null;
   }
 
   @override
@@ -303,6 +305,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
     if (data != null) {
       return data.chapterData;
     }
+    return null;
   }
 
   FutureOr<List<ZhangduChapterData>?> _getZhangduIndexDb(int bookId) {
@@ -339,6 +342,7 @@ mixin ZhangduNetMixin on HiveDioMixin
     } catch (e) {
       Log.e(e);
     }
+    return null;
   }
 
   @override
@@ -357,5 +361,6 @@ mixin ZhangduNetMixin on HiveDioMixin
         Log.i(e);
       }
     }
+    return null;
   }
 }

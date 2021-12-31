@@ -92,27 +92,27 @@ abstract class BookEventMessagerMain extends BookEvent
         ZhangduNetEventMessager {}
 
 mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('bookEventDefault', CustomEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('bookEventDefault', CustomEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(CustomEventMessage, [
-      getSearchData,
-      getImageBytesDynamic,
-      getHiveShudanLists,
-      (args) => getShudanLists(args[0], args[1]),
-      (args) => getTopLists(args[0], args[1], args[2]),
-      (args) => getCategLists(args[0], args[1], args[2]),
-      getShudanDetail,
-      (args) => getCategoryData(),
-      (args) => getContentNet(args[0], args[1]),
-      getInfoNet,
-      getIndexsNet,
-      getZhangduContentNet
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(CustomEventMessage, [
+        getSearchData,
+        getImageBytesDynamic,
+        getHiveShudanLists,
+        (args) => getShudanLists(args[0], args[1]),
+        (args) => getTopLists(args[0], args[1], args[2]),
+        (args) => getCategLists(args[0], args[1], args[2]),
+        getShudanDetail,
+        (args) => getCategoryData(),
+        (args) => getContentNet(args[0], args[1]),
+        getInfoNet,
+        getIndexsNet,
+        getZhangduContentNet
+      ]));
   }
 
   getImageBytes(String img) =>
@@ -123,9 +123,9 @@ mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
 /// implements [CustomEvent]
 mixin CustomEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(bookEventDefault, CustomEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(bookEventDefault, CustomEventMessage));
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
@@ -189,31 +189,30 @@ mixin CustomEventMessager on SendEvent, SendMessage {
   }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('database', BookCacheEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('database', BookCacheEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(BookCacheEventMessage, [
-      (args) => getMainList(),
-      (args) => watchMainList(),
-      (args) => updateBook(args[0], args[1]),
-      insertBook,
-      deleteBook,
-      watchCurrentCid,
-      (args) => getCacheItems()
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(BookCacheEventMessage, [
+        (args) => getMainList(),
+        (args) => watchMainList(),
+        (args) => updateBook(args[0], args[1]),
+        insertBook,
+        deleteBook,
+        watchCurrentCid,
+        (args) => getCacheItems()
+      ]));
   }
 }
 
 /// implements [BookCacheEvent]
 mixin BookCacheEventMessager on SendEvent, SendMessage {
   String get database => 'database';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(database, BookCacheEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()..add(MapEntry(database, BookCacheEventMessage));
   }
 
   FutureOr<Option<List<BookCache>>> getMainList() {
@@ -252,23 +251,24 @@ mixin BookCacheEventMessager on SendEvent, SendMessage {
   }
 }
 mixin BookContentEventResolve on Resolve implements BookContentEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('database', BookContentEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('database', BookContentEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(BookContentEventMessage, [watchBookContentCid, deleteCache]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(
+          BookContentEventMessage, [watchBookContentCid, deleteCache]));
   }
 }
 
 /// implements [BookContentEvent]
 mixin BookContentEventMessager on SendEvent, SendMessage {
   String get database => 'database';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(database, BookContentEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(database, BookContentEventMessage));
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
@@ -283,35 +283,34 @@ mixin BookContentEventMessager on SendEvent, SendMessage {
   }
 }
 mixin ServerEventResolve on Resolve implements ServerEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('database', ServerEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('database', ServerEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ServerEventMessage, [
-      (args) => getContentDb(args[0], args[1]),
-      (args) => insertOrUpdateIndexs(args[0], args[1]),
-      getIndexsDb,
-      insertOrUpdateContent,
-      insertOrUpdateBook,
-      (args) => insertOrUpdateZhangduIndex(args[0], args[1]),
-      (args) => getZhangduContentDb(args[0], args[1]),
-      getZhangduContentCid,
-      insertOrUpdateZhangduContent,
-      getZhangduIndexDb,
-      (args) => insertOrUpdateZhangduBook(args[0], args[1], args[2])
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(ServerEventMessage, [
+        (args) => getContentDb(args[0], args[1]),
+        (args) => insertOrUpdateIndexs(args[0], args[1]),
+        getIndexsDb,
+        insertOrUpdateContent,
+        insertOrUpdateBook,
+        (args) => insertOrUpdateZhangduIndex(args[0], args[1]),
+        (args) => getZhangduContentDb(args[0], args[1]),
+        getZhangduContentCid,
+        insertOrUpdateZhangduContent,
+        getZhangduIndexDb,
+        (args) => insertOrUpdateZhangduBook(args[0], args[1], args[2])
+      ]));
   }
 }
 
 /// implements [ServerEvent]
 mixin ServerEventMessager on SendEvent, SendMessage {
   String get database => 'database';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(database, ServerEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()..add(MapEntry(database, ServerEventMessage));
   }
 
   FutureOr<RawContentLines?> getContentDb(int bookid, int contentid) {
@@ -374,29 +373,29 @@ mixin ServerEventMessager on SendEvent, SendMessage {
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('bookEventDefault', ComplexEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('bookEventDefault', ComplexEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ComplexEventMessage, [
-      (args) => getContent(args[0], args[1], args[2]),
-      (args) => getIndexs(args[0], args[1]),
-      getInfo,
-      (args) => getZhangduContent(
-          args[0], args[1], args[2], args[3], args[4], args[5])
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(ComplexEventMessage, [
+        (args) => getContent(args[0], args[1], args[2]),
+        (args) => getIndexs(args[0], args[1]),
+        getInfo,
+        (args) => getZhangduContent(
+            args[0], args[1], args[2], args[3], args[4], args[5])
+      ]));
   }
 }
 
 /// implements [ComplexEvent]
 mixin ComplexEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(bookEventDefault, ComplexEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(bookEventDefault, ComplexEventMessage));
   }
 
   FutureOr<RawContentLines?> getContent(
@@ -424,33 +423,33 @@ mixin ComplexEventMessager on SendEvent, SendMessage {
   }
 }
 mixin ZhangduDatabaseEventResolve on Resolve implements ZhangduDatabaseEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('database', ZhangduDatabaseEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('database', ZhangduDatabaseEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ZhangduDatabaseEventMessage, [
-      deleteZhangduContentCache,
-      watchZhangduContentCid,
-      (args) => getZhangduMainList(),
-      (args) => watchZhangduMainList(),
-      (args) => updateZhangduBook(args[0], args[1]),
-      insertZhangduBook,
-      deleteZhangduBook,
-      watchZhangduCurrentCid,
-      (args) => getZhangduCacheItems()
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(ZhangduDatabaseEventMessage, [
+        deleteZhangduContentCache,
+        watchZhangduContentCid,
+        (args) => getZhangduMainList(),
+        (args) => watchZhangduMainList(),
+        (args) => updateZhangduBook(args[0], args[1]),
+        insertZhangduBook,
+        deleteZhangduBook,
+        watchZhangduCurrentCid,
+        (args) => getZhangduCacheItems()
+      ]));
   }
 }
 
 /// implements [ZhangduDatabaseEvent]
 mixin ZhangduDatabaseEventMessager on SendEvent, SendMessage {
   String get database => 'database';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(database, ZhangduDatabaseEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(database, ZhangduDatabaseEventMessage));
   }
 
   FutureOr<int?> deleteZhangduContentCache(int bookId) {
@@ -504,29 +503,29 @@ mixin ZhangduDatabaseEventMessager on SendEvent, SendMessage {
   }
 }
 mixin ZhangduComplexEventResolve on Resolve implements ZhangduComplexEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('bookEventDefault', ZhangduComplexEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('bookEventDefault', ZhangduComplexEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ZhangduComplexEventMessage, [
-      (args) => getZhangduIndex(args[0], args[1]),
-      (args) => getZhangduContent(
-          args[0], args[1], args[2], args[3], args[4], args[5]),
-      updateZhangduMainStatus,
-      getZhangduDetail
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(ZhangduComplexEventMessage, [
+        (args) => getZhangduIndex(args[0], args[1]),
+        (args) => getZhangduContent(
+            args[0], args[1], args[2], args[3], args[4], args[5]),
+        updateZhangduMainStatus,
+        getZhangduDetail
+      ]));
   }
 }
 
 /// implements [ZhangduComplexEvent]
 mixin ZhangduComplexEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(bookEventDefault, ZhangduComplexEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(bookEventDefault, ZhangduComplexEventMessage));
   }
 
   FutureOr<List<ZhangduChapterData>?> getZhangduIndex(int bookId, bool update) {
@@ -554,26 +553,26 @@ mixin ZhangduComplexEventMessager on SendEvent, SendMessage {
   }
 }
 mixin ZhangduNetEventResolve on Resolve implements ZhangduNetEvent {
-  Iterable<MapEntry<String, Type>> getResolveProtocols() sync* {
-    yield const MapEntry('bookEventDefault', ZhangduNetEventMessage);
-    yield* super.getResolveProtocols();
+  List<MapEntry<String, Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..add(const MapEntry('bookEventDefault', ZhangduNetEventMessage));
   }
 
-  Iterable<MapEntry<Type, List<Function>>> resolveFunctionIterable() sync* {
-    yield MapEntry(ZhangduNetEventMessage, [
-      getZhangduSameUsersBooks,
-      (args) => getZhangduSearchData(args[0], args[1], args[2])
-    ]);
-    yield* super.resolveFunctionIterable();
+  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+    return super.resolveFunctionIterable()
+      ..add(MapEntry(ZhangduNetEventMessage, [
+        getZhangduSameUsersBooks,
+        (args) => getZhangduSearchData(args[0], args[1], args[2])
+      ]));
   }
 }
 
 /// implements [ZhangduNetEvent]
 mixin ZhangduNetEventMessager on SendEvent, SendMessage {
   String get bookEventDefault => 'bookEventDefault';
-  Iterable<MapEntry<String, Type>> getProtocols() sync* {
-    yield MapEntry(bookEventDefault, ZhangduNetEventMessage);
-    yield* super.getProtocols();
+  List<MapEntry<String, Type>> getProtocols() {
+    return super.getProtocols()
+      ..add(MapEntry(bookEventDefault, ZhangduNetEventMessage));
   }
 
   FutureOr<List<ZhangduSameUsersBooksData>?> getZhangduSameUsersBooks(
@@ -593,12 +592,11 @@ mixin MultiBookEventDefaultMessagerMixin
     on SendEvent, ListenMixin, SendMultiServerMixin /*impl*/ {
   Future<RemoteServer> createRemoteServerBookEventDefault();
   Future<RemoteServer> createRemoteServerDatabase();
-  Iterable<MapEntry<String, CreateRemoteServer>>
-      createRemoteServerIterable() sync* {
-    yield MapEntry(
-        'bookEventDefault', Left(createRemoteServerBookEventDefault));
-    yield MapEntry('database', Left(createRemoteServerDatabase));
-    yield* super.createRemoteServerIterable();
+  List<MapEntry<String, CreateRemoteServer>> createRemoteServerIterable() {
+    return super.createRemoteServerIterable()
+      ..add(MapEntry(
+          'bookEventDefault', Left(createRemoteServerBookEventDefault)))
+      ..add(MapEntry('database', Left(createRemoteServerDatabase)));
   }
 
   void onResumeListen() {

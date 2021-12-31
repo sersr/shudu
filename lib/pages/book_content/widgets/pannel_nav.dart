@@ -396,9 +396,11 @@ class _BottomEndState extends State<BottomEnd> {
           ..overlay = context.read<OverlayObserver>();
   }
 
-  VoidCallback? _callback;
+  final _callbacks = <VoidCallback>[];
   void callbackOnHide([VoidCallback? callback]) {
-    _callback = callback;
+    if (callback != null) {
+      _callbacks.add(callback);
+    }
     hide();
   }
 
@@ -417,8 +419,13 @@ class _BottomEndState extends State<BottomEnd> {
   }
 
   void onhideEnd() {
-    _callback?.call();
-    _callback = null;
+    if (_callbacks.isNotEmpty) {
+      final local = List.of(_callbacks);
+      _callbacks.clear();
+      for (var callback in local) {
+        callback();
+      }
+    }
     _hide.value = true;
 
     showSettings.value = SettingView.none;

@@ -38,13 +38,12 @@ class SingleRepositoryOnServer extends Repository
   SingleRepositoryOnServer();
 
   @override
-  Iterable<MapEntry<String, CreateRemoteServer>>
-      createRemoteServerIterable() sync* {
-    yield MapEntry<String, CreateRemoteServer>(
-        bookEventDefault, Left(onCreateIsolate)); // 所有任务都由此处理
-    yield MapEntry<String, CreateRemoteServer>(
-        database, const Right(NullRemoteServer())); // 提供一个`handle`
-    yield* super.createRemoteServerIterable();
+  List<MapEntry<String, CreateRemoteServer>> createRemoteServerIterable() {
+    return super.createRemoteServerIterable()
+      ..add(MapEntry<String, CreateRemoteServer>(
+          bookEventDefault, Left(onCreateIsolate))) // 所有任务都由此处理
+      ..add(MapEntry<String, CreateRemoteServer>(
+          database, const Right(NullRemoteServer()))); // 提供一个`handle`
   }
 
   Future<RemoteServer> onCreateIsolate() {

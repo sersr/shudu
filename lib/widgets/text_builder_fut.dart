@@ -147,63 +147,65 @@ class ItemAsyncLayout extends StatelessWidget {
         child = ItemWidget(height: height);
       }
       return child;
-    }, layout: (BuildContext context, mounted) async {
-      await releaseUI;
-      if (!mounted()) return const [];
+    }, layout: (BuildContext context, mounted) {
+      return TextCache.runTextPainter(() async {
+        await releaseUI;
+        if (!mounted()) return const [];
 
-      final topR = topRightScore;
-      final width = maxWidth;
-      final ts = context.read<TextStyleConfig>().data;
-      final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
-      List<TextPainter>? topRText;
-      if (topR != null) {
-        topRText = await TextCache.textPainter(
-            text: topR,
-            width: width,
+        final topR = topRightScore;
+        final width = maxWidth;
+        final ts = context.read<TextStyleConfig>().data;
+        final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
+        List<TextPainter>? topRText;
+        if (topR != null) {
+          topRText = await TextCache.oneTextPainter(
+              text: topR,
+              width: width,
+              dir: TextDirection.ltr,
+              style: trs,
+              maxLines: 1,
+              ellipsis: '...');
+        }
+
+        await releaseUI;
+        final _tpWidth = topRText?.first.width ?? 0;
+
+        final topWidth = maxWidth - _tpWidth;
+        final style = ts.title2;
+        if (!mounted()) return const [];
+
+        final topText = await TextCache.oneTextPainter(
+            text: top,
+            width: topWidth,
             dir: TextDirection.ltr,
-            style: trs,
+            style: style,
             maxLines: 1,
             ellipsis: '...');
-      }
 
-      await releaseUI;
-      final _tpWidth = topRText?.first.width ?? 0;
+        await releaseUI;
+        if (!mounted()) return const [];
 
-      final topWidth = maxWidth - _tpWidth;
-      final style = ts.title2;
-      if (!mounted()) return const [];
+        final centerText = await TextCache.oneTextPainter(
+            text: center,
+            width: width,
+            dir: TextDirection.ltr,
+            style: ts.body2,
+            maxLines: centerLines,
+            ellipsis: '...');
 
-      final topText = await TextCache.textPainter(
-          text: top,
-          width: topWidth,
-          dir: TextDirection.ltr,
-          style: style,
-          maxLines: 1,
-          ellipsis: '...');
+        await releaseUI;
+        if (!mounted()) return const [];
+        final bottomText = await TextCache.oneTextPainter(
+            text: bottom,
+            width: width,
+            dir: TextDirection.ltr,
+            style: ts.body3,
+            maxLines: bottomLines,
+            ellipsis: '...');
 
-      await releaseUI;
-      if (!mounted()) return const [];
-
-      final centerText = await TextCache.textPainter(
-          text: center,
-          width: width,
-          dir: TextDirection.ltr,
-          style: ts.body2,
-          maxLines: centerLines,
-          ellipsis: '...');
-
-      await releaseUI;
-      if (!mounted()) return const [];
-      final bottomText = await TextCache.textPainter(
-          text: bottom,
-          width: width,
-          dir: TextDirection.ltr,
-          style: ts.body3,
-          maxLines: bottomLines,
-          ellipsis: '...');
-
-      await releaseUI;
-      return [topRText, topText, centerText, bottomText];
+        await releaseUI;
+        return [topRText, topText, centerText, bottomText];
+      });
     });
   }
 }

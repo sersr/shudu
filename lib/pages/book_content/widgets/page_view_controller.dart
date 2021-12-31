@@ -61,6 +61,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     if (_viewPortDimension != null) {
       return pixels == _viewPortDimension || pixels == _viewPortDimension;
     }
+    return null;
   }
 
   bool get isAtEdge {
