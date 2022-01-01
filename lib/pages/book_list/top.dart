@@ -38,11 +38,7 @@ class _TopPageState extends State<TopPage> {
               labelColor: const Color.fromARGB(255, 255, 255, 255),
               indicatorColor: const Color.fromARGB(255, 252, 137, 175),
               labelStyle: TextStyle(fontSize: 15),
-              tabs: ['周榜', '月榜', '总榜']
-                  .map((e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Text(e)))
-                  .toList(),
+              tabs: ['周榜', '月榜', '总榜'].map(map).toList(),
             ),
             body: TabBarView(
               children: List.generate(3, (index) => Top(index: index)),
@@ -50,6 +46,13 @@ class _TopPageState extends State<TopPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget map(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Text(text),
     );
   }
 }

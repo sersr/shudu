@@ -9,8 +9,8 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../event/export.dart';
 import '../../provider/text_styles.dart';
+import '../../widgets/image_text.dart';
 import 'booklist_detail.dart';
-import 'booklist_item.dart';
 
 // 书单页面
 class BooklistPage extends StatelessWidget {
@@ -186,12 +186,14 @@ class _WrapWidgetState extends State<WrapWidget>
                 });
                 Navigator.of(context).push(route);
               },
-              child: BooklistItem(
-                desc: bookList.description,
-                name: bookList.title,
-                total: bookList.bookCount,
+              child: ImageTextLayout(
                 img: bookList.cover,
-                title: bookList.title,
+                top: bookList.title,
+                center: bookList.description,
+                bottom: '${bookList.bookCount ?? ''}',
+                height: 112,
+                centerLines: 2,
+                bottomLines: 1,
               ),
             );
           }),
@@ -278,8 +280,7 @@ class ShudanCategProvider extends ChangeNotifier {
 
     final _list = list;
     if (_list == null) {
-      var data =
-          await _repository.customEvent.getHiveShudanLists(key);
+      var data = await _repository.customEvent.getHiveShudanLists(key);
       Timer? timer;
       if (data?.isNotEmpty == true) {
         list = data;
@@ -293,8 +294,8 @@ class ShudanCategProvider extends ChangeNotifier {
       }
       timer?.cancel();
     } else {
-      final data = await _repository.customEvent
-          .getShudanLists(key, _listCounts + 1);
+      final data =
+          await _repository.customEvent.getShudanLists(key, _listCounts + 1);
 
       if (data != null && data.isNotEmpty) {
         _listCounts += 1;

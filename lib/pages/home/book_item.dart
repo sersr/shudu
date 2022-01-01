@@ -33,7 +33,7 @@ class BookItem extends StatelessWidget {
       height: 98,
       img: img,
       top: bookName ?? '',
-      topRightScore: api == ApiType.zhangdu ? '_' : null,
+      topRightScore: api == ApiType.zhangdu ? '*' : null,
       center: '最新: $bookUdateItem',
       bottom: bookUpdateTime ?? '',
       bottomLines: 1,

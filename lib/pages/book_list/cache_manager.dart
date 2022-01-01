@@ -42,7 +42,6 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -61,7 +60,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             return ListViewBuilder(
               cacheExtent: 100,
               itemExtent: 60,
-              color:  !context.isDarkMode? null : Color.fromRGBO(25, 25, 25, 1),
+              color: !context.isDarkMode ? null : Color.fromRGBO(25, 25, 25, 1),
               padding: const EdgeInsets.only(bottom: 12.0),
               itemBuilder: (_, index) => cacheItemBuilder(index),
               itemCount: data.length,
@@ -78,11 +77,29 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
 
     final progress =
         _e.isEmpty ? 0.0 : (_e.cacheItemCounts / _e.itemCounts).clamp(0.0, 1.0);
+
+    final indicator = Center(
+      child: LinearProgressIndicator(
+        value: progress,
+        backgroundColor: Colors.blue.shade100,
+        valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
+      ),
+    );
+
     final isLight = !context.isDarkMode;
 
+    final bgColor = isLight ? null : Colors.grey.shade900;
+    final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
+
+    final name = _cacheNotifier.getName(_e.id, _e.api);
+    final text = '$name${_e.api == ApiType.zhangdu ? ' *' : ''}';
+
+    const padding = EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0);
+    final style = TextStyle(fontSize: 12, color: Colors.grey.shade300);
+
     return ListItem(
-      bgColor: isLight ? null : Colors.grey.shade900,
-      splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+      bgColor: bgColor,
+      splashColor: splashColor,
       onTap: () {
         _cacheNotifier.exit = true;
         BookInfoPage.push(context, _e.id, _e.api).whenComplete(() =>
@@ -100,26 +117,13 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
                 Row(
                   children: [
                     const SizedBox(height: 2),
-                    Expanded(
-                      child: Text(
-                        '${_cacheNotifier.getName(_e.id, _e.api)}${_e.api == ApiType.zhangdu ? ' _' : ''}',
-                        maxLines: 1,
-                      ),
-                    ),
+                    Expanded(child: Text(text, maxLines: 1)),
                     const SizedBox(width: 3),
-                    Text(
-                      '${_e.cacheItemCounts}/${_e.itemCounts}',
-                    )
+                    Text('${_e.cacheItemCounts}/${_e.itemCounts}')
                   ],
                 ),
                 const SizedBox(height: 1),
-                Center(
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.blue.shade100,
-                    valueColor: AlwaysStoppedAnimation(Colors.blueGrey),
-                  ),
-                ),
+                indicator,
                 const SizedBox(height: 1),
               ],
             ),
@@ -134,15 +138,8 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
                 bgColor: Colors.blue.shade400,
                 splashColor: Colors.blue.shade200,
                 onTap: () => _cacheNotifier.deleteCache(_e),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0),
-                child: Text(
-                  '清除缓存',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade300,
-                  ),
-                ),
+                padding: padding,
+                child: Text('清除缓存', style: style),
               ),
               const SizedBox(height: 3),
               btn1(
@@ -150,15 +147,8 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
                 bgColor: Colors.red.shade400,
                 splashColor: Colors.red.shade200,
                 onTap: () => _cacheNotifier.deleteBook(_e),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0),
-                child: Text(
-                  '删除记录',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade300,
-                  ),
-                ),
+                padding: padding,
+                child: Text('删除记录', style: style),
               ),
             ],
           ),
@@ -223,17 +213,14 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     if (repository == null) return;
     _out = false;
     _cacheSub?.cancel();
-    _cacheSub =
-        repository!.bookCacheEvent.watchMainList().listen(_listen);
+    _cacheSub = repository!.bookCacheEvent.watchMainList().listen(_listen);
     _cacheSubZd?.cancel();
-    _cacheSubZd = _repository!.zhangduEvent
-        .watchZhangduMainList()
-        .listen(_listenZd);
+    _cacheSubZd =
+        _repository!.zhangduEvent.watchZhangduMainList().listen(_listenZd);
     final remoteItems = await repository!.getCacheItems() ?? const [];
     if (_out) return;
     final zhangduItems =
-        await repository!.zhangduEvent.getZhangduCacheItems() ??
-            const [];
+        await repository!.zhangduEvent.getZhangduCacheItems() ?? const [];
     if (_out) return;
 
     _items
@@ -253,8 +240,7 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     if (repository == null) return;
     _items.remove(item);
     if (item.api == ApiType.zhangdu) {
-      await repository!.zhangduEvent
-          .deleteZhangduContentCache(item.id);
+      await repository!.zhangduEvent.deleteZhangduContentCache(item.id);
     } else {
       await repository!.bookContentEvent.deleteCache(item.id);
     }

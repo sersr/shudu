@@ -53,8 +53,10 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>().data;
     final listColor = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+
     final titleColor =
         isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900;
+    const titlePadding = EdgeInsets.symmetric(vertical: 4.0, horizontal: 10.0);
 
     final bgColor = isLight ? null : Colors.grey.shade900;
     final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
@@ -75,111 +77,117 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
             } else if (data.listId == null) {
               return reloadBotton(() => provider.load(widget.index));
             }
+            
+            // 头部
+            final children = <Widget>[
+              TitleWidget(data: data, total: widget.total),
+              const SizedBox(height: 6),
+              _DescWidget(description: data.description),
+              const SizedBox(height: 6),
+              Container(
+                color: titleColor,
+                padding: titlePadding,
+                child: Text('书单列表', style: ts.title2),
+              ),
+              const SizedBox(height: 3)
+            ];
 
-            var length = 6;
+            var headLength = children.length;
+            var length = headLength;
+
             final bookList = data.bookList;
+
             if (bookList != null) {
               length += bookList.length;
             }
 
-            return Stack(
-              children: [
-                RepaintBoundary(
-                  child: ListViewBuilder(
-                    color: listColor,
-                    refreshDelegate: refreshDelegate2,
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    // cacheExtent: 100,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return TitleWidget(data: data, total: widget.total);
-                      } else if (index == 1 || index == 3) {
-                        return const SizedBox(height: 6);
-                      } else if (index == 2) {
-                        return buildIntro(ts, data.description);
-                      } else if (index == 4) {
-                        return Container(
-                          color: titleColor,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4.0, horizontal: 10.0),
-                          child: Text('书单列表', style: ts.title2),
-                        );
-                      } else if (index == 5) {
-                        return const SizedBox(height: 3);
-                      }
-                      final dataIndex = index - 6;
-                      final item = bookList![dataIndex];
-                      return ListItem(
-                        bgColor: bgColor,
-                        splashColor: splashColor,
-                        height: 108,
-                        onTap: () => BookInfoPage.push(
-                            context, item.bookId!, ApiType.biquge),
-                        child: RepaintBoundary(
-                          child: ShudanListDetailItemWidget(item: item),
-                        ),
-                      );
-                    },
-                    itemCount: length,
+            return ListViewBuilder(
+              color: listColor,
+              itemCount: length,
+              refreshDelegate: refreshDelegate2,
+              padding: const EdgeInsets.only(bottom: 12.0),
+              itemBuilder: (context, index) {
+                if (index < headLength) {
+                  return children[index];
+                }
+                final dataIndex = index - headLength;
+                final item = bookList![dataIndex];
+                return ListItem(
+                  bgColor: bgColor,
+                  splashColor: splashColor,
+                  height: 108,
+                  onTap: () =>
+                      BookInfoPage.push(context, item.bookId!, ApiType.biquge),
+                  child: RepaintBoundary(
+                    child: ShudanListDetailItemWidget(item: item),
                   ),
-                ),
-              ],
+                );
+              },
             );
           },
         ),
       ),
     );
   }
+}
 
-  var hide = ValueNotifier(true);
+/// desc
+class _DescWidget extends StatelessWidget {
+  _DescWidget({Key? key, this.description}) : super(key: key);
+  final String? description;
 
-  Widget buildIntro(TextStyleData ts, String? description) {
+  final hide = ValueNotifier(false);
+  @override
+  Widget build(BuildContext context) {
+    final color = !context.isDarkMode
+        ? Color.fromARGB(255, 250, 250, 250)
+        : Colors.grey.shade900;
+
+    final ts = context.read<TextStyleConfig>().data;
+
+    final title = Text('简介', style: ts.title2);
+    final body = Padding(
+      padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+      child: AnimatedBuilder(
+        animation: hide,
+        builder: (context, child) {
+          final iconData = hide.value
+              ? Icons.keyboard_arrow_down_rounded
+              : Icons.keyboard_arrow_up_rounded;
+
+          return InkWell(
+            onTap: () => hide.value = !hide.value,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  description ?? '',
+                  maxLines: hide.value ? 2 : null,
+                  overflow: TextOverflow.fade,
+                  style: ts.body3,
+                ),
+                Center(child: Icon(iconData, color: Colors.grey[700])),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
     return Container(
       padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-      color:
-          isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900,
+      color: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('简介', style: ts.title2),
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-            child: AnimatedBuilder(
-                animation: hide,
-                builder: (context, child) {
-                  return InkWell(
-                    onTap: () {
-                      hide.value = !hide.value;
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          description ?? '',
-                          maxLines: hide.value ? 2 : null,
-                          overflow: TextOverflow.fade,
-                          style: ts.body3,
-                        ),
-                        Center(
-                            child: Icon(
-                          hide.value
-                              ? Icons.keyboard_arrow_down_rounded
-                              : Icons.keyboard_arrow_up_rounded,
-                          color: Colors.grey[700],
-                        )),
-                      ],
-                    ),
-                  );
-                }),
-          ),
-        ],
+        children: [title, body],
       ),
     );
   }
 }
 
-class TitleWidget extends StatefulWidget {
+/// head
+class TitleWidget extends StatelessWidget {
   const TitleWidget({
     Key? key,
     required this.data,
@@ -189,16 +197,8 @@ class TitleWidget extends StatefulWidget {
   final BookListDetailData data;
   final int? total;
   @override
-  State<TitleWidget> createState() => _TitleWidgetState();
-}
-
-class _TitleWidgetState extends State<TitleWidget>
-    with AutomaticKeepAliveClientMixin {
-  @override
   Widget build(BuildContext context) {
-    super.build(context);
     final ts = context.read<TextStyleConfig>().data;
-    final data = widget.data;
     return Container(
       height: 120,
       color: !context.isDarkMode
@@ -229,7 +229,7 @@ class _TitleWidgetState extends State<TitleWidget>
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
-                      child: Text('共${widget.total}本书', style: ts.body2),
+                      child: Text('共$total本书', style: ts.body2),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3.0),
@@ -244,9 +244,6 @@ class _TitleWidgetState extends State<TitleWidget>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 class ShudanListDetailItemWidget extends StatelessWidget {

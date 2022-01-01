@@ -11,28 +11,6 @@ import '../../provider/export.dart';
 import '../../widgets/image_text.dart';
 import '../book_info/info_page.dart';
 
-class TopItem extends StatelessWidget {
-  const TopItem({Key? key, required this.item}) : super(key: key);
-  final BookTopList item;
-
-  @override
-  Widget build(BuildContext context) {
-    final img = item.img;
-    final name = item.name;
-    final cname = item.cname;
-    final author = item.author;
-    final desc = item.desc;
-    final topRightScore = '${item.score}分';
-    final center = '$cname | $author';
-    return ImageTextLayout(
-        img: img,
-        top: name,
-        center: center,
-        topRightScore: topRightScore,
-        bottom: desc);
-  }
-}
-
 /// [T]: context.read()使用
 class TopCtgListView<T> extends StatefulWidget {
   const TopCtgListView({
@@ -134,15 +112,23 @@ class _TopCtgListViewState<T> extends State<TopCtgListView<T>>
             );
           return SizedBox(height: 50, child: loadingIndicator());
         }
-        final _item = _data[index];
+        final item = _data[index];
         return ListItem(
           bgColor: !context.isDarkMode ? null : Colors.grey.shade900,
           splashColor:
               !context.isDarkMode ? null : Color.fromRGBO(60, 60, 60, 1),
-          onTap: () => _item.id != null
-              ? BookInfoPage.push(context, _item.id!, ApiType.biquge)
-              : null,
-          child: TopItem(item: _item),
+          onTap: () {
+            if (item.id != null) {
+              BookInfoPage.push(context, item.id!, ApiType.biquge);
+            }
+          },
+          child: ImageTextLayout(
+            img: item.img,
+            top: item.name,
+            center: '${item.cname} | ${item.author}',
+            topRightScore: '${item.score}分',
+            bottom: item.desc,
+          ),
         );
       },
     );

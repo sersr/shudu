@@ -341,7 +341,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                     }
                                   },
                                   child: _BookInfoSameItemWidget(
-                                      l: data, author: author, api: widget.api),
+                                      book: data,
+                                      author: author,
+                                      api: widget.api),
                                 );
                               },
                             ),
@@ -622,11 +624,11 @@ class _BookInfoSameItemWidget extends StatelessWidget {
   const _BookInfoSameItemWidget({
     Key? key,
     required this.author,
-    required this.l,
+    required this.book,
     required this.api,
   }) : super(key: key);
 
-  final SameUserBook l;
+  final SameUserBook book;
   final String? author;
   final ApiType api;
   @override
@@ -634,10 +636,10 @@ class _BookInfoSameItemWidget extends StatelessWidget {
     final nText = api == ApiType.biquge ? '最新: ' : '';
     return ImageTextLayout(
       height: 108,
-      img: l.img,
-      top: l.name ?? '',
+      img: book.img,
+      top: book.name ?? '',
       center: '作者: $author',
-      bottom: '$nText${l.lastChapter}',
+      bottom: '$nText${book.lastChapter}',
       bottomLines: 1,
     );
   }

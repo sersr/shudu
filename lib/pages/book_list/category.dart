@@ -48,67 +48,65 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('分类'),
-          centerTitle: true,
-          // backgroundColor: Colors.white,
-          elevation: 1.0,
-        ),
-        body: Center(
-          child: NotificationListener<OverscrollIndicatorNotification>(
-            onNotification: disallowGlow,
-            child: AnimatedBuilder(
-              animation: _category,
-              builder: (context, _) {
-                final data = _category.data;
-                if (data == null) {
-                  return const CircularProgressIndicator();
-                } else if (data.isEmpty) {
-                  return reloadBotton(_category.getCategories);
-                }
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: GridView.builder(
-                    itemCount: data.length,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      final e = data[index];
+      appBar: AppBar(title: Text('分类'), centerTitle: true, elevation: 1.0),
+      body: Center(
+        child: NotificationListener<OverscrollIndicatorNotification>(
+          onNotification: disallowGlow,
+          child: AnimatedBuilder(
+            animation: _category,
+            builder: (context, _) {
+              final data = _category.data;
+              if (data == null) {
+                return loadingIndicator();
+              } else if (data.isEmpty) {
+                return reloadBotton(_category.getCategories);
+              }
 
-                      return Center(
-                        child: btn1(
-                          onTap: () {
-                            final name = e.name;
-                            final id = e.id;
-                            if (name != null && id != null) {
-                              final _index = int.tryParse(id);
-                              if (_index != null)
-                                CategegoryView.push(context, name, _index);
-                            }
-                          },
-                          radius: 6,
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Expanded(child: ImageResolve(img: e.image)),
-                              const SizedBox(height: 4),
-                              Text(e.name ?? '', style: ts.title2),
-                            ],
-                          ),
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: GridView.builder(
+                  itemCount: data.length,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    final item = data[index];
+
+                    return Center(
+                      child: btn1(
+                        radius: 6,
+                        padding: const EdgeInsets.all(12),
+                        onTap: () {
+                          final name = item.name;
+                          final id = item.id;
+                          if (name != null && id != null) {
+                            final _index = int.tryParse(id);
+                            if (_index != null)
+                              CategegoryView.push(context, name, _index);
+                          }
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Expanded(child: ImageResolve(img: item.image)),
+                            const SizedBox(height: 4),
+                            Text(item.name ?? '', style: ts.title2),
+                          ],
                         ),
-                      );
-                    },
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        mainAxisExtent: 124,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 0,
-                        crossAxisCount: 2),
+                      ),
+                    );
+                  },
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    mainAxisExtent: 124,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 0,
+                    crossAxisCount: 2,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   bool disallowGlow(notification) {
@@ -162,39 +160,47 @@ class _CategoriesState extends State<Categories> {
 
   @override
   Widget build(BuildContext context) {
+    var body = TabBarView(
+      children: List.generate(
+        _titles.length,
+        (index) {
+          return ChangeNotifierProvider(
+            create: (context) => TopNotifier<int>(
+              context.read<Repository>().getCategLists,
+              widget.index,
+              _urlKeys[index],
+            ),
+            child: TopCtgListView<int>(index: index),
+          );
+        },
+      ),
+    );
+
     return DefaultTabController(
       length: _titles.length,
       child: Scaffold(
         body: RepaintBoundary(
           child: BarLayout(
             title: Text(widget.title),
-            body: TabBarView(
-              children: List.generate(
-                _titles.length,
-                (index) => ChangeNotifierProvider(
-                  create: (context) => TopNotifier<int>(
-                      context.read<Repository>().getCategLists,
-                      widget.index,
-                      _urlKeys[index]),
-                  child: TopCtgListView<int>(index: index),
-                ),
-              ),
-            ),
+            body: body,
             bottom: TabBar(
               unselectedLabelColor: !context.isDarkMode
                   ? const Color.fromARGB(255, 204, 204, 204)
                   : const Color.fromARGB(255, 110, 110, 110),
               labelColor: const Color.fromARGB(255, 255, 255, 255),
               indicatorColor: const Color.fromARGB(255, 252, 137, 175),
-              tabs: _titles
-                  .map((e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Text(e)))
-                  .toList(),
+              tabs: _titles.map(map).toList(),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget map(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Text(text),
     );
   }
 }
