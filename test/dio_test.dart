@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/api/api.dart';
-import 'package:shudu/event/base/type_adapter.dart';
+import 'package:shudu/utils/type_adapter.dart';
 import 'package:path/path.dart';
 
 void main() async {

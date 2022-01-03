@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:shudu/event/base/book_event.dart';
+import 'package:shudu/event/base/export.dart';
 import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
 
@@ -21,8 +21,8 @@ class RepositoryImplTest extends BookEventMessagerMain
     server = Server();
 
     final remoteSendHandle = server.sendHandle;
-    sendPortOwner = SendPortOwner(
-        localSendPort: remoteSendHandle, remoteSendPort: client.sendHandle);
+    sendPortOwner = SendHandleOwner(
+        localSendHandle: remoteSendHandle, remoteSendHandle: client.sendHandle);
     return server.init();
   }
 
@@ -32,11 +32,11 @@ class RepositoryImplTest extends BookEventMessagerMain
     server.close();
   }
 
-  SendPortOwner? sendPortOwner;
+  SendHandleOwner? sendPortOwner;
 
   @override
-  SendPortOwner? getSendPortOwner(key) {
-    return sendPortOwner ?? super.getSendPortOwner(key);
+  SendHandleOwner? getSendHandleOwner(key) {
+    return sendPortOwner ?? super.getSendHandleOwner(key);
   }
 }
 
@@ -82,7 +82,7 @@ class Server {
 
 class BookEventIsolateTest extends BookEventIsolate {
   BookEventIsolateTest(SendHandle sp)
-      : super(remoteSendPort: sp, appPath: '', cachePath: '');
+      : super(remoteSendHandle: sp, appPath: '', cachePath: '');
 
   @override
   bool remove(key) {

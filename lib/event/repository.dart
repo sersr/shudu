@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/change_notifier.dart';
 
-import 'base/book_event.dart';
+import 'base/export.dart';
 import 'mixin/base/system_infos.dart';
 import 'mixin/multi_Isolate_repository.dart';
 import 'mixin/single_repository.dart';
@@ -16,8 +16,8 @@ abstract class Repository extends BookEventMessagerMain
 
   factory Repository.create() {
     // 切换顺序使用
-    _instance ??= SingleRepositoryOnServer();
     _instance ??= SingleRepository();
+    _instance ??= SingleRepositoryWithServer();
     _instance ??= MultiIsolateRepository();
     return _instance!;
   }

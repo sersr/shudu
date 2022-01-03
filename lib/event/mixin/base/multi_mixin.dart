@@ -8,7 +8,7 @@ import 'package:utils/utils.dart';
 import '../../../data/data.dart';
 import '../../../database/database.dart';
 import '../../../database/nop_database.dart';
-import '../../base/book_event.dart';
+import '../../base/export.dart';
 import 'database_mixin.dart';
 import 'zhangdu_mixin.dart';
 

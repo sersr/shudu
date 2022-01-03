@@ -13,9 +13,9 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../../api/api.dart';
 import '../../../data/data.dart';
 import '../../../database/database.dart';
-import '../../base/book_event.dart';
-import '../../base/constants.dart';
-import '../../base/type_adapter.dart';
+import '../../../utils/type_adapter.dart';
+import '../../base/export.dart';
+import 'constants.dart';
 
 mixin HiveDioMixin on Resolve {
   late Dio dio;

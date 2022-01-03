@@ -3,7 +3,7 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
-import '../base/book_event.dart';
+import '../base/export.dart';
 import '../repository.dart';
 import 'base/export.dart';
 import 'base/system_infos.dart';
@@ -29,7 +29,7 @@ class MultiIsolateRepository extends Repository
   @override
   Future<RemoteServer> createRemoteServerDatabase() async {
     assert(args != null);
-    final localArgs = args!.copyWith(localSendPort);
+    final localArgs = args!.copyWith(localSendHandle);
     if (!kIsWeb) {
       final isolate = await Isolate.spawn(dataBaseEntryPoint, localArgs);
       return IsolateRemoteServer(isolate);
@@ -42,7 +42,7 @@ class MultiIsolateRepository extends Repository
   @override
   Future<RemoteServer> createRemoteServerBookEventDefault() async {
     assert(args != null);
-    final localArgs = args!.copyWith(localSendPort);
+    final localArgs = args!.copyWith(localSendHandle);
     if (!kIsWeb) {
       final isolate = await Isolate.spawn(_multiIsolateEntryPoint, localArgs);
       return IsolateRemoteServer(isolate);
@@ -58,7 +58,7 @@ void _multiIsolateEntryPoint(IsolateArgs args) {
   OneFile.runZoned(BookEventMultiIsolate(
     appPath: args.appPath,
     cachePath: args.cachePath,
-    remoteSendPort: args.sendHandle,
+    remoteSendHandle: args.sendHandle,
   ).init);
 }
 
@@ -83,7 +83,7 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
   BookEventMultiIsolate({
     required this.appPath,
     required this.cachePath,
-    required this.remoteSendPort,
+    required this.remoteSendHandle,
   });
 
   @override
@@ -92,7 +92,7 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
   final String cachePath;
 
   @override
-  final SendHandle remoteSendPort;
+  final SendHandle remoteSendHandle;
 
   @override
   FutureOr<void> initTask() => run();

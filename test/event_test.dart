@@ -2,7 +2,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shudu/database/database.dart';
-import 'package:shudu/event/base/book_event.dart';
+import 'package:shudu/event/base/export.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import 'repository_impl.dart';

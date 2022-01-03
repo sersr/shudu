@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import 'event/base/type_adapter.dart';
+import 'utils/type_adapter.dart';
 import 'pages/app.dart';
 import 'provider/options_notifier.dart';
 

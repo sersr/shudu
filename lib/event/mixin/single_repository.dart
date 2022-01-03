@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../base/book_event.dart';
+import '../base/export.dart';
 import '../repository.dart';
 import 'base/export.dart';
 import 'base/system_infos.dart';
@@ -16,9 +16,9 @@ class SingleRepository extends Repository
   SingleRepository();
 
   @override
-  Future<RemoteServer> onCreateIsolate(SendHandle remoteSendPort) async {
+  Future<RemoteServer> onCreateServer(SendHandle remoteSendHandle) async {
     final args = await initStartArgs();
-    final localArgs = args.copyWith(remoteSendPort);
+    final localArgs = args.copyWith(remoteSendHandle);
 
     if (!kIsWeb) {
       final newIsolate =
@@ -33,9 +33,9 @@ class SingleRepository extends Repository
 
 /// fake
 /// single Isolate
-class SingleRepositoryOnServer extends Repository
+class SingleRepositoryWithServer extends Repository
     with SendEventMixin, SendCacheMixin, ListenMixin, SendMultiServerMixin {
-  SingleRepositoryOnServer();
+  SingleRepositoryWithServer();
 
   @override
   List<MapEntry<String, CreateRemoteServer>> createRemoteServerIterable() {
@@ -48,7 +48,7 @@ class SingleRepositoryOnServer extends Repository
 
   Future<RemoteServer> onCreateIsolate() {
     return initStartArgs().then((args) {
-      final localArgs = args.copyWith(localSendPort);
+      final localArgs = args.copyWith(localSendHandle);
 
       if (!kIsWeb) {
         return Isolate.spawn(singleIsolateEntryPoint, localArgs)
@@ -64,7 +64,7 @@ class SingleRepositoryOnServer extends Repository
 void singleIsolateEntryPoint(IsolateArgs args) {
   Log.i(args, onlyDebug: false);
   OneFile.runZoned(BookEventIsolate(
-    remoteSendPort: args.sendHandle,
+    remoteSendHandle: args.sendHandle,
     appPath: args.appPath,
     cachePath: args.cachePath,
   ).run);
@@ -91,13 +91,13 @@ class BookEventIsolate extends BookEventResolveMain
         ComplexMixin,
         ZhangduComplexMixin {
   BookEventIsolate({
-    required this.remoteSendPort,
+    required this.remoteSendHandle,
     required this.appPath,
     required this.cachePath,
   });
 
   @override
-  final SendHandle remoteSendPort;
+  final SendHandle remoteSendHandle;
   @override
   final String appPath;
   @override

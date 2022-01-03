@@ -5,7 +5,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';
-import '../../base/book_event.dart';
+import '../../base/export.dart';
 
 /// 可以处理跨隔离任务
 mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {

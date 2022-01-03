@@ -10,7 +10,7 @@ import 'package:utils/utils.dart';
 
 import '../../../database/database.dart';
 import '../../../pages/book_list/cache_manager.dart';
-import '../../base/book_event.dart';
+import '../../base/export.dart';
 
 // 数据库接口实现
 mixin DatabaseMixin on Resolve implements DatabaseEvent {
@@ -73,12 +73,15 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   @override
   Stream<List<BookContentDb>> watchBookContentCid(int bookid) {
     late Stream<List<BookContentDb>> w;
-
+    Log.w('bookId: $bookid', onlyDebug: false);
     bookContentDb.query.cid
       ..where.bookId.equalTo(bookid)
       ..let((s) => w = s.watchToTable);
 
-    return w;
+    return w.map((event) {
+      Log.w('hasData: $bookid', onlyDebug: false);
+      return event;
+    });
   }
 
   @override
