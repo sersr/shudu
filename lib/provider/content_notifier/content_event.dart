@@ -76,9 +76,7 @@ mixin ContentEvent
       // indexData.clear();
       if ((rawIndexData.isEmpty || update) && api == ApiType.zhangdu) {
         rawIndexData =
-            await repository.zhangduEvent
-                .getZhangduIndex(bookId, false) ??
-            [];
+            await repository.zhangduEvent.getZhangduIndex(bookId, false) ?? [];
         final d =
             rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
         indexData.clear();
@@ -147,21 +145,19 @@ mixin ContentEvent
   /// 由滚动状态调用
   /// 只有在渲染后才能更改[innerIndex][controller.pixels]
   void reduceController() {
-    if (innerIndex.abs() > 100) {
+    if (innerIndex.abs() > 10) {
       EventQueue.runOne(_reduce, () {
         if (innerIndex.abs() > 10) {
-          return SchedulerBinding.instance!.addPostFrameCallback(_reduce);
+          assert(Log.w('lenght: $innerIndex'));
+          return SchedulerBinding.instance!.endOfFrame.whenComplete(_reduce);
         }
       });
     }
   }
 
-  void _reduce([_]) {
+  void _reduce() {
     final extent = controller?.viewPortDimension;
     if (controller?.isScrolling == false && extent != null) {
-      final pages = controller!.page.truncate();
-      Log.w('lenght: $pages ${extent * pages} | ${controller?.pixels}',
-          onlyDebug: false);
       resetController();
       notify();
     }

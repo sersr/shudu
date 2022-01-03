@@ -85,7 +85,7 @@ class AutoRun {
   bool get value => isActive.value;
   set value(bool v) {
     isActive.value = v;
-    EventQueue.runTask('autoRun_wake', () => Wakelock.toggle(enable: v));
+    EventQueue.run('autoRun_wake', () => Wakelock.toggle(enable: v));
   }
 
   Ticker? _ticker;

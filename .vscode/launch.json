@@ -68,17 +68,17 @@
             "program": "lib/main.dart",
             "flutterMode": "profile",
         },
-        {
-            "name": "profile get sksl",
-            "type": "dart",
-            "request": "launch",
-            "program": "lib/main.dart",
-            "flutterMode": "profile",
-            "args": [
-                "--cache-sksl",
-                "--purge-persistent-cache"
-            ]
-        },
+        // {
+        //     "name": "profile get sksl",
+        //     "type": "dart",
+        //     "request": "launch",
+        //     "program": "lib/main.dart",
+        //     "flutterMode": "profile",
+        //     "args": [
+        //         "--cache-sksl",
+        //         "--purge-persistent-cache"
+        //     ]
+        // },
         {
             "name": "Flutter: Run all Tests",
             "type": "dart",

@@ -93,7 +93,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
   final _errorLoading = <String, int>{};
 
   Future<T> imageTasks<T>(EventCallback<T> task) {
-    return EventQueue.runTask(imageTasks, task, channels: 5);
+    return EventQueue.run(imageTasks, task, channels: 5);
   }
 
   late final String imageLocalPath = join(cachePath, 'shudu', 'images');

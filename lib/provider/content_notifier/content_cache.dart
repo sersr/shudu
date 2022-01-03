@@ -125,7 +125,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
   @pragma('vm:prefer-inline')
   Future<T> _run<T>(EventCallback<T> callback) {
-    return EventQueue.runTask(this, callback);
+    return EventQueue.run(this, callback);
   }
 
   Future<List<ContentMetrics>> _genTextData(
@@ -177,13 +177,13 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
       assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
       if (url != null && name != null && sort != null) {
-        final lines = await repository
-            .getZhangduContent(localBookId, contentId, url, name, sort, update);
+        final lines = await repository.getZhangduContent(
+            localBookId, contentId, url, name, sort, update);
         if (localBookId != bookId) return;
 
         if (lines != null) {
           final hasContent = lines.isNotEmpty;
-          final data = hasContent ? lines : const ['没有章节内容，稍后重试。'];
+          final data = hasContent ? lines : ['没有章节内容，稍后重试。'];
           final pages = await _genTextData(localBookId, data, name);
           if (pages.isEmpty) return;
           newText = TextData(
@@ -197,8 +197,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
         }
       }
     } else {
-      final lines =
-          await repository.getContent(localBookId, contentId, update);
+      final lines = await repository.getContent(localBookId, contentId, update);
       if (localBookId != bookId) return;
 
       if (lines != null && lines.contentIsNotEmpty) {

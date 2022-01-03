@@ -39,7 +39,7 @@ class SearchNotifier extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    return EventQueue.runTask(this, _init);
+    return EventQueue.run(this, _init);
   }
 
   Future<void> _init() async {

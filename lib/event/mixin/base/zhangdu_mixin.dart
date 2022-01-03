@@ -216,7 +216,7 @@ mixin ZhangduComplexMixin on HiveDioMixin
 
   /// 相同的[bookId]在一个队列中
   Future<ZhangduDetailChapterCache?> autoUpdate(int bookId) {
-    return EventQueue.runTask(
+    return EventQueue.run(
         [_autoUpdate, bookId], () => _autoUpdate(bookId));
   }
 

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../demo/view_one.dart';
 import '../setting/setting.dart';
 import 'book_history.dart';
 import 'booklist.dart';
@@ -34,6 +37,7 @@ class ListMainPage extends StatelessWidget {
     }
 
     var count = 0;
+    var index = 0;
     return Container(
       color: light ? Color.fromARGB(255, 231, 231, 231) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -133,20 +137,90 @@ class ListMainPage extends StatelessWidget {
                 }),
               const SizedBox(height: 5),
               row(
-                  left: AnimatedBuilder(
-                      animation: _eventQueueLength,
-                      builder: (context, child) {
-                        return _builder(
-                          'EventQueue length: ${_eventQueueLength.value}',
-                          () => _eventQueueLength.value =
-                              EventQueue.checkTempQueueLength(),
-                        );
-                      })),
+                left: AnimatedBuilder(
+                    animation: _eventQueueLength,
+                    builder: (context, child) {
+                      return _builder(
+                        'EventQueue length: ${_eventQueueLength.value}',
+                        () => _eventQueueLength.value =
+                            EventQueue.checkTempQueueLength(),
+                      );
+                    }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder('nav horizontal', () {
+                  final content = Container(
+                    // color: Color.fromARGB(255, 61, 61, 61),
+                    padding: const EdgeInsets.all(8),
+                    child: Text('horizontal side'),
+                  );
+                  switch (index % 6) {
+                    case 0:
+                      show(content, align: OverlayAliment.start);
+                      break;
+                    case 1:
+                      show(content);
+                      break;
+                    case 2:
+                      show(content, align: OverlayAliment.end);
+                      break;
+                    case 3:
+                      show(content, align: OverlayAliment.end, rightSide: true);
+                      break;
+                    case 4:
+                      show(content, rightSide: true);
+                      break;
+                    case 5:
+                      show(content,
+                          align: OverlayAliment.start, rightSide: true);
+                      break;
+                    default:
+                  }
+                  index++;
+                }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder(
+                  'demo',
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return ViewOne();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void show(Widget content,
+      {bool rightSide = false,
+      OverlayAliment align = OverlayAliment.center,
+      Duration stay = const Duration(seconds: 3),
+      Duration duration = const Duration(milliseconds: 300),
+      Radius radius = const Radius.circular(4)}) {
+    final controller = OverlayHorizontalController(
+      content: content,
+      rightSide: rightSide,
+      align: align,
+      stay: stay,
+      showKey: [align, rightSide],
+      radius: BorderRadius.horizontal(
+          left: rightSide ? radius : Radius.zero,
+          right: !rightSide ? radius : Radius.zero),
+    );
+
+    final delegate = OverlayMixinDelegate(controller, duration);
+    delegate.show();
   }
 
   final _eventQueueLength = ValueNotifier(0);

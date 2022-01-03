@@ -20,10 +20,24 @@ mixin ContentDataBase on ChangeNotifier {
 
   // _innerIndex == page == 0
   void resetController() {
-    controller?.goIdle();
-    _innerIndex = 0;
-    controller?.applyContentDimension(minExtent: 0, maxExtent: 1);
-    controller?.correct(0.0);
+    if (controller?.isScrolling == true) controller?.goIdle();
+    final extent = controller?.viewPortDimension;
+    if (extent != null) {
+      final page = controller!.page;
+      final floorPage = page.floor();
+      final offset = page - floorPage;
+      final resetPixels = offset * extent;
+      assert(Log.w('start: $page | ${controller?.pixels}'));
+
+      controller?.applyContentDimension(minExtent: 0, maxExtent: resetPixels);
+      controller?.correct(resetPixels);
+
+      _innerIndex = controller!.page.round();
+      assert(Log.w(
+          'done: ${controller?.page} | ${floorPage * extent} + ${controller?.pixels}'));
+    } else {
+      _innerIndex = 0;
+    }
     applyContentDimension();
   }
 

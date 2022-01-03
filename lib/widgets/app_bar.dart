@@ -4,11 +4,16 @@ import 'package:get/get.dart';
 
 class AppBarHide extends StatefulWidget {
   const AppBarHide(
-      {Key? key, required this.values, this.begincolor, required this.title})
+      {Key? key,
+      required this.values,
+      this.begincolor,
+      required this.title,
+      this.max = 120})
       : super(key: key);
   final ValueListenable<double> values;
   final Color? begincolor;
   final Widget title;
+  final double max;
   @override
   _AppBarHideState createState() => _AppBarHideState();
 }
@@ -49,7 +54,7 @@ class _AppBarHideState extends State<AppBarHide> {
           child: AnimatedBuilder(
             animation: widget.values,
             builder: (context, child) {
-              final value = (widget.values.value / 120).clamp(0.0, 1.0);
+              final value = (widget.values.value / widget.max).clamp(0.0, 1.0);
               return AnimatedOpacity(
                 child: RepaintBoundary(child: widget.title),
                 opacity: value,
@@ -64,7 +69,7 @@ class _AppBarHideState extends State<AppBarHide> {
       child: AnimatedBuilder(
         animation: widget.values,
         builder: (context, child) {
-          final value = (widget.values.value / 120).clamp(0.0, 1.0);
+          final value = (widget.values.value / widget.max).clamp(0.0, 1.0);
           final color = tweenColor.lerp(1 - value);
           return Material(
               color: color ?? Colors.white, child: SafeArea(child: child!));

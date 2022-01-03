@@ -131,72 +131,72 @@ class _WrapWidgetState extends State<WrapWidget>
       interactive: true,
       controller: scrollController,
       child: ListViewBuilder(
-          scrollController: scrollController,
-          itemCount: list.length + 1,
-          cacheExtent: 200,
-          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
-          refreshDelegate: RefreshDelegate(
-              maxExtent: 80,
-              onRefreshing: shudanProvider.refresh,
-              onDone: shudanProvider.refreshDone,
-              builder: (context, offset, maxExtent, mode, refreshing) {
-                return ColoredBox(
-                  color: Colors.blue,
-                  child: Center(
-                    child: Text('$mode | $refreshing'),
-                  ),
-                );
-              }),
-          finishLayout: (first, last) {
-            final state = shudanProvider.state;
-            if (last >= list.length - 3) {
-              if (state == LoadingStatus.success) {
-                shudanProvider.loadNext(last);
-              }
-            }
-          },
-          itemBuilder: (context, index) {
-            if (index == list.length) {
-              final state = shudanProvider.state;
-              Widget? child;
-
-              if (state == LoadingStatus.error ||
-                  state == LoadingStatus.failed) {
-                child = reloadBotton(() => shudanProvider.loadNext(index));
-              }
-
-              child ??= loadingIndicator();
-
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                height: 60,
-                child: child,
+        scrollController: scrollController,
+        itemCount: list.length + 1,
+        cacheExtent: 200,
+        color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+        refreshDelegate: RefreshDelegate(
+            maxExtent: 80,
+            onRefreshing: shudanProvider.refresh,
+            onDone: shudanProvider.refreshDone,
+            builder: (context, offset, maxExtent, mode, refreshing) {
+              return ColoredBox(
+                color: Colors.blue,
+                child: Center(
+                  child: Text('$mode | $refreshing'),
+                ),
               );
+            }),
+        finishLayout: (first, last) {
+          final state = shudanProvider.state;
+          if (last >= list.length - 3) {
+            if (state == LoadingStatus.success) {
+              shudanProvider.loadNext(last);
+            }
+          }
+        },
+        itemBuilder: (context, index) {
+          if (index == list.length) {
+            final state = shudanProvider.state;
+            Widget? child;
+
+            if (state == LoadingStatus.error || state == LoadingStatus.failed) {
+              child = reloadBotton(() => shudanProvider.loadNext(index));
             }
 
-            final bookList = list[index];
-            return ListItem(
-              height: 112,
-              bgColor: isLight ? null : Colors.grey.shade900,
-              splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
-              onTap: () {
-                final route = MaterialPageRoute(builder: (_) {
-                  return BooklistDetailPage(
-                      total: bookList.bookCount, index: bookList.listId);
-                });
-                Navigator.of(context).push(route);
-              },
-              child: ImageTextLayout(
-                img: bookList.cover,
-                top: bookList.title,
-                center: bookList.description,
-                bottom: '${bookList.bookCount ?? ''}',
-                height: 112,
-                centerLines: 2,
-                bottomLines: 1,
-              ),
+            child ??= loadingIndicator();
+
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              height: 60,
+              child: child,
             );
-          }),
+          }
+
+          final bookList = list[index];
+          return ListItem(
+            height: 112,
+            bgColor: isLight ? null : Colors.grey.shade900,
+            splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
+            onTap: () {
+              final route = MaterialPageRoute(builder: (_) {
+                return BooklistDetailPage(
+                    total: bookList.bookCount, index: bookList.listId);
+              });
+              Navigator.of(context).push(route);
+            },
+            child: ImageTextLayout(
+              img: bookList.cover,
+              top: bookList.title,
+              center: bookList.description,
+              bottom: '共${bookList.bookCount}本书',
+              height: 112,
+              centerLines: 2,
+              bottomLines: 1,
+            ),
+          );
+        },
+      ),
     );
   }
 

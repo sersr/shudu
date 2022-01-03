@@ -16,7 +16,7 @@ import '../../widgets/images.dart';
 import '../../widgets/indexs.dart';
 import '../../widgets/page_animation.dart';
 import '../book_content/book_content_page.dart';
-import 'app_bar.dart';
+import '../../widgets/app_bar.dart';
 
 class BookInfoPage extends StatefulWidget {
   const BookInfoPage({Key? key, required this.id, required this.api})

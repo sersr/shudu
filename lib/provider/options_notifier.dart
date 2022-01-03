@@ -122,7 +122,7 @@ class OptionsNotifier extends ChangeNotifier {
   static const _themeMode = 'themeMode';
 
   static Future<bool> get extenalStorage async {
-    return EventQueue.runTask(setextenalStorage, () async {
+    return EventQueue.run(setextenalStorage, () async {
       final box = await Hive.openBox('setextenalStorage');
       final result = box.get('extenalStorage', defaultValue: true);
       await box.close();
@@ -131,7 +131,7 @@ class OptionsNotifier extends ChangeNotifier {
   }
 
   static Future<void> setextenalStorage(bool use) async {
-    return EventQueue.runTask(setextenalStorage, () async {
+    return EventQueue.run(setextenalStorage, () async {
       final box = await Hive.openBox('setextenalStorage');
       await box.put('extenalStorage', use);
       return box.close();
@@ -145,7 +145,7 @@ class OptionsNotifier extends ChangeNotifier {
 
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.runTask(this, _init);
+  Future<void> init() => EventQueue.run(this, _init);
   bool _initDone = false;
   Future<void> _init() async {
     if (_initDone) return;

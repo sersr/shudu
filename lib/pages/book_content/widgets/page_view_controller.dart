@@ -57,16 +57,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     return pixels / viewPortDimension!;
   }
 
-  bool? get atEdge {
-    if (_viewPortDimension != null) {
-      return pixels == _viewPortDimension || pixels == _viewPortDimension;
-    }
-    return null;
-  }
-
-  bool get isAtEdge {
-    return atEdge ?? true;
-  }
+  bool get atEdge => pixels == _minExtent || pixels == _maxExtent;
 
   double? _viewPortDimension;
   double? get viewPortDimension => _viewPortDimension;
@@ -225,9 +216,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
         PreNextDragController(delegate: this, cancelCallback: cancelCallback);
     beginActivity(DragActivity(delegate: this, controller: _drag));
     _currentDrag = _drag;
-    if (isAtEdge) {
-      getContentDimension();
-    }
+    if (atEdge) getContentDimension();
 
     return _drag;
   }
