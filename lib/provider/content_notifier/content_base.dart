@@ -20,6 +20,15 @@ mixin ContentDataBase on ChangeNotifier {
 
   // _innerIndex == page == 0
   void resetController() {
+    controller?.goIdle();
+    _innerIndex = 0;
+    controller?.applyContentDimension(minExtent: 0, maxExtent: 1);
+    controller?.correct(0.0);
+    applyContentDimension();
+  }
+
+  // 考虑到页面可能没有对齐
+  void shrinkIndex() {
     if (controller?.isScrolling == true) controller?.goIdle();
     final extent = controller?.viewPortDimension;
     if (extent != null) {

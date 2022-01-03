@@ -145,7 +145,7 @@ mixin ContentEvent
   /// 由滚动状态调用
   /// 只有在渲染后才能更改[innerIndex][controller.pixels]
   void reduceController() {
-    if (innerIndex.abs() > 10) {
+    if (innerIndex.abs() > 100) {
       EventQueue.runOne(_reduce, () {
         if (innerIndex.abs() > 10) {
           assert(Log.w('lenght: $innerIndex'));
@@ -158,7 +158,7 @@ mixin ContentEvent
   void _reduce() {
     final extent = controller?.viewPortDimension;
     if (controller?.isScrolling == false && extent != null) {
-      resetController();
+      shrinkIndex();
       notify();
     }
   }
@@ -174,7 +174,7 @@ mixin ContentEvent
       header.value = '';
     }
     final _reset = _shouldUpdate(newBookId, cid, page, api);
-    // assert(_reset || tData.contentIsNotEmpty);
+
     if (_reset || tData.contentIsEmpty) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
