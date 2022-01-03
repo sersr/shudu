@@ -170,7 +170,7 @@ class BookContentPageState extends PanSlideState<BookContentPage>
 
     bloc.out();
 
-    await bloc.dump();
+    bloc.dump();
 
     await blocCache.load();
 

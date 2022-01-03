@@ -105,7 +105,7 @@ mixin ContentDataBase on ChangeNotifier {
   bool get inBook;
 
   void reset();
-  Future<void> dump();
+  void dump();
   void applyContentDimension({bool force = true});
 
   // 更新队列

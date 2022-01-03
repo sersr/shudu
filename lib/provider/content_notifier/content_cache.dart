@@ -226,12 +226,12 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   }
 
   @override
-  Future<void> dump() {
+  void dump() {
     final api = this.api;
     final cid = tData.cid;
     final localBookId = bookId;
     final localCurrentPage = currentPage;
-    return EventQueue.runOne(
+    EventQueue.pushOne(
         _dump, () => _dump(localBookId, cid, localCurrentPage, api));
   }
 

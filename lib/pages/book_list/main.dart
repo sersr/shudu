@@ -126,6 +126,56 @@ class ListMainPage extends StatelessWidget {
                       child: Text('hello banner'),
                     ),
                   );
+                  final builder =
+                      OverlayPannelBuilder(builder: (context, self) {
+                    final offset =
+                        Tween(begin: Offset(1.0, 0.0), end: Offset(0.0, 0.0));
+                    final key = GlobalKey();
+                    return OverlaySideGesture(
+                        entry: self,
+                        left: null,
+                        builder: (context) {
+                          return Center(
+                            child: SizedBox(
+                              key: key,
+                              height: 100,
+                              width: 300,
+                              child: Material(
+                                  color: Colors.blue, child: Text('hell0')),
+                            ),
+                          );
+                        },
+                        transition: (child) {
+                          return AnimatedBuilder(
+                            animation: self.userGesture,
+                            builder: (context, child) {
+                              if (self.userGesture.value) {
+                                final position =
+                                    self.owner.controller.drive(offset);
+
+                                return SlideTransition(
+                                    position: position, child: child);
+                              }
+
+                              return CurvedAnimationWidget(
+                                builder: (context, animation) {
+                                  final position = animation.drive(offset);
+                                  return SlideTransition(
+                                      position: position, child: child);
+                                },
+                                controller: self.owner.controller,
+                              );
+                            },
+                            child: child,
+                          );
+                        },
+                        sizeKey: key);
+                  });
+                  final delegate = OverlayMixinDelegate(
+                      builder, const Duration(milliseconds: 300));
+                  delegate.show().whenComplete(() =>
+                      release(const Duration(seconds: 3))
+                          .whenComplete(delegate.hide));
                 }),
               ),
               if (kDebugMode) const SizedBox(height: 5),
@@ -180,18 +230,13 @@ class ListMainPage extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               row(
-                left: _builder(
-                  'demo',
-                  () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return ViewOne();
-                        },
-                      ),
-                    );
-                  },
-                ),
+                left: _builder('demo', () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ViewOne(),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
@@ -206,19 +251,22 @@ class ListMainPage extends StatelessWidget {
       Duration stay = const Duration(seconds: 3),
       Duration duration = const Duration(milliseconds: 300),
       Radius radius = const Radius.circular(4)}) {
-    final controller = OverlayHorizontalController(
-      content: content,
-      rightSide: rightSide,
-      align: align,
-      stay: stay,
-      showKey: [align, rightSide],
-      radius: BorderRadius.horizontal(
-          left: rightSide ? radius : Radius.zero,
-          right: !rightSide ? radius : Radius.zero),
-    );
-
-    final delegate = OverlayMixinDelegate(controller, duration);
-    delegate.show();
+    showOverlay(content,
+        animationDuration: duration,
+        duration: stay,
+        showKey: [align, rightSide],
+        radius: BorderRadius.horizontal(
+            left: rightSide ? radius : Radius.zero,
+            right: !rightSide ? radius : Radius.zero),
+        position: rightSide ? Position.right : Position.left,
+        builder: (context, child) {
+      return SafeArea(
+        child: Align(
+          alignment: getAlignment(rightSide, align),
+          child: IntrinsicHeight(child: child),
+        ),
+      );
+    });
   }
 
   final _eventQueueLength = ValueNotifier(0);
@@ -233,4 +281,43 @@ class ListMainPage extends StatelessWidget {
       ],
     );
   }
+}
+
+enum OverlayAliment {
+  start,
+  center,
+  end,
+}
+Alignment getAlignment(bool rightSide, OverlayAliment align) {
+  late Alignment _alignment;
+  if (rightSide) {
+    switch (align) {
+      case OverlayAliment.center:
+        _alignment = Alignment.centerLeft;
+        break;
+      case OverlayAliment.start:
+        _alignment = Alignment.topLeft;
+        break;
+      case OverlayAliment.end:
+        _alignment = Alignment.bottomLeft;
+        break;
+
+      default:
+    }
+  } else {
+    switch (align) {
+      case OverlayAliment.center:
+        _alignment = Alignment.centerRight;
+        break;
+      case OverlayAliment.start:
+        _alignment = Alignment.topRight;
+        break;
+      case OverlayAliment.end:
+        _alignment = Alignment.bottomRight;
+        break;
+
+      default:
+    }
+  }
+  return _alignment;
 }
