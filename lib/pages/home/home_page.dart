@@ -247,8 +247,7 @@ class _MyHomePageState extends State<MyHomePage>
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                Navigator.of(context)
-                    .pushReplacement(MaterialPageRoute(builder: (context) {
+                Nav.pushReplacement(MaterialPageRoute(builder: (context) {
                   return BookInfoPage(id: item.bookId!, api: item.api);
                 }));
               }),
@@ -281,7 +280,7 @@ class _MyHomePageState extends State<MyHomePage>
               text: '删除书籍',
               onTap: () {
                 cache.deleteBook(item.bookId!, item.api);
-                Navigator.of(context).maybePop();
+                Nav.maybePop();
               }),
         ],
       ),

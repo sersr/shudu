@@ -35,7 +35,7 @@ class BookSearchPage extends SearchDelegate<void> {
   Widget buildLeading(BuildContext context) => InkWell(
       splashFactory: InkRipple.splashFactory,
       borderRadius: BorderRadius.circular(100),
-      onTap: Navigator.of(context).maybePop,
+      onTap: Nav.maybePop,
       child: SizedBox(
           // color: Colors.cyan,
           height: 100,
@@ -180,8 +180,7 @@ class BookSearchPage extends SearchDelegate<void> {
                         onTap: (index) {
                           final data = searchResult![index];
                           final id = int.tryParse('${data.id}');
-                          if (id != null)
-                            BookInfoPage.push(context, id, ApiType.biquge);
+                          if (id != null) BookInfoPage.push(id, ApiType.biquge);
                         },
                         builder: (context, index) {
                           final data = searchResult![index];
@@ -198,8 +197,7 @@ class BookSearchPage extends SearchDelegate<void> {
                           onTap: (index) {
                             final data = zhangduData![index];
                             if (data.bookId != null)
-                              BookInfoPage.push(
-                                  context, data.bookId!, ApiType.zhangdu);
+                              BookInfoPage.push(data.bookId!, ApiType.zhangdu);
                           },
                           builder: (context, index) {
                             final data = zhangduData![index];

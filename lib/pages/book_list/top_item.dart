@@ -119,7 +119,7 @@ class _TopCtgListViewState<T> extends State<TopCtgListView<T>>
               !context.isDarkMode ? null : Color.fromRGBO(60, 60, 60, 1),
           onTap: () {
             if (item.id != null) {
-              BookInfoPage.push(context, item.id!, ApiType.biquge);
+              BookInfoPage.push(item.id!, ApiType.biquge);
             }
           },
           child: ImageTextLayout(

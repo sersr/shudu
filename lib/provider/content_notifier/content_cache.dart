@@ -91,10 +91,10 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
 
     if (extent != null) {
       _applySuccess = true;
-      final page = controller!.page.round();
+      // final page = controller!.page.round();
+      final page = innerIndex;
       final p = -pLength + page;
       final n = nLength + page;
-
       controller?.applyContentDimension(
           minExtent: p * extent, maxExtent: n * extent);
     } else {
@@ -119,7 +119,8 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   }
 
   @pragma('vm:prefer-inline')
-  Future<void> load(int localBookId, int contentId, {update = false}) {
+  Future<void> load(int localBookId, int contentId, {update = false}) async {
+    if (!canReload(contentId) && !update) return;
     return _run(() => _load(localBookId, contentId, update));
   }
 
@@ -222,8 +223,13 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       addText(newText.cid!, newText.clone());
       applyContentDimension();
       newText.dispose();
+    } else {
+      autoAddReloadIds(contentId);
     }
   }
+
+  bool canReload(int id);
+  bool autoAddReloadIds(int contentId);
 
   @override
   void dump() {

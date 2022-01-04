@@ -26,12 +26,12 @@ class BookInfoPage extends StatefulWidget {
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
-  static Future push(BuildContext context, int bookid, ApiType api) async {
+  static Future push(int bookid, ApiType api) async {
     return pushRecoder(
       key: 'navigator.push',
       saveCount: 3,
       callback: (pushNotifier) =>
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+          Nav.push(MaterialPageRoute(builder: (context) {
         return AnimatedBuilder(
             animation: pushNotifier,
             builder: (context, child) {
@@ -93,7 +93,6 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
       top: 0.0,
       left: 0.0,
       right: 0.0,
-      height: 56 + (MediaQuery.maybeOf(context)?.padding.top ?? 0),
       child: AppBarHide(
         values: notifierValue,
         begincolor: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
@@ -336,8 +335,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                                   splashColor: splashColor,
                                   onTap: () {
                                     if (data.id != null) {
-                                      BookInfoPage.push(
-                                          context, data.id!, widget.api);
+                                      BookInfoPage.push(data.id!, widget.api);
                                     }
                                   },
                                   child: _BookInfoSameItemWidget(

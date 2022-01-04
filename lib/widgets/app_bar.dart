@@ -42,6 +42,7 @@ class _AppBarHideState extends State<AppBarHide> {
   @override
   Widget build(BuildContext context) {
     final canPop = ModalRoute.of(context)?.canPop ?? false;
+
     Widget? leading;
     if (canPop) {
       leading = BackButton(color: Colors.grey.shade100);
@@ -65,6 +66,7 @@ class _AppBarHideState extends State<AppBarHide> {
         ),
       ),
     );
+
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: widget.values,
@@ -74,7 +76,7 @@ class _AppBarHideState extends State<AppBarHide> {
           return Material(
               color: color ?? Colors.white, child: SafeArea(child: child!));
         },
-        child: child,
+        child: SizedBox(height: kToolbarHeight, child: child),
       ),
     );
   }

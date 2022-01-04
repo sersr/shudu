@@ -117,7 +117,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                   splashColor: splashColor,
                   height: 108,
                   onTap: () =>
-                      BookInfoPage.push(context, item.bookId!, ApiType.biquge),
+                      BookInfoPage.push(item.bookId!, ApiType.biquge),
                   child: RepaintBoundary(
                     child: ShudanListDetailItemWidget(item: item),
                   ),

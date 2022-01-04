@@ -4,6 +4,7 @@ import 'package:flutter/physics.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../widgets/app_bar.dart';
+import 'dart:math' as math;
 
 class ViewOne extends StatefulWidget {
   const ViewOne({Key? key}) : super(key: key);
@@ -34,7 +35,7 @@ class _ViewOneState extends State<ViewOne> {
     }
 
     extent = (extent - 180 + data.padding.bottom).clamp(0.0, extent);
-    min = 56 + (MediaQuery.maybeOf(context)?.padding.top ?? 0.0);
+    min = kToolbarHeight + (MediaQuery.maybeOf(context)?.padding.top ?? 0.0);
 
     max = min + extent;
     topOffset.value = max;
@@ -63,19 +64,13 @@ class _ViewOneState extends State<ViewOne> {
         children: [
           background,
           body,
-          Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: min,
-              child: IntrinsicWidth(child: appBar)),
+          Positioned(top: 0, left: 0, right: 0, child: appBar),
         ],
       ),
     );
   }
 }
 
-/// 动画逻辑有问题
 class _BodyView extends StatefulWidget {
   const _BodyView(
       {Key? key, required this.min, required this.max, required this.topOffset})
@@ -120,11 +115,14 @@ class __BodyViewState extends State<_BodyView> with TickerProviderStateMixin {
 
       animationController?.value = value;
       if (extentAfter < extent / 3) {
+        final c = (widget.max - value).toInt() << 1;
+
         animationController?.animateTo(widget.max,
-            duration: const Duration(milliseconds: 300));
+            duration: Duration(milliseconds: c.clamp(300, 600)));
       } else {
+        final c = (value - widget.min).toInt() << 1;
         animationController?.animateTo(widget.min,
-            duration: const Duration(milliseconds: 300));
+            duration: Duration(milliseconds: c.clamp(300, 600)));
       }
     }
   }

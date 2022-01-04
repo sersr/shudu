@@ -53,22 +53,26 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
   }
 
   void _loadWithId(int? id) => loadTasks(bookId, id);
-  bool canReload(int id) => !reloadIds.contains(id);
-  bool _autoAddReloadIds(int contentId) {
+  @override
+  bool canReload(int id, {bool update = true}) =>
+      !reloadIds.contains(id) || (update && tData.cid == id);
+  @override
+  bool autoAddReloadIds(int contentId) {
     if (reloadIds.contains(contentId)) return true;
     assert(Log.w('nid = ${tData.nid}, hasContent: ${tData.hasContent}'));
 
     reloadIds.add(contentId);
 
-    Timer(Duration(seconds: tData.hasContent ? 30 : 10),
-        () => reloadIds.remove(contentId));
+    Timer(const Duration(seconds: 10), () => reloadIds.remove(contentId));
     return false;
   }
 
   // 处于最后一章节时，查看是否有更新
   Future<void> loadResolve() async {
     final updateCid = tData.cid;
-    if (updateCid == null || initQueue.actived || !canReload(updateCid)) return;
+    if (updateCid == null ||
+        initQueue.actived ||
+        !canReload(updateCid, update: false)) return;
     final updateNid = tData.nid == -1;
     final updateContent = !tData.hasContent;
     if (updateNid || updateContent) {
@@ -90,8 +94,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
 
       await releaseUI;
       if (_getdata()) return;
-
-      if (_autoAddReloadIds(updateCid)) return;
+      if (autoAddReloadIds(updateCid)) return;
       if ((currentPage == tData.content.length || currentPage == 1)) {
         await load(bookId, updateCid, update: true);
         _getdata();
@@ -127,7 +130,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
     if (_data == null || _data.contentIsEmpty) {
       _loadAuto();
 
-      await futures.awaitKey(getid);
+      await awaitKey(getid);
 
       _data = getTextData(getid);
       if (_data == null || _data.contentIsEmpty) return false;

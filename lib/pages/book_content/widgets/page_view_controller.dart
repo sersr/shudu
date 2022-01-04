@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../../widgets/activity.dart';
 
@@ -89,17 +90,16 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     if (_lastActivityIsIdle && viewPortDimension != null) {
       if (_maxExtent > pixels) {
         setPixels(viewPortDimension! * (page + 0.51).round());
+        goIdle();
       }
-
-      goIdle();
     }
   }
 
   void prePage() {
     if (_lastActivityIsIdle && _minExtent < pixels) {
       setPixels(viewPortDimension! * (page - 0.51).round());
-    }
     goIdle();
+    }
   }
 
   bool get isScrolling => _activity is! IdleActivity;
@@ -192,10 +192,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   double get maxExtent => _maxExtent;
 
   void applyContentDimension({double? minExtent, double? maxExtent}) {
-    if (minExtent != null && _minExtent != minExtent) {
+    if (minExtent != null) {
       _minExtent = minExtent;
     }
-    if (maxExtent != null && _maxExtent != maxExtent) {
+    if (maxExtent != null) {
       _maxExtent = maxExtent;
     }
     assert(_minExtent <= _maxExtent);

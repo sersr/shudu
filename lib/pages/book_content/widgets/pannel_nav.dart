@@ -761,7 +761,7 @@ class _TopPannelState extends State<TopPannel> {
                 child: Row(
                   children: [
                     _topButton(
-                      onTap: Navigator.of(context).maybePop,
+                      onTap: Nav.maybePop,
                       child: Icon(Icons.arrow_back_ios, color: Colors.white),
                     ),
                     Expanded(
@@ -785,8 +785,7 @@ class _TopPannelState extends State<TopPannel> {
                                 uiOverlay(hide: false);
                                 // OptionsNotifier.autoSetStatus(context);
                                 final cache = context.read<BookCacheNotifier>();
-                                BookInfoPage.push(
-                                        context, bookid, contentNtf.api)
+                                BookInfoPage.push(bookid, contentNtf.api)
                                     .then((_) async {
                                   final list = await cache.getList;
                                   for (final bookCache in list) {

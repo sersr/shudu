@@ -38,7 +38,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
   @override
   Widget build(BuildContext context) {
     final isLight = !context.isDarkMode;
-    
+
     final bgColor = isLight ? null : Colors.grey.shade900;
     final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
     final color = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
@@ -100,7 +100,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
                 splashColor: splashColor,
                 onTap: () {
                   if (item.bookId != null) {
-                    BookInfoPage.push(context, item.bookId!, ApiType.biquge);
+                    BookInfoPage.push(item.bookId!, ApiType.biquge);
                   }
                 },
                 child: child,

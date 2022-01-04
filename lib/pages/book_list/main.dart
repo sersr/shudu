@@ -46,14 +46,12 @@ class ListMainPage extends StatelessWidget {
             children: [
               row(
                 left: _builder('书单', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return BooklistPage();
                   }));
                 }),
                 right: _builder('分类', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return RepaintBoundary(child: ListCatetoryPage());
                   }));
                 }),
@@ -61,14 +59,12 @@ class ListMainPage extends StatelessWidget {
               const SizedBox(height: 5),
               row(
                 left: _builder('缓存管理', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return RepaintBoundary(child: CacheManager());
                   }));
                 }),
                 right: _builder('浏览历史', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return RepaintBoundary(child: BookHistory());
                   }));
                 }),
@@ -76,14 +72,12 @@ class ListMainPage extends StatelessWidget {
               const SizedBox(height: 5),
               row(
                 left: _builder('榜单', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return RepaintBoundary(child: TopPage());
                   }));
                 }),
                 right: _builder('设置', () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) {
+                  Nav.push(MaterialPageRoute(builder: (context) {
                     return Setting();
                   }));
                 }),
@@ -231,7 +225,7 @@ class ListMainPage extends StatelessWidget {
               const SizedBox(height: 5),
               row(
                 left: _builder('demo', () {
-                  Navigator.of(context).push(
+                  Nav.push(
                     MaterialPageRoute(
                       builder: (context) => ViewOne(),
                     ),
@@ -263,7 +257,7 @@ class ListMainPage extends StatelessWidget {
       return SafeArea(
         child: Align(
           alignment: getAlignment(rightSide, align),
-          child: IntrinsicHeight(child: child),
+          child: child,
         ),
       );
     });
@@ -272,6 +266,10 @@ class ListMainPage extends StatelessWidget {
   final _eventQueueLength = ValueNotifier(0);
 
   Widget row({Widget? left, Widget? right}) {
+    if (left == null) {
+      left = right;
+      right = null;
+    }
     final hasChild = right != null;
     return Row(
       children: [

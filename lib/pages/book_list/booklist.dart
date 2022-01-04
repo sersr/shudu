@@ -183,7 +183,7 @@ class _WrapWidgetState extends State<WrapWidget>
                 return BooklistDetailPage(
                     total: bookList.bookCount, index: bookList.listId);
               });
-              Navigator.of(context).push(route);
+              Nav.push(route);
             },
             child: ImageTextLayout(
               img: bookList.cover,

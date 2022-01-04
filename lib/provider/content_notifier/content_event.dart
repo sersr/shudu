@@ -85,6 +85,9 @@ mixin ContentEvent
     }
   }
 
+  var _inTask = false;
+  bool get inTask => _inTask;
+
   /// 当前章节
   ///
   /// 加载、重载、设置更改等操作需要更新[tData]要调用的函数
@@ -101,6 +104,7 @@ mixin ContentEvent
     didChangeKey();
 
     void event() async {
+      _inTask = true;
       autoRun.stopSave();
       if (clear) reset();
 
@@ -137,6 +141,7 @@ mixin ContentEvent
 
       scheduleMicrotask(autoRun.stopAutoRun);
       Timer.run(scheduleTask);
+      _inTask = false;
     }
 
     return only ? event.pushOneAwait(initQueue) : event.pushAwait(initQueue);
