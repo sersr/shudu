@@ -11,6 +11,9 @@ mixin ContentDataBase on ChangeNotifier {
   Repository get repository;
   int bookId = -1;
   int currentPage = 1;
+
+  // 控制边界
+  NopPageViewController? controller;
   int _innerIndex = 0;
   int get innerIndex => _innerIndex;
 
@@ -79,8 +82,6 @@ mixin ContentDataBase on ChangeNotifier {
   }
 
   final initQueue = EventQueue();
-
-  NopPageViewController? controller;
 
   final showCname = ValueNotifier(false);
   final mic = Duration.microsecondsPerMillisecond * 200.0;

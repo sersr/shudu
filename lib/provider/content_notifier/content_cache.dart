@@ -153,6 +153,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   List<ZhangduChapterData> rawIndexData = [];
   Future<void> _load(int localBookId, int contentId, bool update) async {
     if (localBookId == -1 || contentId == -1) return;
+    final localKey = key;
     TextData? newText;
     if (api == ApiType.zhangdu) {
       final current = indexData[contentId];
@@ -180,7 +181,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       if (url != null && name != null && sort != null) {
         final lines = await repository.getZhangduContent(
             localBookId, contentId, url, name, sort, update);
-        if (localBookId != bookId) return;
+        if (localBookId != bookId || localKey != key || !inBook) return;
 
         if (lines != null) {
           final hasContent = lines.isNotEmpty;
@@ -199,7 +200,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       }
     } else {
       final lines = await repository.getContent(localBookId, contentId, update);
-      if (localBookId != bookId) return;
+      if (localBookId != bookId || localKey != key || !inBook) return;
 
       if (lines != null && lines.contentIsNotEmpty) {
         final allLines = debugTest ? ['debugTest'] : lines.source;

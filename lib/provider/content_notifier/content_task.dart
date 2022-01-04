@@ -31,10 +31,6 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
     }
   }
 
-  Future<void>? taskRunner() {
-    return EventQueue.getQueueRunner(this);
-  }
-
   bool _scheduled = false;
 
   void scheduleTask() {

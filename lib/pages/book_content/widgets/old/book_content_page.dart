@@ -175,11 +175,10 @@ class BookContentPageState extends PanSlideState<BookContentPage>
     await blocCache.load();
 
     EventQueue.run(this, () => uiOverlay(hide: false));
+    await bloc.initQueue.runner;
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
-    if (Theme.of(context).platform == TargetPlatform.iOS) {
-      await bloc.taskRunner();
-    }
+
     return true;
   }
 }

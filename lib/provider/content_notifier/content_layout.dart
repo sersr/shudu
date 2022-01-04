@@ -104,7 +104,7 @@ mixin ContentLayout on ContentDataBase, Configs {
     }
     // 分行布局
     for (var i = 0; i < paragraphs.length; i++) {
-      if (_key != key) return const [];
+      if (_key != key || !inBook) return const [];
       final para = await TextCache.textPainter(
           text: paragraphs[i], width: width, style: style, addText: _addText);
       lines.addAll(para);
@@ -131,9 +131,8 @@ mixin ContentLayout on ContentDataBase, Configs {
 
     var extraHeight = lineHeightAndExtra - fontSize;
     await releaseUI;
-    if (_key != key) {
-      return const [];
-    }
+    if (_key != key || !inBook) return const [];
+
     bool error = false;
     // 添加页面信息
     for (var r = 0; r < pages.length; r++) {
@@ -143,10 +142,10 @@ mixin ContentLayout on ContentDataBase, Configs {
         ..layout(maxWidth: width);
 
       final right = width - bottomRight.width - leftExtraPadding * 2;
-      if (_key != key) {
+      if (_key != key || !inBook) {
         error = true;
-        break;
       }
+
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
       await releaseUI;
