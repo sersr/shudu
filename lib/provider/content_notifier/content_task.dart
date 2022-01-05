@@ -26,8 +26,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
         contentId != -1 &&
         !containsKeyText(contentId) &&
         !futures.isLoading(contentId)) {
-      futures.addTask(contentId, load(localBookId, contentId),
-          callback: applyContentDimension);
+      futures.addTask(contentId, load(localBookId, contentId));
     }
   }
 

@@ -73,15 +73,19 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     return math.max(0, length);
   }
 
-  bool _applySuccess = false;
+  bool _needUpdate = false;
+
   @override
-  void applyContentDimension({bool force = true}) {
-    if (!force) {
-      if (_applySuccess) {
-        // 如果处在边界上,应该更新
-        final atEdge = controller?.atEdge ?? true;
-        if (!atEdge) return;
-      }
+  void needUpdateContentDimension() {
+    if (_needUpdate) return;
+    _needUpdate = true;
+  }
+
+  void applyContentDimension() {
+    if (!_needUpdate) {
+      // 如果处在边界上,应该更新
+      final atEdge = controller?.atEdge ?? true;
+      if (!atEdge) return;
     }
 
     final pLength = preLength;
@@ -90,15 +94,12 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     final extent = controller?.viewPortDimension;
 
     if (extent != null) {
-      _applySuccess = true;
-      // final page = controller!.page.round();
+      _needUpdate = false;
       final page = innerIndex;
       final p = -pLength + page;
       final n = nLength + page;
       controller?.applyContentDimension(
           minExtent: p * extent, maxExtent: n * extent);
-    } else {
-      _applySuccess = false;
     }
   }
 
@@ -156,48 +157,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     final localKey = key;
     TextData? newText;
     if (api == ApiType.zhangdu) {
-      final current = indexData[contentId];
-      if (current == null) {
-        Log.e('error...', onlyDebug: false);
-        return;
-      }
-      final index = rawIndexData.lastIndexOf(current);
-
-      var pid = -1;
-      var nid = -1;
-      if (index > 0) {
-        final p = rawIndexData.elementAt(index - 1);
-        if (p.id != null) pid = p.id!;
-      }
-      if (index < rawIndexData.length - 1) {
-        final n = rawIndexData.elementAt(index + 1);
-        if (n.id != null) nid = n.id!;
-      }
-      final url = current.contentUrl;
-      final name = current.name;
-      final sort = current.sort;
-
-      assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
-      if (url != null && name != null && sort != null) {
-        final lines = await repository.getZhangduContent(
-            localBookId, contentId, url, name, sort, update);
-        if (localBookId != bookId || localKey != key || !inBook) return;
-
-        if (lines != null) {
-          final hasContent = lines.isNotEmpty;
-          final data = hasContent ? lines : ['没有章节内容，稍后重试。'];
-          final pages = await _genTextData(localBookId, data, name);
-          if (pages.isEmpty) return;
-          newText = TextData(
-            cid: contentId,
-            nid: nid,
-            pid: pid,
-            content: pages,
-            hasContent: hasContent,
-            cname: name,
-          );
-        }
-      }
+      newText = await _loadZhangdu(localBookId, contentId, update);
     } else {
       final lines = await repository.getContent(localBookId, contentId, update);
       if (localBookId != bookId || localKey != key || !inBook) return;
@@ -222,11 +182,62 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
       final old = removeText(newText.cid);
       old?.dispose();
       addText(newText.cid!, newText.clone());
-      applyContentDimension();
+      needUpdateContentDimension();
       newText.dispose();
     } else {
       autoAddReloadIds(contentId);
     }
+  }
+
+  Future<TextData?> _loadZhangdu(
+      int localBookId, int contentId, bool update) async {
+    assert(localBookId != -1 && contentId != -1);
+    final localKey = key;
+    TextData? newText;
+
+    final current = indexData[contentId];
+    if (current == null) {
+      Log.e('error...', onlyDebug: false);
+      return newText;
+    }
+    final index = rawIndexData.lastIndexOf(current);
+
+    var pid = -1;
+    var nid = -1;
+    if (index > 0) {
+      final p = rawIndexData.elementAt(index - 1);
+      if (p.id != null) pid = p.id!;
+    }
+    if (index < rawIndexData.length - 1) {
+      final n = rawIndexData.elementAt(index + 1);
+      if (n.id != null) nid = n.id!;
+    }
+    final url = current.contentUrl;
+    final name = current.name;
+    final sort = current.sort;
+
+    assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
+    if (url != null && name != null && sort != null) {
+      final lines = await repository.getZhangduContent(
+          localBookId, contentId, url, name, sort, update);
+      if (localBookId != bookId || localKey != key || !inBook) return null;
+
+      if (lines != null) {
+        final hasContent = lines.isNotEmpty;
+        final data = hasContent ? lines : ['没有章节内容，稍后重试。'];
+        final pages = await _genTextData(localBookId, data, name);
+        if (pages.isEmpty) return null;
+        newText = TextData(
+          cid: contentId,
+          nid: nid,
+          pid: pid,
+          content: pages,
+          hasContent: hasContent,
+          cname: name,
+        );
+      }
+    }
+    return newText;
   }
 
   bool canReload(int id);

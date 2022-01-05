@@ -186,7 +186,7 @@ mixin SystemInfos {
   }
 
   /// 系统UI
-  bool _systemOverlaysAreVisible = false;
+  bool _systemOverlaysAreVisible = true;
   bool get systemOverlaysAreVisible => _systemOverlaysAreVisible;
 
   Future<void> _onSystemOverlaysChanges(bool visible) async {

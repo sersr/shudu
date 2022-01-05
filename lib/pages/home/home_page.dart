@@ -89,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage>
       painterBloc.autoRun.stopSave();
     } else if (initIsolateState) {
       painterBloc.autoRun.stopAutoRun();
-      setState(() {});
+      ui.window.scheduleFrame();
     }
   }
 

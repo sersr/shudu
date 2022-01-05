@@ -1,8 +1,11 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
 import 'package:utils/utils.dart';
@@ -216,6 +219,14 @@ void main() async {
       failed = true;
     }
     expect(failed, true);
+  });
+  test('sha1', () async {
+    Hive.init('../test/hive');
+    final box = await Hive.openBox('_test_sha1');
+    final sh = sha1.convert(utf8.encode('你好'));
+    final key = sh.toString();
+    Log.w('key: $key');
+    await box.put(key, 'data');
   });
 }
 

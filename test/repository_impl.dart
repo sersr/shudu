@@ -82,7 +82,10 @@ class Server {
 
 class BookEventIsolateTest extends BookEventIsolate {
   BookEventIsolateTest(SendHandle sp)
-      : super(remoteSendHandle: sp, appPath: '', cachePath: '');
+      : super(
+            remoteSendHandle: sp,
+            appPath: '../test/repository',
+            cachePath: '../test/cache');
 
   @override
   bool remove(key) {
@@ -90,10 +93,6 @@ class BookEventIsolateTest extends BookEventIsolate {
     return super.remove(key);
   }
 
-  @override
-  final String cachePath = Directory.current.path;
-  @override
-  final String appPath = Directory.current.path;
   @override
   String get name => '';
 

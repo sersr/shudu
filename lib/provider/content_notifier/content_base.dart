@@ -27,7 +27,7 @@ mixin ContentDataBase on ChangeNotifier {
     _innerIndex = 0;
     controller?.applyContentDimension(minExtent: 0, maxExtent: 1);
     controller?.correct(0.0);
-    applyContentDimension();
+    needUpdateContentDimension();
   }
 
   // 考虑到页面可能没有对齐
@@ -50,7 +50,7 @@ mixin ContentDataBase on ChangeNotifier {
     } else {
       _innerIndex = 0;
     }
-    applyContentDimension();
+    needUpdateContentDimension();
   }
 
   TextData _tData = TextData();
@@ -107,7 +107,8 @@ mixin ContentDataBase on ChangeNotifier {
 
   void reset();
   void dump();
-  void applyContentDimension({bool force = true});
+
+  void needUpdateContentDimension();
 
   // 更新队列
   void updateCaches(TextData data);

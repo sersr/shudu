@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -462,7 +463,15 @@ mixin NetworkMixin on HiveDioMixin, CustomEventResolve {
         final temp = File('$imgPath.temp');
         try {
           await temp.create(recursive: true);
-          await temp.writeAsBytes(dataBytes);
+          var start = 0;
+          final max = dataBytes.length;
+          final o = await temp.open(mode: FileMode.write);
+          while (start < max) {
+            final end = math.min(start + 1024, max);
+            await o.writeFrom(dataBytes, start, end);
+            start = end;
+          }
+          await o.close();
           await temp.rename(imgPath);
         } catch (e) {
           success = false;

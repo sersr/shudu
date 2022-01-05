@@ -7,11 +7,9 @@ import 'content_base.dart';
 import 'content_task.dart';
 
 mixin ContentGetter on ContentDataBase, ContentTasks {
-
-
   void getContentDimension() {
     scheduleTask();
-    applyContentDimension(force: false);
+    applyContentDimension();
   }
 
   // 首先确定当前章节首页位置
