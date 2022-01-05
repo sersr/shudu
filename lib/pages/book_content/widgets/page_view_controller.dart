@@ -114,14 +114,14 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
     return 0.0;
   }
 
-  void animateTo(double velocity, {double f = 0.8}) {
+  void animateTo(double velocity ) {
     int to;
     if (pixels == minExtent || pixels == maxExtent) notifyListeners();
 
     if (velocity < -150.0) {
-      to = (page - f).round();
+      to = page.round() -1 ;
     } else if (velocity > 150.0) {
-      to = (page + f).round();
+      to = page.round() + 1;
     } else {
       to = page.round();
     }
@@ -139,7 +139,7 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
       return;
     }
     if (axis == Axis.horizontal) {
-      animateTo(velocity, f: 0.52);
+      animateTo(velocity );
     } else {
       beginActivity(
           BallisticScrollActivity(this, getSimulation(velocity), vsync));

@@ -8,3 +8,4 @@ export 'content_getter.dart';
 export 'content_layout.dart';
 export 'content_status.dart';
 export 'content_task.dart';
+export 'content_restore.dart';

@@ -12,6 +12,7 @@ class ContentNotifier extends ChangeNotifier
         ContentBrightness,
         ContentStatus,
         Configs,
+        ContentRestore,
         ContentLayout,
         ContentLoad,
         ContentTasks,

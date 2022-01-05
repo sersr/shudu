@@ -191,6 +191,7 @@ class BookContentPageState extends State<BookContentPage>
 
     EventQueue.pushOne(this, () => uiOverlay(hide: false));
     await bloc.initQueue.runner;
+    await bloc.onOut();
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
     return true;

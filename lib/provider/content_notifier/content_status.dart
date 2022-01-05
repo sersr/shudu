@@ -1,5 +1,5 @@
-import 'content_brightness.dart';
 import 'content_base.dart';
+import 'content_brightness.dart';
 
 mixin ContentStatus on ContentDataBase, ContentBrightness {
   bool _inBookView = false;
@@ -10,7 +10,7 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
   bool uiOverlayShow = false;
   void out() {
     if (!inBook) return;
-    uiOverlayShow = false;
+    // uiOverlayShow = false;
     _inBookView = false;
     assert((debugTest = false) || true);
     notifyCustom();

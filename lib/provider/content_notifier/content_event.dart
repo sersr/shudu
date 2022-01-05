@@ -168,6 +168,7 @@ mixin ContentEvent
     }
   }
 
+  @override
   Future<void> newBookOrCid(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) async {
     if (!inBook) return;

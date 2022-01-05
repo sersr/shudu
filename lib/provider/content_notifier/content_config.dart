@@ -18,7 +18,7 @@ mixin Configs on ContentDataBase, ContentStatus {
     final _fontColor = _config.fontColor!;
     final _fontFamily = _config.fontFamily!;
     final _axis = _config.axis!;
-    final _orientation = _config.orientation!;
+    final isPortrait = _config.orientation!;
 
     var align = _axis != config.value.axis;
 
@@ -40,9 +40,9 @@ mixin Configs on ContentDataBase, ContentStatus {
               : null;
       startFirstEvent(onStart: done);
     }
-    if (orientation != _orientation) {
-      await uiOverlay(hide: !_orientation);
-      setOrientation(_orientation);
+    if (orientation != isPortrait) {
+      await uiOverlay(hide: !isPortrait);
+      setOrientation(isPortrait);
     }
   }
 
@@ -153,4 +153,84 @@ mixin Configs on ContentDataBase, ContentStatus {
       ..whenComplete(() => _configF = null);
     return _configF;
   }
+}
+
+class ContentViewConfig {
+  ContentViewConfig({
+    this.fontSize,
+    this.lineTweenHeight,
+    this.bgcolor,
+    this.fontFamily,
+    this.fontColor,
+    this.locale,
+    this.axis,
+    this.orientation,
+    this.audio,
+  });
+  double? fontSize;
+  double? lineTweenHeight;
+  Color? bgcolor;
+  String? fontFamily;
+  Color? fontColor;
+  Locale? locale;
+  Axis? axis;
+  bool? orientation; // true == portrait
+  bool? audio;
+
+  ContentViewConfig copyWith({
+    double? fontSize,
+    double? lineTweenHeight,
+    Color? bgcolor,
+    int? fontFamily,
+    Color? fontColor,
+    Locale? locale,
+    Axis? axis,
+    bool? orientation,
+    bool? audio,
+  }) {
+    return ContentViewConfig(
+        fontColor: fontColor ?? this.fontColor,
+        fontFamily: fontFamily as String? ?? this.fontFamily,
+        fontSize: fontSize ?? this.fontSize,
+        lineTweenHeight: lineTweenHeight ?? this.lineTweenHeight,
+        bgcolor: bgcolor ?? this.bgcolor,
+        locale: locale ?? this.locale,
+        axis: axis ?? this.axis,
+        audio: audio ?? this.audio,
+        orientation: orientation ?? this.orientation);
+  }
+
+  bool get isEmpty {
+    return bgcolor == null ||
+        fontSize == null ||
+        fontColor == null ||
+        axis == null ||
+        lineTweenHeight == null;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ContentViewConfig &&
+            fontColor == other.fontColor &&
+            fontFamily == other.fontFamily &&
+            fontSize == other.fontSize &&
+            lineTweenHeight == other.lineTweenHeight &&
+            bgcolor == other.bgcolor &&
+            locale == other.locale &&
+            axis == other.axis &&
+            audio == other.audio &&
+            orientation == other.orientation;
+  }
+
+  @override
+  String toString() {
+    return '$runtimeType: fontSize: $fontSize, bgcolor: $bgcolor, fontColor:'
+        ' $fontColor, lineTweenHeight: $lineTweenHeight,'
+        ' fontFamily: $fontFamily,  local: $locale, axis: $axis';
+  }
+
+  @override
+  int get hashCode => hashValues(fontColor, fontFamily, fontSize,
+      lineTweenHeight, bgcolor, locale, axis, audio, orientation);
 }

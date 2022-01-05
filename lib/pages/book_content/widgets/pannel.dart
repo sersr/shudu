@@ -774,37 +774,24 @@ class _TopPannelState extends State<TopPannel> {
                               onTap: () {
                                 contentNtf.showCname.value = false;
                                 contentNtf.controller?.goIdle();
-                                var cid = contentNtf.tData.cid!;
-                                var page = contentNtf.currentPage;
-                                var bookid = contentNtf.bookId;
 
-                                contentNtf
-                                  ..dump()
-                                  ..out();
-                                setOrientation(true);
-                                uiOverlay(hide: false);
-                                // OptionsNotifier.autoSetStatus(context);
+                                final data = contentNtf.saveStateOnOut();
+
                                 final cache = context.read<BookCacheNotifier>();
-                                BookInfoPage.push(bookid, contentNtf.api)
-                                    .then((_) async {
-                                  final list = await cache.getList;
-                                  for (final bookCache in list) {
-                                    if (bookCache.bookId == bookid) {
-                                      cid = bookCache.chapterId ?? cid;
-                                      page = bookCache.page ?? page;
-                                      break;
+                                BookInfoPage.push(data.saveBookId, data.saveApi)
+                                    .then((_) {
+                                  contentNtf.restoreState(() async {
+                                    final list = await cache.getList;
+                                    int? cid, page;
+                                    for (final bookCache in list) {
+                                      if (bookCache.bookId == data.saveBookId) {
+                                        cid = bookCache.chapterId ?? cid;
+                                        page = bookCache.page ?? page;
+                                        break;
+                                      }
                                     }
-                                  }
-                                  contentNtf
-                                    ..inbook()
-                                    ..newBookOrCid(bookid, cid, page,
-                                        api: contentNtf.api);
-                                  setOrientation(
-                                      contentNtf.config.value.orientation!);
-                                  uiOverlay(
-                                      hide: !contentNtf
-                                          .config.value.orientation!);
-                                  uiStyle(dark: true);
+                                    return data.copyWith(cid: cid, page: page);
+                                  });
                                 });
                               },
                               text: '详情页',
