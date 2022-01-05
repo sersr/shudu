@@ -114,35 +114,37 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
     return 0.0;
   }
 
-  void animateTo(double velocity ) {
-    int to;
+  void animateTo(double velocity) {
+    double to = page;
     if (pixels == minExtent || pixels == maxExtent) notifyListeners();
 
     if (velocity < -150.0) {
-      to = page.round() -1 ;
+      to = page - 0.5;
     } else if (velocity > 150.0) {
-      to = page.round() + 1;
-    } else {
-      to = page.round();
+      to = page + 0.5;
     }
 
-    final end = (to * viewPortDimension!).clamp(minExtent, maxExtent);
-
-    beginActivity(BallisticScrollActivity(
-        this, getSpringSimulation(velocity, end), vsync));
+    final end =
+        (to.roundToDouble() * viewPortDimension!).clamp(minExtent, maxExtent);
+    if (end != pixels) {
+      beginActivity(BallisticScrollActivity(
+          this, getSpringSimulation(velocity, end), vsync));
+    } else {
+      goIdle();
+    }
   }
 
   @override
   void goBallistic(double velocity) {
-    if (velocity == 0) {
-      goIdle();
-      return;
-    }
     if (axis == Axis.horizontal) {
-      animateTo(velocity );
+      animateTo(velocity);
     } else {
-      beginActivity(
-          BallisticScrollActivity(this, getSimulation(velocity), vsync));
+      if (velocity != 0) {
+        beginActivity(
+            BallisticScrollActivity(this, getSimulation(velocity), vsync));
+      } else {
+        goIdle();
+      }
     }
   }
 
