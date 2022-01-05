@@ -2,44 +2,33 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-import 'package:useful_tools/useful_tools.dart';
-
-import '../../../widgets/activity.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 
-class NopPageViewController extends ChangeNotifier with ActivityDelegate {
+class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
   NopPageViewController({
     required this.scrollingNotify,
-    required this.vsync,
-    required this.canDrag, // required this.getDragState,
+    required this.vsync, // required this.getDragState,
     required this.getContentDimension,
   })  : _maxExtent = 1,
-        _minExtent = 0 {
-    _activity = IdleActivity(this);
-  }
+        _minExtent = 0;
 
   TickerProvider vsync;
 
-  // BoolCallback getDragState;
   void Function(bool) scrollingNotify;
   void Function() getContentDimension;
-  bool Function() canDrag;
-  Activity? _activity;
+
+  ScrollActivity? _activity;
 
   double _pixels = 0.0;
-  @override
   double get pixels => _pixels;
 
-  void beginActivity(Activity activity) {
-    if (_activity is BallisticActivity || _activity is DrivenAcitvity) {
-      _lastvelocity = _activity!.velocity;
-    }
+  void beginActivity(ScrollActivity activity) {
     _activity?.dispose();
     _activity = activity;
     _currentDrag?.dispose();
     _currentDrag = null;
-    // getBounds();
+    scrollingnotifier();
   }
 
   Axis _axis = Axis.vertical;
@@ -47,14 +36,13 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   set axis(Axis v) {
     if (v == _axis) return;
     _axis = v;
-    if (_activity is! IdleActivity) {
+    if (_activity is! IdleScrollActivity) {
       goIdle();
     }
     notifyListeners();
   }
 
   double get page {
-    // assert(viewPortDimension != null);
     return pixels / viewPortDimension!;
   }
 
@@ -87,7 +75,7 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void nextPage() {
-    if (_lastActivityIsIdle && viewPortDimension != null) {
+    if (!isScrolling && viewPortDimension != null) {
       if (_maxExtent > pixels) {
         setPixels(viewPortDimension! * (page + 0.51).round());
         goIdle();
@@ -96,47 +84,38 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
   }
 
   void prePage() {
-    if (_lastActivityIsIdle && _minExtent < pixels) {
+    if (!isScrolling && _minExtent < pixels) {
       setPixels(viewPortDimension! * (page - 0.51).round());
-    goIdle();
+      goIdle();
     }
   }
 
-  bool get isScrolling => _activity is! IdleActivity;
-  void scrollingnotifier(bool value) {
-    scrollingNotify(value);
+  bool get isScrolling {
+    return _activity?.isScrolling ?? false;
+  }
+
+  var _lastReportState = false;
+  void scrollingnotifier() {
+    final localIsScrolling = isScrolling;
+    if (_lastReportState != localIsScrolling) {
+      _lastReportState = localIsScrolling;
+      scrollingNotify(localIsScrolling);
+    }
   }
 
   @override
   void goIdle() {
-    beginActivity(IdleActivity(this));
-    scrollingnotifier(false);
+    beginActivity(IdleScrollActivity(this));
     getContentDimension();
   }
 
   @override
-  void setPixels(double v) {
-    if (v == _pixels) return;
+  double setPixels(double v) {
+    if (v == _pixels) return 0.0;
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
-  }
-
-  double _lastvelocity = 0.0;
-  double get lastvelocity => _lastvelocity;
-
-  // 判断是否立即停止
-  @override
-  void goBallisticResolveWithLastActivity() {
-    if (viewPortDimension == null) return;
-    final la = pixels % viewPortDimension!;
-    if (axis == Axis.vertical || la <= 1.0 || la + 1.0 >= viewPortDimension!) {
-      _lastvelocity = 0.0;
-      goIdle();
-    }
-    if (_lastvelocity != 0.0) {
-      goBallistic(_lastvelocity);
-    }
+    return 0.0;
   }
 
   void animateTo(double velocity, {double f = 0.8}) {
@@ -153,26 +132,21 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
 
     final end = (to * viewPortDimension!).clamp(minExtent, maxExtent);
 
-    beginActivity(BallisticActivity(
-      delegate: this,
-      vsync: vsync,
-      end: () => end.clamp(minExtent, maxExtent),
-      simulation: getSpringSimulation(velocity, end),
-    ));
+    beginActivity(BallisticScrollActivity(
+        this, getSpringSimulation(velocity, end), vsync));
   }
 
   @override
   void goBallistic(double velocity) {
+    if (velocity == 0) {
+      goIdle();
+      return;
+    }
     if (axis == Axis.horizontal) {
       animateTo(velocity, f: 0.52);
     } else {
-      beginActivity(BallisticActivity(
-        delegate: this,
-        vsync: vsync,
-        end: () => velocity >= 0.0 ? maxExtent : minExtent,
-        simulation: getSimulation(velocity),
-        isVerticalDown: velocity >= 0,
-      ));
+      beginActivity(
+          BallisticScrollActivity(this, getSimulation(velocity), vsync));
     }
   }
 
@@ -181,9 +155,6 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     _pixels = v.clamp(minExtent, maxExtent);
   }
 
-  void correctBy(double v) {
-    correct(_pixels + v);
-  }
 
   double _minExtent;
   double _maxExtent;
@@ -208,27 +179,23 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     setPixels(pixels - delta);
   }
 
-  PreNextDragController? _currentDrag;
+  ScrollDragController? _currentDrag;
 
-  PreNextDragController? drag(
+  ScrollDragController? drag(
       DragStartDetails details, VoidCallback cancelCallback) {
-    final _drag =
-        PreNextDragController(delegate: this, cancelCallback: cancelCallback);
-    beginActivity(DragActivity(delegate: this, controller: _drag));
+    final _drag = ScrollDragController(
+        delegate: this, details: details, onDragCanceled: cancelCallback);
+    beginActivity(DragScrollActivity(this, _drag));
     _currentDrag = _drag;
     if (atEdge) getContentDimension();
 
     return _drag;
   }
 
-  var _lastActivityIsIdle = true;
   ScrollHoldController hold(VoidCallback cancel) {
-    scrollingnotifier(true);
-
-    final _hold = HoldActivity(this, cancelCallback: cancel);
-    _lastActivityIsIdle = _activity is IdleActivity;
-
+    final _hold = HoldScrollActivity(delegate: this, onHoldCanceled: cancel);
     beginActivity(_hold);
+
     return _hold;
   }
 
@@ -240,6 +207,10 @@ class NopPageViewController extends ChangeNotifier with ActivityDelegate {
     _currentDrag = null;
     super.dispose();
   }
+
+  @override
+  AxisDirection get axisDirection =>
+      axis == Axis.vertical ? AxisDirection.down : AxisDirection.right;
 }
 
 class ContentPreNextWidget extends RenderObjectWidget {
@@ -476,16 +447,6 @@ class ContentPreNextRenderObject extends RenderBox {
     } else {
       collectGarbage(0, 0);
     }
-  }
-
-  // 布局之后，属性会改变，确保 `pixels` 还在 范围区间
-  bool correct() {
-    final rawPixels = _nopController.pixels;
-    _nopController.correct(rawPixels);
-
-    final pixels = _nopController.pixels;
-
-    return rawPixels == pixels;
   }
 
   @override

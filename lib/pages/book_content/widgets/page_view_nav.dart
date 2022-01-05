@@ -35,12 +35,7 @@ class ContentPageViewState extends State<ContentPageView>
       vsync: this,
       scrollingNotify: scrollingNotify,
       getContentDimension: getContentDimension,
-      canDrag: canDrag,
     );
-  }
-
-  bool canDrag() {
-    return !bloc.initQueue.actived;
   }
 
   final lKey = Object();
@@ -151,6 +146,7 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   void scrollingNotify(bool isScrolling) {
+    Log.w('...$isScrolling');
     if (isScrolling) {
       bloc.autoRun.stopSave();
     } else {
@@ -205,7 +201,7 @@ class ContentPageViewState extends State<ContentPageView>
     }
   }
 
-  Widget straight(Widget child) {
+  Widget verticalLayout(Widget child) {
     final head = AnimatedBuilder(
       animation: bloc.header,
       builder: (__, _) {
@@ -272,7 +268,7 @@ class ContentPageViewState extends State<ContentPageView>
     if (offsetPosition.axis == Axis.horizontal)
       return child;
     else
-      return straight(child);
+      return verticalLayout(child);
   }
 
   bool onTap(Size size, Offset g) {
@@ -295,9 +291,7 @@ class ContentPageViewState extends State<ContentPageView>
         return bloc.notEmptyOrIgnore.value
             ? GestureDetector(
                 onTapUp: (details) {
-                  if (offsetPosition.page == 0 ||
-                      offsetPosition.page % offsetPosition.page.toInt() == 0 ||
-                      !offsetPosition.isScrolling) {
+                  if (offsetPosition.page == 0 || !offsetPosition.isScrolling) {
                     if (onTap(size, details.globalPosition)) {
                       toggle();
                     } else if (!bloc.autoRun.value) {
@@ -415,11 +409,11 @@ class _NopPageViewState extends State<NopPageView> {
   }
 
   void onDown(DragDownDetails d) {
-    hold = widget.offsetPosition.hold(() => hold = null);
+    hold = widget.offsetPosition.hold(removeHold);
   }
 
   void onStart(DragStartDetails d) {
-    drag = widget.offsetPosition.drag(d, () => drag = null);
+    drag = widget.offsetPosition.drag(d, removeDrag);
   }
 
   void onUpdate(DragUpdateDetails d) {
@@ -428,6 +422,14 @@ class _NopPageViewState extends State<NopPageView> {
 
   void onEnd(DragEndDetails d) {
     drag?.end(d);
+  }
+
+  void removeHold() {
+    hold = null;
+  }
+
+  void removeDrag() {
+    drag = null;
   }
 
   void onCancel() {
