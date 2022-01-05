@@ -12,6 +12,7 @@ import '../../../provider/text_data.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
 import 'page_view_controller.dart';
+import 'page_view_port.dart';
 import 'pannel_nav.dart';
 
 class ContentPageView extends StatefulWidget {
@@ -454,7 +455,7 @@ class _NopPageViewState extends State<NopPageView> {
       child: RawGestureDetector(
         gestures: gestures,
         // key: _gestureDetectorKey,
-        child: ContentPreNextWidget(
+        child: ContentViewPort(
           offset: widget.offsetPosition,
           builder: widget.builder,
         ),
