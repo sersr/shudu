@@ -7,10 +7,7 @@ import 'content_base.dart';
 import 'content_task.dart';
 
 mixin ContentGetter on ContentDataBase, ContentTasks {
-  void getContentDimension() {
-    scheduleTask();
-    applyContentDimension();
-  }
+
 
   // 首先确定当前章节首页位置
   // 再根据当前页面实际位置判断位于哪一个章节，和此章节的哪一页

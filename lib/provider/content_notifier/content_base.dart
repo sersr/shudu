@@ -13,8 +13,7 @@ mixin ContentDataBase on ChangeNotifier {
   int bookId = -1;
   int currentPage = 1;
 
-  // 控制边界
-  NopPageViewController? controller;
+  ContentViewController? controller;
   int _innerIndex = 0;
   int get innerIndex => _innerIndex;
 

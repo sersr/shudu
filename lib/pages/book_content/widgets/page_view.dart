@@ -15,6 +15,31 @@ import 'page_view_controller.dart';
 import 'page_view_port.dart';
 import 'pannel.dart';
 
+class ContentBuildDelegate extends ContentChildBuildDelegate {
+  ContentBuildDelegate(this.content, this.builder);
+  final ContentNotifier content;
+  final Widget? Function(BuildContext context, ContentMetrics? mes) builder;
+  @override
+  Widget? build(BuildContext context, int index) {
+    final mes = content.getContentMes(index);
+    return builder(context, mes);
+  }
+
+  @override
+  Extent getExtent(
+      int firstIndex, int lastIndex, int currentIndex, double itemExtent) {
+    content.getContentMes(currentIndex, changeState: true);
+    if (content.ignoreUpdate) return Extent.none;
+    content.updated();
+    final innerIndex = content.innerIndex;
+    final minLength = -content.preLength + innerIndex;
+    final maxLength = content.nextLength + innerIndex;
+
+    return Extent(
+        minExtent: minLength * itemExtent, maxExtent: maxLength * itemExtent);
+  }
+}
+
 class ContentPageView extends StatefulWidget {
   const ContentPageView({Key? key}) : super(key: key);
 
@@ -24,7 +49,7 @@ class ContentPageView extends StatefulWidget {
 
 class ContentPageViewState extends State<ContentPageView>
     with TickerProviderStateMixin {
-  late NopPageViewController offsetPosition;
+  late ContentViewController offsetPosition;
   ContentNotifier? _bloc;
   ContentNotifier get bloc => _bloc!;
   late BookIndexNotifier indexBloc;
@@ -32,10 +57,9 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   void initState() {
     super.initState();
-    offsetPosition = NopPageViewController(
+    offsetPosition = ContentViewController(
       vsync: this,
       scrollingNotify: scrollingNotify,
-      getContentDimension: getContentDimension,
     );
   }
 
@@ -142,12 +166,8 @@ class ContentPageViewState extends State<ContentPageView>
     setState(() {});
   }
 
-  void getContentDimension() {
-    bloc.getContentDimension();
-  }
-
   void scrollingNotify(bool isScrolling) {
-    Log.w('...$isScrolling');
+    bloc.scheduleTask();
     if (isScrolling) {
       bloc.autoRun.stopSave();
     } else {
@@ -156,8 +176,7 @@ class ContentPageViewState extends State<ContentPageView>
     }
   }
 
-  Widget? getChild(int index, {bool changeState = false}) {
-    final mes = bloc.getContentMes(index, changeState: changeState);
+  Widget? getChild(_, ContentMetrics? mes) {
     if (mes == null) return null;
     final isHorizontal = offsetPosition.axis == Axis.horizontal;
     final batteryChild = isHorizontal
@@ -263,8 +282,9 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   Widget wrapChild() {
-    final child =
-        NopPageView(offsetPosition: offsetPosition, builder: getChild);
+    final child = NopPageView(
+        offsetPosition: offsetPosition,
+        delegate: ContentBuildDelegate(bloc, getChild));
 
     if (offsetPosition.axis == Axis.horizontal)
       return child;
@@ -282,6 +302,14 @@ class ContentPageViewState extends State<ContentPageView>
     return x.abs() < sixW && y.abs() < sixH;
   }
 
+  void _nextPage() {
+    if (!bloc.autoRun.value) {
+      if (offsetPosition.page == 0 || !offsetPosition.isScrolling) {
+        offsetPosition.nextPage();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -292,12 +320,10 @@ class ContentPageViewState extends State<ContentPageView>
         return bloc.notEmptyOrIgnore.value
             ? GestureDetector(
                 onTapUp: (details) {
-                  if (offsetPosition.page == 0 || !offsetPosition.isScrolling) {
-                    if (onTap(size, details.globalPosition)) {
-                      toggle();
-                    } else if (!bloc.autoRun.value) {
-                      offsetPosition.nextPage();
-                    }
+                  if (onTap(size, details.globalPosition)) {
+                    toggle();
+                  } else {
+                    _nextPage();
                   }
                 },
                 child: wrapChild(),
@@ -333,11 +359,11 @@ class NopPageView extends StatefulWidget {
   const NopPageView({
     Key? key,
     required this.offsetPosition,
-    required this.builder,
+    required this.delegate,
   }) : super(key: key);
 
-  final NopPageViewController offsetPosition;
-  final WidgetCallback builder;
+  final ContentViewController offsetPosition;
+  final ContentChildBuildDelegate delegate;
   @override
   _NopPageViewState createState() => _NopPageViewState();
 }
@@ -443,8 +469,9 @@ class _NopPageViewState extends State<NopPageView> {
   void pointer(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
       final delta = event.scrollDelta;
-      widget.offsetPosition
-          .animateTo(500 * delta.dy.sign * math.max(1, delta.dy / 10));
+      widget.offsetPosition.animateTo(
+          500 * delta.dy.sign * math.max(1, delta.dy / 10),
+          fac: 0.6);
     }
   }
 
@@ -457,7 +484,8 @@ class _NopPageViewState extends State<NopPageView> {
         // key: _gestureDetectorKey,
         child: ContentViewPort(
           offset: widget.offsetPosition,
-          builder: widget.builder,
+          delegate: widget.delegate,
+          // itemExtent: 300,
         ),
       ),
     );

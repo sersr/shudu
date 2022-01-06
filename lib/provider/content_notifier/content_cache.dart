@@ -74,33 +74,18 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   }
 
   bool _needUpdate = false;
+  bool get ignoreUpdate {
+    return !_needUpdate || controller?.atEdge != true;
+  }
+
+  void updated() {
+    _needUpdate = false;
+  }
 
   @override
   void needUpdateContentDimension() {
     if (_needUpdate) return;
     _needUpdate = true;
-  }
-
-  void applyContentDimension() {
-    if (!_needUpdate) {
-      // 如果处在边界上,应该更新
-      final atEdge = controller?.atEdge ?? true;
-      if (!atEdge) return;
-    }
-
-    final pLength = preLength;
-    final nLength = nextLength;
-
-    final extent = controller?.viewPortDimension;
-
-    if (extent != null) {
-      _needUpdate = false;
-      final page = innerIndex;
-      final p = -pLength + page;
-      final n = nLength + page;
-      controller?.applyContentDimension(
-          minExtent: p * extent, maxExtent: n * extent);
-    }
   }
 
   // 根据当前章节更新存活章节

@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -6,36 +8,58 @@ import 'page_view_controller.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 
+class Extent {
+  const Extent({required this.maxExtent, required this.minExtent});
+  final double minExtent;
+  final double maxExtent;
+  static const none = Extent(minExtent: 0, maxExtent: 1);
+}
+
+abstract class ContentChildBuildDelegate {
+  Widget? build(BuildContext context, int index);
+  Extent getExtent(
+      int firstIndex, int lastIndex, int currentIndex, double itemExtent);
+}
+
 class ContentViewPort extends RenderObjectWidget {
-  const ContentViewPort({Key? key, required this.builder, required this.offset})
-      : super(key: key);
-  final WidgetCallback builder;
-  final NopPageViewController offset;
-  @override
-  ContentPreNextElement createElement() => ContentPreNextElement(this);
+  const ContentViewPort({
+    Key? key,
+    required this.delegate,
+    required this.offset,
+    this.itemExtent,
+  }) : super(key: key);
+
+  final ContentChildBuildDelegate delegate;
+  final ContentViewController offset;
+  final double? itemExtent;
 
   @override
-  ContentPreNextRenderObject createRenderObject(BuildContext context) {
-    return ContentPreNextRenderObject(vpOffset: offset);
+  ContentViewElement createElement() => ContentViewElement(this);
+
+  @override
+  RenderContentViewPort createRenderObject(BuildContext context) {
+    return RenderContentViewPort(vpOffset: offset, itemExtent: itemExtent);
   }
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant ContentPreNextRenderObject renderObject) {
-    renderObject.nopController = offset;
+      BuildContext context, covariant RenderContentViewPort renderObject) {
+    renderObject
+      ..itemExtent = itemExtent
+      ..nopController = offset;
   }
 }
 
-class ContentPreNextElement extends RenderObjectElement {
-  ContentPreNextElement(RenderObjectWidget widget) : super(widget);
+class ContentViewElement extends RenderObjectElement {
+  ContentViewElement(RenderObjectWidget widget) : super(widget);
 
   @override
   ContentViewPort get widget => super.widget as ContentViewPort;
   @override
-  ContentPreNextRenderObject get renderObject =>
-      super.renderObject as ContentPreNextRenderObject;
+  RenderContentViewPort get renderObject =>
+      super.renderObject as RenderContentViewPort;
 
-  final childElement = <int, Element>{};
+  final childElements = SplayTreeMap<int, Element>();
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
@@ -51,15 +75,15 @@ class ContentPreNextElement extends RenderObjectElement {
   @override
   void forgetChild(Element child) {
     final index = child.slot as int?;
-    if (childElement.containsKey(index)) {
-      childElement.remove(index);
+    if (childElements.containsKey(index)) {
+      childElements.remove(index);
     }
     super.forgetChild(child);
   }
 
   @override
   void visitChildren(ElementVisitor visitor) {
-    for (var element in childElement.values) {
+    for (var element in childElements.values) {
       visitor(element);
     }
   }
@@ -74,27 +98,27 @@ class ContentPreNextElement extends RenderObjectElement {
   void performRebuild() {
     super.performRebuild();
     removeAll();
-    renderObject.needLayout();
+    renderObject.markNeedsLayout();
   }
 
   void removeAll() {
-    for (var el in childElement.values.toList()) {
+    for (var el in childElements.values.toList()) {
       var result = updateChild(el, null, null);
       assert(result == null);
     }
-    childElement.clear();
+    childElements.clear();
   }
 
   void createChild(int index) {
     owner!.buildScope(this, () {
       Element? el;
       try {
-        el = updateChild(childElement[index], _build(index), index);
+        el = updateChild(childElements[index], _build(index), index);
       } finally {}
       if (el != null) {
-        childElement[index] = el;
+        childElements[index] = el;
       } else {
-        childElement.remove(index);
+        childElements.remove(index);
       }
     });
   }
@@ -102,7 +126,7 @@ class ContentPreNextElement extends RenderObjectElement {
   void collectGarbage(int leadingGarbage, int trailingGarbage) {
     owner!.buildScope(this, () {
       try {
-        childElement.removeWhere((key, value) {
+        childElements.removeWhere((key, value) {
           final clear = key < leadingGarbage || key > trailingGarbage;
           if (clear) {
             final el = updateChild(value, null, null);
@@ -114,8 +138,14 @@ class ContentPreNextElement extends RenderObjectElement {
     });
   }
 
-  Widget? _build(int index, {bool changeState = false}) {
-    return widget.builder(index, changeState: changeState);
+  Widget? _build(int index) {
+    return widget.delegate.build(this, index);
+  }
+
+  Extent getExtent(
+      int firstIndex, int lastIndex, int currentIndex, double itemExtent) {
+    return widget.delegate
+        .getExtent(firstIndex, lastIndex, currentIndex, itemExtent);
   }
 
   @override
@@ -137,30 +167,28 @@ class NopPageViewParenData extends BoxParentData {
   }
 }
 
-class ContentPreNextRenderObject extends RenderBox {
-  ContentPreNextRenderObject({required NopPageViewController vpOffset})
-      : _nopController = vpOffset;
+class RenderContentViewPort extends RenderBox {
+  RenderContentViewPort(
+      {required ContentViewController vpOffset, double? itemExtent})
+      : offset = vpOffset,
+        _itemExtent = itemExtent;
 
-  ContentPreNextElement? _element;
-  final childlist = <int, RenderBox>{};
+  ContentViewElement? _element;
+  final children = <int, RenderBox>{};
 
   void add(RenderBox child, index) {
     assert(index is int);
-    if (childlist[index] != null) {
-      dropChild(childlist[index]!);
+    if (children[index] != null) {
+      dropChild(children[index]!);
     }
     adoptChild(child);
-    childlist[index] = child;
+    children[index] = child;
   }
 
   void remove(RenderBox child, index) {
-    assert(childlist[index] == child);
-    childlist.remove(index);
+    assert(children[index] == child);
+    children.remove(index);
     dropChild(child);
-  }
-
-  void needLayout() {
-    markNeedsLayout();
   }
 
   @override
@@ -176,16 +204,24 @@ class ContentPreNextRenderObject extends RenderBox {
     });
   }
 
-  NopPageViewController _nopController;
+  double? _itemExtent;
+  double get itemExtent => _itemExtent ?? viewPortExtent;
+  set itemExtent(double? v) {
+    if (v == _itemExtent) return;
+    _itemExtent = v;
+    markNeedsLayout();
+  }
 
-  NopPageViewController get nopController => _nopController;
+  ContentViewController offset;
 
-  set nopController(NopPageViewController v) {
-    if (_nopController == v) return;
+  ContentViewController get nopController => offset;
+
+  set nopController(ContentViewController v) {
+    if (offset == v) return;
     if (attached) {
-      _nopController.removeListener(markNeedsLayout);
-      _nopController = v;
-      _nopController.addListener(markNeedsLayout);
+      offset.removeListener(markNeedsLayout);
+      offset = v;
+      offset.addListener(markNeedsLayout);
     }
     markNeedsLayout();
   }
@@ -193,8 +229,8 @@ class ContentPreNextRenderObject extends RenderBox {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _nopController.addListener(markNeedsLayout);
-    for (var element in childlist.values) {
+    offset.addListener(markNeedsLayout);
+    for (var element in children.values) {
       element.attach(owner);
     }
   }
@@ -215,55 +251,66 @@ class ContentPreNextRenderObject extends RenderBox {
   Axis axis = Axis.horizontal;
   void _layout(double pixels, double extent) {
     firstIndex = lastIndex = null;
-    final _firstIndex = getMinChildIndexForScrollOffset(pixels, extent);
-    final _lastIndex = getMaxChildIndexForScrollOffset(pixels + extent, extent);
+    final _firstIndex = getMinChildIndexForScrollOffset(pixels, itemExtent);
+    final _lastIndex =
+        getMaxChildIndexForScrollOffset(pixels + extent, itemExtent);
     for (var i = _firstIndex; i <= _lastIndex; i++) {
-      if (!childlist.containsKey(i)) {
+      if (!children.containsKey(i)) {
         layoutChild(i);
       }
     }
     for (var i = _firstIndex; i <= _lastIndex; i++) {
-      if (childlist.containsKey(i)) {
+      if (children.containsKey(i)) {
         firstIndex = i;
         break;
       }
     }
     for (var i = _lastIndex; i >= _firstIndex; i--) {
-      if (childlist.containsKey(i)) {
+      if (children.containsKey(i)) {
         lastIndex = i;
         break;
       }
     }
+    Extent scrollExtent;
     if (canPaint) {
-      _element!._build(nopController.page.round(), changeState: true);
+      scrollExtent = _element!.getExtent(
+          firstIndex!, lastIndex!, nopController.page.round(), itemExtent);
     } else {
+      final currentIndex = nopController.page.round();
+      scrollExtent = _element!
+          .getExtent(currentIndex, currentIndex, currentIndex, itemExtent);
       collectGarbage(0, 0);
+    }
+    if (scrollExtent != Extent.none)
+      nopController.applyContentDimension(
+          minExtent: scrollExtent.minExtent, maxExtent: scrollExtent.maxExtent);
+  }
+
+  double get viewPortExtent {
+    axis = nopController.axis;
+    if (axis == Axis.horizontal) {
+      return size.width;
+    } else {
+      return size.height;
     }
   }
 
   @override
   void performLayout() {
-    double extent;
-    axis = nopController.axis;
-    if (axis == Axis.horizontal) {
-      extent = size.width;
-    } else {
-      extent = size.height;
-    }
-    nopController.applyViewPortDimension(extent);
+    nopController.applyViewPortDimension(viewPortExtent);
 
-    _layout(nopController.pixels, extent);
+    _layout(nopController.pixels, viewPortExtent);
 
     if (canPaint) {
-      final pixels = _nopController.pixels;
+      final pixels = offset.pixels;
 
       for (var i = firstIndex!; i <= lastIndex!; i++) {
-        final child = childlist[i]!;
+        final child = children[i]!;
         final data = child.parentData as NopPageViewParenData;
 
         child.layout(constraints, parentUsesSize: true);
 
-        final s = indexToLayoutOffset(extent, i);
+        final s = indexToLayoutOffset(itemExtent, i);
         final d = computeAbsolutePaintOffset(
             s.clamp(nopController.minExtent, nopController.maxExtent), pixels);
         data.layoutOffset = d;
@@ -305,7 +352,7 @@ class ContentPreNextRenderObject extends RenderBox {
   void defaultPaint(PaintingContext context, Offset offset) {
     // context.setWillChangeHint();
     for (var i = firstIndex!; i <= lastIndex!; i++) {
-      final child = childlist[i]!;
+      final child = children[i]!;
       context.paintChild(child, offset + childScrollOffset(child)!);
     }
   }
@@ -351,29 +398,29 @@ class ContentPreNextRenderObject extends RenderBox {
 
   @override
   void redepthChildren() {
-    childlist.values.forEach((redepthChild));
+    children.values.forEach((redepthChild));
   }
 
   @override
   void detach() {
     super.detach();
 
-    _nopController.removeListener(markNeedsLayout);
-    for (var element in childlist.values) {
+    offset.removeListener(markNeedsLayout);
+    for (var element in children.values) {
       element.detach();
     }
   }
 
   @override
   void visitChildren(visitor) {
-    for (var element in childlist.values) {
+    for (var element in children.values) {
       visitor(element);
     }
   }
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    for (var element in childlist.values) {
+    for (var element in children.values) {
       visitor(element);
     }
   }

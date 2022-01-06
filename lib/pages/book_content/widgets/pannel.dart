@@ -16,7 +16,7 @@ import 'page_view_controller.dart';
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
 
-  final NopPageViewController controller;
+  final ContentViewController controller;
   @override
   _PannelState createState() => _PannelState();
 }
@@ -266,7 +266,7 @@ class CnamePan extends StatelessWidget {
 class BottomEnd extends StatefulWidget {
   const BottomEnd({Key? key, required this.controller}) : super(key: key);
 
-  final NopPageViewController controller;
+  final ContentViewController controller;
 
   @override
   _BottomEndState createState() => _BottomEndState();

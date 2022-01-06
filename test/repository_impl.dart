@@ -1,7 +1,6 @@
 // ignore_for_file: overridden_fields
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:nop_db/nop_db.dart';
 import 'package:shudu/data/zhangdu/zhangdu_detail.dart';

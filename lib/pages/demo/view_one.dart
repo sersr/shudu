@@ -4,7 +4,6 @@ import 'package:flutter/physics.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../widgets/app_bar.dart';
-import 'dart:math' as math;
 
 class ViewOne extends StatefulWidget {
   const ViewOne({Key? key}) : super(key: key);

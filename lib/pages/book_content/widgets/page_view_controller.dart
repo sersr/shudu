@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
-class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
-  NopPageViewController({
+class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
+  ContentViewController({
     required this.scrollingNotify,
     required this.vsync, // required this.getDragState,
-    required this.getContentDimension,
   })  : _maxExtent = 1,
         _minExtent = 0;
 
   TickerProvider vsync;
 
   void Function(bool) scrollingNotify;
-  void Function() getContentDimension;
 
   ScrollActivity? _activity;
 
@@ -52,7 +50,6 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
       _pixels = page.toInt() * dimension;
     }
     _viewPortDimension = dimension;
-    getContentDimension();
   }
 
   static final SpringDescription kDefaultSpring =
@@ -102,26 +99,28 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
   @override
   void goIdle() {
     beginActivity(IdleScrollActivity(this));
-    getContentDimension();
   }
 
   @override
   double setPixels(double v) {
-    if (v == _pixels) return 0.0;
+    if (v == _pixels) {
+      if (atEdge) notifyListeners();
+      return 0.0;
+    }
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
     notifyListeners();
     return 0.0;
   }
 
-  void animateTo(double velocity) {
+  void animateTo(double velocity, {double fac = 0.5}) {
     double to = page;
     if (pixels == minExtent || pixels == maxExtent) notifyListeners();
 
     if (velocity < -150.0) {
-      to = page - 0.5;
+      to = page - fac;
     } else if (velocity > 150.0) {
-      to = page + 0.5;
+      to = page + fac;
     }
 
     final end =
@@ -184,7 +183,6 @@ class NopPageViewController extends ChangeNotifier with ScrollActivityDelegate {
         delegate: this, details: details, onDragCanceled: cancelCallback);
     beginActivity(DragScrollActivity(this, _drag));
     _currentDrag = _drag;
-    if (atEdge) getContentDimension();
 
     return _drag;
   }

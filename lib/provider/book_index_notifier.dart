@@ -391,8 +391,8 @@ class BookIndexNotifier extends ChangeNotifier
     final refresh = _data?.shouldUpdate(bookid, contentid, api) ?? true;
 
     final isNewBook = _data?.bookid != bookid;
-    Log.i(
-        'update: bookid: $bookid cid: $contentid $isNewBook | $refresh | $restore');
+    assert(Log.i(
+        'update: bookid: $bookid cid: $contentid $isNewBook | $refresh | $restore'));
 
     await releaseUI;
     if (isNewBook) {
