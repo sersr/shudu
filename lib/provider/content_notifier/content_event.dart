@@ -149,24 +149,23 @@ mixin ContentEvent
 
   /// 由滚动状态调用
   /// 只有在渲染后才能更改[innerIndex][controller.pixels]
-  void reduceController() {
-    if (innerIndex.abs() > 100) {
-      EventQueue.runOne(_reduce, () {
-        if (innerIndex.abs() > 10) {
-          assert(Log.w('lenght: $innerIndex'));
-          return SchedulerBinding.instance!.endOfFrame.whenComplete(_reduce);
-        }
-      });
-    }
-  }
+  // void reduceController() {
+  // if (innerIndex.abs() > 100) {
+  //   EventQueue.runOne(_reduce, () {
+  //     if (innerIndex.abs() > 10) {
+  //       assert(Log.w('lenght: $innerIndex'));
+  //       return SchedulerBinding.instance!.endOfFrame.whenComplete(_reduce);
+  //     }
+  //   });
+  // }
+  // }
 
-  void _reduce() {
-    final extent = controller?.viewPortDimension;
-    if (controller?.isScrolling == false && extent != null) {
-      shrinkIndex();
-      notify();
-    }
-  }
+  // void _reduce() {
+  // if (controller?.isScrolling == false) {
+  //   shrinkIndex();
+  //   notify();
+  // }
+  // }
 
   @override
   Future<void> newBookOrCid(int newBookId, int cid, int page,

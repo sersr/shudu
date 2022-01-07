@@ -48,7 +48,7 @@ mixin ContentAuto on ContentDataBase, ContentTasks {
 
   void _autoTick(Duration timeStamp) {
     if (controller == null ||
-        controller!.pixels == controller!.maxExtent ||
+        controller!.atEdge ||
         !inBook ||
         !autoRun.value ||
         initQueue.actived ||

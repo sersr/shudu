@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
-class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
+abstract class ContentViewControllerBase {
+  double get pixels;
+  void goIdle();
+  void correct(double newPixels);
+  double get page;
+  Axis get axis;
+  void resetViewportDimension({double? minExtent, double? maxExtent});
+  void setPixels(double offset);
+  bool get atEdge;
+}
+
+class ContentViewController extends ChangeNotifier
+    with ScrollActivityDelegate
+    implements ContentViewControllerBase {
   ContentViewController({
     required this.onScrollingChanged,
     required this.vsync,
@@ -15,6 +28,7 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
   ScrollActivity? _activity;
 
   double _pixels = 0.0;
+  @override
   double get pixels => _pixels;
 
   void beginActivity(ScrollActivity activity) {
@@ -26,6 +40,7 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
   }
 
   Axis _axis = Axis.vertical;
+  @override
   Axis get axis => _axis;
   set axis(Axis v) {
     if (v == _axis) return;
@@ -36,14 +51,17 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     notifyListeners();
   }
 
+  @override
   double get page {
-    return pixels / viewPortDimension!;
+    return pixels / viewportDimension!;
   }
 
+  @override
   bool get atEdge => pixels == _minExtent || pixels == _maxExtent;
 
   double? _viewPortDimension;
-  double? get viewPortDimension => _viewPortDimension;
+
+  double? get viewportDimension => _viewPortDimension;
 
   void applyViewPortDimension(double dimension) {
     if (_viewPortDimension != null && _viewPortDimension != dimension) {
@@ -69,24 +87,24 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
 
   bool _canMod() {
     if (!isScrolling) return true;
-    final x = (pixels % viewPortDimension!).abs();
-    return x < 4 || viewPortDimension! - x < 4;
+    final x = (pixels % viewportDimension!).abs();
+    return x < 4 || viewportDimension! - x < 4;
   }
 
   void nextPage() {
-    if (viewPortDimension != null) {
+    if (viewportDimension != null) {
       if (_maxExtent > pixels && _canMod()) {
         goIdle();
-        setPixels(viewPortDimension! * (page + 0.51).round());
+        setPixels(viewportDimension! * (page + 0.51).round());
       }
     }
   }
 
   void prePage() {
-    if (viewPortDimension != null) {
+    if (viewportDimension != null) {
       if (_minExtent < pixels && _canMod()) {
         goIdle();
-        setPixels(viewPortDimension! * (page - 0.51).round());
+        setPixels(viewportDimension! * (page - 0.51).round());
       }
     }
   }
@@ -131,7 +149,7 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     }
 
     final end =
-        (to.roundToDouble() * viewPortDimension!).clamp(minExtent, maxExtent);
+        (to.roundToDouble() * viewportDimension!).clamp(minExtent, maxExtent);
     if (end != pixels) {
       beginActivity(BallisticScrollActivity(
           this, getSpringSimulation(velocity, end), vsync));
@@ -154,9 +172,16 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     }
   }
 
+  @override
   void correct(double v) {
     if (_pixels == v) return;
     _pixels = v.clamp(minExtent, maxExtent);
+  }
+
+  @override
+  void resetViewportDimension({double? minExtent, double? maxExtent}) {
+    _minExtent = minExtent ?? 0;
+    _maxExtent = maxExtent ?? 1;
   }
 
   double _minExtent;

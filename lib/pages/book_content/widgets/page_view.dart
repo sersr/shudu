@@ -150,59 +150,63 @@ class ContentPageViewState extends State<ContentPageView>
     if (isScrolling) {
       bloc.autoRun.stopSave();
     } else {
-      bloc.reduceController();
+      // bloc.reduceController();
       bloc.autoRun.stopAutoRun();
     }
   }
 
-  Widget? getChild(_, ContentMetrics? mes) {
+  Widget batteryView() {
+    return FutureBuilder<int>(
+      future: bloc.repository.getBatteryLevel,
+      builder: (context, snaps) {
+        final v = snaps.hasData ? snaps.data! : bloc.repository.level;
+        return BatteryView(
+          progress: (v / 100).clamp(0.0, 1.0),
+          color: bloc.config.value.fontColor!,
+        );
+      },
+    );
+  }
+
+  Widget? childBuild(_, ContentMetrics? mes) {
     if (mes == null) return null;
     final isHorizontal = offsetPosition.axis == Axis.horizontal;
     Widget? battery;
     if (isHorizontal) {
-      battery = FutureBuilder<int>(
-        future: bloc.repository.getBatteryLevel,
-        builder: (context, snaps) {
-          final v = snaps.hasData ? snaps.data! : bloc.repository.level;
-          return BatteryView(
-            progress: (v / 100).clamp(0.0, 1.0),
-            color: bloc.config.value.fontColor!,
-          );
-        },
-      );
+      battery = batteryView();
     }
-    if (mes is ContentMetricsText) {
-      return RepaintBoundary(
-        child: CustomMultiChildLayout(
-          delegate: ContentViewTextLayout(),
-          children: [
-            LayoutId(
-                id: ContentViewTextLayout.body,
-                child: RepaintBoundary(
-                  child: ContentViewTextBody(
-                      contentMetrics: mes,
-                      isHorizontal: isHorizontal,
-                      shadow: bloc.showrect),
-                )),
-            LayoutId(
-              id: ContentViewTextLayout.battery,
-              child: RepaintBoundary(
-                child: ContentViewText(
-                  contentMetrics: mes,
-                  battery: battery,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return ContentView(contentMetrics: mes, battery: battery);
-    }
+    // if (mes is ContentMetricsText) {
+    //   return RepaintBoundary(
+    //     child: CustomMultiChildLayout(
+    //       delegate: ContentViewTextLayout(),
+    //       children: [
+    //         LayoutId(
+    //             id: ContentViewTextLayout.body,
+    //             child: RepaintBoundary(
+    //               child: ContentViewTextBody(
+    //                   contentMetrics: mes,
+    //                   isHorizontal: isHorizontal,
+    //                   shadow: bloc.showrect),
+    //             )),
+    //         LayoutId(
+    //           id: ContentViewTextLayout.battery,
+    //           child: RepaintBoundary(
+    //             child: ContentViewText(
+    //               contentMetrics: mes,
+    //               battery: battery,
+    //             ),
+    //           ),
+    //         ),
+    //       ],
+    //     ),
+    //   );
+    // } else {
+    return ContentView(contentMetrics: mes, battery: battery);
+    // }
   }
 
   Widget verticalLayout(Widget child) {
-    final head = AnimatedBuilder(
+    final header = AnimatedBuilder(
       animation: bloc.header,
       builder: (__, _) {
         return Text(
@@ -219,43 +223,36 @@ class ContentPageViewState extends State<ContentPageView>
       animation: bloc.footer,
       builder: (__, _) {
         final time = DateTime.now();
+        final footerLeftBattery = batteryView();
+        final footerLeft = Text(
+          time.hourAndMinuteFormat,
+          style: bloc.secstyle,
+          maxLines: 1,
+        );
+
+        final footerRight = Text(
+          bloc.footer.value,
+          style: bloc.secstyle,
+          textAlign: TextAlign.right,
+          maxLines: 1,
+        );
 
         return Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FutureBuilder<int>(
-              future: bloc.repository.getBatteryLevel,
-              builder: (_, snaps) {
-                return BatteryView(
-                  progress:
-                      ((snaps.hasData ? snaps.data! : bloc.repository.level) /
-                              100)
-                          .clamp(0.0, 1.0),
-                  color: bloc.config.value.fontColor!,
-                );
-              },
-            ),
-            Text(
-              time.hourAndMinuteFormat,
-              style: bloc.secstyle,
-              maxLines: 1,
-            ),
+            footerLeftBattery,
+            footerLeft,
             const Expanded(child: SizedBox()),
-            Text(
-              bloc.footer.value,
-              style: bloc.secstyle,
-              textAlign: TextAlign.right,
-              maxLines: 1,
-            ),
+            footerRight,
           ],
         );
       },
     );
 
-    return _SlideWidget(
-      paddingRect: bloc.contentLayoutPadding,
-      header: RepaintBoundary(child: head),
+    return _ContentVerticalWidget(
+      contentLayoutPadding: bloc.contentLayoutPadding,
+      header: RepaintBoundary(child: header),
       body: RepaintBoundary(child: child),
       footer: RepaintBoundary(child: footer),
     );
@@ -267,21 +264,23 @@ class ContentPageViewState extends State<ContentPageView>
     //     delegate: ContentBuildDelegate(bloc, getChild));
     final child = NopPageView(
         offsetPosition: offsetPosition,
-        delegate: ContentPageBuildDelegate(content: bloc, builder: getChild));
-    if (offsetPosition.axis == Axis.horizontal)
+        delegate: ContentPageBuildDelegate(content: bloc, builder: childBuild));
+
+    if (offsetPosition.axis == Axis.horizontal) {
       return child;
-    else
+    } else {
       return verticalLayout(child);
+    }
   }
 
   bool onTap(Size size, Offset g) {
     final halfH = size.height / 2;
     final halfW = size.width / 2;
-    final sixH = size.height / 5;
-    final sixW = size.width / 5;
+    final minHeight = size.height / 5;
+    final minWidth = size.width / 5;
     final x = g.dx - halfW;
     final y = g.dy - halfH;
-    return x.abs() < sixW && y.abs() < sixH;
+    return x.abs() < minWidth && y.abs() < minHeight;
   }
 
   void _nextPage() {
@@ -293,31 +292,35 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final halfHeight = size.height / 2;
+    final halfWidth = size.width / 2;
+    final minHeight = size.height / 5;
+    final minWidth = size.width / 5;
 
-    final child = AnimatedBuilder(
-      animation: bloc.notEmptyOrIgnore,
-      builder: (context, child) {
-        return bloc.notEmptyOrIgnore.value
-            ? GestureDetector(
-                onTapUp: (details) {
-                  if (onTap(size, details.globalPosition)) {
-                    toggle();
-                  } else {
-                    _nextPage();
-                  }
-                },
-                child: wrapChild(),
-              )
-            : GestureDetector(
-                onTap: toggle,
-                child: ColoredBox(
-                    color: Colors.transparent,
-                    child: reloadBotton(bloc.reload)),
-              );
-      },
+    final empty = GestureDetector(
+      onTap: toggle,
+      child: ColoredBox(
+          color: Colors.transparent, child: reloadBotton(bloc.reload)),
     );
 
-    return child;
+    final contentView = GestureDetector(
+      onTapUp: (details) {
+        final g = details.globalPosition;
+        final x = g.dx - halfWidth;
+        final y = g.dy - halfHeight;
+        final tapMiddle = x.abs() < minWidth && y.abs() < minHeight;
+
+        tapMiddle ? toggle() : _nextPage();
+      },
+      child: wrapChild(),
+    );
+
+    return AnimatedBuilder(
+      animation: bloc.notEmptyOrIgnore,
+      builder: (context, child) {
+        return bloc.notEmptyOrIgnore.value ? contentView : empty;
+      },
+    );
   }
 
   @override
@@ -472,9 +475,9 @@ class _NopPageViewState extends State<NopPageView> {
   }
 }
 
-class _SlideWidget extends RenderObjectWidget {
-  const _SlideWidget({
-    required this.paddingRect,
+class _ContentVerticalWidget extends RenderObjectWidget {
+  const _ContentVerticalWidget({
+    required this.contentLayoutPadding,
     required this.header,
     required this.body,
     required this.footer,
@@ -483,8 +486,8 @@ class _SlideWidget extends RenderObjectWidget {
   final Widget header;
   final Widget body;
   final Widget footer;
-  // final Widget rightFooter;
-  final EdgeInsets paddingRect;
+
+  final EdgeInsets contentLayoutPadding;
   @override
   _SlideElement createElement() {
     return _SlideElement(this);
@@ -492,21 +495,21 @@ class _SlideWidget extends RenderObjectWidget {
 
   @override
   _SlideRenderObject createRenderObject(BuildContext context) {
-    return _SlideRenderObject(paddingRect);
+    return _SlideRenderObject(contentLayoutPadding);
   }
 
   @override
   void updateRenderObject(
       BuildContext context, covariant _SlideRenderObject renderObject) {
-    renderObject.paddingRect = paddingRect;
+    renderObject.contentLayoutPadding = contentLayoutPadding;
   }
 }
 
 class _SlideElement extends RenderObjectElement {
-  _SlideElement(_SlideWidget widget) : super(widget);
+  _SlideElement(_ContentVerticalWidget widget) : super(widget);
 
   @override
-  _SlideWidget get widget => super.widget as _SlideWidget;
+  _ContentVerticalWidget get widget => super.widget as _ContentVerticalWidget;
   @override
   _SlideRenderObject get renderObject =>
       super.renderObject as _SlideRenderObject;
@@ -517,7 +520,7 @@ class _SlideElement extends RenderObjectElement {
   @override
   void mount(Element? parent, newSlot) {
     super.mount(parent, newSlot);
-    ud();
+    _rebuild();
   }
 
   @override
@@ -534,18 +537,18 @@ class _SlideElement extends RenderObjectElement {
   }
 
   @override
-  void update(covariant _SlideWidget newWidget) {
+  void update(covariant _ContentVerticalWidget newWidget) {
     super.update(newWidget);
-    ud();
+    _rebuild();
   }
 
   @override
   void performRebuild() {
     super.performRebuild();
-    ud();
+    _rebuild();
   }
 
-  void ud() {
+  void _rebuild() {
     _header = updateChild(_header, widget.header, 'header');
     _body = updateChild(_body, widget.body, 'body');
     _footer = updateChild(_footer, widget.footer, 'leftFooter');
@@ -563,7 +566,7 @@ class _SlideElement extends RenderObjectElement {
 }
 
 class _SlideRenderObject extends RenderBox {
-  _SlideRenderObject(EdgeInsets epadding) : _paddingRect = epadding;
+  _SlideRenderObject(EdgeInsets epadding) : _contentLayoutPadding = epadding;
   RenderBox? _header;
   RenderBox? _body;
   RenderBox? _footer;
@@ -603,11 +606,11 @@ class _SlideRenderObject extends RenderBox {
     }
   }
 
-  EdgeInsets _paddingRect;
-  EdgeInsets get paddingRect => _paddingRect;
-  set paddingRect(EdgeInsets v) {
-    if (_paddingRect == v) return;
-    _paddingRect = v;
+  EdgeInsets _contentLayoutPadding;
+  EdgeInsets get contentLayoutPadding => _contentLayoutPadding;
+  set contentLayoutPadding(EdgeInsets v) {
+    if (_contentLayoutPadding == v) return;
+    _contentLayoutPadding = v;
     markNeedsLayout();
   }
 
@@ -616,13 +619,13 @@ class _SlideRenderObject extends RenderBox {
     size = constraints.biggest;
     var height = contentFooterSize;
     final _constraints = BoxConstraints.tightFor(
-        width: size.width - paddingRect.horizontal, height: height);
+        width: size.width - contentLayoutPadding.horizontal, height: height);
 
     if (_header != null) {
-      final _height = paddingRect.top + contentTopPad;
+      final _height = contentLayoutPadding.top + contentTopPad;
       _header!.layout(_constraints);
       final parentdata = _header!.parentData as BoxParentData;
-      parentdata.offset = Offset(paddingRect.left, _height);
+      parentdata.offset = Offset(contentLayoutPadding.left, _height);
     }
 
     final _bottomHeight = size.height - contentBotttomPad;
@@ -630,18 +633,20 @@ class _SlideRenderObject extends RenderBox {
     if (_footer != null) {
       _footer!.layout(_constraints);
       final parentdata = _footer!.parentData as BoxParentData;
-      parentdata.offset = Offset(paddingRect.left, _bottomHeight - height);
+      parentdata.offset =
+          Offset(contentLayoutPadding.left, _bottomHeight - height);
     }
 
     if (_body != null) {
       final _constraints = BoxConstraints.tightFor(
           width: size.width,
-          height: size.height - contentWhiteHeight - paddingRect.vertical);
+          height:
+              size.height - contentWhiteHeight - contentLayoutPadding.vertical);
       _body!.layout(_constraints);
 
       final parentdata = _body!.parentData as BoxParentData;
-      parentdata.offset =
-          Offset(.0, contentPadding + paddingRect.top + contentTopPad + height);
+      parentdata.offset = Offset(.0,
+          contentPadding + contentLayoutPadding.top + contentTopPad + height);
     }
   }
 

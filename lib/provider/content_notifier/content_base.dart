@@ -13,7 +13,7 @@ mixin ContentDataBase on ChangeNotifier {
   int bookId = -1;
   int currentPage = 1;
 
-  ContentViewController? controller;
+  ContentViewControllerBase? controller;
   int _innerIndex = 0;
   int get innerIndex => _innerIndex;
 
@@ -25,33 +25,33 @@ mixin ContentDataBase on ChangeNotifier {
   void resetController() {
     controller?.goIdle();
     _innerIndex = 0;
-    controller?.applyContentDimension(minExtent: 0, maxExtent: 1);
+    controller?.resetViewportDimension();
     controller?.correct(0.0);
     needUpdateContentDimension();
   }
 
   // 考虑到页面可能没有对齐
-  void shrinkIndex() {
-    if (controller?.isScrolling == true) controller?.goIdle();
-    final extent = controller?.viewPortDimension;
-    if (extent != null) {
-      final page = controller!.page;
-      final floorPage = page.floor();
-      final offset = page - floorPage;
-      final resetPixels = offset * extent;
-      assert(Log.w('start: $page | ${controller?.pixels}'));
+  // void shrinkIndex() {
+  //   if (controller?.isScrolling == true) controller?.goIdle();
+  //   final extent = controller?.viewPortDimension;
+  //   if (extent != null) {
+  //     final page = controller!.page;
+  //     final floorPage = page.floor();
+  //     final offset = page - floorPage;
+  //     final resetPixels = offset * extent;
+  //     assert(Log.w('start: $page | ${controller?.pixels}'));
 
-      controller?.applyContentDimension(minExtent: 0, maxExtent: resetPixels);
-      controller?.correct(resetPixels);
+  //     controller?.applyContentDimension(minExtent: 0, maxExtent: resetPixels);
+  //     controller?.correct(resetPixels);
 
-      _innerIndex = controller!.page.round();
-      assert(Log.w(
-          'done: ${controller?.page} | ${floorPage * extent} + ${controller?.pixels}'));
-    } else {
-      _innerIndex = 0;
-    }
-    needUpdateContentDimension();
-  }
+  //     _innerIndex = controller!.page.round();
+  //     assert(Log.w(
+  //         'done: ${controller?.page} | ${floorPage * extent} + ${controller?.pixels}'));
+  //   } else {
+  //     _innerIndex = 0;
+  //   }
+  //   needUpdateContentDimension();
+  // }
 
   TextData _tData = TextData();
   TextData get tData => _tData;
