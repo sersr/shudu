@@ -175,34 +175,8 @@ class ContentPageViewState extends State<ContentPageView>
     if (isHorizontal) {
       battery = batteryView();
     }
-    // if (mes is ContentMetricsText) {
-    //   return RepaintBoundary(
-    //     child: CustomMultiChildLayout(
-    //       delegate: ContentViewTextLayout(),
-    //       children: [
-    //         LayoutId(
-    //             id: ContentViewTextLayout.body,
-    //             child: RepaintBoundary(
-    //               child: ContentViewTextBody(
-    //                   contentMetrics: mes,
-    //                   isHorizontal: isHorizontal,
-    //                   shadow: bloc.showrect),
-    //             )),
-    //         LayoutId(
-    //           id: ContentViewTextLayout.battery,
-    //           child: RepaintBoundary(
-    //             child: ContentViewText(
-    //               contentMetrics: mes,
-    //               battery: battery,
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   );
-    // } else {
+
     return ContentView(contentMetrics: mes, battery: battery);
-    // }
   }
 
   Widget verticalLayout(Widget child) {
@@ -617,7 +591,7 @@ class _SlideRenderObject extends RenderBox {
   @override
   void performLayout() {
     size = constraints.biggest;
-    var height = contentFooterSize;
+    var height = contentFontSize;
     final _constraints = BoxConstraints.tightFor(
         width: size.width - contentLayoutPadding.horizontal, height: height);
 

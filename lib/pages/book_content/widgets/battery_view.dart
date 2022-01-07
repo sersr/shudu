@@ -14,7 +14,8 @@ class BatteryView extends LeafRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant BatteryViewObject renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant BatteryViewObject renderObject) {
     renderObject
       ..color = color
       ..progress = progress;
@@ -51,16 +52,12 @@ class BatteryViewObject extends RenderBox {
 
   static const _radius = 2.5;
 
-@override
-  bool get isRepaintBoundary => true;
-  
   @override
-  void paint(PaintingContext context, Offset offset) { 
+  bool get isRepaintBoundary => true;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
-
-    // canvas.save();
-    // canvas.translate(offset.dx, offset.dy);
-
     path
       ..reset()
       ..addRRect(rrect);
@@ -99,9 +96,7 @@ class BatteryViewObject extends RenderBox {
         bottomLeft: const Radius.circular(_radius),
       );
     }
-    
+
     canvas.drawRRect(rrect2, Paint()..color = _color);
-    // canvas.restore();
-    // canvas.drawRect(offset & size, Paint()..color = color);
   }
 }

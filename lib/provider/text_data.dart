@@ -83,50 +83,6 @@ class ContentMetrics {
   }
 }
 
-// class ContentMetricsText implements ContentMetrics {
-//   ContentMetricsText(
-//       {required this.lines,
-//       required this.secStyle,
-//       required this.extraHeight,
-//       required this.fontSize,
-//       required this.titleCname,
-//       required this.bottomRight,
-//       required this.cBigPainter,
-//       required this.right,
-//       required this.left,
-//       required this.index,
-//       required this.size,
-//       required this.paddingRect,
-//       required this.topExtraHeight});
-//   final TextStyle secStyle;
-//   final double extraHeight;
-//   final double fontSize;
-//   final TextPainter titleCname;
-//   final TextPainter bottomRight;
-//   final TextPainter cBigPainter;
-//   final double right;
-//   @override
-//   final double left;
-//   final int index;
-//   @override
-//   final Size size;
-//   final EdgeInsets paddingRect;
-//   final double topExtraHeight;
-//   final List<TextPainter> lines;
-
-//   @override
-//   ContentMetricsText clone() => this;
-
-//   @override
-//   void dispose() {}
-
-//   @override
-//   PictureRefInfo get picture => throw '使用 ContentViewText';
-
-//   @override
-//   TextStyle get secstyle => secStyle;
-// }
-
 void paintText(Canvas canvas,
     {required List<TextPainter> painters,
     required double extraHeight,
@@ -151,7 +107,7 @@ void paintText(Canvas canvas,
     h += contentTopPad;
     titlePainter.paint(canvas, Offset(0.0, h));
     // h += titlePainter.height;
-    h += contentFooterSize;
+    h += contentFontSize;
   }
   if (index == 0) {
     if (!isHorizontal) {
@@ -182,7 +138,7 @@ void paintText(Canvas canvas,
   if (isHorizontal) {
     final bottom = _size.height +
         paddingRect.bottom -
-        contentFooterSize -
+        contentFontSize -
         contentBotttomPad;
     bottomRight.paint(canvas, Offset(right, bottom));
   }
