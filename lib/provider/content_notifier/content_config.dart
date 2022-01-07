@@ -87,7 +87,7 @@ mixin Configs on ContentDataBase, ContentStatus {
 
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: contentFooterSize,
+      fontSize: contentFontSize,
       leadingDistribution: TextLeadingDistribution.even,
     );
     config.addListener(configListen);
@@ -110,7 +110,7 @@ mixin Configs on ContentDataBase, ContentStatus {
   void configListen() async {
     style = _getStyle(config.value);
     secstyle = style.copyWith(
-      fontSize: contentFooterSize,
+      fontSize: contentFontSize,
       leadingDistribution: TextLeadingDistribution.even,
     );
 

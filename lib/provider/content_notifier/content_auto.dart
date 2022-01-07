@@ -8,6 +8,7 @@ import 'package:wakelock/wakelock.dart';
 import 'content_base.dart';
 import 'content_task.dart';
 
+/// 自动滚动阅读实现
 mixin ContentAuto on ContentDataBase, ContentTasks {
   Duration lastStamp = Duration.zero;
 

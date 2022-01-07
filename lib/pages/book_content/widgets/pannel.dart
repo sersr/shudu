@@ -12,6 +12,7 @@ import '../../../widgets/pan_slide.dart';
 import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
 import 'page_view_controller.dart';
+import 'dart:math' as math;
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
@@ -1143,6 +1144,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
       )),
       onTap: () {
         final value = ValueNotifier(EdgeInsets.zero);
+        Timer? timer;
         final child = RepaintBoundary(
           child: Center(
             child: IntrinsicWidth(
@@ -1164,22 +1166,36 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         );
         Get.dialog(Builder(builder: (context) {
           final data = MediaQuery.of(context);
+          Log.w(data.viewInsets);
+          Log.w(data);
+          timer?.cancel();
 
-          release(const Duration(milliseconds: 300))
-              .whenComplete(() => value.value = data.viewInsets);
+          timer = Timer(const Duration(milliseconds: 300), () {
+            var realBottom = data.viewInsets.bottom - data.padding.bottom;
 
-          return AnimatedBuilder(
-            animation: value,
-            builder: (context, child) {
-              return AnimatedContainer(
-                padding: value.value,
-                duration: const Duration(milliseconds: 100),
+            value.value =
+                data.viewInsets.copyWith(bottom: math.max(0.0, realBottom));
+          });
+
+          return MediaQuery(
+            data: MediaQuery.of(context)
+                .removePadding(removeBottom: true)
+                .removeViewInsets(removeBottom: true),
+            child: SafeArea(
+              child: AnimatedBuilder(
+                animation: value,
+                builder: (context, child) {
+                  return AnimatedContainer(
+                    padding: value.value,
+                    duration: const Duration(milliseconds: 200),
+                    child: child,
+                  );
+                },
                 child: child,
-              );
-            },
-            child: child,
+              ),
+            ),
           );
-        }));
+        }), useSafeArea: false);
       },
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:useful_tools/useful_tools.dart';
@@ -11,7 +12,7 @@ import 'content_base.dart';
 import 'content_layout.dart';
 
 mixin ContentLoad on ContentDataBase, ContentLayout {
-  final _caches = <int, TextData>{};
+  final _caches = SplayTreeMap<int, TextData>();
 
   /// 与 [_caches]直接交互的方法
   bool containsKeyText(Object? key) {

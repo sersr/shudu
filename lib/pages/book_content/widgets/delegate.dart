@@ -23,7 +23,7 @@ class ContentPageBuildDelegate extends ContentChildBuildDelegate {
   final Widget? Function(BuildContext context, ContentMetrics? mes) builder;
 
   ContentPageBuildDelegate({required this.builder, required this.content});
-  final ContentNotifier content;
+  final ContentGetter content;
   @override
   Widget? build(BuildContext context, int index) {
     final contentMes = content.getContentMes(index);
