@@ -3,14 +3,14 @@ import 'package:flutter/physics.dart';
 
 class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
   ContentViewController({
-    required this.scrollingNotify,
-    required this.vsync, // required this.getDragState,
+    required this.onScrollingChanged,
+    required this.vsync,
   })  : _maxExtent = 1,
         _minExtent = 0;
 
   TickerProvider vsync;
 
-  void Function(bool) scrollingNotify;
+  void Function(bool) onScrollingChanged;
 
   ScrollActivity? _activity;
 
@@ -67,19 +67,27 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     return ScrollSpringSimulation(kDefaultSpring, pixels, end, velocity);
   }
 
+  bool _canMod() {
+    if (!isScrolling) return true;
+    final x = (pixels % viewPortDimension!).abs();
+    return x < 4 || viewPortDimension! - x < 4;
+  }
+
   void nextPage() {
-    if (!isScrolling && viewPortDimension != null) {
-      if (_maxExtent > pixels) {
-        setPixels(viewPortDimension! * (page + 0.51).round());
+    if (viewPortDimension != null) {
+      if (_maxExtent > pixels && _canMod()) {
         goIdle();
+        setPixels(viewPortDimension! * (page + 0.51).round());
       }
     }
   }
 
   void prePage() {
-    if (!isScrolling && _minExtent < pixels) {
-      setPixels(viewPortDimension! * (page - 0.51).round());
-      goIdle();
+    if (viewPortDimension != null) {
+      if (_minExtent < pixels && _canMod()) {
+        goIdle();
+        setPixels(viewPortDimension! * (page - 0.51).round());
+      }
     }
   }
 
@@ -92,7 +100,7 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     final localIsScrolling = isScrolling;
     if (_lastReportState != localIsScrolling) {
       _lastReportState = localIsScrolling;
-      scrollingNotify(localIsScrolling);
+      onScrollingChanged(localIsScrolling);
     }
   }
 
@@ -115,7 +123,6 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
 
   void animateTo(double velocity, {double fac = 0.5}) {
     double to = page;
-    if (pixels == minExtent || pixels == maxExtent) notifyListeners();
 
     if (velocity < -150.0) {
       to = page - fac;
@@ -203,6 +210,7 @@ class ContentViewController extends ChangeNotifier with ScrollActivityDelegate {
     super.dispose();
   }
 
+  // unused
   @override
   AxisDirection get axisDirection =>
       axis == Axis.vertical ? AxisDirection.down : AxisDirection.right;

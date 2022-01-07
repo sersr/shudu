@@ -11,34 +11,13 @@ import '../../../provider/export.dart';
 import '../../../provider/text_data.dart';
 import 'battery_view.dart';
 import 'content_view.dart';
+import 'delegate.dart';
 import 'page_view_controller.dart';
-import 'page_view_port.dart';
 import 'pannel.dart';
-
-class ContentBuildDelegate extends ContentChildBuildDelegate {
-  ContentBuildDelegate(this.content, this.builder);
-  final ContentNotifier content;
-  final Widget? Function(BuildContext context, ContentMetrics? mes) builder;
-  @override
-  Widget? build(BuildContext context, int index) {
-    final mes = content.getContentMes(index);
-    return builder(context, mes);
-  }
-
-  @override
-  Extent getExtent(
-      int firstIndex, int lastIndex, int currentIndex, double itemExtent) {
-    content.getContentMes(currentIndex, changeState: true);
-    if (content.ignoreUpdate) return Extent.none;
-    content.updated();
-    final innerIndex = content.innerIndex;
-    final minLength = -content.preLength + innerIndex;
-    final maxLength = content.nextLength + innerIndex;
-
-    return Extent(
-        minExtent: minLength * itemExtent, maxExtent: maxLength * itemExtent);
-  }
-}
+// ignore: unused_import
+import 'page_view_port_container.dart';
+// ignore: unused_import
+import 'page_view_port.dart';
 
 class ContentPageView extends StatefulWidget {
   const ContentPageView({Key? key}) : super(key: key);
@@ -59,7 +38,7 @@ class ContentPageViewState extends State<ContentPageView>
     super.initState();
     offsetPosition = ContentViewController(
       vsync: this,
-      scrollingNotify: scrollingNotify,
+      onScrollingChanged: onScrollingChanged,
     );
   }
 
@@ -166,7 +145,7 @@ class ContentPageViewState extends State<ContentPageView>
     setState(() {});
   }
 
-  void scrollingNotify(bool isScrolling) {
+  void onScrollingChanged(bool isScrolling) {
     bloc.scheduleTask();
     if (isScrolling) {
       bloc.autoRun.stopSave();
@@ -179,18 +158,19 @@ class ContentPageViewState extends State<ContentPageView>
   Widget? getChild(_, ContentMetrics? mes) {
     if (mes == null) return null;
     final isHorizontal = offsetPosition.axis == Axis.horizontal;
-    final batteryChild = isHorizontal
-        ? FutureBuilder<int>(
-            future: bloc.repository.getBatteryLevel,
-            builder: (context, snaps) {
-              final v = snaps.hasData ? snaps.data! : bloc.repository.level;
-              return BatteryView(
-                progress: (v / 100).clamp(0.0, 1.0),
-                color: bloc.config.value.fontColor!,
-              );
-            },
-          )
-        : null;
+    Widget? battery;
+    if (isHorizontal) {
+      battery = FutureBuilder<int>(
+        future: bloc.repository.getBatteryLevel,
+        builder: (context, snaps) {
+          final v = snaps.hasData ? snaps.data! : bloc.repository.level;
+          return BatteryView(
+            progress: (v / 100).clamp(0.0, 1.0),
+            color: bloc.config.value.fontColor!,
+          );
+        },
+      );
+    }
     if (mes is ContentMetricsText) {
       return RepaintBoundary(
         child: CustomMultiChildLayout(
@@ -209,7 +189,7 @@ class ContentPageViewState extends State<ContentPageView>
               child: RepaintBoundary(
                 child: ContentViewText(
                   contentMetrics: mes,
-                  battery: batteryChild,
+                  battery: battery,
                 ),
               ),
             ),
@@ -217,7 +197,7 @@ class ContentPageViewState extends State<ContentPageView>
         ),
       );
     } else {
-      return ContentView(contentMetrics: mes, battery: batteryChild);
+      return ContentView(contentMetrics: mes, battery: battery);
     }
   }
 
@@ -282,10 +262,12 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   Widget wrapChild() {
+    // final child = NopPageView(
+    //     offsetPosition: offsetPosition,
+    //     delegate: ContentBuildDelegate(bloc, getChild));
     final child = NopPageView(
         offsetPosition: offsetPosition,
-        delegate: ContentBuildDelegate(bloc, getChild));
-
+        delegate: ContentPageBuildDelegate(content: bloc, builder: getChild));
     if (offsetPosition.axis == Axis.horizontal)
       return child;
     else
@@ -304,9 +286,7 @@ class ContentPageViewState extends State<ContentPageView>
 
   void _nextPage() {
     if (!bloc.autoRun.value) {
-      if (offsetPosition.page == 0 || !offsetPosition.isScrolling) {
-        offsetPosition.nextPage();
-      }
+      offsetPosition.nextPage();
     }
   }
 
@@ -482,7 +462,7 @@ class _NopPageViewState extends State<NopPageView> {
       child: RawGestureDetector(
         gestures: gestures,
         // key: _gestureDetectorKey,
-        child: ContentViewPort(
+        child: ContentViewPortContainer(
           offset: widget.offsetPosition,
           delegate: widget.delegate,
           // itemExtent: 300,

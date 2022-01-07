@@ -4,22 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import 'delegate.dart';
 import 'page_view_controller.dart';
 
 typedef WidgetCallback = Widget? Function(int page, {bool changeState});
 
-class Extent {
-  const Extent({required this.maxExtent, required this.minExtent});
-  final double minExtent;
-  final double maxExtent;
-  static const none = Extent(minExtent: 0, maxExtent: 1);
-}
-
-abstract class ContentChildBuildDelegate {
-  Widget? build(BuildContext context, int index);
-  Extent getExtent(
-      int firstIndex, int lastIndex, int currentIndex, double itemExtent);
-}
 
 class ContentViewPort extends RenderObjectWidget {
   const ContentViewPort({

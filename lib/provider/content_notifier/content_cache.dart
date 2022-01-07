@@ -74,8 +74,9 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   }
 
   bool _needUpdate = false;
-  bool get ignoreUpdate {
-    return !_needUpdate || controller?.atEdge != true;
+
+  bool get needUpdate {
+    return _needUpdate || controller?.atEdge == true;
   }
 
   void updated() {
