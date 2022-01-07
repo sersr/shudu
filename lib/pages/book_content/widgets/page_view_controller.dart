@@ -129,9 +129,9 @@ class ContentViewController extends ChangeNotifier
 
   @override
   double setPixels(double v) {
-    if (v == _pixels) {
-      if (atEdge) notifyListeners();
-      return 0.0;
+    if (atEdge) {
+      notifyListeners();
+      return v;
     }
     v = v.clamp(minExtent, maxExtent);
     _pixels = v;
