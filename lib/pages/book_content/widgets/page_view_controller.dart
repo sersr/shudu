@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 abstract class ContentViewControllerBase {
   double get pixels;
@@ -57,17 +58,23 @@ class ContentViewController extends ChangeNotifier
   }
 
   @override
-  bool get atEdge => pixels == _minExtent || pixels == _maxExtent;
+  bool get atEdge => pixels <= _minExtent || pixels >= _maxExtent;
 
-  double? _viewPortDimension;
+  double? _viewportDimension;
 
-  double? get viewportDimension => _viewPortDimension;
+  double? get viewportDimension => _viewportDimension;
 
   void applyViewPortDimension(double dimension) {
-    if (_viewPortDimension != null && _viewPortDimension != dimension) {
-      _pixels = page.toInt() * dimension;
+    if (_viewportDimension != null && _viewportDimension != dimension) {
+      if (pixels != 0.0) {
+        final _lastVelocity = _activity?.velocity;
+        _pixels = page * dimension;
+        if (_lastVelocity != null) {
+          goBallistic(_lastVelocity);
+        }
+      }
     }
-    _viewPortDimension = dimension;
+    _viewportDimension = dimension;
   }
 
   static final SpringDescription kDefaultSpring =
@@ -128,15 +135,14 @@ class ContentViewController extends ChangeNotifier
   }
 
   @override
-  double setPixels(double v) {
-    if (atEdge) {
-      notifyListeners();
-      return v;
+  double setPixels(double newPixels) {
+    if (pixels == newPixels) {
+      return 0.0;
     }
-    v = v.clamp(minExtent, maxExtent);
-    _pixels = v;
+    final pixelsClamp = newPixels.clamp(minExtent, maxExtent);
+    _pixels = pixelsClamp;
     notifyListeners();
-    return 0.0;
+    return newPixels - pixelsClamp;
   }
 
   void animateTo(double velocity, {double fac = 0.5}) {
