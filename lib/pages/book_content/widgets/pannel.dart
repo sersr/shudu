@@ -861,26 +861,25 @@ class _BookSettingsViewState extends State<BookSettingsView> {
 
   Widget _preview() {
     return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: bgColor,
-        builder: (context, child) {
+      child: ValueListenableBuilder(
+        valueListenable: bgColor,
+        builder: (context, Color color, child) {
           return Material(
             borderRadius: BorderRadius.circular(9),
-            color: bgColor.value,
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-              child: AnimatedBuilder(
-                animation: ftColor,
-                builder: (context, child) {
-                  return Text('  为了保证每一只宠兽都能有一个好基础，时宇在每一只宠兽突破时，都让它们选择了特殊的突破方法。',
-                      style: TextStyle(
-                          color: ftColor.value, fontSize: fontvalue.value));
-                },
-              ),
-            ),
+            color: color,
+            child: child,
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+          child: ValueListenableBuilder(
+            valueListenable: ftColor,
+            builder: (context, Color color, child) {
+              return Text('\u3000\u3000为了保证每一只宠兽都能有一个好基础，时宇在每一只宠兽突破时',
+                  style: TextStyle(color: color));
+            },
+          ),
+        ),
       ),
     );
   }
@@ -1097,6 +1096,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                             !context.isDarkMode,
                             '选择背景颜色',
                             () => HueRingPicker(
+                                  colorPickerHeight: 200,
                                   onColorChanged: (Color value) {
                                     bgColor.value = value;
                                   },
@@ -1110,6 +1110,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                             !context.isDarkMode,
                             '选择字体颜色',
                             () => HueRingPicker(
+                                  colorPickerHeight: 200,
                                   onColorChanged: (Color value) {
                                     ftColor.value = value;
                                   },
@@ -1150,7 +1151,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         final child = RepaintBoundary(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
               child: SingleChildScrollView(
                 child: IntrinsicWidth(
                   child: Material(
@@ -1159,16 +1160,14 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                         : Color.fromARGB(255, 41, 41, 41),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IntrinsicWidth(
-                        child: RepaintBoundary(
-                            child: Column(
-                          children: [
-                            preview(),
-                            builder(),
-                          ],
-                        )),
-                      ),
+                      padding: const EdgeInsets.all(4.0),
+                      child: RepaintBoundary(
+                          child: Column(
+                        children: [
+                          preview(),
+                          builder(),
+                        ],
+                      )),
                     ),
                   ),
                 ),
