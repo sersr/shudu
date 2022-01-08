@@ -63,7 +63,7 @@ mixin ContentDataBase on ChangeNotifier {
   set tData(TextData data) {
     if (data == _tData) return;
     assert(data.contentIsNotEmpty, '不该为 空');
-
+    needUpdateContentDimension();
     _tData.dispose();
     _tData = data.clone(); // 复制
     dump();
@@ -116,6 +116,14 @@ mixin ContentDataBase on ChangeNotifier {
   // 更新队列
   void updateCaches(TextData data);
 
+  /// 加载当前章节内容
+  ///
+  /// 互斥
+  ///
+  /// 多次调用会安排任务进入一个队列中
+  ///
+  /// 配置的更改,窗口的属性变化都有可能调用一次方法
+  /// [newBookOrCid]: 重置状态后,会调用一次方法
   Future<void> startFirstEvent({
     bool clear = true,
     bool only = true,

@@ -859,6 +859,32 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     ftColor.value = fcolor;
   }
 
+  Widget _preview() {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: bgColor,
+        builder: (context, child) {
+          return Material(
+            borderRadius: BorderRadius.circular(9),
+            color: bgColor.value,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+              child: AnimatedBuilder(
+                animation: ftColor,
+                builder: (context, child) {
+                  return Text('  为了保证每一只宠兽都能有一个好基础，时宇在每一只宠兽突破时，都让它们选择了特殊的突破方法。',
+                      style: TextStyle(
+                          color: ftColor.value, fontSize: fontvalue.value));
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   //TODO: 添加配色保存功能
   Widget settings() {
     var fontSlider = Row(
@@ -999,34 +1025,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         ),
       ],
     );
-    var padding2 = Padding(
-      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-      child: RepaintBoundary(
-        child: AnimatedBuilder(
-          animation: bgColor,
-          builder: (context, child) {
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(9),
-                color: bgColor.value,
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: AnimatedBuilder(
-                    animation: ftColor,
-                    builder: (context, child) {
-                      return Text('字体颜色',
-                          style: TextStyle(color: ftColor.value));
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
+    // var padding2 = _preview();
 
     return Column(
       children: [
@@ -1037,7 +1036,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  padding2,
+                  // padding2,
                   RepaintBoundary(
                     child: Container(
                       height: 106,
@@ -1102,7 +1101,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                     bgColor.value = value;
                                   },
                                   pickerColor: bgColor.value,
-                                )),
+                                ),
+                            _preview),
                       ),
                       const SizedBox(width: 10),
                       Flexible(
@@ -1114,7 +1114,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
                                     ftColor.value = value;
                                   },
                                   pickerColor: ftColor.value,
-                                )),
+                                ),
+                            _preview),
                       ),
                       const SizedBox(width: 10),
                     ],
@@ -1129,7 +1130,8 @@ class _BookSettingsViewState extends State<BookSettingsView> {
     );
   }
 
-  Widget _builder(bool light, String text, Widget Function() builder) {
+  Widget _builder(bool light, String text, Widget Function() builder,
+      Widget Function() preview) {
     return btn1(
       elevation: 0.5,
       radius: 10.0,
@@ -1147,17 +1149,27 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         Timer? timer;
         final child = RepaintBoundary(
           child: Center(
-            child: IntrinsicWidth(
-              child: Material(
-                color: !context.isDarkMode
-                    ? Color.fromARGB(255, 224, 224, 224)
-                    : Color.fromARGB(255, 41, 41, 41),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IntrinsicWidth(
-                    child: RepaintBoundary(
-                        child: SingleChildScrollView(child: builder())),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: SingleChildScrollView(
+                child: IntrinsicWidth(
+                  child: Material(
+                    color: !context.isDarkMode
+                        ? Color.fromARGB(255, 224, 224, 224)
+                        : Color.fromARGB(255, 41, 41, 41),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IntrinsicWidth(
+                        child: RepaintBoundary(
+                            child: Column(
+                          children: [
+                            preview(),
+                            builder(),
+                          ],
+                        )),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1166,8 +1178,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         );
         Get.dialog(Builder(builder: (context) {
           final data = MediaQuery.of(context);
-          Log.w(data.viewInsets);
-          Log.w(data);
+
           timer?.cancel();
 
           timer = Timer(const Duration(milliseconds: 300), () {

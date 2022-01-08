@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 abstract class ContentViewControllerBase {
   double get pixels;

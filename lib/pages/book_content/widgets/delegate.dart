@@ -30,8 +30,18 @@ class ContentPageBuildDelegate extends ContentChildBuildDelegate {
     return builder(context, contentMes);
   }
 
+  int? _minLength;
+  int? _maxLength;
   @override
   bool childExistsAt(int index) {
+    if (!content.needUpdate) {
+      final min = _minLength;
+      final max = _maxLength;
+      if (min != null && max != null) {
+        final exists = index >= min && index <= max;
+        if (exists) return exists;
+      }
+    }
     final innerIndex = content.innerIndex;
     final minLength = -content.preLength + innerIndex;
     final maxLength = content.nextLength + innerIndex;
@@ -47,6 +57,8 @@ class ContentPageBuildDelegate extends ContentChildBuildDelegate {
     final innerIndex = content.innerIndex;
     final minLength = -content.preLength + innerIndex;
     final maxLength = content.nextLength + innerIndex;
+    _minLength = minLength;
+    _maxLength = maxLength;
     return Extent(
         minExtent: minLength * itemExtent, maxExtent: maxLength * itemExtent);
   }

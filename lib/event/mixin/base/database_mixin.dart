@@ -73,15 +73,11 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   @override
   Stream<List<BookContentDb>> watchBookContentCid(int bookid) {
     late Stream<List<BookContentDb>> w;
-    Log.w('bookId: $bookid', onlyDebug: false);
     bookContentDb.query.cid
       ..where.bookId.equalTo(bookid)
       ..let((s) => w = s.watchToTable);
 
-    return w.map((event) {
-      Log.w('hasData: $bookid', onlyDebug: false);
-      return event;
-    });
+    return w;
   }
 
   @override
