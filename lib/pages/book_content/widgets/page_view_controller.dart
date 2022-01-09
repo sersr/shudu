@@ -99,7 +99,7 @@ class ContentViewController extends ChangeNotifier
 
   void nextPage() {
     if (viewportDimension != null) {
-      if (_maxExtent > pixels && _canMod()) {
+      if (_canMod()) {
         goIdle();
         setPixels(viewportDimension! * (page + 0.51).round());
       }
@@ -108,7 +108,7 @@ class ContentViewController extends ChangeNotifier
 
   void prePage() {
     if (viewportDimension != null) {
-      if (_minExtent < pixels && _canMod()) {
+      if (_canMod()) {
         goIdle();
         setPixels(viewportDimension! * (page - 0.51).round());
       }
