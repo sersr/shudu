@@ -9,11 +9,11 @@ import '../../data/zhangdu/zhangdu_search.dart';
 import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
 
-@NopIsolateEventItem(separate: true)
+@NopServerEventItem(separate: true)
 abstract class ZhangduEvent
     implements ZhangduDatabaseEvent, ZhangduComplexEvent, ZhangduNetEvent {}
 
-@NopIsolateEventItem(isolateName: 'database')
+@NopServerEventItem(serverName: 'database')
 abstract class ZhangduDatabaseEvent {
   FutureOr<int?> deleteZhangduContentCache(int bookId);
 

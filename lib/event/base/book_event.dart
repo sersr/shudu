@@ -16,8 +16,8 @@ export 'server_event.dart';
 
 part 'book_event.g.dart';
 
-@NopIsolateEvent()
-@NopIsolateEventItem(connectToIsolate: ['database'])
+@NopServerEvent()
+@NopServerEventItem(connectToServer: ['database'])
 abstract class BookEvent
     implements CustomEvent, DatabaseEvent, ComplexEvent, ZhangduEvent {
   BookCacheEvent get bookCacheEvent => this;
@@ -45,14 +45,14 @@ abstract class BookCacheEvent {
   FutureOr<List<CacheItem>?> getCacheItems();
 }
 
-@NopIsolateEventItem(separate: true, isolateName: 'database')
+@NopServerEventItem(separate: true, serverName: 'database')
 abstract class DatabaseEvent
     with BookCacheEvent, BookContentEvent, ServerEvent {}
 
 abstract class CustomEvent implements ServerNetEvent {
   FutureOr<SearchList?> getSearchData(String key);
 
-  @NopIsolateMethod(useTransferType: true)
+  @NopServerMethod(useTransferType: true)
   FutureOr<Uint8List?> getImageBytes(String img);
 
   FutureOr<List<BookList>?> getHiveShudanLists(String c);
