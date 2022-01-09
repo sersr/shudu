@@ -1175,37 +1175,40 @@ class _BookSettingsViewState extends State<BookSettingsView> {
             ),
           ),
         );
-        Get.dialog(Builder(builder: (context) {
-          final data = MediaQuery.of(context);
+        Nav.showDialog(
+          builder: (context) {
+            final data = MediaQuery.of(context);
 
-          timer?.cancel();
+            timer?.cancel();
 
-          timer = Timer(const Duration(milliseconds: 300), () {
-            var realBottom = data.viewInsets.bottom - data.padding.bottom;
+            timer = Timer(const Duration(milliseconds: 300), () {
+              var realBottom = data.viewInsets.bottom - data.padding.bottom;
 
-            value.value =
-                data.viewInsets.copyWith(bottom: math.max(0.0, realBottom));
-          });
+              value.value =
+                  data.viewInsets.copyWith(bottom: math.max(0.0, realBottom));
+            });
 
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .removePadding(removeBottom: true)
-                .removeViewInsets(removeBottom: true),
-            child: SafeArea(
-              child: AnimatedBuilder(
-                animation: value,
-                builder: (context, child) {
-                  return AnimatedContainer(
-                    padding: value.value,
-                    duration: const Duration(milliseconds: 200),
-                    child: child,
-                  );
-                },
-                child: child,
+            return MediaQuery(
+              data: MediaQuery.of(context)
+                  .removePadding(removeBottom: true)
+                  .removeViewInsets(removeBottom: true),
+              child: SafeArea(
+                child: AnimatedBuilder(
+                  animation: value,
+                  builder: (context, child) {
+                    return AnimatedContainer(
+                      padding: value.value,
+                      duration: const Duration(milliseconds: 200),
+                      child: child,
+                    );
+                  },
+                  child: child,
+                ),
               ),
-            ),
-          );
-        }), useSafeArea: false);
+            );
+          },
+          useSafeArea: false,
+        );
       },
     );
   }

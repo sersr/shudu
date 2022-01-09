@@ -28,7 +28,7 @@ class _MyHomePageState extends State<MyHomePage>
   late BookCacheNotifier cache;
   late TextStyleConfig config;
   Future? _future;
-  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
+  // final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
   @override
   void initState() {
     super.initState();
@@ -41,7 +41,6 @@ class _MyHomePageState extends State<MyHomePage>
     if (mounted) {
       config.notify(Theme.of(context).brightness);
     }
-    // opts.toggle();
   }
 
   @override
@@ -62,7 +61,8 @@ class _MyHomePageState extends State<MyHomePage>
     _future ??= opts.init().whenComplete(() {
       Timer.run(() {
         if (opts.options.updateOnStart == true && mounted) {
-          _refreshKey.currentState!.show();
+          // _refreshKey.currentState!.show();
+          refreshDelegate.show();
         }
       });
       return context.read<SearchNotifier>().init();
@@ -212,7 +212,8 @@ class _MyHomePageState extends State<MyHomePage>
   ValueNotifier<int> notifier = ValueNotifier(0);
   void changed(index) {
     if (notifier.value == index && index == 0) {
-      _refreshKey.currentState!.show(atTop: true);
+      // _refreshKey.currentState!.show(atTop: true);
+      refreshDelegate.show();
     }
     notifier.value = index;
   }
@@ -287,61 +288,88 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
+  late final refreshDelegate = RefreshDelegate(
+      builder: (context, offset, maxExtent, mode, rfreshing) {
+        String text;
+        switch (mode) {
+          case RefreshMode.dragStart:
+            text = '下拉刷新';
+            break;
+          case RefreshMode.dragEnd:
+            text = '释放刷新';
+
+            break;
+          case RefreshMode.animatedDone:
+          case RefreshMode.done:
+            text = '刷新完成';
+            break;
+          case RefreshMode.refreshing:
+            text = '刷新中';
+            break;
+          case RefreshMode.animatedIgnore:
+          case RefreshMode.ignore:
+            text = '已取消';
+            break;
+          default:
+            text = '';
+        }
+
+        return Center(child: Text(text));
+      },
+      maxExtent: 100,
+      onRefreshing: () => cache.load(update: true));
+
   Widget buildBlocBuilder() {
-    return RefreshIndicator(
-      key: _refreshKey,
-      displacement: 20.0,
-      onRefresh: () => cache.load(update: true),
-      child: NotificationListener<OverscrollIndicatorNotification>(
-        onNotification: (OverscrollIndicatorNotification no) {
-          no.disallowIndicator();
-          return false;
+    return NotificationListener<OverscrollIndicatorNotification>(
+      onNotification: (OverscrollIndicatorNotification no) {
+        if (no.leading) no.disallowIndicator();
+        return false;
+      },
+      child: AnimatedBuilder(
+        animation: cache,
+        builder: (_, state) {
+          if (!cache.initialized) return const SizedBox();
+
+          final children = cache.showChildren;
+
+          if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
+          final darkMode = context.isDarkMode;
+          return Scrollbar(
+            child: ListViewBuilder(
+              refreshDelegate: refreshDelegate,
+              color: !darkMode ? null : Color.fromRGBO(25, 25, 25, 1),
+              cacheExtent: 100,
+              itemCount: children.length,
+              itemBuilder: (_, index) {
+                final item = children[index];
+                return ListItem(
+                  bgColor: !darkMode ? null : Colors.grey.shade900,
+                  splashColor: !context.isDarkMode
+                      ? null
+                      : Color.fromRGBO(60, 60, 60, 1),
+                  onTap: () {
+                    BookContentPage.push(context, item.bookId!, item.chapterId!,
+                        item.page!, item.api);
+                  },
+                  onLongPress: () {
+                    showModalBottomSheet(
+                        context: context,
+                        builder: (_) => bottomSheet(item, item.api));
+                  },
+                  child: BookItem(
+                    img: item.img,
+                    bookName: item.name,
+                    api: item.api,
+                    bookUdateItem: item.lastChapter,
+                    bookUpdateTime: item.updateTime,
+                    isTop: item.isTop ?? false,
+                    isNew: item.isNew ?? false,
+                  ),
+                );
+              },
+            ),
+          );
         },
-        child: AnimatedBuilder(
-          animation: cache,
-          builder: (_, state) {
-            if (!cache.initialized) return const SizedBox();
-
-            final children = cache.showChildren;
-
-            if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
-            return Scrollbar(
-              child: ListViewBuilder(
-                color:
-                    !context.isDarkMode ? null : Color.fromRGBO(25, 25, 25, 1),
-                cacheExtent: 100,
-                itemCount: children.length,
-                itemBuilder: (_, index) {
-                  final item = children[index];
-                  return ListItem(
-                    bgColor: !context.isDarkMode ? null : Colors.grey.shade900,
-                    splashColor: !context.isDarkMode
-                        ? null
-                        : Color.fromRGBO(60, 60, 60, 1),
-                    onTap: () {
-                      BookContentPage.push(context, item.bookId!,
-                          item.chapterId!, item.page!, item.api);
-                    },
-                    onLongPress: () {
-                      showModalBottomSheet(
-                          context: context,
-                          builder: (_) => bottomSheet(item, item.api));
-                    },
-                    child: BookItem(
-                      img: item.img,
-                      bookName: item.name,
-                      api: item.api,
-                      bookUdateItem: item.lastChapter,
-                      bookUpdateTime: item.updateTime,
-                      isTop: item.isTop ?? false,
-                      isNew: item.isNew ?? false,
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
       ),
     );
   }
