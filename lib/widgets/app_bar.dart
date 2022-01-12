@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class AppBarHide extends StatefulWidget {
   const AppBarHide(
@@ -34,8 +33,12 @@ class _AppBarHideState extends State<AppBarHide> {
   }
 
   void updateColor() {
-    final begin = widget.begincolor ??
-        (!context.isDarkMode ? Colors.grey.shade100 : Colors.grey.shade900);
+    Color? begin = widget.begincolor;
+    if (begin == null) {
+      final data = Theme.of(context);
+      final darkMode = data.brightness == Brightness.dark;
+      begin = darkMode ? data.colorScheme.onPrimary : data.colorScheme.primary;
+    }
     tweenColor = ColorTween(begin: begin, end: begin.withAlpha(0));
   }
 
@@ -66,6 +69,8 @@ class _AppBarHideState extends State<AppBarHide> {
         ),
       ),
     );
+    final theme = Theme.of(context);
+    final background = theme.backgroundColor;
 
     return RepaintBoundary(
       child: AnimatedBuilder(
@@ -74,7 +79,8 @@ class _AppBarHideState extends State<AppBarHide> {
           final value = (widget.values.value / widget.max).clamp(0.0, 1.0);
           final color = tweenColor.lerp(1 - value);
           return Material(
-              color: color ?? Colors.white, child: SafeArea(child: child!));
+              color: color ?? background,
+              child: SafeArea(bottom: false, child: child!));
         },
         child: SizedBox(height: kToolbarHeight, child: child),
       ),

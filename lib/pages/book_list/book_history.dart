@@ -41,7 +41,9 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
 
     final bgColor = isLight ? null : Colors.grey.shade900;
     final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
-    final color = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+    final color = isLight
+        ? const Color.fromRGBO(236, 236, 236, 1)
+        : Color.fromRGBO(25, 25, 25, 1);
 
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: Text('浏览历史'), elevation: 1.0),

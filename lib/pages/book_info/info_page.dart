@@ -88,6 +88,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
+    const height = 48.0;
 
     final appBar = Positioned(
       top: 0.0,
@@ -217,7 +218,9 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
 
             final bgColor = isLight ? null : Colors.grey.shade900;
             final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
-            final color = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+            final color = isLight
+                ? const Color.fromRGBO(236, 236, 236, 1)
+                : Color.fromRGBO(25, 25, 25, 1);
 
             final bottomBar = Material(
               color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
@@ -258,10 +261,12 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                     Widget rightChild =
                         Text('${show ? '移除' : '添加到'}书架', style: style);
 
-                    child = SizedBox(height: 56, child: Center(child: child));
+                    child =
+                        SizedBox(height: height, child: Center(child: child));
 
                     rightChild =
-                        SizedBox(height: 56, child: Center(child: rightChild));
+                        SizedBox(
+                        height: height, child: Center(child: rightChild));
 
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -541,7 +546,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
           ImageResolve(boxFit: BoxFit.fitWidth, img: realImg, shadow: false),
           RepaintBoundary(
             child: Container(
-              padding: EdgeInsets.only(top: 56.0 + top),
+              padding: EdgeInsets.only(top: kToolbarHeight + top),
               color: Color.fromARGB(148, 0, 0, 0),
               child: Container(
                 height: 130,

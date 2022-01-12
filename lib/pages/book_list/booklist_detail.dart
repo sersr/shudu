@@ -52,7 +52,9 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   @override
   Widget build(BuildContext context) {
     final ts = context.read<TextStyleConfig>().data;
-    final listColor = isLight ? null : Color.fromRGBO(25, 25, 25, 1);
+    final listColor = isLight
+        ? const Color.fromRGBO(236, 236, 236, 1)
+        : Color.fromRGBO(25, 25, 25, 1);
 
     final titleColor =
         isLight ? Color.fromARGB(255, 250, 250, 250) : Colors.grey.shade900;

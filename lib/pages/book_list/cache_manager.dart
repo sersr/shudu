@@ -60,7 +60,9 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
             return ListViewBuilder(
               cacheExtent: 100,
               itemExtent: 60,
-              color: !context.isDarkMode ? null : Color.fromRGBO(25, 25, 25, 1),
+              color: !context.isDarkMode
+                  ? const Color.fromRGBO(236, 236, 236, 1)
+                  : Color.fromRGBO(25, 25, 25, 1),
               padding: const EdgeInsets.only(bottom: 12.0),
               itemBuilder: (_, index) => cacheItemBuilder(index),
               itemCount: data.length,

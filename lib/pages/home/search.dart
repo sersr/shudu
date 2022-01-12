@@ -284,7 +284,9 @@ class _SearchPageState extends State<SearchPage>
           scrollController: controller,
           itemCount: widget.length,
           padding: const EdgeInsets.only(bottom: 60.0),
-          color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+          color: isLight
+              ? const Color.fromRGBO(236, 236, 236, 1)
+              : Color.fromRGBO(25, 25, 25, 1),
           itemBuilder: (context, index) {
             final child = widget.builder(context, index);
 

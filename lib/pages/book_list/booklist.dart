@@ -134,7 +134,9 @@ class _WrapWidgetState extends State<WrapWidget>
         scrollController: scrollController,
         itemCount: list.length + 1,
         cacheExtent: 200,
-        color: isLight ? null : Color.fromRGBO(25, 25, 25, 1),
+        color: isLight
+            ? const Color.fromRGBO(236, 236, 236, 1)
+            : Color.fromRGBO(25, 25, 25, 1),
         refreshDelegate: RefreshDelegate(
             maxExtent: 80,
             onRefreshing: shudanProvider.refresh,

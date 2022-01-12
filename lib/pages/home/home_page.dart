@@ -28,7 +28,7 @@ class _MyHomePageState extends State<MyHomePage>
   late BookCacheNotifier cache;
   late TextStyleConfig config;
   Future? _future;
-  // final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +61,6 @@ class _MyHomePageState extends State<MyHomePage>
     _future ??= opts.init().whenComplete(() {
       Timer.run(() {
         if (opts.options.updateOnStart == true && mounted) {
-          // _refreshKey.currentState!.show();
           refreshDelegate.show();
         }
       });
@@ -212,7 +211,6 @@ class _MyHomePageState extends State<MyHomePage>
   ValueNotifier<int> notifier = ValueNotifier(0);
   void changed(index) {
     if (notifier.value == index && index == 0) {
-      // _refreshKey.currentState!.show(atTop: true);
       refreshDelegate.show();
     }
     notifier.value = index;
@@ -337,7 +335,9 @@ class _MyHomePageState extends State<MyHomePage>
           return Scrollbar(
             child: ListViewBuilder(
               refreshDelegate: refreshDelegate,
-              color: !darkMode ? null : Color.fromRGBO(25, 25, 25, 1),
+              color: !darkMode
+                  ? const Color.fromRGBO(236, 236, 236, 1)
+                  : Color.fromRGBO(25, 25, 25, 1),
               cacheExtent: 100,
               itemCount: children.length,
               itemBuilder: (_, index) {
