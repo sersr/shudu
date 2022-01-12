@@ -23,6 +23,7 @@ class ViewOne extends StatefulWidget {
     required this.title,
     this.bodyColor,
     required this.body,
+    this.initMax = true,
     this.radius = const BorderRadius.all(Radius.circular(20)),
   }) : super(key: key);
 
@@ -35,33 +36,68 @@ class ViewOne extends StatefulWidget {
   final BorderRadius? radius;
   final Color? bodyColor;
   final Widget body;
+  final bool initMax;
   @override
   _ViewOneState createState() => _ViewOneState();
 }
 
 class _ViewOneState extends State<ViewOne> {
-  @override
-  Widget build(BuildContext context) {
-    double min;
-    double max;
-    double extent;
-    double hideMax;
-    final topOffset = ValueNotifier(0.0);
+  final topOffset = ValueNotifier(0.0);
+  late ValueListenable<double> appHideValue;
+  late double min;
+  late double max;
+  late double range;
 
+  bool _initFirst = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    update();
+  }
+
+  @override
+  void didUpdateWidget(covariant ViewOne oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initMax != oldWidget.initMax ||
+        widget.minHeight != oldWidget.minHeight) {
+      _initFirst = false;
+      update();
+    }
+  }
+
+  void update() {
+    double extent;
     final data = MediaQuery.of(context);
     if (data.orientation == Orientation.portrait) {
       extent = data.size.height;
     } else {
       extent = data.size.width;
     }
+    double? oldMin, oldMax;
+    if (_initFirst) {
+      oldMin = min;
+      oldMax = max;
+    } else {
+      _initFirst = true;
+    }
 
     min = kToolbarHeight + data.padding.top;
     min = math.min(min, extent);
     max = (extent - widget.minHeight - data.padding.bottom).clamp(min, extent);
-    hideMax = max - min;
-    topOffset.value = max;
-    final appHideValue = topOffset
-        .selector((parent) => (max - parent.value).clamp(0.0, hideMax));
+    range = max - min;
+
+    if (min != oldMin || max != oldMax) {
+      topOffset.value = widget.initMax ? max : min;
+    }
+
+    appHideValue =
+        topOffset.selector((parent) => (max - parent.value).clamp(0.0, range));
+  }
+
+  void onChanged(offset) => topOffset.value = offset;
+
+  @override
+  Widget build(BuildContext context) {
     Widget? background = widget.backgroundChild;
 
     assert(() {
@@ -92,16 +128,18 @@ class _ViewOneState extends State<ViewOne> {
     Widget appBar = AppBarHide(
       begincolor: widget.appColor,
       title: widget.title,
-      max: hideMax,
+      max: range,
       values: appHideValue,
     );
 
     final body = ShrinkWidget(
       min: min,
       max: max,
-      offset: topOffset,
+      onChanged: onChanged,
       child: headChild,
       body: widget.body,
+      initMax: widget.initMax,
+      initOffset: topOffset.value,
     );
     return SafeArea(
       top: false,
@@ -124,9 +162,11 @@ class ShrinkWidget extends StatefulWidget {
     Key? key,
     required this.min,
     required this.max,
-    required this.offset,
     required this.body,
     this.backgroundColor,
+    required this.onChanged,
+    this.initMax = true,
+    this.initOffset,
     this.radius = const BorderRadius.vertical(top: Radius.circular(20)),
     this.useBodyBackground = true,
     this.clipBehavior = Clip.hardEdge,
@@ -135,7 +175,7 @@ class ShrinkWidget extends StatefulWidget {
   }) : super(key: key);
   final double min;
   final double max;
-  final ValueNotifier<double> offset;
+
   final Widget? child;
   final Color? backgroundColor;
   final BorderRadius? radius;
@@ -143,27 +183,36 @@ class ShrinkWidget extends StatefulWidget {
   final bool useBodyBackground;
   final Clip clipBehavior;
   final ScrollController? controller;
+  final void Function(double offset) onChanged;
+  final bool initMax;
+  final double? initOffset;
   @override
   _ShrinkWidgetState createState() => _ShrinkWidgetState();
 }
 
 class _ShrinkWidgetState extends State<ShrinkWidget>
     with TickerProviderStateMixin {
-  final controller = ScrollController();
-
-  double get value => widget.offset.value;
-
   ScrollDirection? direction;
   late ClampedPosition position;
+  late _ScrollController _scrollController;
+
   Map<Type, GestureRecognizerFactory> gestures =
       <Type, GestureRecognizerFactory>{};
-  late _ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
     position = ClampedPosition(
-        min: widget.min, max: widget.max, vsync: this, syncPixels: setPixels);
-    position.resetPixels(value);
+      min: widget.min,
+      max: widget.max,
+      vsync: this,
+      syncPixels: setPixels,
+      initMax: widget.initMax,
+    );
+    if (widget.initOffset != null) {
+      position.resetPixels(widget.initOffset!);
+    }
+
     _scrollController = _ScrollController(position, widget.controller);
 
     gestures = <Type, GestureRecognizerFactory>{
@@ -189,17 +238,27 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.min != widget.min || oldWidget.max != widget.max) {
       position.dispose();
+      final oldOffset = position.pixels;
       position = ClampedPosition(
-          min: widget.min, max: widget.max, vsync: this, syncPixels: setPixels);
-      position.resetPixels(value);
+        min: widget.min,
+        max: widget.max,
+        vsync: this,
+        syncPixels: setPixels,
+        initMax: widget.initMax,
+      );
+      position.resetPixels(oldOffset);
       _scrollController = _ScrollController(position);
     } else if (widget.controller != oldWidget.controller) {
       _scrollController.updateParent(widget.controller);
     }
+    if (widget.initOffset != null &&
+        widget.initOffset != oldWidget.initOffset) {
+      position.resetPixels(widget.initOffset!);
+    }
   }
 
   void setPixels(double pixels) {
-    widget.offset.value = pixels;
+    widget.onChanged(pixels);
   }
 
   @override
@@ -227,25 +286,27 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
 
     var child = PrimaryScrollController(
       controller: _scrollController,
-      child: Stack(
-        children: [
-          ValueListenableBuilder(
-            valueListenable: position,
-            builder: (context, double offset, child) {
-              return Positioned(
-                top: offset,
-                right: 0,
-                left: 0,
-                bottom: 0,
-                child: child!,
-              );
-            },
-            child: RawGestureDetector(
-              gestures: gestures,
-              child: RepaintBoundary(child: body),
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            ValueListenableBuilder(
+              valueListenable: position,
+              builder: (context, double offset, child) {
+                return Positioned(
+                  top: offset,
+                  right: 0,
+                  left: 0,
+                  bottom: 0,
+                  child: child!,
+                );
+              },
+              child: RawGestureDetector(
+                gestures: gestures,
+                child: RepaintBoundary(child: body),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -456,10 +517,10 @@ class _ScrollController extends ScrollController {
   @override
   ScrollPosition createScrollPosition(ScrollPhysics physics,
       ScrollContext context, ScrollPosition? oldPosition) {
-    return ScrollPositionMetries(
+    return ShrinkScrollPosition(
         physics: physics,
         context: context,
-        metries: metries,
+        outerPosition: metries,
         oldPosition: oldPosition);
   }
 
@@ -490,22 +551,22 @@ class _ScrollController extends ScrollController {
   }
 }
 
-class ScrollPositionMetries extends ScrollPositionWithSingleContext {
-  ScrollPositionMetries({
+class ShrinkScrollPosition extends ScrollPositionWithSingleContext {
+  ShrinkScrollPosition({
     required ScrollPhysics physics,
     required ScrollContext context,
-    required this.metries,
+    required this.outerPosition,
     ScrollPosition? oldPosition,
   }) : super(physics: physics, context: context, oldPosition: oldPosition);
 
-  final ClampedPosition metries;
+  final ClampedPosition outerPosition;
 
   @override
   void applyUserOffset(double delta) {
     if (extentBefore <= 0.0) {
-      final oldPixels = metries.pixels;
-      metries.applyUserOffset(delta);
-      final newDelta = metries.pixels - oldPixels;
+      final oldPixels = outerPosition.pixels;
+      outerPosition.applyUserOffset(delta);
+      final newDelta = outerPosition.pixels - oldPixels;
       super.applyUserOffset(delta - newDelta);
     } else {
       super.applyUserOffset(delta);
@@ -523,7 +584,7 @@ class ScrollPositionMetries extends ScrollPositionWithSingleContext {
   }
 
   ScrollDragController? _currentDrag;
-  late final delegate = DragDelegate(this, metries);
+  late final delegate = DragDelegate(this, outerPosition);
   @override
   Drag drag(DragStartDetails details, VoidCallback dragCancelCallback) {
     final ScrollDragController drag = ScrollDragController(
@@ -531,15 +592,15 @@ class ScrollPositionMetries extends ScrollPositionWithSingleContext {
       details: details,
       onDragCanceled: () {
         dragCancelCallback();
-        metries._onScrollDrag = false;
+        outerPosition._onScrollDrag = false;
       },
       carriedVelocity: physics.carriedMomentum(_heldPreviousVelocity),
       motionStartDistanceThreshold: physics.dragStartDistanceMotionThreshold,
     );
     beginActivity(DragScrollActivity(this, drag));
     _currentDrag = drag;
-    metries.goIdle();
-    metries._onScrollDrag = true;
+    outerPosition.goIdle();
+    outerPosition._onScrollDrag = true;
     return drag;
   }
 
