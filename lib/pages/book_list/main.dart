@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../demo/view_one.dart';
+import '../demo/view_one_inner.dart';
 import '../setting/setting.dart';
 import 'book_history.dart';
 import 'booklist.dart';
@@ -224,10 +224,69 @@ class ListMainPage extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               row(
-                left: _builder('demo', () {
+                left: _builder('list body', () {
                   Nav.push(
                     MaterialPageRoute(
-                      builder: (context) => ViewOne(),
+                      builder: (context) => ViewOne(
+                        title: Text('title'),
+                        backgroundChild: Container(
+                            child: Center(child: Text('background')),
+                            color: Colors.cyan),
+                        body: ListViewBuilder(
+                          padding: const EdgeInsets.all(8.0),
+                          itemCount: 200,
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              height: 50,
+                              child: Text('$index'),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                right: _builder('list body, header', () {
+                  Nav.push(
+                    MaterialPageRoute(
+                      builder: (context) => ViewOne(
+                          child: Center(child: Text('hello')),
+                          title: Text('title'),
+                          backgroundChild: Container(
+                              child: Center(child: Text('background')),
+                              color: Colors.cyan),
+                          body: ListViewBuilder(
+                            padding: const EdgeInsets.all(8.0),
+                            itemCount: 200,
+                            itemBuilder: (context, index) {
+                              return SizedBox(
+                                height: 50,
+                                child: Text('$index'),
+                              );
+                            },
+                          )),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 5),
+              row(
+                left: _builder('widget body, header', () {
+                  Nav.push(
+                    MaterialPageRoute(
+                      builder: (context) => ViewOne(
+                        child: Center(child: Text('hello')),
+                        title: Text('title'),
+                        backgroundChild: Container(
+                            child: Center(child: Text('background')),
+                            color: Colors.cyan),
+                        body: Center(
+                          child: Container(
+                            height: 500,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }),
