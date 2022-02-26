@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
-import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 

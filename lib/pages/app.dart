@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 import 'package:flutter/services.dart';
@@ -43,17 +42,16 @@ class ShuduApp extends StatelessWidget {
               appBarTheme:
                   AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
           darkTheme: ThemeData.dark().copyWith(
-            splashColor: Color.fromARGB(255, 212, 212, 212),
-            scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
-            platform: list[1] ?? defaultTargetPlatform,
-            colorScheme: const ColorScheme.dark(secondary: Colors.grey),
-            pageTransitionsTheme: const PageTransitionsTheme(builders: {
-              TargetPlatform.iOS: SlidePageTransition(),
-              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+              splashColor: Color.fromARGB(255, 212, 212, 212),
+              scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
+              platform: list[1] ?? defaultTargetPlatform,
+              colorScheme: const ColorScheme.dark(secondary: Colors.grey),
+              pageTransitionsTheme: const PageTransitionsTheme(builders: {
+                TargetPlatform.iOS: SlidePageTransition(),
+                TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
               }),
               appBarTheme:
-                  AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))
-          ),
+                  AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
           showPerformanceOverlay: list[2] ?? false,
           home: Builder(builder: (context) {
             return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -95,7 +93,7 @@ class MulProvider extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => TextStyleConfig()),
       ],
-      child: GetMaterialApp(home: ShuduApp(mode: mode)),
+      child: ShuduApp(mode: mode),
     );
   }
 }

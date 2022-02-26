@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'package:useful_tools/useful_tools.dart';
 
 import '../../event/export.dart';
 import '../../provider/text_styles.dart';

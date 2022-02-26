@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -45,10 +44,6 @@ void main() {
           Log.e('error: $e', onlyDebug: false);
         }
 
-        Get.isLogEnable = false;
-        Get.log = _emptyFunction;
         runApp(MulProvider(mode: await OptionsNotifier.getThemeModeUnSafe()));
       }, printEventQueue: printEvent));
 }
-
-void _emptyFunction(String text, {bool isError = false}) {}

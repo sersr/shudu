@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../demo/view_one_inner.dart';

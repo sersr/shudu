@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -37,7 +36,7 @@ class _SettingState extends State<Setting> {
 
   void update(TargetPlatform? d) {
     optionsNotifier.options = ConfigOptions(platform: d);
-    Get.back();
+    Nav.maybePop();
   }
 
   SnackbarDelegate? handle;
@@ -54,20 +53,22 @@ class _SettingState extends State<Setting> {
         builder: (context, updateValue, _) {
           return ListTile(
             onTap: () {
-              Get.dialog(Center(
-                  child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 50),
-                child: Material(
-                  borderRadius: BorderRadius.circular(5.0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: children,
+              Nav.showDialog(builder: (_) {
+                return Center(
+                    child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 50),
+                  child: Material(
+                    borderRadius: BorderRadius.circular(5.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: children,
+                      ),
                     ),
                   ),
-                ),
-              )));
+                ));
+              });
             },
             visualDensity: VisualDensity.compact,
             leading: Text(title,
@@ -113,7 +114,7 @@ class _SettingState extends State<Setting> {
 
   void _onChanged(ThemeMode? updateValue) {
     optionsNotifier.options = ConfigOptions(themeMode: updateValue);
-    Get.back();
+    Nav.maybePop();
   }
 
   @override

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/Material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../book_index_notifier.dart';
