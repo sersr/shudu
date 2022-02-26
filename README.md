@@ -2,8 +2,7 @@
 
 ## 介绍
 
-    小说阅读app
-
+    提供简易小说阅读方式
 
 ## 使用到的包：
  - nop_db: 数据库工具包，代码生成，`Isolate`通信协议，动态传输
@@ -12,17 +11,11 @@
 - useful_tools: 指针采样，异步任务队列，图片缓存库
 
 ## 构建
-- flutter channel master
--  步骤:
-```shell 
-git clone https://github.com/sersr/sync_projects
-git clone https://github.com/sersr/shudu
-cd shudu
-dart run ../sync_projects/bin/sync_projects.dart
-```
-可能出现的意外的情况运行下面命令保持最新状态：
+- flutter channel stable
+- 运行下面命令获取最新状态：
 
-    flutter pub upgrade
+        flutter pub upgrade
+- flutter build apk / windows
 
 ## web平台可能有跨域问题：  
 可以在`flutter/packages/flutter_tools/lib/web/chrome.dart`下添加`--disable-web-security`启动参数
