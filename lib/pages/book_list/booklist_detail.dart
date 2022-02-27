@@ -105,7 +105,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
             return ListViewBuilder(
               color: listColor,
               itemCount: length,
-              refreshDelegate: refreshDelegate2,
+              // refreshDelegate: refreshDelegate2,
               padding: const EdgeInsets.only(bottom: 12.0),
               itemBuilder: (context, index) {
                 if (index < headLength) {

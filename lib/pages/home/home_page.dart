@@ -27,7 +27,8 @@ class _MyHomePageState extends State<MyHomePage>
   late BookCacheNotifier cache;
   late TextStyleConfig config;
   Future? _future;
-
+  final _refreshKey = GlobalKey<RefreshIndicatorState>();
+  final scrollController = ScrollController();
   @override
   void initState() {
     super.initState();
@@ -84,9 +85,9 @@ class _MyHomePageState extends State<MyHomePage>
 
     onInitIsolate();
     if (closeIsolateState) {
-      painterBloc.autoRun.stopSave();
+      painterBloc.stopSave();
     } else if (initIsolateState) {
-      painterBloc.autoRun.stopAutoRun();
+      painterBloc.stopAutoRun();
       ui.window.scheduleFrame();
     }
   }
@@ -210,7 +211,10 @@ class _MyHomePageState extends State<MyHomePage>
   ValueNotifier<int> notifier = ValueNotifier(0);
   void changed(index) {
     if (notifier.value == index && index == 0) {
-      refreshDelegate.show();
+      // refreshDelegate.show();
+      scrollController.position
+          .jumpTo(scrollController.position.minScrollExtent);
+      _refreshKey.currentState!.show();
     }
     notifier.value = index;
   }
@@ -317,58 +321,65 @@ class _MyHomePageState extends State<MyHomePage>
       onRefreshing: () => cache.load(update: true));
 
   Widget buildBlocBuilder() {
-    return NotificationListener<OverscrollIndicatorNotification>(
-      onNotification: (OverscrollIndicatorNotification no) {
-        if (no.leading) no.disallowIndicator();
-        return false;
+    return RefreshIndicator(
+      key: _refreshKey,
+      onRefresh: () {
+        return cache.load(update: true);
       },
-      child: AnimatedBuilder(
-        animation: cache,
-        builder: (_, state) {
-          if (!cache.initialized) return const SizedBox();
-
-          final children = cache.showChildren;
-
-          if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
-          final darkMode = context.isDarkMode;
-          return Scrollbar(
-            child: ListViewBuilder(
-              refreshDelegate: refreshDelegate,
-              color: !darkMode
-                  ? const Color.fromRGBO(236, 236, 236, 1)
-                  : Color.fromRGBO(25, 25, 25, 1),
-              cacheExtent: 100,
-              itemCount: children.length,
-              itemBuilder: (_, index) {
-                final item = children[index];
-                return ListItem(
-                  bgColor: !darkMode ? null : Colors.grey.shade900,
-                  splashColor: !context.isDarkMode
-                      ? null
-                      : Color.fromRGBO(60, 60, 60, 1),
-                  onTap: () {
-                    BookContentPage.push(context, item.bookId!, item.chapterId!,
-                        item.page!, item.api);
-                  },
-                  onLongPress: () {
-                    showModalBottomSheet(
-                        context: context,
-                        builder: (_) => bottomSheet(item, item.api));
-                  },
-                  child: BookItem(
-                    img: item.img,
-                    bookName: item.name,
-                    api: item.api,
-                    bookUdateItem: item.lastChapter,
-                    bookUpdateTime: item.updateTime,
-                    isTop: item.isTop ?? false,
-                    isNew: item.isNew ?? false,
-                  ),
-                );
-              },
-            ),
-          );
+      child: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (OverscrollIndicatorNotification no) {
+          if (no.leading) no.disallowIndicator();
+          return false;
         },
+        child: AnimatedBuilder(
+          animation: cache,
+          builder: (_, state) {
+            if (!cache.initialized) return const SizedBox();
+
+            final children = cache.showChildren;
+
+            if (children.isEmpty) return const Center(child: Text('点击右上角按钮搜索'));
+            final darkMode = context.isDarkMode;
+            return Scrollbar(
+              child: ListViewBuilder(
+                // refreshDelegate: refreshDelegate,
+                scrollController: scrollController,
+                color: !darkMode
+                    ? const Color.fromRGBO(236, 236, 236, 1)
+                    : Color.fromRGBO(25, 25, 25, 1),
+                cacheExtent: 100,
+                itemCount: children.length,
+                itemBuilder: (_, index) {
+                  final item = children[index];
+                  return ListItem(
+                    bgColor: !darkMode ? null : Colors.grey.shade900,
+                    splashColor: !context.isDarkMode
+                        ? null
+                        : Color.fromRGBO(60, 60, 60, 1),
+                    onTap: () {
+                      BookContentPage.push(context, item.bookId!,
+                          item.chapterId!, item.page!, item.api);
+                    },
+                    onLongPress: () {
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (_) => bottomSheet(item, item.api));
+                    },
+                    child: BookItem(
+                      img: item.img,
+                      bookName: item.name,
+                      api: item.api,
+                      bookUdateItem: item.lastChapter,
+                      bookUpdateTime: item.updateTime,
+                      isTop: item.isTop ?? false,
+                      isNew: item.isNew ?? false,
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
