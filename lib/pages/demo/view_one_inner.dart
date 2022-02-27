@@ -310,8 +310,7 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
       ),
     );
 
-    return NotificationListener(
-        onNotification: onScrollNotification, child: child);
+    return child;
   }
 
   Drag? drag;
@@ -345,15 +344,6 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
     hold?.cancel();
     assert(drag == null);
     assert(hold == null);
-  }
-
-  bool onScrollNotification(Notification n) {
-    if (n is ScrollStartNotification) {
-      position._onScrollDrag = true;
-    } else if (n is ScrollEndNotification) {
-      position._onScrollDrag = false;
-    }
-    return false;
   }
 }
 
@@ -437,7 +427,8 @@ class ClampedPosition extends ChangeNotifier
     return delta;
   }
 
-  bool _onScrollDrag = false;
+  bool get _onScrollDrag => _onScrollDragCount > 0;
+  int _onScrollDragCount = 0;
 
   /// 如果有多个命中,以Scroll为主
   @override
@@ -563,14 +554,23 @@ class ShrinkScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void applyUserOffset(double delta) {
-    if (extentBefore <= 0.0) {
-      final oldPixels = outerPosition.pixels;
-      outerPosition.applyUserOffset(delta);
-      final newDelta = outerPosition.pixels - oldPixels;
-      super.applyUserOffset(delta - newDelta);
+    if (delta < 0) {
+      if (outerPosition.extentBefore > 0.0) {
+        delta = applyOuterPositionOffset(delta);
+      }
     } else {
-      super.applyUserOffset(delta);
+      if (extentBefore == 0.0) {
+        delta = applyOuterPositionOffset(delta);
+      }
     }
+    super.applyUserOffset(delta);
+  }
+
+  double applyOuterPositionOffset(double delta) {
+    final oldPixels = outerPosition.pixels;
+    outerPosition.applyUserOffset(delta);
+    final newDelta = outerPosition.pixels - oldPixels;
+    return delta - newDelta;
   }
 
   @override
@@ -592,15 +592,16 @@ class ShrinkScrollPosition extends ScrollPositionWithSingleContext {
       details: details,
       onDragCanceled: () {
         dragCancelCallback();
-        outerPosition._onScrollDrag = false;
+        outerPosition._onScrollDragCount--;
       },
       carriedVelocity: physics.carriedMomentum(_heldPreviousVelocity),
       motionStartDistanceThreshold: physics.dragStartDistanceMotionThreshold,
     );
     beginActivity(DragScrollActivity(this, drag));
+    assert(_currentDrag == null);
     _currentDrag = drag;
     outerPosition.goIdle();
-    outerPosition._onScrollDrag = true;
+    outerPosition._onScrollDragCount++;
     return drag;
   }
 
@@ -641,7 +642,8 @@ class DragDelegate implements ScrollActivityDelegate {
   void goBallistic(double velocity) {
     assert(Log.w('go | $velocity'));
     metries.goBallistic(velocity, scroll: true);
-    if (!metries.extentInside) {
+
+    if (metries.extentBefore <= 0.0) {
       delegate.goBallistic(velocity);
     } else {
       goIdle();
