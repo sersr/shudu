@@ -27,7 +27,7 @@ mixin ContentRestore on ContentDataBase, ContentStatus, Configs {
     if (callback != null) {
       EventQueue.run(restoreState, () async {
         final data = await callback();
-        inbook();
+        setInBook();
         newBookOrCid(data.saveBookId, data.saveCid, data.savePage,
             api: data.saveApi);
 

@@ -434,8 +434,7 @@ class _BottomEndState extends State<BottomEnd> {
   void onshowEnd() {
     _hide.value = false;
     bloc.reloadBrightness();
-    indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid,
-        api: bloc.api, restore: true);
+    indexBloc.loadIndexs(bloc.bookId, bloc.cid, api: bloc.api, restore: true);
   }
 
   @override
@@ -467,7 +466,7 @@ class _BottomEndState extends State<BottomEnd> {
                     bloc.showCname.value = false;
                     // context
                     //     .read<BookIndexNotifier>()
-                    //     .loadIndexs(bloc.bookid, bloc.tData.cid, true);
+                    //     .loadIndexs(bloc.bookid, bloc.cid, true);
                     showSettings.value = SettingView.indexs;
                   } else {
                     toggle();
@@ -481,7 +480,7 @@ class _BottomEndState extends State<BottomEnd> {
                     bloc.showCname.value = false;
                     indexBloc
                       ..bookUpDateTime.remove(bloc.bookId)
-                      ..loadIndexs(bloc.bookId, bloc.tData.cid,
+                      ..loadIndexs(bloc.bookId, bloc.cid,
                           api: bloc.api, restore: true);
                     showSettings.value = SettingView.indexs;
                   } else {
@@ -512,10 +511,10 @@ class _BottomEndState extends State<BottomEnd> {
               child: bottomButton(
                 onTap: bloc.auto,
                 child: AnimatedBuilder(
-                  animation: bloc.autoRun.isActive,
+                  animation: bloc.autoRunNotifier,
                   builder: (context, child) {
                     return Text(
-                      '${!bloc.autoRun.value ? '开始' : '停止'}滚动',
+                      '${!bloc.autoRunActive ? '开始' : '停止'}滚动',
                       style:
                           TextStyle(fontSize: 10, color: Colors.grey.shade300),
                     );
@@ -552,7 +551,7 @@ class _BottomEndState extends State<BottomEnd> {
                       ? Axis.vertical
                       : Axis.horizontal;
 
-                  bloc.autoRun.stopTicked();
+                  bloc.stopTicked();
                   bloc.setPrefs(bloc.config.value.copyWith(axis: _axis));
                 },
                 child: AnimatedBuilder(
@@ -772,27 +771,7 @@ class _TopPannelState extends State<TopPannel> {
                           children: [
                             _topButton(
                               onTap: () {
-                                contentNtf.showCname.value = false;
-                                contentNtf.controller?.goIdle();
-
-                                final data = contentNtf.saveStateOnOut();
-
-                                final cache = context.read<BookCacheNotifier>();
-                                BookInfoPage.push(data.saveBookId, data.saveApi)
-                                    .then((_) {
-                                  contentNtf.restoreState(() async {
-                                    final list = await cache.getList;
-                                    int? cid, page;
-                                    for (final bookCache in list) {
-                                      if (bookCache.bookId == data.saveBookId) {
-                                        cid = bookCache.chapterId ?? cid;
-                                        page = bookCache.page ?? page;
-                                        break;
-                                      }
-                                    }
-                                    return data.copyWith(cid: cid, page: page);
-                                  });
-                                });
+                                contentNtf.goInfoPage(context);
                               },
                               text: '详情页',
                             ),

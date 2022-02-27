@@ -74,7 +74,6 @@ mixin ContentDataBase on ChangeNotifier {
   Object get key => _key;
   void didChangeKey() => _key = Object();
 
-  @visibleForTesting
   void clear() {
     reset();
     _tData.dispose();

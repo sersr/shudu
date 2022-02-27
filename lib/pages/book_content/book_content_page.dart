@@ -23,8 +23,7 @@ class BookContentPage extends StatefulWidget {
     try {
       final bloc = context.read<ContentNotifier>();
       await bloc.touchBook(newBookid, cid, page, api: api);
-      // ignore: empty_catches
-    } catch (e) {}
+    } catch (_) {}
     _lock = null;
 
     return Nav.push(MaterialPageRoute(builder: (context) {
@@ -183,14 +182,9 @@ class BookContentPageState extends State<BookContentPage>
       return false;
     }
 
-    bloc.out();
-
-    await bloc.dumpIgnore();
-    await blocCache.load();
-
-    EventQueue.pushOne(this, () => uiOverlay(hide: false));
-    await bloc.initQueue.runner;
     await bloc.onOut();
+    EventQueue.pushOne(this, () => uiOverlay(hide: false));
+    await blocCache.load();
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);
     return true;

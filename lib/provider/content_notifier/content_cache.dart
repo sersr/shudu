@@ -93,17 +93,13 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   // 根据当前章节更新存活章节
   // 任务顺序与添加顺序一致
   Iterable<int> getCurrentIds() {
-    final ids = <int?>{};
+
     final cid = tData.cid;
 
     final current = getTextData(tData.cid);
     final nid = current?.nid;
     final pid = current?.pid;
-    ids
-      ..add(cid)
-      ..add(nid)
-      ..add(pid);
-    return ids.whereType<int>();
+    return [cid, nid, pid].whereType<int>();
   }
 
   @pragma('vm:prefer-inline')

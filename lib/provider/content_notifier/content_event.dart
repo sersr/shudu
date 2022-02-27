@@ -53,7 +53,7 @@ mixin ContentEvent
     }
     await setOrientation(config.value.orientation!);
 
-    inbook();
+    setInBook();
     newBookOrCid(newBookId, cid, page, api: api);
   }
 

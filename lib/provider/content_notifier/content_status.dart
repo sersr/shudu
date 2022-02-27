@@ -24,7 +24,7 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
     return super.onOut();
   }
 
-  void inbook() {
+  void setInBook() {
     if (_inBookView) return;
     _inBookView = true;
     assert(debugTest = true);

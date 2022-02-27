@@ -105,8 +105,8 @@ class ContentPageViewState extends State<ContentPageView>
       if (!_delegate!.closed) return _delegate!;
     }
 
-    bloc.initQueue.runner.whenComplete(() {
-      indexBloc.loadIndexs(bloc.bookId, bloc.tData.cid, api: bloc.api);
+    bloc.runner.whenComplete(() {
+      indexBloc.loadIndexs(bloc.bookId, bloc.cid, api: bloc.api);
     });
 
     return _delegate =
@@ -129,9 +129,9 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _bloc?.removeListener(update);
+    _bloc?.handle.removeListener(update);
     _bloc = context.read<ContentNotifier>()..controller = offsetPosition;
-    _bloc!.addListener(update);
+    _bloc!.handle.addListener(update);
     indexBloc = context.read<BookIndexNotifier>();
     update();
   }
@@ -148,10 +148,10 @@ class ContentPageViewState extends State<ContentPageView>
   void onScrollingChanged(bool isScrolling) {
     bloc.scheduleTask();
     if (isScrolling) {
-      bloc.autoRun.stopSave();
+      bloc.stopSave();
     } else {
       // bloc.reduceController();
-      bloc.autoRun.stopAutoRun();
+      bloc.stopAutoRun();
     }
   }
 
@@ -238,7 +238,8 @@ class ContentPageViewState extends State<ContentPageView>
     //     delegate: ContentBuildDelegate(bloc, getChild));
     final child = NopPageView(
         offsetPosition: offsetPosition,
-        delegate: ContentPageBuildDelegate(content: bloc, builder: childBuild));
+        delegate: ContentPageBuildDelegate(
+            content: bloc.handle, builder: childBuild));
 
     if (offsetPosition.axis == Axis.horizontal) {
       return child;
@@ -258,7 +259,7 @@ class ContentPageViewState extends State<ContentPageView>
   }
 
   void _nextPage() {
-    if (!bloc.autoRun.value) {
+    if (!bloc.autoRunActive) {
       offsetPosition.nextPage();
     }
   }
@@ -300,7 +301,7 @@ class ContentPageViewState extends State<ContentPageView>
   @override
   void dispose() {
     offsetPosition.dispose();
-    _bloc?.removeListener(update);
+    _bloc?.handle.removeListener(update);
     bloc.controller = null;
     indexBloc.removeRegisterKey(lKey);
     super.dispose();
