@@ -246,10 +246,17 @@ class ListMainPage extends StatelessWidget {
                   );
                 }),
                 right: _builder('list body, header', () {
+                  final controller = ClampedScrollController();
                   Nav.push(
                     MaterialPageRoute(
                       builder: (context) => ViewOne(
-                          child: Center(child: Text('hello')),
+                          scrollController: controller,
+                          child: Center(
+                              child: ElevatedButton(
+                                  onPressed: () {
+                                    controller.auto();
+                                  },
+                                  child: Text('hello'))),
                           title: Text('title'),
                           backgroundChild: Container(
                               child: Center(child: Text('background')),

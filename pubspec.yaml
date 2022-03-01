@@ -44,12 +44,10 @@ dependencies:
   stream_channel: ^2.1.0
   stack_trace: ^1.10.0
   url_launcher: ^6.0.3
-  # useful_tools:
-  #   git:
-  #     url: git@github.com:sersr/useful_tools.git
-  #     ref: ab92915efe65dfd22f7c1f25164c01a64fec5f90
   useful_tools:
-    path: ../packages/useful_tools
+    git:
+      url: git@github.com:sersr/useful_tools.git
+  #     ref: ab92915efe65dfd22f7c1f25164c01a64fec5f90
   video_player: ^2.1.0
   wakelock: ^0.6.1+1
   infinite_listview: ^1.1.0
@@ -88,6 +86,10 @@ dependencies:
   scrollable_positioned_list: ^0.2.3
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
+
+dependency_overrides:
+  useful_tools:
+    path: ../packages/useful_tools
 
 dev_dependencies:
   flutter_test:

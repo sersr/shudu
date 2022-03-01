@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:flutter/rendering.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../widgets/app_bar.dart';
@@ -25,6 +24,7 @@ class ViewOne extends StatefulWidget {
     required this.body,
     this.initMax = true,
     this.radius = const BorderRadius.all(Radius.circular(20)),
+    this.scrollController,
   }) : super(key: key);
 
   final double minHeight;
@@ -37,6 +37,7 @@ class ViewOne extends StatefulWidget {
   final Color? bodyColor;
   final Widget body;
   final bool initMax;
+  final ScrollController? scrollController;
   @override
   _ViewOneState createState() => _ViewOneState();
 }
@@ -140,6 +141,7 @@ class _ViewOneState extends State<ViewOne> {
       body: widget.body,
       initMax: widget.initMax,
       initOffset: topOffset.value,
+      controller: widget.scrollController,
     );
     return SafeArea(
       top: false,
@@ -192,7 +194,6 @@ class ShrinkWidget extends StatefulWidget {
 
 class _ShrinkWidgetState extends State<ShrinkWidget>
     with TickerProviderStateMixin {
-  ScrollDirection? direction;
   late ClampedPosition position;
   late _ScrollController _scrollController;
 
@@ -214,6 +215,7 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
     }
 
     _scrollController = _ScrollController(position, widget.controller);
+    updateController();
 
     gestures = <Type, GestureRecognizerFactory>{
       VerticalDragGestureRecognizer:
@@ -233,6 +235,20 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
     };
   }
 
+  void updateController() {
+    final controller = widget.controller;
+    if (controller is ClampedScrollController) {
+      controller._position = position;
+    }
+  }
+
+  void removeController() {
+    final controller = widget.controller;
+    if (controller is ClampedScrollController) {
+      controller._position = null;
+    }
+  }
+
   @override
   void didUpdateWidget(covariant ShrinkWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -247,10 +263,11 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
         initMax: widget.initMax,
       );
       position.resetPixels(oldOffset);
-      _scrollController = _ScrollController(position);
+      _scrollController = _ScrollController(position, widget.controller);
     } else if (widget.controller != oldWidget.controller) {
       _scrollController.updateParent(widget.controller);
     }
+    updateController();
     if (widget.initOffset != null &&
         widget.initOffset != oldWidget.initOffset) {
       position.resetPixels(widget.initOffset!);
@@ -264,6 +281,7 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
   @override
   void dispose() {
     position.dispose();
+    removeController();
     super.dispose();
   }
 
@@ -286,27 +304,25 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
 
     var child = PrimaryScrollController(
       controller: _scrollController,
-      child: RepaintBoundary(
-        child: Stack(
-          children: [
-            ValueListenableBuilder(
-              valueListenable: position,
-              builder: (context, double offset, child) {
-                return Positioned(
-                  top: offset,
-                  right: 0,
-                  left: 0,
-                  bottom: 0,
-                  child: child!,
-                );
-              },
-              child: RawGestureDetector(
-                gestures: gestures,
-                child: RepaintBoundary(child: body),
-              ),
+      child: Stack(
+        children: [
+          ValueListenableBuilder(
+            valueListenable: position,
+            builder: (context, double offset, child) {
+              return Positioned(
+                top: offset,
+                right: 0,
+                left: 0,
+                bottom: 0,
+                child: child!,
+              );
+            },
+            child: RawGestureDetector(
+              gestures: gestures,
+              child: RepaintBoundary(child: body),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
 
@@ -347,6 +363,44 @@ class _ShrinkWidgetState extends State<ShrinkWidget>
   }
 }
 
+class ClampedScrollController extends ScrollController {
+  ClampedPosition? _position;
+  void expand() {
+    if (_position != null) {
+      final vel = _position!.max - _position!.min;
+      _position?._go(vel);
+    }
+  }
+
+  void shrink() {
+    if (_position != null) {
+      final vel = _position!.max - _position!.min;
+      _position?._go(-vel);
+    }
+  }
+
+  bool get isExpanded => _position?.extentBefore == 0;
+
+  void auto() {
+    if (_position != null) {
+      if (_position!.extentBefore > 0) {
+        expand();
+      } else {
+        shrink();
+      }
+    }
+  }
+}
+
+/// viewport
+/// ----------------------- top
+///   space
+///  --------------- => min
+///   inner space
+///
+///  --------------- => max
+///   space
+/// ----------------------- bottom
 class ClampedPosition extends ChangeNotifier
     implements ValueListenable<double>, ScrollActivityDelegate {
   final double min;
@@ -358,9 +412,11 @@ class ClampedPosition extends ChangeNotifier
     required this.vsync,
     required this.syncPixels,
     bool initMax = true,
-  }) : _pixels = initMax ? max : min;
+  }) : _pixels = initMax ? max : min {
+    animatingUp = pixels == max;
+  }
 
-  bool get extentInside => pixels > min && pixels < max;
+  bool get isExtentInside => pixels > min && pixels < max;
   double get extentBefore => pixels - min;
   double get extentAfter => max - pixels;
 
@@ -415,11 +471,11 @@ class ClampedPosition extends ChangeNotifier
     double delta = newPixels - pixelsClamp;
     if (_activity is BallisticScrollActivity) {
       if (extentBefore <= 1) {
+        delta -= min - _pixels;
         _pixels = min;
-        delta -= 1;
       } else if (extentAfter <= 1) {
+        delta -= max - _pixels;
         _pixels = max;
-        delta -= 1;
       }
     }
     syncPixels(_pixels);
@@ -437,6 +493,16 @@ class ClampedPosition extends ChangeNotifier
       goIdle();
       return;
     }
+    final to = getTo(velocity);
+
+    if (pixels == min || pixels == max) {
+      goIdle();
+    } else {
+      animationStart(velocity, to);
+    }
+  }
+
+  double getTo(double velocity) {
     double to = pixels;
 
     if (velocity < 0) {
@@ -444,28 +510,35 @@ class ClampedPosition extends ChangeNotifier
     } else if (velocity > 0) {
       to = min;
     } else {
-      if (_lastDelta > 0) {
+      if (!animatingUp) {
         to = max;
       } else {
         to = min;
       }
     }
-
-    if (pixels == min || pixels == max) {
-      goIdle();
-    } else {
-      velocity = -velocity;
-      beginActivity(BallisticScrollActivity(
-          this, getSpringSimulation(velocity, to), vsync));
-    }
+    return to;
   }
 
-  double _lastDelta = 1;
+  void _go(double velocity) {
+    final to = getTo(velocity);
+    animationStart(velocity, to);
+  }
+
+  void animationStart(double velocity, double to) {
+    // doing
+    animatingUp = to == min;
+    velocity = -velocity;
+    beginActivity(BallisticScrollActivity(
+        this, getSpringSimulation(velocity, to), vsync));
+  }
+
+  // 只有不在边界时可用,可能的出现打断动画的情况
+  // 保存上一次动画的方向
+  bool animatingUp = false;
+
   @override
   void applyUserOffset(double delta) {
     if (delta == 0.0) return;
-    _lastDelta = delta;
-
     setPixels(pixels + delta);
   }
 
@@ -554,16 +627,30 @@ class ShrinkScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void applyUserOffset(double delta) {
-    if (delta < 0) {
-      if (outerPosition.extentBefore > 0.0) {
-        delta = applyOuterPositionOffset(delta);
-      }
+    // 如果内部存在空白区域(inner space)或者内部[ScrollView]滚动位置处于起点位置
+    // 先处理outerPosition
+    if (outerPosition.extentBefore > 0.0 || extentBefore == 0.0) {
+      delta = applyOuterPositionOffset(delta);
+      super.applyUserOffset(delta);
     } else {
+      _userDrag = true;
+      final oldPixels = pixels;
+      super.applyUserOffset(delta);
       if (extentBefore == 0.0) {
-        delta = applyOuterPositionOffset(delta);
+        final useDelta = oldPixels - pixels;
+        final extra = delta - useDelta;
+        outerPosition.applyUserOffset(extra);
       }
+      _userDrag = false;
     }
-    super.applyUserOffset(delta);
+  }
+
+  /// 如果是拖动状态,不显示超出滚动范围指示器
+  bool _userDrag = false;
+  @override
+  void didOverscrollBy(double value) {
+    if (_userDrag) return;
+    super.didOverscrollBy(value);
   }
 
   double applyOuterPositionOffset(double delta) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -59,11 +60,15 @@ class _MyHomePageState extends State<MyHomePage>
     painterBloc.metricsChange(data);
 
     _future ??= opts.init().whenComplete(() {
-      Timer.run(() {
-        if (opts.options.updateOnStart == true && mounted) {
-          refreshDelegate.show();
-        }
-      });
+      if (opts.options.updateOnStart == true) {
+        SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+          if (mounted) {
+            _refreshKey.currentState!.show();
+            // refreshDelegate.show();
+
+          }
+        });
+      }
       return context.read<SearchNotifier>().init();
     });
   }
@@ -289,36 +294,36 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  late final refreshDelegate = RefreshDelegate(
-      builder: (context, offset, maxExtent, mode, rfreshing) {
-        String text;
-        switch (mode) {
-          case RefreshMode.dragStart:
-            text = '下拉刷新';
-            break;
-          case RefreshMode.dragEnd:
-            text = '释放刷新';
+  // late final refreshDelegate = RefreshDelegate(
+  //     builder: (context, offset, maxExtent, mode, rfreshing) {
+  //       String text;
+  //       switch (mode) {
+  //         case RefreshMode.dragStart:
+  //           text = '下拉刷新';
+  //           break;
+  //         case RefreshMode.dragEnd:
+  //           text = '释放刷新';
 
-            break;
-          case RefreshMode.animatedDone:
-          case RefreshMode.done:
-            text = '刷新完成';
-            break;
-          case RefreshMode.refreshing:
-            text = '刷新中';
-            break;
-          case RefreshMode.animatedIgnore:
-          case RefreshMode.ignore:
-            text = '已取消';
-            break;
-          default:
-            text = '';
-        }
+  //           break;
+  //         case RefreshMode.animatedDone:
+  //         case RefreshMode.done:
+  //           text = '刷新完成';
+  //           break;
+  //         case RefreshMode.refreshing:
+  //           text = '刷新中';
+  //           break;
+  //         case RefreshMode.animatedIgnore:
+  //         case RefreshMode.ignore:
+  //           text = '已取消';
+  //           break;
+  //         default:
+  //           text = '';
+  //       }
 
-        return Center(child: Text(text));
-      },
-      maxExtent: 100,
-      onRefreshing: () => cache.load(update: true));
+  //       return Center(child: Text(text));
+  //     },
+  //     maxExtent: 100,
+  //     onRefreshing: () => cache.load(update: true));
 
   Widget buildBlocBuilder() {
     return RefreshIndicator(
