@@ -46,7 +46,7 @@ dependencies:
   url_launcher: ^6.0.3
   useful_tools:
     git:
-      url: git@github.com:sersr/useful_tools.git
+      url: https://github.com/sersr/useful_tools.git
   #     ref: ab92915efe65dfd22f7c1f25164c01a64fec5f90
   video_player: ^2.1.0
   wakelock: ^0.6.1+1
@@ -57,16 +57,16 @@ dependencies:
   carousel_slider: ^4.0.0-nullsafety.0
   nop_db:
     git:
-      url: git@github.com:sersr/nop_db.git
+      url: https://github.com/sersr/nop_db.git
 
   # nop_db_sqflite:
   #   path: ../packages/nop_db_sqflite
   nop_db_sqlite:
     git:
-      url: git@github.com:sersr/nop_db_sqlite.git
+      url: https://github.com/sersr/nop_db_sqlite.git
   bangs:
     git:
-      url: git@github.com:sersr/bangs.git
+      url: https://github.com/sersr/bangs.git
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2
@@ -105,7 +105,7 @@ dev_dependencies:
   #     ref: master
   nop_db_gen:
     git:
-      url: git@github.com:sersr/nop_db_gen.git
+      url: https://github.com/sersr/nop_db_gen.git
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:
