@@ -54,7 +54,7 @@ class _ImageResolveState extends State<ImageResolve> {
       final _img = widget.img;
 
       return _img == null
-          ? _errorBuilder(true, width, height)
+          ? _errorBuilder(width, height)
           : Selector<OptionsNotifier, bool>(
               selector: (_, opt) => opt.options.useImageCache ?? false,
               builder: (context, useImageCache, _) {
@@ -111,28 +111,25 @@ class _ImageResolveState extends State<ImageResolve> {
       boxFit: widget.boxFit,
       getMemory: () => callback(_img),
       builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
-      errorBuilder: (context) => _errorBuilder(true, width, height),
+      errorBuilder: (context) => _errorBuilder(width, height),
     );
   }
 
-  Widget _errorBuilder(bool isFirst, double width, double height) {
-    if (isFirst) {
-      if (widget.errorBuilder != null) {
-        return widget.errorBuilder!(context);
-      } else {
-        final callback = repository.getImageBytes;
-        return ImageFuture.memory(
-          imageKey: [errorImg, callback],
-          width: width,
-          height: height,
-          boxFit: widget.boxFit,
-          getMemory: () => callback(errorImg),
-          builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
-          errorBuilder: (context) => _errorBuilder(false, width, height),
-        );
-      }
+  Widget _errorBuilder(double width, double height) {
+    if (widget.errorBuilder != null) {
+      return widget.errorBuilder!(context);
+    } else {
+      final callback = repository.getImageBytes;
+      return ImageFuture.memory(
+        imageKey: [errorImg, callback],
+        width: width,
+        height: height,
+        boxFit: widget.boxFit,
+        getMemory: () => callback(errorImg),
+        builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
+        // errorBuilder: (context) => _errorBuilder(false, width, height),
+      );
     }
-    return const SizedBox();
   }
 
   Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
