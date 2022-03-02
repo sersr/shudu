@@ -38,6 +38,8 @@ pubspec.lock
 **/build/
 build
 .dart_tool
+.vscode/settings.json
+
 # Web related
 lib/generated_plugin_registrant.dart
 
