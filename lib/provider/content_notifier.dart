@@ -13,6 +13,7 @@ import 'content_notifier/export.dart';
 
 export 'content_notifier/export.dart';
 
+/// 只提供向外暴露的api
 class ContentNotifier {
   ContentNotifier({required this.repository})
       : handle = ContentNotifierImpl(repository);

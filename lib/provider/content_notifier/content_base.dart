@@ -75,6 +75,7 @@ mixin ContentDataBase on ChangeNotifier {
   void didChangeKey() => _key = Object();
 
   void clear() {
+    assert(!inBook);
     reset();
     _tData.dispose();
     _tData = TextData();

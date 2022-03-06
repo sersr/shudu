@@ -263,8 +263,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                     child =
                         SizedBox(height: height, child: Center(child: child));
 
-                    rightChild =
-                        SizedBox(
+                    rightChild = SizedBox(
                         height: height, child: Center(child: rightChild));
 
                     return Row(
@@ -539,72 +538,71 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         img ?? '${PinyinHelper.getPinyinE(name ?? '', separator: '')}.jpg';
     final top = MediaQuery.maybeOf(context)?.padding.top ?? 0;
     return SizedBox(
-      height: 180 + top,
+      height: 200 + top,
       child: Stack(
         children: [
           ImageResolve(boxFit: BoxFit.fitWidth, img: realImg, shadow: false),
-          RepaintBoundary(
+          ColoredBox(
+            color: const Color.fromARGB(148, 0, 0, 0),
+            child: const SizedBox.expand(),
+          ),
+          Container(
+            padding: EdgeInsets.only(top: kToolbarHeight + top),
             child: Container(
-              padding: EdgeInsets.only(top: kToolbarHeight + top),
-              color: Color.fromARGB(148, 0, 0, 0),
-              child: Container(
-                height: 130,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
-                child: CustomMultiChildLayout(
-                  delegate: ImageLayout(width: 90),
-                  children: [
-                    LayoutId(
-                      id: ImageLayout.image,
-                      child: ImageResolve(img: realImg, shadow: false),
-                    ),
-                    LayoutId(
-                      id: ImageLayout.text,
-                      child: Container(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: DefaultTextStyle(
-                          style: ts.body2.copyWith(
-                              color: const Color.fromARGB(255, 223, 223, 223)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.only(
-                                    top: 2.0, bottom: 5.0),
-                                child: Text(
-                                  name ?? '',
-                                  style: ts.bigTitle1.copyWith(
-                                      color: const Color.fromARGB(
-                                          255, 223, 223, 223)),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  softWrap: false,
-                                ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
+              child: CustomMultiChildLayout(
+                delegate: ImageLayout(width: 90),
+                children: [
+                  LayoutId(
+                    id: ImageLayout.image,
+                    child: ImageResolve(img: realImg, shadow: false),
+                  ),
+                  LayoutId(
+                    id: ImageLayout.text,
+                    child: Container(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: DefaultTextStyle(
+                        style: ts.body2.copyWith(
+                            color: const Color.fromARGB(255, 223, 223, 223)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding:
+                                  const EdgeInsets.only(top: 2.0, bottom: 5.0),
+                              child: Text(
+                                name ?? '',
+                                style: ts.bigTitle1.copyWith(
+                                    color: const Color.fromARGB(
+                                        255, 223, 223, 223)),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                softWrap: false,
                               ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _wrapText('作者: $author'),
-                                    _wrapText('类型: $cName'),
-                                    _wrapText('状态: $bookStatus'),
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 2.0),
-                                      child: _wrapText('评分: $scroe分'),
-                                    ),
-                                  ],
-                                ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  _wrapText('作者: $author'),
+                                  _wrapText('类型: $cName'),
+                                  _wrapText('状态: $bookStatus'),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 2.0),
+                                    child: _wrapText('评分: $scroe分'),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                  ],
-                ),
+                    ),
+                  )
+                ],
               ),
             ),
           ),
