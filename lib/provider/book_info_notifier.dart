@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:utils/utils.dart';
 
-import '../api/api.dart';
 import '../data/data.dart';
-
 import '../event/export.dart';
 import 'book_index_notifier.dart';
 
@@ -11,9 +9,8 @@ class BookInfoProvider extends ChangeNotifier {
   Repository? repository;
   int? lastId;
   BookInfoRoot? get data => _data;
-  ZhangduDetailData? get zhangduData => _data;
+
   int? firstCid;
-  List<ZhangduSameUsersBooksData>? sameUsers;
   dynamic _data;
   Future<void> getData(int id, ApiType api) async {
     if (repository == null) return;
@@ -22,24 +19,8 @@ class BookInfoProvider extends ChangeNotifier {
       return;
     }
     lastId = id;
-    if (api == ApiType.biquge) {
-      _data = await repository!.getInfo(id) ?? const BookInfoRoot();
-    } else {
-      _data = await repository!.zhangduEvent.getZhangduDetail(id) ??
-          const ZhangduDetailData();
-      var rawIndexData =
-          await repository!.zhangduEvent.getZhangduIndex(id, false) ??
-              [];
-      if (zhangduData?.author != null) {
-        sameUsers = await repository!.zhangduEvent
-            .getZhangduSameUsersBooks(zhangduData!.author!);
-      }
-      if (rawIndexData.isNotEmpty) {
-        firstCid = rawIndexData.first.id;
-        Log.w('firstCid: $firstCid', onlyDebug: false);
-        Log.i(ZhangduApi.getBookIndexDetail(id));
-      }
-    }
+
+    _data = await repository!.getInfo(id) ?? const BookInfoRoot();
 
     notifyListeners();
   }

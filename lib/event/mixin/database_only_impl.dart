@@ -15,11 +15,7 @@ void dataBaseEntryPoint(IsolateArgs args) {
 
 /// 只处理数据库相关操作
 class DatabaseImpl extends MultiDatabaseResolveMain
-    with
-        DatabaseMixin,
-        ZhangduDatabaseMixin,
-        ComplexOnDatabaseMixin,
-        ZhangduComplexOnDatabaseMixin {
+    with DatabaseMixin, ComplexOnDatabaseMixin {
   DatabaseImpl({
     required this.appPath,
     required this.remoteSendHandle,

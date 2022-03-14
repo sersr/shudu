@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../provider/text_styles.dart';
 import '../demo/view_one_inner.dart';
 import '../setting/setting.dart';
 import 'book_history.dart';
@@ -247,17 +249,29 @@ class ListMainPage extends StatelessWidget {
                 }),
                 right: _builder('list body, header', () {
                   final controller = ClampedScrollController();
+                  final expanded = ValueNotifier(false);
+                  final ts = context.read<TextStyleConfig>().data;
+
+                  final style = ts.bigTitle1
+                      .copyWith(fontSize: 20, color: Colors.grey.shade100);
                   Nav.push(
                     MaterialPageRoute(
                       builder: (context) => ViewOne(
                           scrollController: controller,
                           child: Center(
-                              child: ElevatedButton(
-                                  onPressed: () {
-                                    controller.auto();
-                                  },
-                                  child: Text('hello'))),
-                          title: Text('title'),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                controller.auto();
+                              },
+                              child: ValueListenableBuilder(
+                                valueListenable: expanded,
+                                builder: (context, bool expanded, child) {
+                                  return Text(expanded ? 'expanded' : 'hello');
+                                },
+                              ),
+                            ),
+                          ),
+                          title: Text('title', style: style),
                           backgroundChild: Container(
                               child: Center(child: Text('background')),
                               color: Colors.cyan),

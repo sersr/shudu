@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 
-import '../../data/data.dart';
 
 class Uint8ListType with TransferTypeMapData<Uint8List?> {
   Uint8ListType(this.list);
@@ -72,11 +71,4 @@ class RawContentLines {
   String toString() {
     return '$runtimeType: $cid, $pid, $nid, $hasContent, $cname, $source';
   }
-}
-
-class ZhangduDetailChapterCache {
-  ZhangduDetailChapterCache(this.detailData, this.chapterData, this.timePoint);
-  ZhangduDetailData detailData;
-  List<ZhangduChapterData> chapterData;
-  final int timePoint;
 }

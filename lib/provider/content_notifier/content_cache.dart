@@ -4,7 +4,6 @@ import 'dart:math' as math;
 
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../data/data.dart';
 import '../../database/database.dart';
 import '../book_index_notifier.dart';
 import '../text_data.dart';
@@ -93,7 +92,6 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   // 根据当前章节更新存活章节
   // 任务顺序与添加顺序一致
   Iterable<int> getCurrentIds() {
-
     final cid = tData.cid;
 
     final current = getTextData(tData.cid);
@@ -129,37 +127,30 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     return pages;
   }
 
-  /// {contentId: data}
-  Map<int?, ZhangduChapterData> indexData = {};
   ApiType api = ApiType.biquge;
 
-  /// 通过`lastIndexOf`找到index
-  List<ZhangduChapterData> rawIndexData = [];
   Future<void> _load(int localBookId, int contentId, bool update) async {
     if (localBookId == -1 || contentId == -1) return;
     final localKey = key;
     TextData? newText;
-    if (api == ApiType.zhangdu) {
-      newText = await _loadZhangdu(localBookId, contentId, update);
-    } else {
-      final lines = await repository.getContent(localBookId, contentId, update);
-      if (localBookId != bookId || localKey != key || !inBook) return;
 
-      if (lines != null && lines.contentIsNotEmpty) {
-        final allLines = debugTest ? ['debugTest'] : lines.source;
-        final pages = await _genTextData(localBookId, allLines, lines.cname!);
+    final lines = await repository.getContent(localBookId, contentId, update);
+    if (localBookId != bookId || localKey != key || !inBook) return;
 
-        if (pages.isEmpty) return;
-        newText = TextData(
-          content: pages,
-          nid: lines.nid,
-          pid: lines.pid,
-          cid: lines.cid,
-          hasContent: debugTest ? false : lines.hasContent,
-          cname: lines.cname,
-        );
-        debugTest = false;
-      }
+    if (lines != null && lines.contentIsNotEmpty) {
+      final allLines = debugTest ? ['debugTest'] : lines.source;
+      final pages = await _genTextData(localBookId, allLines, lines.cname!);
+
+      if (pages.isEmpty) return;
+      newText = TextData(
+        content: pages,
+        nid: lines.nid,
+        pid: lines.pid,
+        cid: lines.cid,
+        hasContent: debugTest ? false : lines.hasContent,
+        cname: lines.cname,
+      );
+      debugTest = false;
     }
     if (newText != null) {
       final old = removeText(newText.cid);
@@ -170,57 +161,6 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     } else {
       autoAddReloadIds(contentId);
     }
-  }
-
-  Future<TextData?> _loadZhangdu(
-      int localBookId, int contentId, bool update) async {
-    assert(localBookId != -1 && contentId != -1);
-    final localKey = key;
-    TextData? newText;
-
-    final current = indexData[contentId];
-    if (current == null) {
-      Log.e('error...', onlyDebug: false);
-      return newText;
-    }
-    final index = rawIndexData.lastIndexOf(current);
-
-    var pid = -1;
-    var nid = -1;
-    if (index > 0) {
-      final p = rawIndexData.elementAt(index - 1);
-      if (p.id != null) pid = p.id!;
-    }
-    if (index < rawIndexData.length - 1) {
-      final n = rawIndexData.elementAt(index + 1);
-      if (n.id != null) nid = n.id!;
-    }
-    final url = current.contentUrl;
-    final name = current.name;
-    final sort = current.sort;
-
-    assert(Log.i('${current.contentUrl} | ${current.name} | $nid, $pid'));
-    if (url != null && name != null && sort != null) {
-      final lines = await repository.getZhangduContent(
-          localBookId, contentId, url, name, sort, update);
-      if (localBookId != bookId || localKey != key || !inBook) return null;
-
-      if (lines != null) {
-        final hasContent = lines.isNotEmpty;
-        final data = hasContent ? lines : ['没有章节内容，稍后重试。'];
-        final pages = await _genTextData(localBookId, data, name);
-        if (pages.isEmpty) return null;
-        newText = TextData(
-          cid: contentId,
-          nid: nid,
-          pid: pid,
-          content: pages,
-          hasContent: hasContent,
-          cname: name,
-        );
-      }
-    }
-    return newText;
   }
 
   bool canReload(int id);
@@ -251,23 +191,14 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
   Future<void> _dump(
       int localBookId, int? cid, int localCurrentPage, ApiType api) async {
     if (cid == null || localBookId == -1) return;
-    if (api == ApiType.biquge) {
-      final book = BookCache(
-        isNew: false,
-        chapterId: cid,
-        sortKey: sortKey,
-        page: localCurrentPage,
-      );
 
-      await repository.bookCacheEvent.updateBook(localBookId, book);
-    } else {
-      final book = ZhangduCache(
-        isNew: false,
-        chapterId: cid,
-        sortKey: sortKey,
-        page: localCurrentPage,
-      );
-      await repository.zhangduEvent.updateZhangduBook(localBookId, book);
-    }
+    final book = BookCache(
+      isNew: false,
+      chapterId: cid,
+      sortKey: sortKey,
+      page: localCurrentPage,
+    );
+
+    await repository.bookCacheEvent.updateBook(localBookId, book);
   }
 }

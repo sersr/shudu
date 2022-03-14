@@ -40,22 +40,6 @@ class Cache {
       api: ApiType.biquge,
     );
   }
-  factory Cache.fromZdCache(ZhangduCache book) {
-    return Cache._(
-      name: book.name,
-      img: book.picture,
-      updateTime: book.chapterUpdateTime,
-      chapterId: book.chapterId,
-      lastChapter: book.chapterName,
-      bookId: book.bookId,
-      page: book.page,
-      sortKey: book.sortKey,
-      isTop: book.isTop,
-      isNew: book.isNew,
-      isShow: book.isShow,
-      api: ApiType.zhangdu,
-    );
-  }
 
   final String? name;
   final String? img;
@@ -113,14 +97,6 @@ class BookCacheNotifier extends ChangeNotifier {
         ifNone: () {},
         ifSome: (data) =>
             dataList.addAll(data.map((e) => Cache.fromBookCache(e))));
-    final fn2 = repository.zhangduEvent
-        .getZhangduMainList()
-        .mapOption(
-            ifNone: () {},
-            ifSome: (data) =>
-                dataList.addAll(data.map((e) => Cache.fromZdCache(e))));
-
-    await fn2;
     await fn1;
     return dataList;
   }
@@ -167,26 +143,12 @@ class BookCacheNotifier extends ChangeNotifier {
     load();
   }
 
-  Future<void> addZdBook(ZhangduCache book) async {
-    await repository.zhangduEvent.insertZhangduBook(book);
-    load();
-  }
-
   Future<void> updateTop(int id, bool isTop, ApiType api) {
-    if (api == ApiType.biquge) {
-      return _updateBook(id, BookCache(isTop: isTop, sortKey: sortKey));
-    } else {
-      return updateZdTop(id, isTop);
-    }
+    return _updateBook(id, BookCache(isTop: isTop, sortKey: sortKey));
   }
 
   Future<void> updateShow(int id, bool isShow, ApiType api) {
-    if (api == ApiType.biquge) {
-      return _updateBook(id, BookCache(isShow: isShow, sortKey: sortKey));
-    } else {
-      Log.i('show: $isShow');
-      return updateZdShow(id, isShow);
-    }
+    return _updateBook(id, BookCache(isShow: isShow, sortKey: sortKey));
   }
 
   Future<void> _updateBook(int id, BookCache book) async {
@@ -194,40 +156,14 @@ class BookCacheNotifier extends ChangeNotifier {
     return load();
   }
 
-  Future<void> updateZdTop(int id, bool isTop) {
-    return _updateZdBook(id, ZhangduCache(isTop: isTop, sortKey: sortKey));
-  }
-
-  Future<void> updateZdShow(int id, bool isShow) {
-    return _updateZdBook(id, ZhangduCache(isShow: isShow, sortKey: sortKey));
-  }
-
-  Future<void> _updateZdBook(int id, ZhangduCache book) async {
-    await repository.zhangduEvent.updateZhangduBook(id, book);
-    return load();
-  }
-
   Future<void> deleteBook(int? id, ApiType api) async {
     if (id == null) return;
-    if (api == ApiType.biquge) {
-      await repository.bookCacheEvent.deleteBook(id);
-    } else {
-      await repository.zhangduEvent.deleteZhangduBook(id);
-    }
-    load();
-  }
+    await repository.bookCacheEvent.deleteBook(id);
 
-  Future<void> deleteZdBook(int? id) async {
-    if (id == null) return;
-    await repository.zhangduEvent.deleteZhangduBook(id);
     load();
   }
 
   Future<void> updateBookStatus(int id, ApiType api) async {
-    if (api == ApiType.biquge) {
-      await repository.getInfo(id);
-    } else {
-      await repository.zhangduEvent.updateZhangduMainStatus(id);
-    }
+    await repository.getInfo(id);
   }
 }

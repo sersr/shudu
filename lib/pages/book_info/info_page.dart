@@ -153,60 +153,24 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
             List<SameUserBook>? sameUserBooks;
             String? author;
 
-            if (widget.api == ApiType.biquge) {
-              final _infoData = infoData as BookInfoRoot;
-              final _bookId = _infoData.data?.id;
+            final _infoData = infoData as BookInfoRoot;
+            final _bookId = _infoData.data?.id;
 
-              if ((_infoData.data == null || _bookId == null)) {
-                return reloadBotton(() => info.reload(widget.id, widget.api));
-              }
-              bookId = _bookId;
-              final infos = _infoData.data!;
-              firstChapterId = infos.firstChapterId;
-
-              children.add(header(infos.author, infos.bookStatus, infos.name,
-                  infos.bookVote?.scroe, infos.cName, infos.img, ts));
-
-              sameUserBooks = infos.sameUserBooks;
-              author = infos.author;
-
-              children.addAll(desc(infos.id, infos.author, infos.desc,
-                  infos.firstChapterId, infos.lastChapter, infos.lastTime, ts));
-            } else if (widget.api == ApiType.zhangdu) {
-              final data = infoData as ZhangduDetailData?;
-              final _bookId = data?.id;
-              if (data == null || _bookId == null) {
-                return reloadBotton(() => info.reload(widget.id, widget.api));
-              }
-              bookId = _bookId;
-              firstChapterId =
-                  info.firstCid ?? data.chapterId ?? firstChapterId;
-
-              children.add(header(data.author, data.bookStatus, data.name,
-                  data.score, data.categoryName, data.picture, ts));
-
-              author = data.author;
-              sameUserBooks = info.sameUsers
-                  ?.map((e) => SameUserBook(
-                        id: e.id,
-                        img: e.picture,
-                        lastChapter: e.intro,
-                        name: e.name,
-                        score: e.score,
-                      ))
-                  .toList();
-
-              children.addAll(desc(
-                data.id,
-                data.author,
-                data.intro,
-                firstChapterId,
-                data.chapterName,
-                data.updatedTime,
-                // sameUserBooks,
-                ts,
-              ));
+            if ((_infoData.data == null || _bookId == null)) {
+              return reloadBotton(() => info.reload(widget.id, widget.api));
             }
+            bookId = _bookId;
+            final infos = _infoData.data!;
+            firstChapterId = infos.firstChapterId;
+
+            children.add(header(infos.author, infos.bookStatus, infos.name,
+                infos.bookVote?.scroe, infos.cName, infos.img, ts));
+
+            sameUserBooks = infos.sameUserBooks;
+            author = infos.author;
+
+            children.addAll(desc(infos.id, infos.author, infos.desc,
+                infos.firstChapterId, infos.lastChapter, infos.lastTime, ts));
 
             final headLength = children.length;
             var length = headLength;

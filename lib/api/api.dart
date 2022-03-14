@@ -1,6 +1,4 @@
 import 'dart:collection';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 
 class Api {
   ///API------------------------------------------------
@@ -71,28 +69,28 @@ class Api {
 
 }
 
-class ZhangduApi {
-  static const domains = 'rungean.com';
-  static int shortId(int id) {
-    return (id / 2000 + 1).toInt();
-  }
+// class ZhangduApi {
+//   static const domains = 'rungean.com';
+//   static int shortId(int id) {
+//     return (id / 2000 + 1).toInt();
+//   }
 
-  static String getBookIndexDetail(int id) {
-    return 'http://statics.rungean.com/static/book/zip/${shortId(id)}/$id.zip';
-  }
+//   static String getBookIndexDetail(int id) {
+//     return 'http://statics.rungean.com/static/book/zip/${shortId(id)}/$id.zip';
+//   }
 
-  // search
-  static String hotSearchUrl() {
-    return ' http://statics.rungean.com/static/book/heat/14/heat.json';
-  }
+//   // search
+//   static String hotSearchUrl() {
+//     return ' http://statics.rungean.com/static/book/heat/14/heat.json';
+//   }
 
-  static String searchUrl(String query, int pageIndex, int pageSize) {
-    return 'https://api.zhangduxs.com/api/v1/novelsearch?content=$query'
-        '&pageIndex=$pageIndex&pageSize=$pageSize&type=2';
-  }
+//   static String searchUrl(String query, int pageIndex, int pageSize) {
+//     return 'https://api.zhangduxs.com/api/v1/novelsearch?content=$query'
+//         '&pageIndex=$pageIndex&pageSize=$pageSize&type=2';
+//   }
 
-  static String sameUsersBooks(String author) {
-    final m = md5.convert(utf8.encode(author));
-    return 'http://statics.rungean.com/static/book/author/$m.json';
-  }
-}
+//   static String sameUsersBooks(String author) {
+//     final m = md5.convert(utf8.encode(author));
+//     return 'http://statics.rungean.com/static/book/author/$m.json';
+//   }
+// }

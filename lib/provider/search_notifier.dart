@@ -3,7 +3,6 @@ import 'package:hive/hive.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../data/biquge/search_data.dart';
-import '../data/zhangdu/zhangdu_search.dart';
 import '../event/export.dart';
 
 class SearchNotifier extends ChangeNotifier {
@@ -13,7 +12,6 @@ class SearchNotifier extends ChangeNotifier {
 
   late Box box;
   SearchList? list;
-  ZhangduSearchData? data;
   void load(String key) {
     if (key.isEmpty) return;
     EventQueue.pushOne(_load, () => _load(key));
@@ -21,12 +19,9 @@ class SearchNotifier extends ChangeNotifier {
 
   Future<void> _load(String key) async {
     list = null;
-    data = null;
 
     notifyListeners();
     list = await repository.customEvent.getSearchData(key);
-    data = await repository.zhangduEvent
-        .getZhangduSearchData(key, 1, 20);
 
     searchHistory
       ..remove(key)

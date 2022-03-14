@@ -79,17 +79,13 @@ class BookEventIsolate extends BookEventResolveMain
     with
         // base
         DatabaseMixin,
-        ZhangduDatabaseMixin,
         // net
         HiveDioMixin,
         NetworkMixin,
-        ZhangduNetMixin,
         // complex on Database
         ComplexOnDatabaseMixin,
-        ZhangduComplexOnDatabaseMixin,
         // complex
-        ComplexMixin,
-        ZhangduComplexMixin {
+        ComplexMixin {
   BookEventIsolate({
     required this.remoteSendHandle,
     required this.appPath,

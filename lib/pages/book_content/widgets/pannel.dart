@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -8,10 +9,8 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../../provider/export.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
-import '../../book_info/info_page.dart';
 import '../book_content_page.dart';
 import 'page_view_controller.dart';
-import 'dart:math' as math;
 
 class Pannel extends StatefulWidget {
   const Pannel({Key? key, required this.controller}) : super(key: key);
@@ -203,7 +202,6 @@ class CnamePan extends StatelessWidget {
                 return reloadBotton(indexBloc.reloadIndexs);
               }
               final indexs = data.allChapters;
-              final _zduIndexs = data.data;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: AnimatedBuilder(
@@ -212,18 +210,11 @@ class CnamePan extends StatelessWidget {
                     var v = indexBloc.slide.value.toInt();
                     var text = '';
                     var cid = -1;
-                    if (data.api == ApiType.biquge) {
-                      if (v < indexs!.length) {
-                        final chapter = indexs[v];
-                        text = chapter.name ?? text;
-                        cid = chapter.id ?? cid;
-                      }
-                    } else {
-                      if (v < _zduIndexs!.length) {
-                        final chapter = _zduIndexs[v];
-                        text = chapter.name ?? text;
-                        cid = chapter.id ?? cid;
-                      }
+
+                    if (v < indexs!.length) {
+                      final chapter = indexs[v];
+                      text = chapter.name ?? text;
+                      cid = chapter.id ?? cid;
                     }
 
                     return GestureDetector(

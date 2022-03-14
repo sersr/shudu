@@ -11,8 +11,6 @@ abstract class ComplexEvent {
   FutureOr<RawContentLines?> getContent(int bookid, int contentid, bool update);
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update);
   FutureOr<BookInfoRoot?> getInfo(int id);
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update);
 }
 
 abstract class ServerEvent {
@@ -26,21 +24,6 @@ abstract class ServerEvent {
   FutureOr<int?> insertOrUpdateContent(BookContentDb contentDb);
   @protected
   FutureOr<int?> insertOrUpdateBook(BookInfo data);
-
-  /// zhangdu
-  @protected
-  FutureOr<int?> insertOrUpdateZhangduIndex(int bookId, String data);
-  @protected
-  FutureOr<List<String>?> getZhangduContentDb(int bookId, int contentId);
-  @protected
-  FutureOr<int?> getZhangduContentCid(int bookid);
-  @protected
-  FutureOr<int?> insertOrUpdateZhangduContent(ZhangduContent content);
-  @protected
-  FutureOr<List<ZhangduChapterData>?> getZhangduIndexDb(int bookId);
-  @protected
-  FutureOr<void> insertOrUpdateZhangduBook(
-      int bookId, int firstChapterId, ZhangduDetailData data);
 }
 
 abstract class ServerNetEvent {
@@ -50,6 +33,4 @@ abstract class ServerNetEvent {
   FutureOr<BookInfoRoot?> getInfoNet(int id);
   @protected
   FutureOr<String?> getIndexsNet(int id);
-  @protected
-  FutureOr<String?> getZhangduContentNet(String url);
 }

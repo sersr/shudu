@@ -111,20 +111,6 @@ class _IndexsState extends State<_Indexs> {
 
   double _compute() {
     final data = indexBloc?.data;
-    if (data?.api == ApiType.zhangdu) {
-      final currentIndex = data?.currentIndex;
-      final length = data?.data?.length;
-      if (currentIndex != null && length != null) {
-        final offset = widget.extent * currentIndex - widget.halfHeight;
-        return math.max(
-            0.0,
-            math.min(
-                offset,
-                // 减去一个视口高度避免过度滚动
-                widget.headerExtent + length * widget.extent - widget.height));
-      }
-      return 0;
-    }
 
     if (data == null || !data.isValidBqg) {
       return 0;
@@ -180,53 +166,29 @@ class _IndexsState extends State<_Indexs> {
 
         final children = <Widget>[];
 
-        if (data.api == ApiType.biquge) {
-          final indexs = data.chapters!;
-          final vols = data.vols!;
+        final indexs = data.chapters!;
+        final vols = data.vols!;
 
-          for (var i = 0; i < indexs.length; i++) {
-            final indexC = indexs[i];
-            final child = SliverStickyHeader.builder(
-              builder: (context, _) {
-                return Container(
-                  height: widget.headerExtent,
-                  color: const Color.fromRGBO(150, 180, 160, 1),
-                  child: Center(child: Text(vols[i])),
-                );
-              },
-              sliver: _StickyBody(
-                length: indexC.length,
-                extent: widget.extent,
-                getName: (index) => indexC[index].name ?? '',
-                isCached: (index) => indexBloc!.contains(indexC[index].id),
-                onTap: (context, index) {
-                  final id = indexC[index].id;
-                  if (id != null) {
-                    widget.onTap(context, data.bookid!, id);
-                  }
-                },
-              ),
-            );
-            children.add(child);
-          }
-        } else if (data.api == ApiType.zhangdu) {
-          final indexs = data.data!;
+        for (var i = 0; i < indexs.length; i++) {
+          final indexC = indexs[i];
           final child = SliverStickyHeader.builder(
             builder: (context, _) {
               return Container(
                 height: widget.headerExtent,
                 color: const Color.fromRGBO(150, 180, 160, 1),
-                child: Center(child: Text('正文 | ${indexs.length}章')),
+                child: Center(child: Text(vols[i])),
               );
             },
             sliver: _StickyBody(
-              length: indexs.length,
+              length: indexC.length,
               extent: widget.extent,
-              getName: (index) => indexs[index].name ?? '',
-              isCached: (index) => indexBloc!.contains(indexs[index].id),
+              getName: (index) => indexC[index].name ?? '',
+              isCached: (index) => indexBloc!.contains(indexC[index].id),
               onTap: (context, index) {
-                final id = indexs[index].id;
-                if (id != null) widget.onTap(context, data.bookid!, id);
+                final id = indexC[index].id;
+                if (id != null) {
+                  widget.onTap(context, data.bookid!, id);
+                }
               },
             ),
           );

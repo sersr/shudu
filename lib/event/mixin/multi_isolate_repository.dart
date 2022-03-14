@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:isolate';
+
 import 'package:flutter/foundation.dart';
 import 'package:nop_db/nop_db.dart';
 import 'package:useful_tools/useful_tools.dart';
+
 import '../base/export.dart';
 import '../repository.dart';
 import 'base/export.dart';
@@ -75,11 +77,9 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
         // net
         HiveDioMixin,
         NetworkMixin,
-        ZhangduNetMixin,
         ServerEventMessager,
         // complex
-        ComplexMixin,
-        ZhangduComplexMixin {
+        ComplexMixin {
   BookEventMultiIsolate({
     required this.appPath,
     required this.cachePath,

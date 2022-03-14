@@ -66,21 +66,11 @@ mixin ContentEvent
     if (_shouldUpdate(newBookId, cid, page, api)) {
       notify();
       notifyState(notEmptyOrIgnore: true, loading: false);
-      final update = bookId != newBookId;
       tData.dispose();
       resetData(TextData(cid: cid, api: api));
       this.api = api;
       currentPage = page;
       bookId = newBookId;
-      // indexData.clear();
-      if ((rawIndexData.isEmpty || update) && api == ApiType.zhangdu) {
-        rawIndexData =
-            await repository.zhangduEvent.getZhangduIndex(bookId, false) ?? [];
-        final d =
-            rawIndexData.asMap().map((key, value) => MapEntry(value.id, value));
-        indexData.clear();
-        indexData.addAll(d);
-      }
     }
   }
 

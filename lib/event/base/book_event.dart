@@ -9,7 +9,6 @@ import '../../database/database.dart';
 import '../../pages/book_list/cache_manager.dart';
 import 'data.dart';
 import 'server_event.dart';
-import 'zhangdu_event.dart';
 
 export 'data.dart';
 export 'server_event.dart';
@@ -18,14 +17,12 @@ part 'book_event.g.dart';
 
 @NopServerEvent()
 @NopServerEventItem(connectToServer: ['database'])
-abstract class BookEvent
-    implements CustomEvent, DatabaseEvent, ComplexEvent, ZhangduEvent {
+abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
   CustomEvent get customEvent => this;
   DatabaseEvent get databaseEvent => this;
   ComplexEvent get complexEvent => this;
-  ZhangduEvent get zhangduEvent => this;
 }
 
 abstract class BookContentEvent {

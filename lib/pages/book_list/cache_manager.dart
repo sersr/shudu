@@ -93,7 +93,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
     final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
 
     final name = _cacheNotifier.getName(_e.id, _e.api);
-    final text = '$name${_e.api == ApiType.zhangdu ? ' *' : ''}';
+    final text = name;
 
     const padding = EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0);
     final style = TextStyle(fontSize: 12, color: Colors.grey.shade300);
@@ -177,16 +177,13 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     _exit = v;
     if (_exit) {
       _cacheSub?.pause();
-      _cacheSubZd?.pause();
     } else {
       _cacheSub?.resume();
-      _cacheSubZd?.resume();
     }
     notifyListeners();
   }
 
   StreamSubscription? _cacheSub;
-  StreamSubscription? _cacheSubZd;
 
   @override
   void notifyListeners() {
@@ -207,7 +204,7 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
 
   @override
   void onOpen() {
-    if (_cacheList.isEmpty || _cacheListZd.isEmpty) startLoad();
+    if (_cacheList.isEmpty) startLoad();
   }
 
   void startLoad() async {
@@ -215,18 +212,11 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     _out = false;
     _cacheSub?.cancel();
     _cacheSub = repository!.bookCacheEvent.watchMainList().listen(_listen);
-    _cacheSubZd?.cancel();
-    _cacheSubZd =
-        _repository!.zhangduEvent.watchZhangduMainList().listen(_listenZd);
     final remoteItems = await repository!.getCacheItems() ?? const [];
-    if (_out) return;
-    final zhangduItems =
-        await repository!.zhangduEvent.getZhangduCacheItems() ?? const [];
     if (_out) return;
 
     _items
       ..clear()
-      ..addAll(zhangduItems.reversed)
       ..addAll(remoteItems.reversed);
     notifyListeners();
   }
@@ -240,23 +230,17 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
   Future<void> deleteCache(CacheItem item) async {
     if (repository == null) return;
     _items.remove(item);
-    if (item.api == ApiType.zhangdu) {
-      await repository!.zhangduEvent.deleteZhangduContentCache(item.id);
-    } else {
-      await repository!.bookContentEvent.deleteCache(item.id);
-    }
+
+    await repository!.bookContentEvent.deleteCache(item.id);
+
     notifyListeners();
   }
 
   final _cacheList = <int, Cache>{};
-  final _cacheListZd = <int, Cache>{};
   String getName(int bookid, ApiType api) {
     final Map<int, Cache> dataList;
-    if (api == ApiType.zhangdu) {
-      dataList = _cacheListZd;
-    } else {
-      dataList = _cacheList;
-    }
+
+    dataList = _cacheList;
     final cache = dataList[bookid];
     if (cache?.name != null) return cache!.name!;
     return '';
@@ -273,25 +257,11 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     notifyListeners();
   }
 
-  void _listenZd(List<ZhangduCache>? data) {
-    assert(Log.e('cache manager'));
-    if (data == null) return;
-    _cacheListZd.clear();
-    for (var item in data) {
-      if (item.bookId != null)
-        _cacheListZd[item.bookId!] = Cache.fromZdCache(item);
-    }
-    notifyListeners();
-  }
-
   Future<void> deleteBook(CacheItem item) async {
     if (repository == null) return;
     await deleteCache(item);
-    if (item.api == ApiType.zhangdu) {
-      await repository!.zhangduEvent.deleteZhangduBook(item.id);
-    } else {
-      await repository!.bookCacheEvent.deleteBook(item.id);
-    }
+
+    await repository!.bookCacheEvent.deleteBook(item.id);
   }
 
   bool _out = false;
@@ -300,8 +270,6 @@ class _CacheNotifier extends ChangeNotifier with NotifyStateOnChangeNotifier {
     _out = true;
     _cacheSub?.cancel();
     _cacheSub = null;
-    _cacheSubZd?.cancel();
-    _cacheSubZd = null;
   }
 
   @override

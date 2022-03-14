@@ -6,8 +6,3 @@ export 'biquge/book_list_detail.dart';
 export 'biquge/search_data.dart';
 export 'biquge/book_top.dart';
 export 'biquge/book_category_all.dart';
-export 'zhangdu/zhangdu_chapter.dart';
-export 'zhangdu/zhangdu_detail.dart';
-export 'zhangdu/zhangdu_search.dart';
-export 'zhangdu/zhangdu_ranking.dart';
-export 'zhangdu/zhangdu_same_users_books.dart';

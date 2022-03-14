@@ -9,7 +9,6 @@ import 'package:utils/utils.dart';
 import '../data/data.dart';
 
 part 'nop_database.g.dart';
-part 'zhangdu_database.dart';
 
 class BookCache extends Table {
   BookCache({
@@ -108,9 +107,6 @@ class BookIndex extends Table {
   BookCache,
   BookContentDb,
   BookIndex,
-  ZhangduCache,
-  ZhangduContent,
-  ZhangduIndex,
 ])
 class BookDatabase extends _GenBookDatabase {
   BookDatabase(this.path);
@@ -157,10 +153,10 @@ class BookDatabase extends _GenBookDatabase {
         Log.i('error: $e', onlyDebug: false);
       }
     }
-    if (oldVersion <= 2) {
-      await db.execute(zhangduCache.createTable());
-      await db.execute(zhangduContent.createTable());
-      await db.execute(zhangduIndex.createTable());
-    }
+    // if (oldVersion <= 2) {
+    //   await db.execute(zhangduCache.createTable());
+    //   await db.execute(zhangduContent.createTable());
+    //   await db.execute(zhangduIndex.createTable());
+    // }
   }
 }

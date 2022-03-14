@@ -132,88 +132,48 @@ class BookSearchPage extends SearchDelegate<void> {
   @override
   Widget buildResults(BuildContext context) {
     final search = context.read<SearchNotifier>();
-    final isLight = !context.isDarkMode;
 
     return wrap(
-        context,
-        AnimatedBuilder(
-          animation: search,
-          builder: (context, _) {
-            final searchResult = search.list?.data;
-            final zhangduData = search.data?.list;
-            if (searchResult == null && zhangduData == null) {
-              return loadingIndicator();
-            }
-            final searchLength = searchResult?.length ?? 0;
-            final zhangduLength = zhangduData?.length ?? 0;
+      context,
+      AnimatedBuilder(
+        animation: search,
+        builder: (context, _) {
+          final searchResult = search.list?.data;
+          if (searchResult == null) {
+            return loadingIndicator();
+          }
+          final searchLength = searchResult.length;
 
-            return DefaultTabController(
-              length: 2,
-              child: Column(
-                children: [
-                  SizedBox(child: suggestions(context), height: 80),
-                  const Divider(height: 1),
-                  TabBar(
-                    tabs: const [
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 5.0),
-                        child: Text('biqu'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 5.0),
-                        child: Text('zhangdu'),
-                      ),
-                    ],
-                    labelColor: isLight
-                        ? TextStyleConfig.blackColor2
-                        : Colors.grey.shade700,
-                    unselectedLabelColor: isLight
-                        ? TextStyleConfig.blackColor7
-                        : Colors.grey.shade400,
-                    indicatorColor: Colors.pink.shade200,
-                  ),
-                  Expanded(
-                    child: TabBarView(children: [
-                      SearchPage(
-                        length: searchLength,
-                        onTap: (index) {
-                          final data = searchResult![index];
-                          final id = int.tryParse('${data.id}');
-                          if (id != null) BookInfoPage.push(id, ApiType.biquge);
-                        },
-                        builder: (context, index) {
-                          final data = searchResult![index];
-                          return ImageTextLayout(
-                              img: data.img,
-                              topRightScore: '${data.bookStatus}',
-                              top: data.name,
-                              center: '${data.cName} | ${data.author}',
-                              bottom: data.desc ?? '');
-                        },
-                      ),
-                      SearchPage(
-                          length: zhangduLength,
-                          onTap: (index) {
-                            final data = zhangduData![index];
-                            if (data.bookId != null)
-                              BookInfoPage.push(data.bookId!, ApiType.zhangdu);
-                          },
-                          builder: (context, index) {
-                            final data = zhangduData![index];
-                            return ImageTextLayout(
-                                img: data.picture,
-                                topRightScore: '${data.bookStatus}',
-                                top: data.name,
-                                center: '${data.categoryName} | ${data.author}',
-                                bottom: data.intro ?? '');
-                          })
-                    ]),
-                  )
-                ],
-              ),
-            );
-          },
-        ));
+          return SearchPage(
+            length: searchLength + 1,
+            onTap: (index) {
+              if (index == 0) {
+                return;
+              }
+              index--;
+              final data = searchResult[index];
+              final id = int.tryParse('${data.id}');
+              if (id != null) BookInfoPage.push(id, ApiType.biquge);
+            },
+            builder: (context, index) {
+              if (index == 0) {
+                return ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 80),
+                    child: suggestions(context));
+              }
+              index--;
+              final data = searchResult[index];
+              return ImageTextLayout(
+                  img: data.img,
+                  topRightScore: '${data.bookStatus}',
+                  top: data.name,
+                  center: '${data.cName} | ${data.author}',
+                  bottom: data.desc ?? '');
+            },
+          );
+        },
+      ),
+    );
   }
 
   @override

@@ -91,35 +91,4 @@ mixin ComplexMixin implements ComplexEvent, ServerEvent, ServerNetEvent {
     }
     return null;
   }
-
-  // zhangdu
-  // @override
-  // FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-  //     String contentUrl, String name, int sort, bool update) async {
-  //   if (update) {
-  //     return await _getZhangduContentNet(
-  //             bookId, contentId, name, sort, contentUrl) ??
-  //         await getZhangduContentDb(bookId, contentId);
-  //   } else {
-  //     return await getZhangduContentDb(bookId, contentId) ??
-  //         await _getZhangduContentNet(
-  //             bookId, contentId, name, sort, contentUrl);
-  //   }
-  // }
-
-  // Future<List<String>?> _getZhangduContentNet(int bookId, int contentId,
-  //     String name, int sort, String contentUrl) async {
-  //   final result = await getZhangduContentNet(contentUrl);
-  //   if (result != null) {
-  //     final _raw = ZhangduComplexMixin.replaceAll(result);
-  //     insertOrUpdateZhangduContent(ZhangduContent(
-  //       bookId: bookId,
-  //       contentId: contentId,
-  //       name: name,
-  //       data: result,
-  //       sort: sort,
-  //     ));
-  //     return split(_raw);
-  //   }
-  // }
 }

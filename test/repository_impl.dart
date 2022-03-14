@@ -3,8 +3,6 @@
 import 'dart:async';
 
 import 'package:nop_db/nop_db.dart';
-import 'package:shudu/data/zhangdu/zhangdu_detail.dart';
-import 'package:shudu/database/nop_database.dart';
 import 'package:shudu/event/base/export.dart';
 import 'package:shudu/event/mixin/single_repository.dart';
 import 'package:utils/utils.dart';
@@ -94,60 +92,4 @@ class BookEventIsolateTest extends BookEventIsolate {
 
   @override
   String get name => '';
-
-  @override
-  FutureOr<int?> deleteZhangduBook(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> deleteZhangduContentCache(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<String>?> getZhangduContent(int bookId, int contentId,
-      String contentUrl, String name, int sort, bool update) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<ZhangduDetailData?> getZhangduDetail(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<List<ZhangduCache>?> getZhangduMainList() {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> insertZhangduBook(ZhangduCache book) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> updateZhangduBook(int bookId, ZhangduCache book) {
-    throw UnimplementedError();
-  }
-
-  @override
-  FutureOr<int?> updateZhangduMainStatus(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<int>?> watchZhangduContentCid(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduCurrentCid(int bookId) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<ZhangduCache>?> watchZhangduMainList() {
-    throw UnimplementedError();
-  }
 }
