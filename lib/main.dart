@@ -9,8 +9,6 @@ import 'pages/app.dart';
 import 'provider/options_notifier.dart';
 
 void main() {
-  var printEvent = false;
-  // assert(printEvent = true);
   OneFile.runZoned(() => Log.logRun(() async {
         // 异步
         // final style =
@@ -45,5 +43,5 @@ void main() {
         }
 
         runApp(MulProvider(mode: await OptionsNotifier.getThemeModeUnSafe()));
-      }, printEventQueue: printEvent));
+      }));
 }
