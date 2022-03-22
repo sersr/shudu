@@ -9,6 +9,7 @@
  - utils：纯dart工具包
 
 ## 构建
+- 注释`pubspec.yaml`下`dependency_overrides`项
 - flutter channel stable
 - 运行下面命令获取最新状态：
 
