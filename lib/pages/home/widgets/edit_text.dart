@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:utils/utils.dart';
+import 'package:nop/utils.dart';
 
 import '../../../provider/export.dart';
 

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import '../../../provider/text_data.dart';
+import 'package:nop/utils.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/constants.dart';
+import '../../../provider/text_data.dart';
 
 class ContentView extends SingleChildRenderObjectWidget {
   const ContentView({
@@ -133,4 +134,3 @@ class ContentViewTextLayout extends MultiChildLayoutDelegate {
     return false;
   }
 }
- 

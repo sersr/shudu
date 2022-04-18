@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:lpinyin/lpinyin.dart';
-import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/utils.dart';
+import 'package:nop/nop.dart';
 
 import '../../../data/data.dart';
 import '../../../database/database.dart';

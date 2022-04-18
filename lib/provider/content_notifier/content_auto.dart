@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/Material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/event_queue.dart';
 import 'package:wakelock/wakelock.dart';
 
 import 'content_base.dart';

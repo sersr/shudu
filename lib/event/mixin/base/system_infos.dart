@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:android_external_storage/android_external_storage.dart';
 import 'package:bangs/bangs.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -9,7 +10,7 @@ import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:memory_info/memory_info.dart';
-import 'package:nop_db/nop_db.dart';
+import 'package:nop/nop.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,15 +18,10 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../provider/export.dart';
 
-class IsolateArgs {
+class BookIsolateArgs {
   final String appPath;
   final String cachePath;
-  late final SendHandle sendHandle;
-
-  IsolateArgs(this.appPath, this.cachePath);
-  IsolateArgs copyWith(SendHandle sendHandle) {
-    return IsolateArgs(appPath, cachePath)..sendHandle = sendHandle;
-  }
+  BookIsolateArgs(this.appPath, this.cachePath);
 
   @override
   String toString() {
@@ -35,7 +31,7 @@ class IsolateArgs {
 
 /// [Repository]需要的信息
 mixin SystemInfos {
-  Future<IsolateArgs> initStartArgs() async {
+  Future<BookIsolateArgs> initStartArgs() async {
     SystemChrome.setSystemUIChangeCallback(_onSystemOverlaysChanges);
     if (defaultTargetPlatform == TargetPlatform.android) {
       Bangs.bangs.setNavigationChangeCallback(_navState);
@@ -45,7 +41,7 @@ mixin SystemInfos {
       final root = windows.current;
       final appPath = join(root, 'shudu');
       final cachePath = join(appPath, 'cache');
-      return IsolateArgs(appPath, cachePath);
+      return BookIsolateArgs(appPath, cachePath);
     }
     final _waits = FutureAny();
 
@@ -137,7 +133,7 @@ mixin SystemInfos {
       });
     }
 
-    return IsolateArgs(appPath, cachePath);
+    return BookIsolateArgs(appPath, cachePath);
   }
 
   Battery? _battery;

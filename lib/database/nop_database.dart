@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:nop_db/nop_db.dart';
-// import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+import 'package:nop/nop.dart';
+// import 'package:nop_sqflite/nop_db_sqflite.dart';
 import 'package:nop_db_sqlite/sqlite.dart' as nop;
-import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/utils.dart';
 
 import '../data/data.dart';
 
@@ -26,7 +24,7 @@ class BookCache extends Table {
     this.isShow,
   });
 
-  @NopItem(primaryKey: true)
+  @NopDbItem(primaryKey: true)
   int? id;
   String? name;
   String? img;
@@ -70,7 +68,7 @@ class BookContentDb extends Table {
         hasContent: Table.intToBool(content.hasContent));
   }
 
-  @NopItem(primaryKey: true)
+  @NopDbItem(primaryKey: true)
   int? id;
   int? bookId;
   int? cid;
@@ -93,7 +91,7 @@ class BookIndex extends Table {
     this.cacheItemCounts,
   });
 
-  @NopItem(primaryKey: true)
+  @NopDbItem(primaryKey: true)
   int? id;
   int? bookId;
   String? bIndexs;
@@ -103,7 +101,7 @@ class BookIndex extends Table {
   Map<String, dynamic> toJson() => _BookIndex_toJson(this);
 }
 
-@Nop(tables: [
+@NopDb(tables: [
   BookCache,
   BookContentDb,
   BookIndex,

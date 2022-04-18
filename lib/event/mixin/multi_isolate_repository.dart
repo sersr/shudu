@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
-import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/nop.dart';
 
 import '../base/export.dart';
 import '../repository.dart';
@@ -18,10 +16,10 @@ class MultiIsolateRepository extends Repository
         // SendEventPortMixin,
         SendCacheMixin,
         SendMultiServerMixin,
-        MultiBookEventDefaultMessagerMixin // 默认
+        MultiBookMessagerMixin // 默认
 {
   // [appPath, cachePath]
-  IsolateArgs? args;
+  BookIsolateArgs? args;
 
   @override
   FutureOr<void> onInitStart() async {
@@ -29,51 +27,49 @@ class MultiIsolateRepository extends Repository
   }
 
   @override
-  Future<RemoteServer> createRemoteServerDatabase() async {
+  RemoteServer get databaseRemoteServer {
     assert(args != null);
-    final localArgs = args!.copyWith(localSendHandle);
     if (!kIsWeb) {
-      final isolate = await Isolate.spawn(dataBaseEntryPoint, localArgs);
-      return IsolateRemoteServer(isolate);
+      return IsolateRemoteServer<BookIsolateArgs>(
+          entryPoint: dataBaseEntryPoint, args: getArgs(args!));
     } else {
-      dataBaseEntryPoint(localArgs);
-      return LocalRemoteServer();
+      return LocalRemoteServer(
+          entryPoint: dataBaseEntryPoint, args: getArgs(args!));
     }
   }
 
   @override
-  Future<RemoteServer> createRemoteServerBookEventDefault() async {
+  RemoteServer get bookRemoteServer {
     assert(args != null);
-    final localArgs = args!.copyWith(localSendHandle);
     if (!kIsWeb) {
-      final isolate = await Isolate.spawn(_multiIsolateEntryPoint, localArgs);
-      return IsolateRemoteServer(isolate);
+      return IsolateRemoteServer(
+          entryPoint: _multiIsolateEntryPoint, args: getArgs(args!));
     } else {
-      _multiIsolateEntryPoint(localArgs);
-      return LocalRemoteServer();
+      return LocalRemoteServer(
+          entryPoint: _multiIsolateEntryPoint, args: getArgs(args!));
     }
   }
 }
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
-void _multiIsolateEntryPoint(IsolateArgs args) {
+void _multiIsolateEntryPoint(IsolateConfigurations<BookIsolateArgs> configs) {
   OneFile.runZoned(BookEventMultiIsolate(
-    appPath: args.appPath,
-    cachePath: args.cachePath,
-    remoteSendHandle: args.sendHandle,
-  ).init);
+    appPath: configs.args.appPath,
+    cachePath: configs.args.cachePath,
+    remoteSendHandle: configs.sendHandle,
+  ).run);
 }
 
 /// 与 [MultiIsolateRepository] 配合使用
 /// 任务隔离(remote):处理 数据库、网络任务
 /// 接受一个[SendPortOwner]处理数据库消息
-class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
+class BookEventMultiIsolate extends MultiBookResolveMain
     with
         // senders
         SendEventMixin,
         // SendEventPortMixin,
         SendCacheMixin,
-        SendInitCloseMixin,
+        // SendInitCloseMixin,
         // net
         HiveDioMixin,
         NetworkMixin,
@@ -93,12 +89,6 @@ class BookEventMultiIsolate extends MultiBookEventDefaultResolveMain
 
   @override
   final SendHandle remoteSendHandle;
-
-  @override
-  FutureOr<void> initTask() => run();
-
-  @override
-  FutureOr<void> closeTask() => null;
 
   @override
   void onResolvedFailed(message) {

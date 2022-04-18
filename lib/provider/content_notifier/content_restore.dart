@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:nop/event_queue.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../book_index_notifier.dart';

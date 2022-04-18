@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      nop_db_gen:
+        generate_for:
+          - lib/database/**
+      nop_db_gen:nop_isolate_event:
+        generate_for:
+          - lib/event/**
+      json_serializable:
+        generate_for:
+          - lib/data/**

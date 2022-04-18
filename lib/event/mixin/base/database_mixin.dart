@@ -3,10 +3,8 @@ import 'dart:convert';
 
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
-import 'package:nop_db/nop_db.dart';
+import 'package:nop/nop.dart';
 import 'package:path/path.dart';
-import 'package:useful_tools/useful_tools.dart';
-import 'package:utils/utils.dart';
 
 import '../../../database/database.dart';
 import '../../../pages/book_list/cache_manager.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:nop/event_queue.dart';
 import 'package:screen_brightness/screen_brightness.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 mixin ContentBrightness {
   final brightness = ValueNotifier(0.0);

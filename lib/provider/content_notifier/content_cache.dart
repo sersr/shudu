@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/nop.dart';
 
 import '../../database/database.dart';
 import '../book_index_notifier.dart';

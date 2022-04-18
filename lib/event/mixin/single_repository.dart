@@ -1,8 +1,5 @@
-import 'dart:isolate';
-
 import 'package:flutter/foundation.dart';
-import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/nop.dart';
 
 import '../base/export.dart';
 import '../repository.dart';
@@ -18,55 +15,27 @@ class SingleRepository extends Repository
   @override
   Future<RemoteServer> onCreateServer(SendHandle remoteSendHandle) async {
     final args = await initStartArgs();
-    final localArgs = args.copyWith(remoteSendHandle);
 
     if (!kIsWeb) {
-      final newIsolate =
-          await Isolate.spawn(singleIsolateEntryPoint, localArgs);
-      return IsolateRemoteServer(newIsolate);
+      return IsolateRemoteServer(
+          entryPoint: singleIsolateEntryPoint,
+          args:
+              IsolateConfigurations(args: args, sendHandle: remoteSendHandle));
     } else {
-      singleIsolateEntryPoint(localArgs);
-      return LocalRemoteServer();
+      return LocalRemoteServer(
+          entryPoint: singleIsolateEntryPoint,
+          args:
+              IsolateConfigurations(args: args, sendHandle: remoteSendHandle));
     }
   }
 }
 
-/// fake
-/// single Isolate
-class SingleRepositoryWithServer extends Repository
-    with SendEventMixin, SendCacheMixin, ListenMixin, SendMultiServerMixin {
-  SingleRepositoryWithServer();
-
-  @override
-  List<MapEntry<String, CreateRemoteServer>> createRemoteServerIterable() {
-    return super.createRemoteServerIterable()
-      ..add(MapEntry<String, CreateRemoteServer>(
-          bookEventDefault, Left(onCreateIsolate))) // 所有任务都由此处理
-      ..add(MapEntry<String, CreateRemoteServer>(
-          database, const Right(NullRemoteServer()))); // 提供一个`handle`
-  }
-
-  Future<RemoteServer> onCreateIsolate() {
-    return initStartArgs().then((args) {
-      final localArgs = args.copyWith(localSendHandle);
-
-      if (!kIsWeb) {
-        return Isolate.spawn(singleIsolateEntryPoint, localArgs)
-            .then(IsolateRemoteServer.wrap);
-      } else {
-        singleIsolateEntryPoint(localArgs);
-        return LocalRemoteServer();
-      }
-    });
-  }
-}
-
-void singleIsolateEntryPoint(IsolateArgs args) {
-  Log.i(args, onlyDebug: false);
+void singleIsolateEntryPoint(IsolateConfigurations<BookIsolateArgs> configs) {
+  Log.i(configs, onlyDebug: false);
   OneFile.runZoned(BookEventIsolate(
-    remoteSendHandle: args.sendHandle,
-    appPath: args.appPath,
-    cachePath: args.cachePath,
+    remoteSendHandle: configs.sendHandle,
+    appPath: configs.args.appPath,
+    cachePath: configs.args.cachePath,
   ).run);
 }
 
@@ -75,8 +44,9 @@ void singleIsolateEntryPoint(IsolateArgs args) {
 /// 所有的事件都在同一个隔离中运行
 /// 缺点: 随着任务增加，处理消息的速度会变慢
 /// 与[SingleRepository]配合使用
-class BookEventIsolate extends BookEventResolveMain
+class BookEventIsolate extends MultiBookResolveMain
     with
+        BookEvent,
         // base
         DatabaseMixin,
         // net

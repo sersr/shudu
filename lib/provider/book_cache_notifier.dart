@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:utils/utils.dart';
+import 'package:nop/event_queue.dart';
+import 'package:nop/utils.dart';
 
 import '../database/nop_database.dart';
 import '../event/export.dart';

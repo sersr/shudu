@@ -2,13 +2,14 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:nop/event_queue.dart';
+import 'package:nop/utils.dart';
 import 'package:shudu/database/database.dart';
 import 'package:shudu/database/nop_database.dart';
-import 'package:utils/utils.dart';
 
 void main() async {
   test('regexp', () {

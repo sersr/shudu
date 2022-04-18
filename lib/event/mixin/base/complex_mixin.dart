@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/utils.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';

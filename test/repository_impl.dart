@@ -2,12 +2,11 @@
 
 import 'dart:async';
 
-import 'package:nop_db/nop_db.dart';
+import 'package:nop/nop.dart';
 import 'package:shudu/event/base/export.dart';
 import 'package:shudu/event/mixin/single_repository.dart';
-import 'package:utils/utils.dart';
 
-class RepositoryImplTest extends BookEventMessagerMain
+class RepositoryImplTest extends BookMessagerMain
     with SendCacheMixin, SendEventPortMixin {
   RepositoryImplTest();
   late Server server;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nop/event_queue.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -78,7 +79,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
             } else if (data.listId == null) {
               return reloadBotton(() => provider.load(widget.index));
             }
-            
+
             // 头部
             final children = <Widget>[
               TitleWidget(data: data, total: widget.total),
@@ -117,8 +118,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
                   bgColor: bgColor,
                   splashColor: splashColor,
                   height: 108,
-                  onTap: () =>
-                      BookInfoPage.push(item.bookId!, ApiType.biquge),
+                  onTap: () => BookInfoPage.push(item.bookId!, ApiType.biquge),
                   child: RepaintBoundary(
                     child: ShudanListDetailItemWidget(item: item),
                   ),

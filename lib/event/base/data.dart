@@ -3,8 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:nop_db/nop_db.dart';
-
+import 'package:nop/nop.dart';
 
 class Uint8ListType with TransferTypeMapData<Uint8List?> {
   Uint8ListType(this.list);

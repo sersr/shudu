@@ -21,6 +21,7 @@ enum CustomEventMessage {
   getInfoNet,
   getIndexsNet
 }
+
 enum BookCacheEventMessage {
   getMainList,
   watchMainList,
@@ -30,7 +31,9 @@ enum BookCacheEventMessage {
   watchCurrentCid,
   getCacheItems
 }
+
 enum BookContentEventMessage { watchBookContentCid, deleteCache }
+
 enum ServerEventMessage {
   getContentDb,
   insertOrUpdateIndexs,
@@ -38,19 +41,10 @@ enum ServerEventMessage {
   insertOrUpdateContent,
   insertOrUpdateBook
 }
+
 enum ComplexEventMessage { getContent, getIndexs, getInfo }
 
-abstract class BookEventResolveMain extends BookEvent
-    with
-        ListenMixin,
-        Resolve,
-        CustomEventResolve,
-        BookCacheEventResolve,
-        BookContentEventResolve,
-        ServerEventResolve,
-        ComplexEventResolve {}
-
-abstract class BookEventMessagerMain extends BookEvent
+abstract class BookMessagerMain extends BookEvent
     with
         SendEvent,
         Messager,
@@ -61,14 +55,13 @@ abstract class BookEventMessagerMain extends BookEvent
         ComplexEventMessager {}
 
 mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
-  List<MapEntry<String, Type>> getResolveProtocols() {
-    return super.getResolveProtocols()
-      ..add(const MapEntry('bookEventDefault', CustomEventMessage));
+  Map<String, Type> getResolveProtocols() {
+    return super.getResolveProtocols()..['book'] = CustomEventMessage;
   }
 
-  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+  Map<Type, List<Function>> resolveFunctionIterable() {
     return super.resolveFunctionIterable()
-      ..add(MapEntry(CustomEventMessage, [
+      ..[CustomEventMessage] = [
         getSearchData,
         getImageBytesDynamic,
         getHiveShudanLists,
@@ -80,7 +73,7 @@ mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
         (args) => getContentNet(args[0], args[1]),
         getInfoNet,
         getIndexsNet
-      ]));
+      ];
   }
 
   getImageBytes(String img) =>
@@ -90,76 +83,70 @@ mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
 
 /// implements [CustomEvent]
 mixin CustomEventMessager on SendEvent, Messager {
-  String get bookEventDefault => 'bookEventDefault';
-  List<MapEntry<String, Type>> getProtocols() {
-    return super.getProtocols()
-      ..add(MapEntry(bookEventDefault, CustomEventMessage));
+  String get book => 'book';
+  Map<String, Type> getProtocols() {
+    return super.getProtocols()..[book] = CustomEventMessage;
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
-    return sendMessage(CustomEventMessage.getSearchData, key,
-        serverName: bookEventDefault);
+    return sendMessage(CustomEventMessage.getSearchData, key, serverName: book);
   }
 
   FutureOr<Uint8List?> getImageBytes(String img) {
-    return sendMessage(CustomEventMessage.getImageBytes, img,
-        serverName: bookEventDefault);
+    return sendMessage(CustomEventMessage.getImageBytes, img, serverName: book);
   }
 
   FutureOr<List<BookList>?> getHiveShudanLists(String c) {
     return sendMessage(CustomEventMessage.getHiveShudanLists, c,
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<List<BookList>?> getShudanLists(String c, int index) {
     return sendMessage(CustomEventMessage.getShudanLists, [c, index],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookTopData?> getTopLists(String c, String date, int index) {
     return sendMessage(CustomEventMessage.getTopLists, [c, date, index],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookTopData?> getCategLists(int c, String date, int index) {
     return sendMessage(CustomEventMessage.getCategLists, [c, date, index],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookListDetailData?> getShudanDetail(int index) {
     return sendMessage(CustomEventMessage.getShudanDetail, index,
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<List<BookCategoryData>?> getCategoryData() {
     return sendMessage(CustomEventMessage.getCategoryData, null,
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookContentDb?> getContentNet(int bookid, int contentid) {
     return sendMessage(CustomEventMessage.getContentNet, [bookid, contentid],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookInfoRoot?> getInfoNet(int id) {
-    return sendMessage(CustomEventMessage.getInfoNet, id,
-        serverName: bookEventDefault);
+    return sendMessage(CustomEventMessage.getInfoNet, id, serverName: book);
   }
 
   FutureOr<String?> getIndexsNet(int id) {
-    return sendMessage(CustomEventMessage.getIndexsNet, id,
-        serverName: bookEventDefault);
+    return sendMessage(CustomEventMessage.getIndexsNet, id, serverName: book);
   }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
-  List<MapEntry<String, Type>> getResolveProtocols() {
-    return super.getResolveProtocols()
-      ..add(const MapEntry('database', BookCacheEventMessage));
+  Map<String, Type> getResolveProtocols() {
+    return super.getResolveProtocols()..['database'] = BookCacheEventMessage;
   }
 
-  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+  Map<Type, List<Function>> resolveFunctionIterable() {
     return super.resolveFunctionIterable()
-      ..add(MapEntry(BookCacheEventMessage, [
+      ..[BookCacheEventMessage] = [
         (args) => getMainList(),
         (args) => watchMainList(),
         (args) => updateBook(args[0], args[1]),
@@ -167,15 +154,15 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
         deleteBook,
         watchCurrentCid,
         (args) => getCacheItems()
-      ]));
+      ];
   }
 }
 
 /// implements [BookCacheEvent]
 mixin BookCacheEventMessager on SendEvent, Messager {
   String get database => 'database';
-  List<MapEntry<String, Type>> getProtocols() {
-    return super.getProtocols()..add(MapEntry(database, BookCacheEventMessage));
+  Map<String, Type> getProtocols() {
+    return super.getProtocols()..[database] = BookCacheEventMessage;
   }
 
   FutureOr<Option<List<BookCache>>> getMainList() {
@@ -214,24 +201,21 @@ mixin BookCacheEventMessager on SendEvent, Messager {
   }
 }
 mixin BookContentEventResolve on Resolve implements BookContentEvent {
-  List<MapEntry<String, Type>> getResolveProtocols() {
-    return super.getResolveProtocols()
-      ..add(const MapEntry('database', BookContentEventMessage));
+  Map<String, Type> getResolveProtocols() {
+    return super.getResolveProtocols()..['database'] = BookContentEventMessage;
   }
 
-  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+  Map<Type, List<Function>> resolveFunctionIterable() {
     return super.resolveFunctionIterable()
-      ..add(MapEntry(
-          BookContentEventMessage, [watchBookContentCid, deleteCache]));
+      ..[BookContentEventMessage] = [watchBookContentCid, deleteCache];
   }
 }
 
 /// implements [BookContentEvent]
 mixin BookContentEventMessager on SendEvent, Messager {
   String get database => 'database';
-  List<MapEntry<String, Type>> getProtocols() {
-    return super.getProtocols()
-      ..add(MapEntry(database, BookContentEventMessage));
+  Map<String, Type> getProtocols() {
+    return super.getProtocols()..[database] = BookContentEventMessage;
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
@@ -246,28 +230,27 @@ mixin BookContentEventMessager on SendEvent, Messager {
   }
 }
 mixin ServerEventResolve on Resolve implements ServerEvent {
-  List<MapEntry<String, Type>> getResolveProtocols() {
-    return super.getResolveProtocols()
-      ..add(const MapEntry('database', ServerEventMessage));
+  Map<String, Type> getResolveProtocols() {
+    return super.getResolveProtocols()..['database'] = ServerEventMessage;
   }
 
-  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+  Map<Type, List<Function>> resolveFunctionIterable() {
     return super.resolveFunctionIterable()
-      ..add(MapEntry(ServerEventMessage, [
+      ..[ServerEventMessage] = [
         (args) => getContentDb(args[0], args[1]),
         (args) => insertOrUpdateIndexs(args[0], args[1]),
         getIndexsDb,
         insertOrUpdateContent,
         insertOrUpdateBook
-      ]));
+      ];
   }
 }
 
 /// implements [ServerEvent]
 mixin ServerEventMessager on SendEvent, Messager {
   String get database => 'database';
-  List<MapEntry<String, Type>> getProtocols() {
-    return super.getProtocols()..add(MapEntry(database, ServerEventMessage));
+  Map<String, Type> getProtocols() {
+    return super.getProtocols()..[database] = ServerEventMessage;
   }
 
   FutureOr<RawContentLines?> getContentDb(int bookid, int contentid) {
@@ -296,59 +279,55 @@ mixin ServerEventMessager on SendEvent, Messager {
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
-  List<MapEntry<String, Type>> getResolveProtocols() {
-    return super.getResolveProtocols()
-      ..add(const MapEntry('bookEventDefault', ComplexEventMessage));
+  Map<String, Type> getResolveProtocols() {
+    return super.getResolveProtocols()..['book'] = ComplexEventMessage;
   }
 
-  List<MapEntry<Type, List<Function>>> resolveFunctionIterable() {
+  Map<Type, List<Function>> resolveFunctionIterable() {
     return super.resolveFunctionIterable()
-      ..add(MapEntry(ComplexEventMessage, [
+      ..[ComplexEventMessage] = [
         (args) => getContent(args[0], args[1], args[2]),
         (args) => getIndexs(args[0], args[1]),
         getInfo
-      ]));
+      ];
   }
 }
 
 /// implements [ComplexEvent]
 mixin ComplexEventMessager on SendEvent, Messager {
-  String get bookEventDefault => 'bookEventDefault';
-  List<MapEntry<String, Type>> getProtocols() {
-    return super.getProtocols()
-      ..add(MapEntry(bookEventDefault, ComplexEventMessage));
+  String get book => 'book';
+  Map<String, Type> getProtocols() {
+    return super.getProtocols()..[book] = ComplexEventMessage;
   }
 
   FutureOr<RawContentLines?> getContent(
       int bookid, int contentid, bool update) {
     return sendMessage(
         ComplexEventMessage.getContent, [bookid, contentid, update],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<NetBookIndex?> getIndexs(int bookid, bool update) {
     return sendMessage(ComplexEventMessage.getIndexs, [bookid, update],
-        serverName: bookEventDefault);
+        serverName: book);
   }
 
   FutureOr<BookInfoRoot?> getInfo(int id) {
-    return sendMessage(ComplexEventMessage.getInfo, id,
-        serverName: bookEventDefault);
+    return sendMessage(ComplexEventMessage.getInfo, id, serverName: book);
   }
 }
-mixin MultiBookEventDefaultMessagerMixin
+mixin MultiBookMessagerMixin
     on SendEvent, ListenMixin, SendMultiServerMixin /*impl*/ {
-  Future<RemoteServer> createRemoteServerBookEventDefault();
-  Future<RemoteServer> createRemoteServerDatabase();
-  List<MapEntry<String, CreateRemoteServer>> createRemoteServerIterable() {
-    return super.createRemoteServerIterable()
-      ..add(MapEntry(
-          'bookEventDefault', Left(createRemoteServerBookEventDefault)))
-      ..add(MapEntry('database', Left(createRemoteServerDatabase)));
+  RemoteServer get bookRemoteServer;
+  RemoteServer get databaseRemoteServer;
+  Map<String, RemoteServer> regRemoteServer() {
+    return super.regRemoteServer()
+      ..['book'] = bookRemoteServer
+      ..['database'] = databaseRemoteServer;
   }
 
   void onResumeListen() {
-    sendHandleOwners['bookEventDefault']!.localSendHandle.send(SendHandleName(
+    sendHandleOwners['book']!.localSendHandle.send(SendHandleName(
         'database', sendHandleOwners['database']!.localSendHandle,
         protocols: getServerProtocols('database')));
 
@@ -356,7 +335,8 @@ mixin MultiBookEventDefaultMessagerMixin
   }
 }
 
-abstract class MultiBookEventDefaultResolveMain
+/// book Server
+abstract class MultiBookResolveMain
     with
         SendEvent,
         ListenMixin,
@@ -365,6 +345,7 @@ abstract class MultiBookEventDefaultResolveMain
         CustomEventResolve,
         ComplexEventResolve {}
 
+/// database Server
 abstract class MultiDatabaseResolveMain
     with
         ListenMixin,

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/event_queue.dart';
 
 import '../../event/export.dart';
 import '../../pages/book_content/widgets/page_view_controller.dart';

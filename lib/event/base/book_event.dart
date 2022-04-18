@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/nop.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
@@ -16,7 +15,7 @@ export 'server_event.dart';
 part 'book_event.g.dart';
 
 @NopServerEvent()
-@NopServerEventItem(connectToServer: ['database'])
+@NopServerEventItem(connectToServer: ['database'], serverName: 'book')
 abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
@@ -42,7 +41,7 @@ abstract class BookCacheEvent {
   FutureOr<List<CacheItem>?> getCacheItems();
 }
 
-@NopServerEventItem(separate: true, serverName: 'database')
+@NopServerEventItem(serverName: 'database', separate: true)
 abstract class DatabaseEvent
     with BookCacheEvent, BookContentEvent, ServerEvent {}
 

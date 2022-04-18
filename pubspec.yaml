@@ -33,7 +33,7 @@ dependencies:
   #   path: ../packages/hot_fix
   infinite_scroll_pagination: ^3.1.0
   intl: ^0.17.0
-  json_annotation: ^4.0.1
+  json_annotation: ^4.4.0
   logger: ^1.0.0
   lpinyin: ^2.0.3
   path: any
@@ -55,9 +55,9 @@ dependencies:
   # bitsdojo_window: ^0.1.1+1
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
-  nop_db:
+  nop:
     git:
-      url: https://github.com/sersr/nop_db.git
+      url: https://github.com/sersr/nop.git
 
   # nop_db_sqflite:
   #   path: ../packages/nop_db_sqflite
@@ -92,6 +92,16 @@ dependencies:
 dependency_overrides:
   useful_tools:
     path: ../packages/useful_tools
+  nop:
+    path: ../packages/nop
+  nop_db_gen:
+    path: ../packages/nop_db_gen
+  nop_annotations:
+    path: ../packages/nop_annotations
+  nop_db_sqlite:
+    path: ../packages/nop_db_sqlite
+  bangs:
+    path: ../packages/bangs
 
 dev_dependencies:
   flutter_test:

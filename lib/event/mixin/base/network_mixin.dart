@@ -7,9 +7,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
-import 'package:nop_db/nop_db.dart';
+import 'package:nop/nop.dart';
 import 'package:path/path.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:utils/utils.dart';
+import 'package:nop/utils.dart';
 
 abstract class PanSlideState<T extends StatefulWidget> extends State<T>
     with TickerProviderStateMixin {

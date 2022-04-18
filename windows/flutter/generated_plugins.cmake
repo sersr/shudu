@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   battery_plus_windows
   permission_handler_windows
+  sqlite3_flutter_libs
   sqlite3_windows_dll
   url_launcher_windows
 )

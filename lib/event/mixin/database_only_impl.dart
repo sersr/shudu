@@ -1,15 +1,16 @@
-import 'package:nop_db/nop_db.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop/nop.dart';
 
 import '../base/export.dart';
 import 'base/export.dart';
 import 'base/system_infos.dart';
 
 // 子隔离，数据库 入口
-void dataBaseEntryPoint(IsolateArgs args) {
+void dataBaseEntryPoint(IsolateConfigurations<BookIsolateArgs> configs) {
+  final userArgs = configs.args;
+  final sendHandle = configs.sendHandle;
   OneFile.runZoned(DatabaseImpl(
-    appPath: args.appPath,
-    remoteSendHandle: args.sendHandle,
+    appPath: userArgs.appPath,
+    remoteSendHandle: sendHandle,
   ).run);
 }
 

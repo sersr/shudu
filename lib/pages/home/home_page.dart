@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:nop_db/nop_db.dart';
+import 'package:nop/nop.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 

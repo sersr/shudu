@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:utils/utils.dart';
+import 'package:nop/event_queue.dart';
 
 void main() {
   test('set string', () {
