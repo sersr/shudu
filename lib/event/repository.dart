@@ -5,18 +5,15 @@ import 'package:useful_tools/change_notifier.dart';
 import 'base/export.dart';
 import 'mixin/base/system_infos.dart';
 import 'mixin/multi_Isolate_repository.dart';
-import 'mixin/single_repository.dart';
 
-abstract class Repository extends BookMessagerMain
+abstract class Repository extends MultiBookMessagerMain
     with SendInitCloseMixin, NotifyStateMixin, SystemInfos {
   Repository();
 
   static Repository? _instance;
 
   factory Repository.create() {
-    // 切换顺序使用
     _instance ??= MultiIsolateRepository();
-    _instance ??= SingleRepository();
     return _instance!;
   }
 

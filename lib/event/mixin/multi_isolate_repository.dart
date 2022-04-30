@@ -11,13 +11,9 @@ import 'database_only_impl.dart';
 
 class MultiIsolateRepository extends Repository
     with
-        ListenMixin,
-        SendEventMixin,
+        SendEventPortStreamMixin,
         // SendEventPortMixin,
-        SendCacheMixin,
-        SendMultiServerMixin,
-        MultiBookMessagerMixin // 默认
-{
+        SendCacheMixin {
   // [appPath, cachePath]
   BookIsolateArgs? args;
 
@@ -52,43 +48,36 @@ class MultiIsolateRepository extends Repository
 }
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
-void _multiIsolateEntryPoint(IsolateConfigurations<BookIsolateArgs> configs) {
-  OneFile.runZoned(BookEventMultiIsolate(
-    appPath: configs.args.appPath,
-    cachePath: configs.args.cachePath,
-    remoteSendHandle: configs.sendHandle,
-  ).run);
+Runner _multiIsolateEntryPoint(ServerConfigurations<BookIsolateArgs> configs) {
+  return Runner(
+      runDelegate: OneFile.runZoned,
+      runner: BookEventMultiIsolate(
+        configurations: configs,
+      ));
 }
 
 /// 与 [MultiIsolateRepository] 配合使用
 /// 任务隔离(remote):处理 数据库、网络任务
-/// 接受一个[SendPortOwner]处理数据库消息
 class BookEventMultiIsolate extends MultiBookResolveMain
     with
         // senders
-        SendEventMixin,
-        // SendEventPortMixin,
-        SendCacheMixin,
+        SendEventPortStreamMixin,
         // SendInitCloseMixin,
         // net
         HiveDioMixin,
         NetworkMixin,
-        ServerEventMessager,
         // complex
         ComplexMixin {
   BookEventMultiIsolate({
-    required this.appPath,
-    required this.cachePath,
-    required this.remoteSendHandle,
-  });
+    required ServerConfigurations<BookIsolateArgs> configurations,
+  })  : appPath = configurations.args.appPath,
+        cachePath = configurations.args.appPath,
+        super(configurations: configurations);
 
   @override
   final String appPath;
   @override
   final String cachePath;
-
-  @override
-  final SendHandle remoteSendHandle;
 
   @override
   void onResolvedFailed(message) {

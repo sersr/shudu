@@ -108,7 +108,7 @@ void main() async {
   }
 
   test('event', _innerTest);
-  test('event_sync', () async {
+  test('event_sync; 分别测试每一个测试，否则会报错', () async {
     bookEvent = repository.server.bookEventIsolate;
     await _innerTest();
   });

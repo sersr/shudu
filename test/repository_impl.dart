@@ -4,9 +4,11 @@ import 'dart:async';
 
 import 'package:nop/nop.dart';
 import 'package:shudu/event/base/export.dart';
-import 'package:shudu/event/mixin/single_repository.dart';
+import 'package:shudu/event/mixin/base/export.dart';
+import 'package:shudu/event/mixin/base/system_infos.dart';
+import 'package:shudu/event/mixin/multi_isolate_repository.dart';
 
-class RepositoryImplTest extends BookMessagerMain
+class RepositoryImplTest extends MultiBookMessagerMain
     with SendCacheMixin, SendEventPortMixin {
   RepositoryImplTest();
   late Server server;
@@ -34,6 +36,12 @@ class RepositoryImplTest extends BookMessagerMain
   SendHandleOwner? getSendHandleOwner(key) {
     return sendPortOwner ?? super.getSendHandleOwner(key);
   }
+
+  @override
+  RemoteServer get bookRemoteServer => const NullRemoteServer();
+
+  @override
+  RemoteServer get databaseRemoteServer => const NullRemoteServer();
 }
 
 class Client {
@@ -55,9 +63,12 @@ class Server {
 
   SendHandle get sendHandle => serverHandle.sendHandle;
 
-  late BookEventIsolate bookEventIsolate;
+  late BookEventIsolateTest bookEventIsolate;
   Future<void> init() async {
-    bookEventIsolate = BookEventIsolateTest(serverHandle.sendHandle);
+    final configs = ServerConfigurations(
+        args: BookIsolateArgs('../test/repository', '../test/cache'),
+        sendHandle: sendHandle);
+    bookEventIsolate = BookEventIsolateTest(configs);
     final list = <Future>[];
     bookEventIsolate.initStateListen((task) {
       if (task is Future) {
@@ -76,12 +87,17 @@ class Server {
   }
 }
 
-class BookEventIsolateTest extends BookEventIsolate {
-  BookEventIsolateTest(SendHandle sp)
-      : super(
-            remoteSendHandle: sp,
-            appPath: '../test/repository',
-            cachePath: '../test/cache');
+class BookEventIsolateTest extends BookEventMultiIsolate
+    with
+        BookEvent,
+        BookCacheEventResolve,
+        BookContentEventResolve,
+        ServerEventResolve,
+        // 覆盖掉 messager
+        DatabaseMixin,
+        ComplexOnDatabaseMixin {
+  BookEventIsolateTest(ServerConfigurations<BookIsolateArgs> configurations)
+      : super(configurations: configurations);
 
   @override
   bool remove(key) {

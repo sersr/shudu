@@ -44,19 +44,67 @@ enum ServerEventMessage {
 
 enum ComplexEventMessage { getContent, getIndexs, getInfo }
 
-abstract class BookMessagerMain extends BookEvent
+/// 主入口
+abstract class MultiBookMessagerMain
     with
-        SendEvent,
-        Messager,
+        BookEvent,
+        ListenMixin,
+        SendEventMixin,
+        SendMultiServerMixin,
         CustomEventMessager,
         BookCacheEventMessager,
         BookContentEventMessager,
         ServerEventMessager,
-        ComplexEventMessager {}
+        ComplexEventMessager {
+  RemoteServer get bookRemoteServer;
+  RemoteServer get databaseRemoteServer;
+  Map<String, RemoteServer> regRemoteServer() {
+    return super.regRemoteServer()
+      ..['book'] = bookRemoteServer
+      ..['database'] = databaseRemoteServer;
+  }
+
+  void onResumeListen() {
+    connect('book', 'database');
+    super.onResumeListen();
+  }
+}
+
+/// book Server
+abstract class MultiBookResolveMain
+    with
+        ListenMixin,
+        Resolve,
+        SendEventMixin,
+        SendCacheMixin,
+        ResolveMultiRecievedMixin,
+        BookCacheEventMessager,
+        BookContentEventMessager,
+        ServerEventMessager,
+        CustomEventResolve,
+        ComplexEventResolve {
+  MultiBookResolveMain({required ServerConfigurations configurations})
+      : remoteSendHandle = configurations.sendHandle;
+  final SendHandle remoteSendHandle;
+}
+
+/// database Server
+abstract class MultiDatabaseResolveMain
+    with
+        ListenMixin,
+        Resolve,
+        BookCacheEventResolve,
+        BookContentEventResolve,
+        ServerEventResolve {
+  MultiDatabaseResolveMain({required ServerConfigurations configurations})
+      : remoteSendHandle = configurations.sendHandle;
+  final SendHandle remoteSendHandle;
+}
 
 mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
-  Map<String, Type> getResolveProtocols() {
-    return super.getResolveProtocols()..['book'] = CustomEventMessage;
+  Map<String, List<Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..putIfAbsent('book', () => []).add(CustomEventMessage);
   }
 
   Map<Type, List<Function>> resolveFunctionIterable() {
@@ -84,8 +132,9 @@ mixin CustomEventResolve on Resolve implements CustomEvent, ServerNetEvent {
 /// implements [CustomEvent]
 mixin CustomEventMessager on SendEvent, Messager {
   String get book => 'book';
-  Map<String, Type> getProtocols() {
-    return super.getProtocols()..[book] = CustomEventMessage;
+  Map<String, List<Type>> getProtocols() {
+    return super.getProtocols()
+      ..putIfAbsent(book, () => []).add(CustomEventMessage);
   }
 
   FutureOr<SearchList?> getSearchData(String key) {
@@ -140,8 +189,9 @@ mixin CustomEventMessager on SendEvent, Messager {
   }
 }
 mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
-  Map<String, Type> getResolveProtocols() {
-    return super.getResolveProtocols()..['database'] = BookCacheEventMessage;
+  Map<String, List<Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..putIfAbsent('database', () => []).add(BookCacheEventMessage);
   }
 
   Map<Type, List<Function>> resolveFunctionIterable() {
@@ -161,8 +211,9 @@ mixin BookCacheEventResolve on Resolve implements BookCacheEvent {
 /// implements [BookCacheEvent]
 mixin BookCacheEventMessager on SendEvent, Messager {
   String get database => 'database';
-  Map<String, Type> getProtocols() {
-    return super.getProtocols()..[database] = BookCacheEventMessage;
+  Map<String, List<Type>> getProtocols() {
+    return super.getProtocols()
+      ..putIfAbsent(database, () => []).add(BookCacheEventMessage);
   }
 
   FutureOr<Option<List<BookCache>>> getMainList() {
@@ -201,8 +252,9 @@ mixin BookCacheEventMessager on SendEvent, Messager {
   }
 }
 mixin BookContentEventResolve on Resolve implements BookContentEvent {
-  Map<String, Type> getResolveProtocols() {
-    return super.getResolveProtocols()..['database'] = BookContentEventMessage;
+  Map<String, List<Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..putIfAbsent('database', () => []).add(BookContentEventMessage);
   }
 
   Map<Type, List<Function>> resolveFunctionIterable() {
@@ -214,8 +266,9 @@ mixin BookContentEventResolve on Resolve implements BookContentEvent {
 /// implements [BookContentEvent]
 mixin BookContentEventMessager on SendEvent, Messager {
   String get database => 'database';
-  Map<String, Type> getProtocols() {
-    return super.getProtocols()..[database] = BookContentEventMessage;
+  Map<String, List<Type>> getProtocols() {
+    return super.getProtocols()
+      ..putIfAbsent(database, () => []).add(BookContentEventMessage);
   }
 
   Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
@@ -230,8 +283,9 @@ mixin BookContentEventMessager on SendEvent, Messager {
   }
 }
 mixin ServerEventResolve on Resolve implements ServerEvent {
-  Map<String, Type> getResolveProtocols() {
-    return super.getResolveProtocols()..['database'] = ServerEventMessage;
+  Map<String, List<Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..putIfAbsent('database', () => []).add(ServerEventMessage);
   }
 
   Map<Type, List<Function>> resolveFunctionIterable() {
@@ -249,8 +303,9 @@ mixin ServerEventResolve on Resolve implements ServerEvent {
 /// implements [ServerEvent]
 mixin ServerEventMessager on SendEvent, Messager {
   String get database => 'database';
-  Map<String, Type> getProtocols() {
-    return super.getProtocols()..[database] = ServerEventMessage;
+  Map<String, List<Type>> getProtocols() {
+    return super.getProtocols()
+      ..putIfAbsent(database, () => []).add(ServerEventMessage);
   }
 
   FutureOr<RawContentLines?> getContentDb(int bookid, int contentid) {
@@ -279,8 +334,9 @@ mixin ServerEventMessager on SendEvent, Messager {
   }
 }
 mixin ComplexEventResolve on Resolve implements ComplexEvent {
-  Map<String, Type> getResolveProtocols() {
-    return super.getResolveProtocols()..['book'] = ComplexEventMessage;
+  Map<String, List<Type>> getResolveProtocols() {
+    return super.getResolveProtocols()
+      ..putIfAbsent('book', () => []).add(ComplexEventMessage);
   }
 
   Map<Type, List<Function>> resolveFunctionIterable() {
@@ -296,8 +352,9 @@ mixin ComplexEventResolve on Resolve implements ComplexEvent {
 /// implements [ComplexEvent]
 mixin ComplexEventMessager on SendEvent, Messager {
   String get book => 'book';
-  Map<String, Type> getProtocols() {
-    return super.getProtocols()..[book] = ComplexEventMessage;
+  Map<String, List<Type>> getProtocols() {
+    return super.getProtocols()
+      ..putIfAbsent(book, () => []).add(ComplexEventMessage);
   }
 
   FutureOr<RawContentLines?> getContent(
@@ -316,40 +373,3 @@ mixin ComplexEventMessager on SendEvent, Messager {
     return sendMessage(ComplexEventMessage.getInfo, id, serverName: book);
   }
 }
-mixin MultiBookMessagerMixin
-    on SendEvent, ListenMixin, SendMultiServerMixin /*impl*/ {
-  RemoteServer get bookRemoteServer;
-  RemoteServer get databaseRemoteServer;
-  Map<String, RemoteServer> regRemoteServer() {
-    return super.regRemoteServer()
-      ..['book'] = bookRemoteServer
-      ..['database'] = databaseRemoteServer;
-  }
-
-  void onResumeListen() {
-    sendHandleOwners['book']!.localSendHandle.send(SendHandleName(
-        'database', sendHandleOwners['database']!.localSendHandle,
-        protocols: getServerProtocols('database')));
-
-    super.onResumeListen();
-  }
-}
-
-/// book Server
-abstract class MultiBookResolveMain
-    with
-        SendEvent,
-        ListenMixin,
-        Resolve,
-        ResolveMultiRecievedMixin,
-        CustomEventResolve,
-        ComplexEventResolve {}
-
-/// database Server
-abstract class MultiDatabaseResolveMain
-    with
-        ListenMixin,
-        Resolve,
-        BookCacheEventResolve,
-        BookContentEventResolve,
-        ServerEventResolve {}
