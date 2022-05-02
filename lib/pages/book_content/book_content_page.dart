@@ -71,7 +71,7 @@ class BookContentPageState extends State<BookContentPage>
   void initOnceTask() {
     super.initOnceTask();
     if (bloc.config.value.orientation!) {
-      EventQueue.pushOne(this, () async {
+      fqGlobal.pushOne(() async {
         if (!bloc.uiOverlayShow) await uiOverlay();
       });
     }
@@ -184,7 +184,8 @@ class BookContentPageState extends State<BookContentPage>
     }
 
     await bloc.onOut();
-    EventQueue.pushOne(this, () => uiOverlay(hide: false));
+    fqGlobal.pushOne(() => uiOverlay(hide: false));
+
     await blocCache.load();
     // 横屏处理
     if (!bloc.config.value.orientation!) setOrientation(true);

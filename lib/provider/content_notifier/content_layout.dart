@@ -61,7 +61,7 @@ mixin ContentLayout on ContentDataBase, Configs {
     final lineHeightAndExtra = hl + lineHeight;
     final _key = key;
 
-    await releaseUI;
+    await idleWait;
     // 大标题
     final TextPainter _bigTitlePainter = TextPainter(
         text: TextSpan(
@@ -71,7 +71,7 @@ mixin ContentLayout on ContentDataBase, Configs {
         textDirection: TextDirection.ltr)
       ..layout(maxWidth: width);
 
-    await releaseUI;
+    await idleWait;
     // 小标题
     final TextPainter smallTitlePainter = TextPainter(
         text: TextSpan(text: cname, style: secstyle),
@@ -85,7 +85,7 @@ mixin ContentLayout on ContentDataBase, Configs {
     while (lineHeightAndExtra * whiteRows > 140) {
       whiteRows--;
       if (lineHeightAndExtra * whiteRows < 130) break;
-      await releaseUI;
+      await idleWait;
     }
 
     final lines = <TextPainter>[];
@@ -111,7 +111,7 @@ mixin ContentLayout on ContentDataBase, Configs {
       lines.addAll(para);
     }
 
-    await releaseUI;
+    await idleWait;
     var topExtraRows = (_bigTitlePainter.height / fontSize).floor();
     if (topExtraRows > 2) {
       if (whiteRows > 2) {
@@ -131,7 +131,7 @@ mixin ContentLayout on ContentDataBase, Configs {
       }
 
     var extraHeight = lineHeightAndExtra - fontSize;
-    await releaseUI;
+    await idleWait;
     if (_key != key || !inBook) return const [];
 
     bool error = false;
@@ -149,7 +149,7 @@ mixin ContentLayout on ContentDataBase, Configs {
 
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
-      await releaseUI;
+      await idleWait;
 
       paintText(canvas,
           painters: pages[r],
@@ -166,10 +166,10 @@ mixin ContentLayout on ContentDataBase, Configs {
           paddingRect: _contentLayoutPadding,
           showrect: showrect,
           topExtraHeight: lineHeightAndExtra * (whiteRows + topExtraRows));
-      await releaseUI;
+      await idleWait;
 
       final picture = recorder.endRecording();
-      await releaseUI;
+      await idleWait;
 
       final met = ContentMetrics(
         picture: PictureRefInfo(picture),

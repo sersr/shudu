@@ -230,16 +230,21 @@ class ShudanCategProvider extends ChangeNotifier {
     }
   }
 
-  final _loop = EventQueue();
+  final _loop = FutureQueue();
 
   bool get idle => !_loop.actived;
 
-  void load() => _loop.addEventTask(_load);
+  void load() async {
+    await _loop;
+    _load();
+  }
 
   LoadingStatus state = LoadingStatus.success;
 
-  void loadNext(int index) {
-    _loop.addOneEventTask(() => _loadNext(index));
+  void loadNext(int index) async {
+    if (await _loop.only) return;
+    _loadNext(index);
+    // _loop.pushOne(() => _loadNext(index));
   }
 
   void _loadNext(int index) async {
@@ -259,11 +264,12 @@ class ShudanCategProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    return _loop.awaitOne(() {
-      list = null;
-      _listCounts = 0;
-      return _load();
-    });
+    if (await _loop.only) return;
+    // return _loop.runOne(() {
+    list = null;
+    _listCounts = 0;
+    return _load();
+    // });
   }
 
   void refreshDone() {

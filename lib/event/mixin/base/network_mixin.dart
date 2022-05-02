@@ -39,7 +39,7 @@ mixin HiveDioMixin on Resolve {
   }
 }
 
-mixin NetworkMixin on HiveDioMixin, CustomEvent {
+mixin NetworkMixin on HiveDioMixin, CustomEvent, CustomEventResolve {
   var frequency = 0;
 
   late Box imageUpdate;

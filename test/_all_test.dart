@@ -167,7 +167,7 @@ void main() async {
 
     for (var i = 0; i < 10; i++) {
       loop.addOneEventTask(() async {
-        await releaseUI;
+        await idleWait;
         print('2:.....$i');
       });
     }

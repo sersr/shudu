@@ -140,7 +140,7 @@ class ItemAsyncLayout extends StatelessWidget {
       },
       layout: (BuildContext context, mounted) {
         return TextCache.runTextPainter(() async {
-          await releaseUI;
+          await idleWait;
           if (!mounted()) return const [];
 
           final topR = topRightScore;
@@ -158,7 +158,7 @@ class ItemAsyncLayout extends StatelessWidget {
                 ellipsis: '...');
           }
 
-          await releaseUI;
+          await idleWait;
           final _tpWidth = topRText?.first.width ?? 0;
 
           final topWidth = maxWidth - _tpWidth;
@@ -173,7 +173,7 @@ class ItemAsyncLayout extends StatelessWidget {
               maxLines: 1,
               ellipsis: '...');
 
-          await releaseUI;
+          await idleWait;
           if (!mounted()) return const [];
 
           final centerText = await TextCache.oneTextPainter(
@@ -184,7 +184,7 @@ class ItemAsyncLayout extends StatelessWidget {
               maxLines: centerLines,
               ellipsis: '...');
 
-          await releaseUI;
+          await idleWait;
           if (!mounted()) return const [];
           final bottomText = await TextCache.oneTextPainter(
               text: bottom,
@@ -194,7 +194,7 @@ class ItemAsyncLayout extends StatelessWidget {
               maxLines: bottomLines,
               ellipsis: '...');
 
-          await releaseUI;
+          await idleWait;
           return [topRText, topText, centerText, bottomText];
         });
       },

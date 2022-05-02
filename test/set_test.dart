@@ -16,7 +16,7 @@ void main() {
     final rf = _fu();
     rf.then((_) => print('rf: ...'));
     print(rf.hashCode);
-    await releaseUI;
+    await idleWait;
   });
 
   test('impl', () {

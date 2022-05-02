@@ -302,7 +302,7 @@ class BookIndexNotifier extends ChangeNotifier
     assert(Log.i(
         'update: bookid: $bookid cid: $contentid $isNewBook | $refresh | $restore'));
 
-    await releaseUI;
+    await idleWait;
     if (isNewBook) {
       final data = _data;
       _data = null;

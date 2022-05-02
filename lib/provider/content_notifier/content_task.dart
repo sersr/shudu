@@ -87,7 +87,7 @@ mixin ContentTasks on ContentDataBase, ContentLoad {
         return false;
       }
 
-      await releaseUI;
+      await idleWait;
       if (_getdata()) return;
       if (autoAddReloadIds(updateCid)) return;
       if ((currentPage == tData.content.length || currentPage == 1)) {
