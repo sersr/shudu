@@ -59,14 +59,16 @@ dependencies:
     git:
       url: https://github.com/sersr/nop.git
 
-  # nop_db_sqflite:
-  #   path: ../packages/nop_db_sqflite
+
   nop_db_sqlite:
     git:
       url: https://github.com/sersr/nop_db_sqlite.git
   bangs:
     git:
       url: https://github.com/sersr/bangs.git
+  nop_db_sqflite:
+    git:
+      url: https://github.com/sersr/nop_db_sqflite.git
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2
@@ -102,6 +104,8 @@ dependency_overrides:
     path: ../packages/bangs
   nop_gen:
     path: ../packages/nop_gen
+  nop_db_sqflite:
+    path: ../packages/nop_db_sqflite
   
 dev_dependencies:
   flutter_test:

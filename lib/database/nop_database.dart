@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:nop/nop.dart';
-// import 'package:nop_sqflite/nop_db_sqflite.dart';
+import 'package:nop_db_sqflite/nop_db_sqflite.dart';
+// ignore: unused_import
 import 'package:nop_db_sqlite/sqlite.dart' as nop;
 
 import '../data/data.dart';
@@ -128,13 +129,20 @@ class BookDatabase extends _GenBookDatabase {
   }
 
   FutureOr<void> _initDb() {
-    return nop
-        .open(path,
-            version: version,
-            onCreate: onCreate,
-            onUpgrade: onUpgrade,
-            onDowngrade: onDowngrade)
-        .then(setDb);
+    return NopDatabaseSqflite.openSqfite(
+      path,
+      version: version,
+      onCreate: onCreate,
+      onDowngrade: onDowngrade,
+      onUpgrade: onUpgrade,
+    ).then(setDb);
+    // return nop
+    //     .open(path,
+    //         version: version,
+    //         onCreate: onCreate,
+    //         onUpgrade: onUpgrade,
+    //         onDowngrade: onDowngrade)
+    //     .then(setDb);
   }
 
   @override

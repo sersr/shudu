@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:memory_info/memory_info.dart';
 import 'package:nop/nop.dart';
+import 'package:nop_db_sqflite/nop_db_sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -67,6 +68,8 @@ mixin SystemInfos {
           final appPath = extPath ?? '/storage/emulated/0';
           appDirExt = appPath;
         }
+
+        SqfliteMainIsolate.initMainDb();
         _waits
           ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
           ..add(Bangs.safePadding

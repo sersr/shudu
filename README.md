@@ -14,6 +14,8 @@
 - 运行下面命令获取最新状态：
 
         flutter pub upgrade
-- flutter build apk / windows
+
+  note: 如果有插件在本地的要及时拉取最新
+- flutter build apk
 
 声明：本项目仅供学习参考
