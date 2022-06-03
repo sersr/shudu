@@ -20,7 +20,7 @@ class Api {
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
   static String imageUrl(String img) =>
-      'https://imgapixs.${domains.first}.com/BookFiles/BookImages/$img';
+      'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
 
   static String contentUrl(int id, int? cid) {
     final sd = shortid(id);
