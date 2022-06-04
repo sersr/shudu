@@ -5,13 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/text_styles.dart';
+import '../../routes/routes.dart';
 import '../demo/view_one_inner.dart';
-import '../setting/setting.dart';
-import 'book_history.dart';
-import 'booklist.dart';
-import 'cache_manager.dart';
-import 'category.dart';
-import 'top.dart';
 
 class ListMainPage extends StatelessWidget {
   ListMainPage({Key? key}) : super(key: key);
@@ -48,40 +43,46 @@ class ListMainPage extends StatelessWidget {
             children: [
               row(
                 left: _builder('书单', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return BooklistPage();
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return BooklistPage();
+                  // }));
+                  NavRoutes.booklistPage().go;
                 }),
                 right: _builder('分类', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: ListCatetoryPage());
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return RepaintBoundary(child: ListCatetoryPage());
+                  // }));
+                  NavRoutes.listCatetoryPage().go;
                 }),
               ),
               const SizedBox(height: 5),
               row(
                 left: _builder('缓存管理', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: CacheManager());
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return RepaintBoundary(child: CacheManager());
+                  // }));
+                  NavRoutes.cacheManager().go;
                 }),
                 right: _builder('浏览历史', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: BookHistory());
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return RepaintBoundary(child: BookHistory());
+                  // }));
+                  NavRoutes.bookHistory().go;
                 }),
               ),
               const SizedBox(height: 5),
               row(
                 left: _builder('榜单', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return RepaintBoundary(child: TopPage());
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return RepaintBoundary(child: TopPage());
+                  // }));
+                  NavRoutes.topPage().go;
                 }),
                 right: _builder('设置', () {
-                  Nav.push(MaterialPageRoute(builder: (context) {
-                    return Setting();
-                  }));
+                  // Nav.push(MaterialPageRoute(builder: (context) {
+                  //   return Setting();
+                  // }));
+                  NavRoutes.setting().go;
                 }),
               ),
               const SizedBox(height: 5),

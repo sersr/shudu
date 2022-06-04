@@ -38,10 +38,10 @@ class RepositoryImplTest extends MultiBookMessagerMain
   }
 
   @override
-  RemoteServer get bookRemoteServer => const NullRemoteServer();
+  RemoteServer get bookRemoteServer => NullRemoteServer();
 
   @override
-  RemoteServer get databaseRemoteServer => const NullRemoteServer();
+  RemoteServer get databaseRemoteServer => NullRemoteServer();
 }
 
 class Client {

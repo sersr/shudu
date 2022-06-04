@@ -10,6 +10,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../event/export.dart';
 import '../../provider/export.dart';
+import '../../routes/routes.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/images.dart';
 import '../../widgets/indexs.dart';
@@ -26,21 +27,28 @@ class BookInfoPage extends StatefulWidget {
   _BookInfoPageState createState() => _BookInfoPageState();
 
   static Future push(int bookid, ApiType api) async {
-    return pushRecoder(
-      key: 'navigator.push',
-      saveCount: 3,
-      callback: (pushNotifier) =>
-          Nav.push(MaterialPageRoute(builder: (context) {
-        return AnimatedBuilder(
-            animation: pushNotifier,
-            builder: (context, child) {
-              return TickerMode(
-                  enabled: !pushNotifier.value,
-                  child: Offstage(offstage: pushNotifier.value, child: child));
-            },
-            child: RepaintBoundary(child: BookInfoPage(id: bookid, api: api)));
-      })),
-    );
+    final notifier = ShuduRoute.getInfo;
+    notifier.value += 1;
+    return NavRoutes.bookInfoPage(id: bookid, api: api).go
+      ..whenComplete(() {
+        notifier.value -= 1;
+        if (notifier.value == 0) ShuduRoute.removeInfo;
+      });
+    // return pushRecoder(
+    //   key: 'navigator.push',
+    //   saveCount: 3,
+    //   callback: (pushNotifier) =>
+    //       Nav.push(MaterialPageRoute(builder: (context) {
+    //     return AnimatedBuilder(
+    //         animation: pushNotifier,
+    //         builder: (context, child) {
+    //           return TickerMode(
+    //               enabled: !pushNotifier.value,
+    //               child: Offstage(offstage: pushNotifier.value, child: child));
+    //         },
+    //         child: RepaintBoundary(child: BookInfoPage(id: bookid, api: api)));
+    //   })),
+    // );
   }
 }
 

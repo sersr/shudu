@@ -7,6 +7,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../event/export.dart';
 import '../../provider/export.dart';
+import '../../routes/routes.dart';
 import '../../widgets/images.dart';
 import '../../widgets/page_animation.dart';
 import 'booklist.dart';
@@ -134,8 +135,9 @@ class CategegoryView extends StatelessWidget {
   final int ctg;
 
   static Future push(context, String title, int ctg) {
-    return Nav.push(MaterialPageRoute(
-        builder: (context) => CategegoryView(title: title, ctg: ctg)));
+    return NavRoutes.categegoryView(title: title, ctg: ctg).go;
+    // return Nav.push(MaterialPageRoute(
+    //     builder: (context) => CategegoryView(title: title, ctg: ctg)));
   }
 
   @override

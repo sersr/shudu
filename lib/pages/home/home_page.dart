@@ -8,8 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/export.dart';
+import '../../routes/routes.dart';
 import '../book_content/book_content_page.dart';
-import '../book_info/info_page.dart';
 import '../book_list/main.dart';
 import 'book_item.dart';
 import 'search.dart';
@@ -254,9 +254,10 @@ class _MyHomePageState extends State<MyHomePage>
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                Nav.pushReplacement(MaterialPageRoute(builder: (context) {
-                  return BookInfoPage(id: item.bookId!, api: item.api);
-                }));
+                // Nav.pushReplacement(MaterialPageRoute(builder: (context) {
+                //   return BookInfoPage(id: item.bookId!, api: item.api);
+                // }));
+                NavRoutes.bookInfoPage(id: item.bookId!, api: api).goReplace;
               }),
           Selector<BookCacheNotifier, bool>(
             selector: (_, notifier) {

@@ -9,8 +9,8 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../data/data.dart';
 import '../../event/export.dart';
 import '../../provider/text_styles.dart';
+import '../../routes/routes.dart';
 import '../../widgets/image_text.dart';
-import 'booklist_detail.dart';
 
 // 书单页面
 class BooklistPage extends StatelessWidget {
@@ -181,11 +181,14 @@ class _WrapWidgetState extends State<WrapWidget>
             bgColor: isLight ? null : Colors.grey.shade900,
             splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
             onTap: () {
-              final route = MaterialPageRoute(builder: (_) {
-                return BooklistDetailPage(
-                    total: bookList.bookCount, index: bookList.listId);
-              });
-              Nav.push(route);
+              // final route = MaterialPageRoute(builder: (_) {
+              //   return BooklistDetailPage(
+              //       total: bookList.bookCount, index: bookList.listId);
+              // });
+              // Nav.push(route);
+              NavRoutes.booklistDetailPage(
+                      total: bookList.bookCount, index: bookList.listId)
+                  .go;
             },
             child: ImageTextLayout(
               img: bookList.cover,

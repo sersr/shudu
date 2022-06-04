@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:nop/event_queue.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../provider/export.dart';
+import '../../routes/routes.dart';
 import '../../widgets/page_animation.dart';
 import 'widgets/page_view.dart';
 
@@ -26,12 +26,12 @@ class BookContentPage extends StatefulWidget {
       await bloc.touchBook(newBookid, cid, page, api: api);
     } catch (_) {}
     _lock = null;
-
-    return Nav.push(MaterialPageRoute(builder: (context) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-          child: const RepaintBoundary(child: BookContentPage()));
-    }));
+    return NavRoutes.bookContentPage().go;
+    // return Nav.push(MaterialPageRoute(builder: (context) {
+    //   return AnnotatedRegion<SystemUiOverlayStyle>(
+    //       value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+    //       child: const RepaintBoundary(child: BookContentPage()));
+    // }));
   }
 
   @override
@@ -177,7 +177,7 @@ class BookContentPageState extends State<BookContentPage>
 
   Future<bool> onWillPop() async {
     bloc.showCname.value = false;
-
+    Provider;
     if (getLength() > 1) {
       observer.hideLast();
       return false;
