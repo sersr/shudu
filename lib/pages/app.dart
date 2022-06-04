@@ -2,10 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
-import 'package:flutter/services.dart';
 import '../event/export.dart';
 import '../provider/export.dart';
-import 'home/home_page.dart';
+import '../routes/routes.dart';
 
 class ShuduApp extends StatelessWidget {
   const ShuduApp({Key? key, required this.mode}) : super(key: key);
@@ -53,12 +52,16 @@ class ShuduApp extends StatelessWidget {
               appBarTheme:
                   AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
           showPerformanceOverlay: list[2] ?? false,
-          home: Builder(builder: (context) {
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-                value:
-                    getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-                child: const MyHomePage());
-          }),
+          // home: Builder(builder: (context) {
+          //   return AnnotatedRegion<SystemUiOverlayStyle>(
+          //       value:
+          //           getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+          //       child: const MyHomePage());
+          // }),
+          initialRoute: Routes.root.fullName,
+          onGenerateRoute: (settings) {
+            return Routes.root.onMatch(settings)?.wrapMaterial;
+          },
           navigatorObservers: [
             context.read<OptionsNotifier>().routeObserver,
             Nav.observer
