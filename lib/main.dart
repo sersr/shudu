@@ -5,9 +5,16 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import 'app.dart';
+import 'event/repository.dart';
+import 'modules/book_content/book_content.dart';
+import 'modules/book_index/book_index.dart';
+import 'modules/home/home.dart';
+import 'modules/search/search.dart';
+import 'modules/setting/providers/options_notifier.dart';
+import 'modules/setting/setting.dart';
+import 'modules/text_style/text_style.dart';
 import 'utils/type_adapter.dart';
-import 'pages/app.dart';
-import 'provider/options_notifier.dart';
 
 void main() {
   OneFile.runZoned(() => Log.logRun(() async {
@@ -24,6 +31,16 @@ void main() {
         // );
 
         NopWidgetsFlutterBinding.ensureInitialized();
+        Nav.put(() => Repository.create()..init());
+        Nav.putContext((context) => OptionsNotifier(context.getType())..init());
+        Nav.putContext(
+            (context) => BookIndexNotifier(repository: context.getType()));
+        Nav.putContext((context) => SearchNotifier(context.getType())..init());
+        Nav.putContext((context) =>
+            ContentNotifier(repository: context.getType())..initConfigs());
+        Nav.putContext(
+            (context) => BookCacheNotifier(context.getType())..load());
+        Nav.put(() => TextStyleConfig());
 
         uiOverlay(hide: false);
         try {
@@ -43,6 +60,8 @@ void main() {
           Log.e('error: $e', onlyDebug: false);
         }
 
-        runApp(MulProvider(mode: await OptionsNotifier.getThemeModeUnSafe()));
+        runApp(Nop(
+            // 提供 Nop.of 支持
+            child: ShuduApp(mode: await OptionsNotifier.getThemeModeUnSafe())));
       }));
 }

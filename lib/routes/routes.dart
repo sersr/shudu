@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:nop/nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../pages/book_content/book_content_page.dart';
-import '../pages/book_info/info_page.dart';
-import '../pages/book_list/book_history.dart';
-import '../pages/book_list/booklist.dart';
-import '../pages/book_list/booklist_detail.dart';
-import '../pages/book_list/cache_manager.dart';
-import '../pages/book_list/category.dart';
-import '../pages/book_list/top.dart';
-import '../pages/home/home_page.dart';
-import '../pages/setting/setting.dart';
-import '../provider/export.dart';
+import '../api/api.dart';
+import '../modules/book_content/views/book_content_page.dart';
+import '../modules/book_info/views/info_page.dart';
+import '../modules/book_list/views/book_history.dart';
+import '../modules/book_list/views/booklist.dart';
+import '../modules/book_list/views/booklist_detail.dart';
+import '../modules/book_list/views/cache_manager.dart';
+import '../modules/book_list/views/category.dart';
+import '../modules/book_list/views/top.dart';
+import '../modules/home/views/home_page.dart';
+import '../modules/setting/views/setting.dart';
 
 part 'routes.g.dart';
 

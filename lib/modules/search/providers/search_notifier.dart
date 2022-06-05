@@ -1,0 +1,79 @@
+import 'package:hive/hive.dart';
+import 'package:nop/nop.dart';
+import 'package:useful_tools/change_notifier.dart';
+
+import '../../../data/biquge/search_data.dart';
+import '../../../event/export.dart';
+
+class SearchNotifier extends ChangeNotifierBase {
+  SearchNotifier(this.repository);
+  final Repository repository;
+  late List<String> searchHistory;
+
+  late Box box;
+  SearchList? list;
+  void load(String key) {
+    if (key.isEmpty) return;
+    EventQueue.pushOne(_load, () => _load(key));
+  }
+
+  Future<void> _load(String key) async {
+    list = null;
+
+    notifyListeners();
+    list = await repository.customEvent.getSearchData(key);
+
+    searchHistory
+      ..remove(key)
+      ..add(key);
+    notifyListeners();
+    final ignore = EventQueue.currentTask?.canDiscard ?? false;
+    if (!ignore) {
+      await save();
+    }
+  }
+
+  Future<void> init() async {
+    return EventQueue.run(this, _init);
+  }
+
+  Future<void> _init() async {
+    box = await Hive.openBox('searchHistory');
+    try {
+      final se = box.get('suggestions', defaultValue: <String>[]);
+      final List<String> _searchHistory;
+      if (kDartIsWeb) {
+        final dynamicList = se as List;
+        _searchHistory =
+            List.generate(dynamicList.length, (index) => dynamicList[index]);
+      } else {
+        _searchHistory = se;
+      }
+      if (_searchHistory.length > 20) {
+        searchHistory = _searchHistory.sublist(
+            _searchHistory.length - 20, _searchHistory.length);
+      } else {
+        searchHistory = List.of(_searchHistory);
+      }
+    } catch (e) {
+      Log.e('error: $e');
+    }
+  }
+
+  Future<void> save() async {
+    return EventQueue.pushOne(this, _save);
+  }
+
+  Future<void> _save() async {
+    if (searchHistory.length > 20) {
+      searchHistory = searchHistory.sublist(
+          searchHistory.length - 16, searchHistory.length);
+    }
+    await box.put('suggestions', searchHistory);
+  }
+
+  void delete(String key) {
+    searchHistory.remove(key);
+    notifyListeners();
+  }
+}

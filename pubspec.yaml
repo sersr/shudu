@@ -39,7 +39,7 @@ dependencies:
   path: any
   path_provider: ^2.0.1
   permission_handler: ^9.2.0
-  provider: ^6.0.2
+  # provider: ^6.0.2
   screen_brightness: ^0.1.3
   stream_channel: ^2.1.0
   stack_trace: ^1.10.0

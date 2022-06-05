@@ -5,7 +5,7 @@ import 'package:nop/nop.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';
-import '../../pages/book_list/cache_manager.dart';
+import '../../modules/book_list/views/cache_manager.dart';
 import 'data.dart';
 import 'server_event.dart';
 

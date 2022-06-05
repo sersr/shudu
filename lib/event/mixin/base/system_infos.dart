@@ -17,7 +17,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../../provider/export.dart';
+import '../../../modules/setting/setting.dart';
 
 class BookIsolateArgs {
   final String appPath;

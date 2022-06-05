@@ -94,3 +94,6 @@ class Api {
 //     return 'http://statics.rungean.com/static/book/author/$m.json';
 //   }
 // }
+enum ApiType {
+  biquge,
+}

@@ -1,11 +1,10 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../event/export.dart';
-import '../provider/export.dart';
+import '../modules/setting/setting.dart';
 import 'image_shadow.dart';
 
 class ImageResolve extends StatefulWidget {
@@ -41,7 +40,7 @@ class _ImageResolveState extends State<ImageResolve> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    repository = context.read();
+    repository = context.getType();
   }
 
   String? path;
@@ -55,11 +54,13 @@ class _ImageResolveState extends State<ImageResolve> {
 
       return _img == null
           ? _errorBuilder(width, height)
-          : Selector<OptionsNotifier, bool>(
-              selector: (_, opt) => opt.options.useImageCache ?? false,
+          : ValueListenableBuilder<bool>(
+              valueListenable: context
+                  .getType<OptionsNotifier>()
+                  .selector((parent) => parent.options.useImageCache ?? false),
               builder: (context, useImageCache, _) {
                 if (!useImageCache) {
-                  final repository = context.read<Repository>();
+                  final repository = context.getType<Repository>();
 
                   final getImageBytes = repository.getImageBytes;
                   final rw = (width * ratio).toInt();

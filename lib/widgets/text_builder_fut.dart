@@ -6,10 +6,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:nop/event_queue.dart';
-import 'package:provider/provider.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../provider/export.dart';
+import '../modules/setting/setting.dart';
+import '../modules/text_style/text_style.dart';
 
 class TextAsyncLayout extends StatelessWidget {
   const TextAsyncLayout({
@@ -32,7 +32,7 @@ class TextAsyncLayout extends StatelessWidget {
   final int bottomLines;
   @override
   Widget build(BuildContext context) {
-    final ts = context.read<TextStyleConfig>().data;
+    final ts = context.getType<TextStyleConfig>().data;
     final child = ItemWidget(
         topRight: topRightScore != null
             ? Text(topRightScore ?? '',
@@ -52,8 +52,11 @@ class TextAsyncLayout extends StatelessWidget {
             textDirection: TextDirection.ltr));
 
     return RepaintBoundary(
-      child: Selector<OptionsNotifier, bool>(
-          selector: (_, opt) => opt.options.useTextCache ?? false,
+      child: ValueListenableBuilder<bool>(
+          valueListenable: context
+              .getType<OptionsNotifier>()
+              .selector((parent) => parent.options.useTextCache ?? false),
+          // selector: (_, opt) => opt.options.useTextCache ?? false,
           builder: (context, useTextCache, child) {
             /// 只有绑定 [CacheBinding] 才能启用
             if (useTextCache && textCache != null)
@@ -145,7 +148,7 @@ class ItemAsyncLayout extends StatelessWidget {
 
           final topR = topRightScore;
           final width = maxWidth;
-          final ts = context.read<TextStyleConfig>().data;
+          final ts = context.getType<TextStyleConfig>().data;
           final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
           List<TextPainter>? topRText;
           if (topR != null) {

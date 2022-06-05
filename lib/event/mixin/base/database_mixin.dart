@@ -7,7 +7,7 @@ import 'package:nop/nop.dart';
 import 'package:path/path.dart';
 
 import '../../../database/database.dart';
-import '../../../pages/book_list/cache_manager.dart';
+import '../../../modules/book_list/views/cache_manager.dart';
 import '../../base/export.dart';
 
 // 数据库接口实现
