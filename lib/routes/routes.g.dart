@@ -24,7 +24,7 @@ class Routes {
       _setting,
       _topPage
     ],
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: MyHomePage(),
     ),
   );
@@ -32,7 +32,7 @@ class Routes {
   static final _bookContentPage = NopRoute(
     name: '/bookContentPage',
     fullName: '/bookContentPage',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: BookContentPage(),
     ),
   );
@@ -40,7 +40,7 @@ class Routes {
   static final _bookInfoPage = NopRoute(
     name: '/bookInfoPage',
     fullName: '/bookInfoPage',
-    builder: (context, arguments) => Nop(
+    builder: (context, arguments) => Nop.page(
       builders: const [ShuduRoute._builder],
       child: BookInfoPage(id: arguments['id'], api: arguments['api']),
     ),
@@ -49,7 +49,7 @@ class Routes {
   static final _bookHistory = NopRoute(
     name: '/bookHistory',
     fullName: '/bookHistory',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: BookHistory(),
     ),
   );
@@ -57,7 +57,7 @@ class Routes {
   static final _booklistDetailPage = NopRoute(
     name: '/booklistDetailPage',
     fullName: '/booklistDetailPage',
-    builder: (context, arguments) => Nop(
+    builder: (context, arguments) => Nop.page(
       child: BooklistDetailPage(
           total: arguments['total'], index: arguments['index']),
     ),
@@ -66,7 +66,7 @@ class Routes {
   static final _booklistPage = NopRoute(
     name: '/booklistPage',
     fullName: '/booklistPage',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: BooklistPage(),
     ),
   );
@@ -74,7 +74,7 @@ class Routes {
   static final _cacheManager = NopRoute(
     name: '/cacheManager',
     fullName: '/cacheManager',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: CacheManager(),
     ),
   );
@@ -83,7 +83,7 @@ class Routes {
     name: '/listCatetoryPage',
     fullName: '/listCatetoryPage',
     children: [_categegoryView],
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: ListCatetoryPage(),
     ),
   );
@@ -91,7 +91,7 @@ class Routes {
   static final _categegoryView = NopRoute(
     name: '/categegoryView',
     fullName: '/listCatetoryPage/categegoryView',
-    builder: (context, arguments) => Nop(
+    builder: (context, arguments) => Nop.page(
       child: CategegoryView(title: arguments['title'], ctg: arguments['ctg']),
     ),
   );
@@ -99,7 +99,7 @@ class Routes {
   static final _setting = NopRoute(
     name: '/setting',
     fullName: '/setting',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: Setting(),
     ),
   );
@@ -107,7 +107,7 @@ class Routes {
   static final _topPage = NopRoute(
     name: '/topPage',
     fullName: '/topPage',
-    builder: (context, arguments) => const Nop(
+    builder: (context, arguments) => const Nop.page(
       child: TopPage(),
     ),
   );

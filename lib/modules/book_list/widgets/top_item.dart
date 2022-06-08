@@ -168,6 +168,7 @@ class TopNotifier<T> extends ChangeNotifierBase {
           final nextIndex = currentIndex + 1;
 
           dataResolve = CtgDataResolve.loading(dataSource, nextIndex);
+          await idleWait;
           notifyListeners();
 
           // 任务最小时长
