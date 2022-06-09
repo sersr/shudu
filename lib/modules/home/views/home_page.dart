@@ -258,11 +258,11 @@ class _MyHomePageState extends State<MyHomePage>
                 // Nav.pushReplacement(MaterialPageRoute(builder: (context) {
                 //   return BookInfoPage(id: item.bookId!, api: item.api);
                 // }));
-                NavRoutes.bookInfoPage(id: item.bookId!, api: api).goReplace;
+                NavRoutes.bookInfoPage(id: item.bookId!, api: api)
+                    .goReplacement();
               }),
-          ValueListenableBuilder<bool>(
-            // selector: select,
-            valueListenable:
+          ChangeAuto(() {
+            final selector =
                 context.getType<BookCacheNotifier>().selector((notifier) {
               final child = notifier.sortChildren;
               final it = child.iterator;
@@ -277,14 +277,38 @@ class _MyHomePageState extends State<MyHomePage>
               }
               current ??= item;
               return current.isTop ?? false;
-            }),
-            builder: (context, isTop, child) {
-              return btn2(
-                  icon: Icons.touch_app_sharp,
-                  text: isTop ? '取消置顶' : '书籍置顶',
-                  onTap: () => cache.updateTop(item.bookId!, !isTop, item.api));
-            },
-          ),
+            });
+            final isTop = selector.al.value;
+            return btn2(
+                icon: Icons.touch_app_sharp,
+                text: isTop ? '取消置顶' : '书籍置顶',
+                onTap: () => cache.updateTop(item.bookId!, !isTop, item.api));
+          }),
+          // ValueListenableBuilder<bool>(
+          //   // selector: select,
+          //   valueListenable:
+          //       context.getType<BookCacheNotifier>().selector((notifier) {
+          //     final child = notifier.sortChildren;
+          //     final it = child.iterator;
+          //     Cache? current;
+          //     final bookid = item.bookId;
+          //     while (it.moveNext()) {
+          //       final _cache = it.current;
+          //       if (bookid == _cache.bookId) {
+          //         current = _cache;
+          //         break;
+          //       }
+          //     }
+          //     current ??= item;
+          //     return current.isTop ?? false;
+          //   }),
+          //   builder: (context, isTop, child) {
+          //     return btn2(
+          //         icon: Icons.touch_app_sharp,
+          //         text: isTop ? '取消置顶' : '书籍置顶',
+          //         onTap: () => cache.updateTop(item.bookId!, !isTop, item.api));
+          //   },
+          // ),
           btn2(
               icon: Icons.delete_forever_outlined,
               text: '删除书籍',

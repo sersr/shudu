@@ -15,57 +15,59 @@ class ShuduApp extends StatelessWidget {
           opt.options.platform,
           opt.options.showPerformanceOverlay,
         ]);
-    return ValueListenableBuilder<List>(
-        valueListenable: listenable,
-        builder: (context, list, child) {
-          final themeMode = list[0] ?? mode;
-          return MaterialApp(
-            themeMode: themeMode,
-            title: 'shudu',
-            theme: ThemeData.light().copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: Color.fromARGB(255, 15, 152, 231),
-                  secondary: Color.fromARGB(255, 179, 179, 179),
-                  onPrimary: Color.fromARGB(255, 245, 245, 245),
-                  onSurface: Color.fromARGB(255, 17, 30, 41),
-                ),
-                splashColor: Color.fromARGB(255, 212, 212, 212),
-                scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
-                platform: list[1] ?? defaultTargetPlatform,
-                pageTransitionsTheme: const PageTransitionsTheme(builders: {
-                  TargetPlatform.iOS: SlidePageTransition(),
-                  TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
-                }),
-                appBarTheme: AppBarTheme(
-                    systemOverlayStyle: getOverlayStyle(dark: true))),
-            darkTheme: ThemeData.dark().copyWith(
-                splashColor: Color.fromARGB(255, 212, 212, 212),
-                scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
-                platform: list[1] ?? defaultTargetPlatform,
-                colorScheme: const ColorScheme.dark(secondary: Colors.grey),
-                pageTransitionsTheme: const PageTransitionsTheme(builders: {
-                  TargetPlatform.iOS: SlidePageTransition(),
-                  TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
-                }),
-                appBarTheme: AppBarTheme(
-                    systemOverlayStyle: getOverlayStyle(dark: true))),
-            showPerformanceOverlay: list[2] ?? false,
-            // home: Builder(builder: (context) {
-            //   return AnnotatedRegion<SystemUiOverlayStyle>(
-            //       value:
-            //           getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-            //       child: const MyHomePage());
-            // }),
-            initialRoute: Routes.root.fullName,
-            onGenerateRoute: (settings) {
-              return Routes.root.onMatch(settings)?.wrapMaterial;
-            },
-            navigatorObservers: [
-              context.getType<OptionsNotifier>().routeObserver,
-              Nav.observer
-            ],
-          );
-        });
+    // return ValueListenableBuilder<List>(
+    //     valueListenable: listenable,
+    //     builder: (context, list, child) {
+    return ChangeAuto(() {
+      final List<dynamic> list = listenable.al.value;
+      final themeMode = list[0] ?? mode;
+      return MaterialApp(
+        themeMode: themeMode,
+        title: 'shudu',
+        theme: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Color.fromARGB(255, 15, 152, 231),
+              secondary: Color.fromARGB(255, 179, 179, 179),
+              onPrimary: Color.fromARGB(255, 245, 245, 245),
+              onSurface: Color.fromARGB(255, 17, 30, 41),
+            ),
+            splashColor: Color.fromARGB(255, 212, 212, 212),
+            scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
+            platform: list[1] ?? defaultTargetPlatform,
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.iOS: SlidePageTransition(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+            }),
+            appBarTheme:
+                AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
+        darkTheme: ThemeData.dark().copyWith(
+            splashColor: Color.fromARGB(255, 212, 212, 212),
+            scrollbarTheme: ScrollbarThemeData(radius: Radius.circular(6)),
+            platform: list[1] ?? defaultTargetPlatform,
+            colorScheme: const ColorScheme.dark(secondary: Colors.grey),
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.iOS: SlidePageTransition(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+            }),
+            appBarTheme:
+                AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
+        showPerformanceOverlay: list[2] ?? false,
+        // home: Builder(builder: (context) {
+        //   return AnnotatedRegion<SystemUiOverlayStyle>(
+        //       value:
+        //           getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+        //       child: const MyHomePage());
+        // }),
+        initialRoute: Routes.root.fullName,
+        onGenerateRoute: (settings) {
+          return Routes.root.onMatch(settings)?.wrapMaterial;
+        },
+        navigatorObservers: [
+          context.getType<OptionsNotifier>().routeObserver,
+          Nav.observer
+        ],
+      );
+    });
     // return Selector<OptionsNotifier, List>(
     //   selector: (context, opt) {
     //     return [
