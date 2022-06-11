@@ -1,32 +1,32 @@
 import 'package:hive/hive.dart';
 import 'package:nop/nop.dart';
-import 'package:useful_tools/change_notifier.dart';
 
 import '../../../data/biquge/search_data.dart';
 import '../../../event/export.dart';
+import 'search_state.dart';
 
-class SearchNotifier extends ChangeNotifierBase {
+class SearchNotifier {
   SearchNotifier(this.repository);
   final Repository repository;
-  late List<String> searchHistory;
+  final state = SearchState();
+
+  List<String> get searchHistory => state.searchHistory;
 
   late Box box;
-  SearchList? list;
+  SearchList? get list => state.list;
   void load(String key) {
     if (key.isEmpty) return;
     EventQueue.pushOne(_load, () => _load(key));
   }
 
   Future<void> _load(String key) async {
-    list = null;
+    state.list = await repository.customEvent.getSearchData(key);
 
-    notifyListeners();
-    list = await repository.customEvent.getSearchData(key);
-
-    searchHistory
+    state.searchHistory
       ..remove(key)
       ..add(key);
-    notifyListeners();
+    state.updateSearchHistory();
+
     final ignore = EventQueue.currentTask?.canDiscard ?? false;
     if (!ignore) {
       await save();
@@ -50,10 +50,10 @@ class SearchNotifier extends ChangeNotifierBase {
         _searchHistory = se;
       }
       if (_searchHistory.length > 20) {
-        searchHistory = _searchHistory.sublist(
+        state.searchHistory = _searchHistory.sublist(
             _searchHistory.length - 20, _searchHistory.length);
       } else {
-        searchHistory = List.of(_searchHistory);
+        state.searchHistory = List.of(_searchHistory);
       }
     } catch (e) {
       Log.e('error: $e');
@@ -66,7 +66,7 @@ class SearchNotifier extends ChangeNotifierBase {
 
   Future<void> _save() async {
     if (searchHistory.length > 20) {
-      searchHistory = searchHistory.sublist(
+      state.searchHistory = searchHistory.sublist(
           searchHistory.length - 16, searchHistory.length);
     }
     await box.put('suggestions', searchHistory);
@@ -74,6 +74,6 @@ class SearchNotifier extends ChangeNotifierBase {
 
   void delete(String key) {
     searchHistory.remove(key);
-    notifyListeners();
+    state.updateSearchHistory();
   }
 }

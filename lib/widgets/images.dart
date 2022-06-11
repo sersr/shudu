@@ -57,7 +57,7 @@ class _ImageResolveState extends State<ImageResolve> {
           : ValueListenableBuilder<bool>(
               valueListenable: context
                   .getType<OptionsNotifier>()
-                  .selector((parent) => parent.options.useImageCache ?? false),
+                  .select((parent) => parent.options.useImageCache ?? false),
               builder: (context, useImageCache, _) {
                 if (!useImageCache) {
                   final repository = context.getType<Repository>();

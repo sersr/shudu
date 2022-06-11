@@ -53,7 +53,7 @@ class ShuduRoute {
     final local = notifier.value;
 
     final notifierSelector =
-        notifier.selector((parent) => local < parent.value - 3);
+        notifier.select((parent) => local < parent.value - 3);
     return notifierSelector;
   }
 

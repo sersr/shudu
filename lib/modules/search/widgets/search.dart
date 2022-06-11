@@ -45,48 +45,51 @@ class BookSearchPage extends SearchDelegate<void> {
   }
 
   Widget suggestions(BuildContext context) {
-    final bloc = context.getType<SearchNotifier>();
-    final isLight = !context.isDarkMode;
-    final ts = context.getType<TextStyleConfig>().data;
-    return Padding(
-      padding: const EdgeInsets.only(top: 6.0),
-      child: SingleChildScrollView(
-        child: StatefulBuilder(
-          builder: (context, setstate) {
-            return Wrap(
-              children: [
-                for (var i in bloc.searchHistory.reversed)
-                  Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Material(
-                      borderRadius: BorderRadius.circular(3.0),
-                      color: isLight
-                          ? Color.fromARGB(255, 220, 220, 220)
-                          : const Color.fromRGBO(40, 40, 40, 1),
-                      child: InkWell(
-                        onLongPress: () {
-                          bloc.delete(i);
-                          setstate(() {});
-                        },
-                        onTap: () {
-                          query = i;
-                          showResults(context);
-                        },
+    return Cs(() {
+      final bloc = context.getType<SearchNotifier>();
+      final isLight = !context.isDarkMode;
+      bloc.searchHistory;
+      final ts = context.getType<TextStyleConfig>().data;
+      return Padding(
+        padding: const EdgeInsets.only(top: 6.0),
+        child: SingleChildScrollView(
+          child: StatefulBuilder(
+            builder: (context, setstate) {
+              return Wrap(
+                children: [
+                  for (var i in bloc.searchHistory.reversed)
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Material(
                         borderRadius: BorderRadius.circular(3.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0, vertical: 4.0),
-                          child: Text(i, style: ts.body2),
+                        color: isLight
+                            ? Color.fromARGB(255, 220, 220, 220)
+                            : const Color.fromRGBO(40, 40, 40, 1),
+                        child: InkWell(
+                          onLongPress: () {
+                            bloc.delete(i);
+                            setstate(() {});
+                          },
+                          onTap: () {
+                            query = i;
+                            showResults(context);
+                          },
+                          borderRadius: BorderRadius.circular(3.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 4.0),
+                            child: Text(i, style: ts.body2),
+                          ),
                         ),
                       ),
-                    ),
-                  )
-              ],
-            );
-          },
+                    )
+                ],
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget wrap(BuildContext context, Widget child) {
@@ -134,44 +137,41 @@ class BookSearchPage extends SearchDelegate<void> {
 
     return wrap(
       context,
-      AnimatedBuilder(
-        animation: search,
-        builder: (context, _) {
-          final searchResult = search.list?.data;
-          if (searchResult == null) {
-            return loadingIndicator();
-          }
-          final searchLength = searchResult.length;
+      Cs(() {
+        final searchResult = search.list?.data;
+        if (searchResult == null) {
+          return loadingIndicator();
+        }
+        final searchLength = searchResult.length;
 
-          return SearchPage(
-            length: searchLength + 1,
-            onTap: (index) {
-              if (index == 0) {
-                return;
-              }
-              index--;
-              final data = searchResult[index];
-              final id = int.tryParse('${data.id}');
-              if (id != null) BookInfoPage.push(id, ApiType.biquge);
-            },
-            builder: (context, index) {
-              if (index == 0) {
-                return ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: 80),
-                    child: suggestions(context));
-              }
-              index--;
-              final data = searchResult[index];
-              return ImageTextLayout(
-                  img: data.img,
-                  topRightScore: '${data.bookStatus}',
-                  top: data.name,
-                  center: '${data.cName} | ${data.author}',
-                  bottom: data.desc ?? '');
-            },
-          );
-        },
-      ),
+        return SearchPage(
+          length: searchLength + 1,
+          onTap: (index) {
+            if (index == 0) {
+              return;
+            }
+            index--;
+            final data = searchResult[index];
+            final id = int.tryParse('${data.id}');
+            if (id != null) BookInfoPage.push(id, ApiType.biquge);
+          },
+          builder: (context, index) {
+            if (index == 0) {
+              return ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: 80),
+                  child: suggestions(context));
+            }
+            index--;
+            final data = searchResult[index];
+            return ImageTextLayout(
+                img: data.img,
+                topRightScore: '${data.bookStatus}',
+                top: data.name,
+                center: '${data.cName} | ${data.author}',
+                bottom: data.desc ?? '');
+          },
+        );
+      }),
     );
   }
 

@@ -9,7 +9,7 @@ import '../../../database/database.dart';
 import '../../../event/export.dart';
 import '../../../widgets/page_animation.dart';
 import '../../book_info/views/info_page.dart';
-import '../../home/home.dart';
+import '../../home.dart';
 
 class CacheManager extends StatefulWidget {
   const CacheManager({Key? key}) : super(key: key);

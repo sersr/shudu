@@ -79,7 +79,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
     super.initState();
     addListener(complete);
     notifierValue =
-        parentValue.selector((parent) => parent.value.clamp(0.0, 120.0));
+        parentValue.select((parent) => parent.value.clamp(0.0, 120.0));
   }
 
   void complete() {
@@ -148,194 +148,185 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         left: false,
         right: false,
         top: false,
-        child: AnimatedBuilder(
-          animation: info,
-          builder: (context, child) {
-            final infoData = info.get(widget.id);
-            if (infoData == null) {
-              return AnnotatedRegion<SystemUiOverlayStyle>(
-                value: getOverlayStyle(dark: context.isDarkMode),
-                child: loadingIndicator(),
-              );
-            }
-            var children = <Widget>[];
-            int bookId = 0;
-            int? firstChapterId = -1;
-            List<SameUserBook>? sameUserBooks;
-            String? author;
+        child: Cs(() {
+          final infoData = info.get(widget.id);
+          if (infoData == null) {
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: getOverlayStyle(dark: context.isDarkMode),
+              child: loadingIndicator(),
+            );
+          }
+          var children = <Widget>[];
+          int bookId = 0;
+          int? firstChapterId = -1;
+          List<SameUserBook>? sameUserBooks;
+          String? author;
 
-            final _infoData = infoData as BookInfoRoot;
-            final _bookId = _infoData.data?.id;
+          final _infoData = infoData;
+          final _bookId = _infoData.data?.id;
 
-            if ((_infoData.data == null || _bookId == null)) {
-              return reloadBotton(() => info.reload(widget.id, widget.api));
-            }
-            bookId = _bookId;
-            final infos = _infoData.data!;
-            firstChapterId = infos.firstChapterId;
+          if ((_infoData.data == null || _bookId == null)) {
+            return reloadBotton(() => info.reload(widget.id, widget.api));
+          }
+          bookId = _bookId;
+          final infos = _infoData.data!;
+          firstChapterId = infos.firstChapterId;
 
-            children.add(header(infos.author, infos.bookStatus, infos.name,
-                infos.bookVote?.scroe, infos.cName, infos.img, ts));
+          children.add(header(infos.author, infos.bookStatus, infos.name,
+              infos.bookVote?.scroe, infos.cName, infos.img, ts));
 
-            sameUserBooks = infos.sameUserBooks;
-            author = infos.author;
+          sameUserBooks = infos.sameUserBooks;
+          author = infos.author;
 
-            children.addAll(desc(infos.id, infos.author, infos.desc,
-                infos.firstChapterId, infos.lastChapter, infos.lastTime, ts));
+          children.addAll(desc(infos.id, infos.author, infos.desc,
+              infos.firstChapterId, infos.lastChapter, infos.lastTime, ts));
 
-            final headLength = children.length;
-            var length = headLength;
-            final hasSameUserBook = sameUserBooks != null;
-            if (hasSameUserBook) {
-              length += sameUserBooks.length;
-            }
+          final headLength = children.length;
+          var length = headLength;
+          final hasSameUserBook = sameUserBooks != null;
+          if (hasSameUserBook) {
+            length += sameUserBooks.length;
+          }
 
-            final bgColor = isLight ? null : Colors.grey.shade900;
-            final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
-            final color = isLight
-                ? const Color.fromRGBO(236, 236, 236, 1)
-                : Color.fromRGBO(25, 25, 25, 1);
+          final bgColor = isLight ? null : Colors.grey.shade900;
+          final splashColor = isLight ? null : Color.fromRGBO(60, 60, 60, 1);
+          final color = isLight
+              ? const Color.fromRGBO(236, 236, 236, 1)
+              : Color.fromRGBO(25, 25, 25, 1);
 
-            final bottomBar = Material(
-              color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
-              child: SafeArea(
-                top: false,
-                child: AnimatedBuilder(
-                  animation: cache,
-                  builder: (context, _) {
-                    var show = false;
-                    int? cid;
-                    int? currentPage;
-                    final list = cache.sortChildren;
+          final bottomBar = Material(
+            color: isLight ? Color.fromARGB(255, 13, 157, 224) : null,
+            child: SafeArea(
+              top: false,
+              child: Cs(() {
+                var show = false;
+                int? cid;
+                int? currentPage;
+                final list = cache.sortChildren;
 
-                    for (var l in list) {
-                      if (l.bookId == bookId) {
-                        if (l.isShow ?? false) {
-                          show = true;
-                          cid = l.chapterId;
-                          currentPage = l.page;
-                        }
-                        break;
-                      }
+                for (var l in list) {
+                  if (l.bookId == bookId) {
+                    if (l.isShow ?? false) {
+                      show = true;
+                      cid = l.chapterId;
+                      currentPage = l.page;
                     }
+                    break;
+                  }
+                }
 
-                    final splashColor = isLight
-                        ? Color.fromARGB(255, 110, 188, 248)
-                        : Color.fromARGB(255, 107, 108, 109);
+                final splashColor = isLight
+                    ? Color.fromARGB(255, 110, 188, 248)
+                    : Color.fromARGB(255, 107, 108, 109);
 
-                    final ios = bottom > 0.0 &&
-                        defaultTargetPlatform == TargetPlatform.iOS;
+                final ios =
+                    bottom > 0.0 && defaultTargetPlatform == TargetPlatform.iOS;
 
-                    final padding = EdgeInsets.only(bottom: ios ? 10.0 : 0.0);
-                    final style = TextStyle(
-                        color: Color.fromARGB(255, 224, 224, 224),
-                        fontSize: 15);
+                final padding = EdgeInsets.only(bottom: ios ? 10.0 : 0.0);
+                final style = TextStyle(
+                    color: Color.fromARGB(255, 224, 224, 224), fontSize: 15);
 
-                    Widget child = Text(show ? '阅读' : '试读', style: style);
-                    Widget rightChild =
-                        Text('${show ? '移除' : '添加到'}书架', style: style);
+                Widget child = Text(show ? '阅读' : '试读', style: style);
+                Widget rightChild =
+                    Text('${show ? '移除' : '添加到'}书架', style: style);
 
-                    child =
-                        SizedBox(height: height, child: Center(child: child));
+                child = SizedBox(height: height, child: Center(child: child));
 
-                    rightChild = SizedBox(
-                        height: height, child: Center(child: rightChild));
+                rightChild =
+                    SizedBox(height: height, child: Center(child: rightChild));
 
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Expanded(
-                          child: btn1(
-                            background: false,
-                            splashColor: splashColor,
-                            child: Padding(padding: padding, child: child),
-                            onTap: () async {
-                              final _list = await cache.getList;
-                              int? _cid, _page;
-                              for (final bookCache in _list) {
-                                if (bookCache.bookId == bookId) {
-                                  _cid = bookCache.chapterId;
-                                  _page = bookCache.page;
-                                  break;
-                                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Expanded(
+                      child: btn1(
+                        background: false,
+                        splashColor: splashColor,
+                        child: Padding(padding: padding, child: child),
+                        onTap: () async {
+                          final _list = await cache.getList;
+                          int? _cid, _page;
+                          for (final bookCache in _list) {
+                            if (bookCache.bookId == bookId) {
+                              _cid = bookCache.chapterId;
+                              _page = bookCache.page;
+                              break;
+                            }
+                          }
+                          _cid ??= cid ?? firstChapterId!;
+                          _page ??= currentPage ?? 1;
+
+                          BookContentPage.push(
+                              context, bookId, _cid, _page, widget.api);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: btn1(
+                        background: false,
+                        splashColor: splashColor,
+                        onTap: () =>
+                            cache.updateShow(bookId, !show, widget.api),
+                        child: Padding(padding: padding, child: rightChild),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          );
+
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: SafeArea(
+                        top: false,
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: onScrollNotification,
+                          child: ListViewBuilder(
+                            color: color,
+                            cacheExtent: 100,
+                            itemCount: length,
+                            itemBuilder: (context, index) {
+                              if (index < headLength) {
+                                return children[index];
                               }
-                              _cid ??= cid ?? firstChapterId!;
-                              _page ??= currentPage ?? 1;
+                              final bookIndex = index - headLength;
+                              final data = sameUserBooks![bookIndex];
 
-                              BookContentPage.push(
-                                  context, bookId, _cid, _page, widget.api);
+                              return ListItem(
+                                height: 108,
+                                bgColor: bgColor,
+                                splashColor: splashColor,
+                                onTap: () {
+                                  if (data.id != null) {
+                                    BookInfoPage.push(data.id!, widget.api);
+                                  }
+                                },
+                                child: _BookInfoSameItemWidget(
+                                    book: data,
+                                    author: author,
+                                    api: widget.api),
+                              );
                             },
                           ),
                         ),
-                        Expanded(
-                          child: btn1(
-                            background: false,
-                            splashColor: splashColor,
-                            onTap: () =>
-                                cache.updateShow(bookId, !show, widget.api),
-                            child: Padding(padding: padding, child: rightChild),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            );
-
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value:
-                  getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-              child: Stack(
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: SafeArea(
-                          top: false,
-                          child: NotificationListener<ScrollNotification>(
-                            onNotification: onScrollNotification,
-                            child: ListViewBuilder(
-                              color: color,
-                              cacheExtent: 100,
-                              itemCount: length,
-                              itemBuilder: (context, index) {
-                                if (index < headLength) {
-                                  return children[index];
-                                }
-                                final bookIndex = index - headLength;
-                                final data = sameUserBooks![bookIndex];
-
-                                return ListItem(
-                                  height: 108,
-                                  bgColor: bgColor,
-                                  splashColor: splashColor,
-                                  onTap: () {
-                                    if (data.id != null) {
-                                      BookInfoPage.push(data.id!, widget.api);
-                                    }
-                                  },
-                                  child: _BookInfoSameItemWidget(
-                                      book: data,
-                                      author: author,
-                                      api: widget.api),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
                       ),
-                      bottomBar,
-                    ],
-                  ),
-                  appBar,
-                  indexView,
-                ],
-              ),
-            );
-          },
-        ),
+                    ),
+                    bottomBar,
+                  ],
+                ),
+                appBar,
+                indexView,
+              ],
+            ),
+          );
+        }),
       ),
     );
     return child;
@@ -423,75 +414,71 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
         color: isLight
             ? const Color.fromRGBO(250, 250, 250, 1)
             : Colors.grey.shade900,
-        child: AnimatedBuilder(
-          animation: cache,
-          builder: (context, _) {
-            int? cid;
-            final list = cache.sortChildren;
+        child: Cs(() {
+          int? cid;
+          final list = cache.sortChildren;
 
-            list.any((e) {
-              if (e.bookId == bookid) {
-                cid = e.chapterId;
-                return true;
-              }
-              return false;
-            });
+          list.any((e) {
+            if (e.bookId == bookid) {
+              cid = e.chapterId;
+              return true;
+            }
+            return false;
+          });
 
-            return btn1(
-              onTap: () {
-                final _cid = cid ?? firstChapterId;
+          return btn1(
+            onTap: () {
+              final _cid = cid ?? firstChapterId;
 
-                context
-                    .getType<BookIndexNotifier>()
-                    .loadIndexs(bookid, _cid, api: widget.api);
-                showIndexs.value = !showIndexs.value;
-              },
-              bgColor: isLight ? null : Colors.grey.shade900,
-              splashColor: isLight
-                  ? const Color.fromRGBO(225, 225, 225, 1)
-                  : Color.fromRGBO(60, 60, 60, 1),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text('目录 最近更新 ', style: ts.title2),
-                            Expanded(
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  lastTime ?? '',
-                                  softWrap: false,
-                                  style: ts.body3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+              context
+                  .getType<BookIndexNotifier>()
+                  .loadIndexs(bookid, _cid, api: widget.api);
+              showIndexs.value = !showIndexs.value;
+            },
+            bgColor: isLight ? null : Colors.grey.shade900,
+            splashColor: isLight
+                ? const Color.fromRGBO(225, 225, 225, 1)
+                : Color.fromRGBO(60, 60, 60, 1),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('目录 最近更新 ', style: ts.title2),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                lastTime ?? '',
+                                softWrap: false,
+                                style: ts.body3,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            )
-                          ],
+                            ),
+                          )
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          lastChapter ?? '',
+                          style: ts.body2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
                         ),
-                        Container(
-                          padding: const EdgeInsets.only(top: 6.0),
-                          child: Text(
-                            lastChapter ?? '',
-                            style: ts.body2,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Icon(Icons.arrow_forward_ios, color: Colors.grey[600])
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.grey[600])
+              ],
+            ),
+          );
+        }),
       ),
       const SizedBox(height: 6),
       Container(

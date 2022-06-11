@@ -30,7 +30,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
 
   void complete() {
     show.value = true;
-    _listenable = notifier;
+    _listenable = notifier.state.rawLists;
     removeListener(complete);
   }
 

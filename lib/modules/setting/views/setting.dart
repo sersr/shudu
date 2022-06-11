@@ -50,7 +50,7 @@ class _SettingState extends State<Setting> {
       color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: ValueListenableBuilder<T>(
         // selector: select,
-        valueListenable: context.getType<OptionsNotifier>().selector(select),
+        valueListenable: context.getType<OptionsNotifier>().select(select),
         builder: (context, updateValue, _) {
           return ListTile(
             onTap: () {
@@ -94,7 +94,7 @@ class _SettingState extends State<Setting> {
       color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: ValueListenableBuilder<bool>(
         // selector: select,
-        valueListenable: context.getType<T>().selector(select),
+        valueListenable: context.getType<T>().select(select),
         builder: (context, value, _) {
           return SwitchListTile.adaptive(
             visualDensity: VisualDensity.compact,
@@ -122,7 +122,7 @@ class _SettingState extends State<Setting> {
   @override
   Widget build(BuildContext context) {
     final mode = optionsNotifier
-        .selector((parent) => parent.options.themeMode ?? ThemeMode.system);
+        .select((parent) => parent.options.themeMode ?? ThemeMode.system);
 
     final line = Divider(
         color: !context.isDarkMode
@@ -237,7 +237,7 @@ class _SettingState extends State<Setting> {
           children: [
             ValueListenableBuilder<TargetPlatform>(
                 // selector: select,
-                valueListenable: context.getType<OptionsNotifier>().selector(
+                valueListenable: context.getType<OptionsNotifier>().select(
                     (opt) => opt.options.platform ?? defaultTargetPlatform),
                 builder: (context, updateValue, _) {
                   return RadioListTile(
@@ -249,7 +249,7 @@ class _SettingState extends State<Setting> {
                 }),
             ValueListenableBuilder<TargetPlatform>(
                 // selector: select,
-                valueListenable: context.getType<OptionsNotifier>().selector(
+                valueListenable: context.getType<OptionsNotifier>().select(
                     (opt) => opt.options.platform ?? defaultTargetPlatform),
                 builder: (context, updateValue, _) {
                   return RadioListTile(

@@ -7,10 +7,10 @@ import 'package:useful_tools/useful_tools.dart';
 
 import 'app.dart';
 import 'event/repository.dart';
-import 'modules/book_content/book_content.dart';
-import 'modules/book_index/book_index.dart';
-import 'modules/home/home.dart';
-import 'modules/search/search.dart';
+import 'modules/book_content.dart';
+import 'modules/book_index.dart';
+import 'modules/home.dart';
+import 'modules/search.dart';
 import 'modules/setting/providers/options_notifier.dart';
 import 'modules/setting/setting.dart';
 import 'modules/text_style/text_style.dart';

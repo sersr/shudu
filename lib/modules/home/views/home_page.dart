@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:nop/nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -58,18 +57,7 @@ class _MyHomePageState extends State<MyHomePage>
     final data = MediaQuery.of(context);
     painterBloc.metricsChange(data);
 
-    _future ??= opts.init().whenComplete(() {
-      if (opts.options.updateOnStart == true) {
-        SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
-          if (mounted) {
-            _refreshKey.currentState!.show();
-            // refreshDelegate.show();
-
-          }
-        });
-      }
-      return context.getType<SearchNotifier>().init();
-    });
+    _future ??= opts.init();
   }
 
   @override
@@ -261,24 +249,9 @@ class _MyHomePageState extends State<MyHomePage>
                 NavRoutes.bookInfoPage(id: item.bookId!, api: api)
                     .goReplacement();
               }),
-          ChangeAuto(() {
-            final selector =
-                context.getType<BookCacheNotifier>().selector((notifier) {
-              final child = notifier.sortChildren;
-              final it = child.iterator;
-              Cache? current;
-              final bookid = item.bookId;
-              while (it.moveNext()) {
-                final _cache = it.current;
-                if (bookid == _cache.bookId) {
-                  current = _cache;
-                  break;
-                }
-              }
-              current ??= item;
-              return current.isTop ?? false;
-            });
-            final isTop = selector.al.value;
+          Cs(() {
+            final isTop =
+                context.getType<BookCacheNotifier>().state.isTop(item).value;
             return btn2(
                 icon: Icons.touch_app_sharp,
                 text: isTop ? '取消置顶' : '书籍置顶',
@@ -287,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage>
           // ValueListenableBuilder<bool>(
           //   // selector: select,
           //   valueListenable:
-          //       context.getType<BookCacheNotifier>().selector((notifier) {
+          //       context.getType<BookCacheNotifier>().select((notifier) {
           //     final child = notifier.sortChildren;
           //     final it = child.iterator;
           //     Cache? current;
@@ -363,9 +336,8 @@ class _MyHomePageState extends State<MyHomePage>
           if (no.leading) no.disallowIndicator();
           return false;
         },
-        child: AnimatedBuilder(
-          animation: cache,
-          builder: (_, state) {
+        child: Cs(
+          () {
             if (!cache.initialized) return const SizedBox();
 
             final children = cache.showChildren;

@@ -6,7 +6,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../../event/export.dart';
 import '../../book_info/views/info_page.dart';
-import '../../home/home.dart';
+import '../../home.dart';
 import '../import.dart';
 import '../widgets/page_view_controller.dart';
 import 'content_notifier/export.dart';

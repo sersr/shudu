@@ -3,39 +3,39 @@ import 'package:nop/nop.dart';
 import '../../../api/api.dart';
 import '../../../data/data.dart';
 import '../../../event/export.dart';
-import 'package:useful_tools/change_notifier.dart';
 
-class BookInfoProvider extends ChangeNotifierBase {
+import 'book_info_state.dart';
+
+class BookInfoProvider {
   Repository? repository;
-  int? lastId;
-  BookInfoRoot? get data => _data;
+  final state = BookInfoState();
 
-  int? firstCid;
-  dynamic _data;
+  BookInfoRoot? get data => state.data;
+  int? get lastId => state.lastId;
+
   Future<void> getData(int id, ApiType api) async {
     if (repository == null) return;
     if (contains(id)) {
       Log.i('contains');
       return;
     }
-    lastId = id;
 
-    _data = await repository!.getInfo(id) ?? const BookInfoRoot();
-
-    notifyListeners();
+    final data = await repository!.getInfo(id) ?? const BookInfoRoot();
+    state.data = data;
+    state.lastId = id;
   }
 
-  dynamic get(int id) {
-    if (lastId == id) return _data;
+  BookInfoRoot? get(int id) {
+    if (lastId == id) return data;
+    return null;
   }
 
   void remove(int id) {
-    if (lastId == id) _data = null;
+    if (lastId == id) state.data = null;
   }
 
   void reload(int id, ApiType api) {
     remove(id);
-    notifyListeners();
     getData(id, api);
   }
 

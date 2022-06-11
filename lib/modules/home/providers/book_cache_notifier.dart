@@ -7,6 +7,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../../api/api.dart';
 import '../../../database/nop_database.dart';
 import '../../../event/export.dart';
+import 'book_cache_state.dart';
 
 class Cache {
   static const none = Cache._();
@@ -56,49 +57,26 @@ class Cache {
   final ApiType api;
 }
 
-class BookCacheNotifier extends ChangeNotifierBase {
+class BookCacheNotifier with NopLifeCycle {
   BookCacheNotifier(this.repository);
   final Repository repository;
+  final state = BookCacheState();
 
-  List<Cache>? _rawList;
+  List<Cache>? get rawList => state.rawList;
 
-  List<Cache>? get rawList => _rawList;
+  List<Cache> get sortChildren => state.sortChildren;
 
-  List<Cache>? _sortChildren;
-  List<Cache> get sortChildren {
-    if (_sortChildren != null) return _sortChildren!;
-    final _list = _rawList;
-    if (_list != null && _list.isNotEmpty) {
-      _list.sort((p, n) =>
-          n.sortKey == null || p.sortKey == null ? 0 : n.sortKey! - p.sortKey!);
-      final isTop = _list.where((element) => element.isTop == true);
-      final custom = _list.where((element) => element.isTop != true);
-      _sortChildren = [...isTop, ...custom];
-    } else {
-      _sortChildren = <Cache>[];
-    }
+  bool get initialized => rawList != null;
 
-    return _sortChildren!;
-  }
-
-  bool get initialized => _rawList != null;
-
-  List<Cache>? _showChildren;
-  List<Cache> get showChildren {
-    final sort = sortChildren;
-
-    _showChildren ??= sort.where((e) => e.isShow == true).toList();
-
-    return _showChildren!;
-  }
+  List<Cache> get showChildren => state.sortChildren;
 
   FutureOr<List<Cache>> get getList async {
     final dataList = <Cache>[];
-    final fn1 = repository.bookCacheEvent.getMainList().mapOption(
+    await repository.bookCacheEvent.getMainList().mapOption(
         ifNone: () {},
         ifSome: (data) =>
             dataList.addAll(data.map((e) => Cache.fromBookCache(e))));
-    await fn1;
+
     return dataList;
   }
 
@@ -129,14 +107,10 @@ class BookCacheNotifier extends ChangeNotifierBase {
       await _update();
     }
     await _awaitData();
-
-    notifyListeners();
   }
 
   Future<void> _awaitData() async {
-    final list = await getList;
-    _showChildren = _sortChildren = null;
-    _rawList = list;
+    state.rawList = await getList;
   }
 
   Future<void> addBook(BookCache bookCache) async {
@@ -167,4 +141,10 @@ class BookCacheNotifier extends ChangeNotifierBase {
   Future<void> updateBookStatus(int id, ApiType api) async {
     await repository.getInfo(id);
   }
+
+  @override
+  void init() {}
+
+  @override
+  void nopDispose() {}
 }

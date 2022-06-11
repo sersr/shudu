@@ -93,7 +93,7 @@ class _ViewOneState extends State<ViewOne> {
     }
 
     appHideValue =
-        topOffset.selector((parent) => (max - parent.value).clamp(0.0, range));
+        topOffset.select((parent) => (max - parent.value).clamp(0.0, range));
   }
 
   void onChanged(offset) => topOffset.value = offset;

@@ -10,7 +10,7 @@ class ShuduApp extends StatelessWidget {
   final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
-    final listenable = context.getType<OptionsNotifier>().selector((opt) => [
+    final listenable = context.getType<OptionsNotifier>().select((opt) => [
           opt.options.themeMode,
           opt.options.platform,
           opt.options.showPerformanceOverlay,
@@ -18,7 +18,7 @@ class ShuduApp extends StatelessWidget {
     // return ValueListenableBuilder<List>(
     //     valueListenable: listenable,
     //     builder: (context, list, child) {
-    return ChangeAuto(() {
+    return Cs(() {
       final List<dynamic> list = listenable.al.value;
       final themeMode = list[0] ?? mode;
       return MaterialApp(

@@ -8,7 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../../../api/api.dart';
 import '../../../routes/routes.dart';
 import '../../../widgets/page_animation.dart';
-import '../../home/home.dart';
+import '../../home.dart';
 import '../../setting/setting.dart';
 import '../providers/content_notifier.dart';
 import '../providers/content_notifier/content_base.dart';
@@ -61,7 +61,7 @@ class BookContentPageState extends State<BookContentPage>
     bloc = context.getType<ContentNotifier>();
     blocCache = context.getType<BookCacheNotifier>();
     notifier = context.getType();
-    notifyColor = bloc.config.selector((parent) => parent.value.bgcolor);
+    notifyColor = bloc.config.select((parent) => parent.value.bgcolor);
   }
 
   @override

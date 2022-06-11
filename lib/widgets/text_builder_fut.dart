@@ -55,7 +55,7 @@ class TextAsyncLayout extends StatelessWidget {
       child: ValueListenableBuilder<bool>(
           valueListenable: context
               .getType<OptionsNotifier>()
-              .selector((parent) => parent.options.useTextCache ?? false),
+              .select((parent) => parent.options.useTextCache ?? false),
           // selector: (_, opt) => opt.options.useTextCache ?? false,
           builder: (context, useTextCache, child) {
             /// 只有绑定 [CacheBinding] 才能启用
