@@ -368,6 +368,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEvent, CustomEventResolve {
       url = Api.imageUrl(img);
       imgName = img;
     }
+    url = url.replaceAll('pysmei', 'pigqq');
     return [url, '${url.hashCode}_$imgName'];
   }
 
