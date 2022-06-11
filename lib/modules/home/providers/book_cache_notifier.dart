@@ -68,7 +68,7 @@ class BookCacheNotifier with NopLifeCycle {
 
   bool get initialized => rawList != null;
 
-  List<Cache> get showChildren => state.sortChildren;
+  List<Cache> get showChildren => state.showChildren;
 
   FutureOr<List<Cache>> get getList async {
     final dataList = <Cache>[];

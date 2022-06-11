@@ -47,4 +47,9 @@ class BookCacheState {
 
   /// 添加 al 支持自动监听
   List<Cache> get sortChildren => _sortChildren.al.value;
+
+  late final _showChildren = _sortChildren.select((sortChildren) {
+    return sortChildren.value.where((e) => e.isShow == true).toList();
+  });
+  List<Cache> get showChildren => _showChildren.al.value;
 }
