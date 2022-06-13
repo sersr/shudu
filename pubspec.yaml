@@ -47,7 +47,7 @@ dependencies:
   useful_tools:
     git:
       url: https://github.com/sersr/useful_tools.git
-  #     ref: ab92915efe65dfd22f7c1f25164c01a64fec5f90
+      ref: aa4a8659967f2efbc3d17e8a5688b4a7d07d87df
   video_player: ^2.1.0
   wakelock: ^0.6.1+1
   infinite_listview: ^1.1.0
@@ -58,17 +58,19 @@ dependencies:
   nop:
     git:
       url: https://github.com/sersr/nop.git
-
-
+      ref: 3e4ba0febdac8f210ae504846506c010057ddeda
   nop_db_sqlite:
     git:
       url: https://github.com/sersr/nop_db_sqlite.git
+      ref: f9b3b06597e467b43aa8ffde8a7f6dcc47746108
   bangs:
     git:
       url: https://github.com/sersr/bangs.git
+      ref: 53124048826a2da474178433732d970104dc3798
   nop_db_sqflite:
     git:
       url: https://github.com/sersr/nop_db_sqflite.git
+      ref: 0766b8432c145b64d284f2a639eb6958474d7efa
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2
@@ -98,6 +100,7 @@ dependency_overrides:
     path: ../packages/nop
   nop_annotations:
     path: ../packages/nop_annotations
+    # ref: 5d68ec759a5eb00416236660bb82fe932fa645f4
   nop_db_sqlite:
     path: ../packages/nop_db_sqlite
   bangs:
@@ -119,6 +122,7 @@ dev_dependencies:
   nop_gen:
     git:
       url: https://github.com/sersr/nop_gen.git
+      ref: 9407d8e518acf6c7acdc7d3b448b5e68d49799de
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:
