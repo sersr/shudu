@@ -1,60 +1,66 @@
 PODS:
-  - battery (0.0.1):
+  - battery_plus (1.0.0):
     - Flutter
   - device_info (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - flutter_local_notifications (0.0.1):
     - Flutter
+  - flutter_native_splash (0.0.1):
+    - Flutter
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - path_provider (0.0.1):
+  - memory_info (0.0.1):
     - Flutter
-  - "permission_handler (5.1.0+2)":
+  - path_provider_ios (0.0.1):
     - Flutter
-  - screen_brightness (0.0.1):
+  - permission_handler_apple (9.0.4):
+    - Flutter
+  - screen_brightness_ios (0.0.5):
     - Flutter
   - sqflite (0.0.2):
     - Flutter
     - FMDB (>= 2.7.5)
-  - sqlite3 (3.35.5):
-    - sqlite3/common (= 3.35.5)
-  - sqlite3/common (3.35.5)
-  - sqlite3/fts5 (3.35.5):
+  - sqlite3 (3.38.5):
+    - sqlite3/common (= 3.38.5)
+  - sqlite3/common (3.38.5)
+  - sqlite3/fts5 (3.38.5):
     - sqlite3/common
-  - sqlite3/json1 (3.35.5):
+  - sqlite3/json1 (3.38.5):
     - sqlite3/common
-  - sqlite3/perf-threadsafe (3.35.5):
+  - sqlite3/perf-threadsafe (3.38.5):
     - sqlite3/common
-  - sqlite3/rtree (3.35.5):
+  - sqlite3/rtree (3.38.5):
     - sqlite3/common
   - sqlite3_flutter_libs (0.0.1):
     - Flutter
-    - sqlite3 (~> 3.35.4)
+    - sqlite3 (~> 3.38.5)
     - sqlite3/fts5
     - sqlite3/json1
     - sqlite3/perf-threadsafe
     - sqlite3/rtree
-  - url_launcher (0.0.1):
+  - url_launcher_ios (0.0.1):
     - Flutter
-  - video_player (0.0.1):
+  - video_player_avfoundation (0.0.1):
     - Flutter
   - wakelock (0.0.1):
     - Flutter
 
 DEPENDENCIES:
-  - battery (from `.symlinks/plugins/battery/ios`)
+  - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
   - device_info (from `.symlinks/plugins/device_info/ios`)
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
-  - path_provider (from `.symlinks/plugins/path_provider/ios`)
-  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
-  - screen_brightness (from `.symlinks/plugins/screen_brightness/ios`)
+  - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
+  - memory_info (from `.symlinks/plugins/memory_info/ios`)
+  - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - sqlite3_flutter_libs (from `.symlinks/plugins/sqlite3_flutter_libs/ios`)
-  - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
-  - video_player (from `.symlinks/plugins/video_player/ios`)
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/ios`)
   - wakelock (from `.symlinks/plugins/wakelock/ios`)
 
 SPEC REPOS:
@@ -63,47 +69,53 @@ SPEC REPOS:
     - sqlite3
 
 EXTERNAL SOURCES:
-  battery:
-    :path: ".symlinks/plugins/battery/ios"
+  battery_plus:
+    :path: ".symlinks/plugins/battery_plus/ios"
   device_info:
     :path: ".symlinks/plugins/device_info/ios"
   Flutter:
     :path: Flutter
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
-  path_provider:
-    :path: ".symlinks/plugins/path_provider/ios"
-  permission_handler:
-    :path: ".symlinks/plugins/permission_handler/ios"
-  screen_brightness:
-    :path: ".symlinks/plugins/screen_brightness/ios"
+  flutter_native_splash:
+    :path: ".symlinks/plugins/flutter_native_splash/ios"
+  memory_info:
+    :path: ".symlinks/plugins/memory_info/ios"
+  path_provider_ios:
+    :path: ".symlinks/plugins/path_provider_ios/ios"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
+  screen_brightness_ios:
+    :path: ".symlinks/plugins/screen_brightness_ios/ios"
   sqflite:
     :path: ".symlinks/plugins/sqflite/ios"
   sqlite3_flutter_libs:
     :path: ".symlinks/plugins/sqlite3_flutter_libs/ios"
-  url_launcher:
-    :path: ".symlinks/plugins/url_launcher/ios"
-  video_player:
-    :path: ".symlinks/plugins/video_player/ios"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
+  video_player_avfoundation:
+    :path: ".symlinks/plugins/video_player_avfoundation/ios"
   wakelock:
     :path: ".symlinks/plugins/wakelock/ios"
 
 SPEC CHECKSUMS:
-  battery: 6b19dafdbba590f03b1f0cd2f1224e3ffedadbe6
+  battery_plus: 7851ab482c336dd101ae735dc9363f01e1223c7c
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743
+  flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
-  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
-  screen_brightness: 994a74a8a983e319ff8a8e1e2380b1d7be899098
+  memory_info: 4559bfc41a5fad956f88a9ba0e4f2f9944c767e1
+  path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
+  permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  screen_brightness_ios: dd110ebfe9602013ea863d59770a9192ebbb7ac7
   sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
-  sqlite3: 75da32fd4e3574f6c38566a9f0114cfe792c8db5
-  sqlite3_flutter_libs: aedb7b6ba191f9a052dcef77691cf5d37437431c
-  url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
-  video_player: 9cc823b1d9da7e8427ee591e8438bfbcde500e6e
+  sqlite3: 93442daab2ab1825bc9c05faa85814a1996f5b65
+  sqlite3_flutter_libs: 92ed62fa0dcbfe2e37d5e2b60d00820672b71ffb
+  url_launcher_ios: 839c58cdb4279282219f5e248c3321761ff3c4de
+  video_player_avfoundation: e489aac24ef5cf7af82702979ed16f2a5ef84cff
   wakelock: d0fc7c864128eac40eba1617cb5264d9c940b46f
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
-COCOAPODS: 1.10.2
+COCOAPODS: 1.11.3

@@ -51,7 +51,7 @@ class BookContentPageState extends State<BookContentPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     observer = OverlayObserverState(overlayGetter: overlayGetter);
   }
 
@@ -66,7 +66,7 @@ class BookContentPageState extends State<BookContentPage>
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

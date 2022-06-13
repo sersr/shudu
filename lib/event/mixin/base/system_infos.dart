@@ -53,7 +53,14 @@ mixin SystemInfos {
       ..add(setOrientation(true))
       ..add(getBatteryLevel);
     bool externalDir = true;
-
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        SqfliteMainIsolate.initMainDb();
+        break;
+      default:
+    }
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 存储在外部，避免重新安装时数据丢失
       _waits.add(getExternalStorageDirectories().then((f) async {
@@ -69,7 +76,6 @@ mixin SystemInfos {
           appDirExt = appPath;
         }
 
-        SqfliteMainIsolate.initMainDb();
         _waits
           ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
           ..add(Bangs.safePadding
@@ -150,13 +156,13 @@ mixin SystemInfos {
   Future<int> get getBatteryLevel async {
     _battery ??= Battery();
 
-    // deviceInfo ??= DeviceInfoPlugin();
+    deviceInfo ??= DeviceInfoPlugin();
 
-    // if (defaultTargetPlatform == TargetPlatform.iOS) {
-    //   var iosInfo = await deviceInfo!.iosInfo;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      var iosInfo = await deviceInfo!.iosInfo;
 
-    //   if (!iosInfo.isPhysicalDevice) return level;
-    // }
+      if (!iosInfo.isPhysicalDevice) return level;
+    }
     if (Platform.isWindows || Platform.isMacOS) {
       return level;
     }

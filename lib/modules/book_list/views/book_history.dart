@@ -7,7 +7,7 @@ import '../../book_info/views/info_page.dart';
 import '../../home/providers/book_cache_notifier.dart';
 
 class BookHistory extends StatefulWidget {
-  const BookHistory({Key? key}) : super(key: key);
+  const BookHistory({super.key});
 
   @override
   _BookHistoryState createState() => _BookHistoryState();

@@ -193,7 +193,7 @@ class OptionsNotifier extends ChangeNotifierBase {
     // final bool followSystem = box.get(_followSystem, defaultValue: true);
     final ThemeMode themeMode =
         box.get(_themeMode, defaultValue: ThemeMode.system);
-    GestureBinding.instance!.resamplingEnabled = resample;
+    GestureBinding.instance.resamplingEnabled = resample;
     NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
     await box.close();
 
@@ -231,7 +231,7 @@ class OptionsNotifier extends ChangeNotifierBase {
     _updateOptions(box, any, _themeMode, options.themeMode);
 
     if (_updateOptions(box, any, _resample, options.resample))
-      GestureBinding.instance!.resamplingEnabled = options.resample!;
+      GestureBinding.instance.resamplingEnabled = options.resample!;
 
     if (_updateOptions(box, any, _nopResample, options.nopResample))
       NopGestureBinding.instance!.nopResamplingEnabled = options.nopResample!;

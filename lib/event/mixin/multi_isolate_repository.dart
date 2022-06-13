@@ -39,7 +39,9 @@ class MultiIsolateRepository extends Repository
     assert(args != null);
     if (!kIsWeb) {
       return IsolateRemoteServer(
-          entryPoint: _multiIsolateEntryPoint, args: getArgs(args!));
+          entryPoint: _multiIsolateEntryPoint,
+          args: getArgs(args!),
+          debugName: 'book_remote_server');
     } else {
       return LocalRemoteServer(
           entryPoint: _multiIsolateEntryPoint, args: getArgs(args!));

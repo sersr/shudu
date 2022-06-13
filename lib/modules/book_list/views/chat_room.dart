@@ -98,7 +98,7 @@ class _ChatRoomState extends State<ChatRoom> {
                     builder: (context, child) {
                       if (_user01List.isEmpty)
                         return Center(child: Text('没有消息'));
-                      SchedulerBinding.instance!.addPostFrameCallback((_) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
                           if (controller.hasClients) {
                             final end = controller.position.maxScrollExtent;

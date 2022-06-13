@@ -8,7 +8,7 @@ import 'package:useful_tools/useful_tools.dart';
 import '../providers/options_notifier.dart';
 
 class Setting extends StatefulWidget {
-  const Setting({Key? key}) : super(key: key);
+  const Setting({super.key}) ;
 
   @override
   _SettingState createState() => _SettingState();
