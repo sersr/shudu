@@ -47,7 +47,7 @@ dependencies:
   useful_tools:
     git:
       url: https://github.com/sersr/useful_tools.git
-      ref: aa4a8659967f2efbc3d17e8a5688b4a7d07d87df
+      # ref: aa4a8659967f2efbc3d17e8a5688b4a7d07d87df
   video_player: ^2.1.0
   wakelock: ^0.6.1+1
   infinite_listview: ^1.1.0
