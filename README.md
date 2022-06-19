@@ -2,11 +2,15 @@
 
 提供简易小说阅读方式
 
-## 个人开发的包：
- - nop_db: 数据库工具包，代码生成，`Isolate`通信协议，动态传输
+## 包含的库：
+ - nop_db: 数据库工具包，代码生成，
+ - nop: `Isolate`通信协议，动态传输
  - nop_db_sqlite: 使用 sqlite3 作为 nop_db 数据库底层实现
  - useful_tools: 指针采样，图片缓存库（包含flutter相关的库）
- - utils：纯dart工具包
+
+## flutter version
+
+    3.0
 
 ## 构建
 - 注释`pubspec.yaml`下`dependency_overrides`项
