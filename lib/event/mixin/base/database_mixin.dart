@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:path/path.dart';
 
 import '../../../database/database.dart';

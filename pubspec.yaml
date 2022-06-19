@@ -59,6 +59,9 @@ dependencies:
     git:
       url: https://github.com/sersr/nop.git
       ref: 3e4ba0febdac8f210ae504846506c010057ddeda
+  nop_db:
+    git:
+      url: https://github.com/sersr/nop_db.git
   nop_flutter:
     git:
       url: https://github.com/sersr/nop_flutter.git
@@ -103,6 +106,8 @@ dependency_overrides:
     path: ../packages/nop_flutter
   nop:
     path: ../packages/nop
+  nop_db:
+    path: ../packages/nop_db
   nop_annotations:
     path: ../packages/nop_annotations
     # ref: 5d68ec759a5eb00416236660bb82fe932fa645f4

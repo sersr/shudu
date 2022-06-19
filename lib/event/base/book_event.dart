@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:nop/nop.dart';
+import 'package:nop_db/nop_db.dart';
 
 import '../../data/data.dart';
 import '../../database/database.dart';

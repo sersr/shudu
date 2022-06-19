@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:nop/nop.dart';
+import 'package:nop_db/nop_db.dart';
 import 'package:nop_flutter/nop_flutter.dart';
 
 import '../api/api.dart';
