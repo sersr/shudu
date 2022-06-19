@@ -62,44 +62,34 @@ mixin SystemInfos {
       default:
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // 存储在外部，避免重新安装时数据丢失
-      _waits.add(getExternalStorageDirectories().then((f) async {
-        if (f != null && f.isNotEmpty) {
-          String? extPath;
-          try {
-            extPath =
-                await AndroidExternalStorage.getExternalStorageDirectory();
-          } catch (e) {
-            Log.i(e);
-          }
-          final appPath = extPath ?? '/storage/emulated/0';
-          appDirExt = appPath;
-        }
-
-        _waits
-          ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
-          ..add(Bangs.safePadding
-              .then((value) => _statusHeight = value.padding.top))
-          ..add(Permission.manageExternalStorage.status.then((status) {
-            if (status.isDenied) {
-              return OptionsNotifier.extenalStorage.then((request) {
-                return OptionsNotifier.setextenalStorage(false)
-                    .whenComplete(() {
-                  if (request) {
-                    return Permission.manageExternalStorage
-                        .request()
-                        .then((status) {
-                      if (status.isDenied) externalDir = false;
-                    });
-                  } else {
-                    externalDir = false;
-                  }
-                });
-              });
-            }
-          }));
-      }));
+      _waits.add(
+        AndroidExternalStorage.getExternalStorageDirectory().then((extPath) {
+          appDirExt = extPath ?? '/storage/emulated/0';
+        }),
+      );
     }
+
+    _waits
+      ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
+      ..add(
+          Bangs.safePadding.then((value) => _statusHeight = value.padding.top))
+      ..add(Permission.manageExternalStorage.status.then((status) {
+        if (status.isDenied) {
+          return OptionsNotifier.extenalStorage.then((request) {
+            return OptionsNotifier.setextenalStorage(false).whenComplete(() {
+              if (request) {
+                return Permission.manageExternalStorage
+                    .request()
+                    .then((status) {
+                  if (status.isDenied) externalDir = false;
+                });
+              } else {
+                externalDir = false;
+              }
+            });
+          });
+        }
+      }));
 
     late Directory appDir;
 
