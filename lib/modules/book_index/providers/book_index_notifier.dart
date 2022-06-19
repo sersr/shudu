@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
+import 'package:nop_flutter/change_notifier.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';

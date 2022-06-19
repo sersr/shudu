@@ -59,6 +59,9 @@ dependencies:
     git:
       url: https://github.com/sersr/nop.git
       ref: 3e4ba0febdac8f210ae504846506c010057ddeda
+  nop_flutter:
+    git:
+      url: https://github.com/sersr/nop_flutter.git
   nop_db_sqlite:
     git:
       url: https://github.com/sersr/nop_db_sqlite.git
@@ -96,6 +99,8 @@ dependencies:
 dependency_overrides:
   useful_tools:
     path: ../packages/useful_tools
+  nop_flutter:
+    path: ../packages/nop_flutter
   nop:
     path: ../packages/nop
   nop_annotations:

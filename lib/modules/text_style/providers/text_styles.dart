@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:useful_tools/change_notifier.dart';
+import 'package:nop_flutter/change_notifier.dart';
 
 import '../models/text_style.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
-import 'package:useful_tools/change_notifier.dart';
+import 'package:nop_flutter/change_notifier.dart';
 
 import 'base/export.dart';
 import 'mixin/base/system_infos.dart';

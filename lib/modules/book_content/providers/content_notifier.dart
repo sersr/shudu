@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:useful_tools/useful_tools.dart';
+import 'package:nop_flutter/nop_flutter.dart';
 
 import '../../../event/export.dart';
 import '../../book_info/views/info_page.dart';

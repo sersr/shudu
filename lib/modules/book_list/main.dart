@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:nop/event_queue.dart';
+import 'package:nop_flutter/nop_flutter.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../text_style/providers/text_styles.dart';
@@ -366,6 +367,7 @@ enum OverlayAliment {
   center,
   end,
 }
+
 Alignment getAlignment(bool rightSide, OverlayAliment align) {
   late Alignment _alignment;
   if (rightSide) {

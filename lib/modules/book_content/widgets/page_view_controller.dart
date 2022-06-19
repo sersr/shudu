@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:useful_tools/change_notifier.dart';
+import 'package:nop_flutter/change_notifier.dart';
 
 abstract class ContentViewControllerBase {
   double get pixels;
