@@ -48,7 +48,11 @@ mixin Configs on ContentDataBase, ContentStatus {
 
   late TextStyle style;
   late TextStyle secstyle;
-  Future<void> initConfigs() async {
+  Future? _init;
+  Future<void> initConfigs() =>
+      _init ??= _initConfigs()..whenComplete(() => _init = null);
+
+  Future<void> _initConfigs() async {
     final box = await Hive.openBox('settings');
     var _bgcolor = box.get('bgcolor', defaultValue: Color(0xffe3d1a8));
     var _fontColor = box.get('fontColor', defaultValue: Color(0xff4e4e4e));
@@ -231,6 +235,6 @@ class ContentViewConfig {
   }
 
   @override
-  int get hashCode => hashValues(fontColor, fontFamily, fontSize,
+  int get hashCode => Object.hash(fontColor, fontFamily, fontSize,
       lineTweenHeight, bgcolor, locale, axis, audio, orientation);
 }

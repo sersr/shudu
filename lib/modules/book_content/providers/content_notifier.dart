@@ -12,12 +12,16 @@ import '../widgets/page_view_controller.dart';
 import 'content_notifier/export.dart';
 
 /// 只提供向外暴露的api
-class ContentNotifier {
-  ContentNotifier({required this.repository})
-      : handle = ContentNotifierImpl(repository);
+class ContentNotifier with NopLifeCycle {
+  ContentNotifier();
 
-  final Repository repository;
-  final ContentNotifierImpl handle;
+  late final Repository repository = getType();
+  late final ContentNotifierImpl handle = ContentNotifierImpl(repository);
+  @override
+  void nopInit() {
+    super.nopInit();
+    initConfigs();
+  }
 
   void notifyState(
       {bool? loading, bool? notEmptyOrIgnore, NotifyMessage? error}) {

@@ -13,9 +13,10 @@ void main() async {
     final fe = f as _EBase;
     fe.b = '11';
     print(fe.b);
-    final _e = _EBase();
+    final _e = _EBase(b: '..');
     _e.a = 'ebase';
     _e.b = 'ss';
+    _e.b;
     print(_e);
   });
 }

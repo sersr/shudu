@@ -58,8 +58,8 @@ class Cache {
 }
 
 class BookCacheNotifier with NopLifeCycle {
-  BookCacheNotifier(this.repository);
-  final Repository repository;
+  BookCacheNotifier();
+  late final Repository repository = getType();
   final state = BookCacheState();
 
   List<Cache>? get rawList => state.rawList;
@@ -143,8 +143,8 @@ class BookCacheNotifier with NopLifeCycle {
   }
 
   @override
-  void init() {}
-
-  @override
-  void nopDispose() {}
+  void nopInit() {
+    super.nopInit();
+    load();
+  }
 }

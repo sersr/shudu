@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
 import 'package:nop_flutter/change_notifier.dart';
+import 'package:nop_flutter/nop_state.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';
@@ -116,12 +117,15 @@ class BookIndexsData {
 }
 
 class BookIndexNotifier extends ChangeNotifierBase
-    with NotifyStateOnChangeNotifier {
-  BookIndexNotifier({required this.repository}) {
+    with NotifyStateOnChangeNotifier, NopLifeCycle {
+  BookIndexNotifier();
+
+  late final Repository repository = getType();
+  @override
+  void nopInit() {
+    super.nopInit();
     handle = repository;
   }
-
-  final Repository repository;
 
   int lastUpdateTime = 0;
 

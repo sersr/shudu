@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:nop/event_queue.dart';
+import 'package:nop/nop.dart';
 import 'package:nop_flutter/nop_flutter.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -333,8 +334,9 @@ class ListMainPage extends StatelessWidget {
         radius: BorderRadius.horizontal(
             left: rightSide ? radius : Radius.zero,
             right: !rightSide ? radius : Radius.zero),
-        position: rightSide ? Position.right : Position.left,
-        builder: (context, child) {
+        position: rightSide
+            ? NopOverlayPosition.right
+            : NopOverlayPosition.left, builder: (context, child) {
       return SafeArea(
         child: Align(
           alignment: getAlignment(rightSide, align),

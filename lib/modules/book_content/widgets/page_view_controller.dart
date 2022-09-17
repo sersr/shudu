@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:nop_flutter/change_notifier.dart';
 
 abstract class ContentViewControllerBase {

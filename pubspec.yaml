@@ -97,10 +97,10 @@ dependencies:
 dependency_overrides:
   useful_tools:
     path: ../packages/useful_tools
-#   nop_flutter:
-#     path: ../packages/nop_flutter
-#   nop:
-#     path: ../packages/nop
+  nop_flutter:
+    path: ../packages/nop_flutter
+  nop:
+    path: ../packages/nop
   nop_db:
     path: ../packages/nop_db
 #   nop_annotations:

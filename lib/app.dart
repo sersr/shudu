@@ -37,7 +37,7 @@ class ShuduApp extends StatelessWidget {
             platform: list[1] ?? defaultTargetPlatform,
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
               TargetPlatform.iOS: SlidePageTransition(),
-              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+              TargetPlatform.android: SlidePageTransition()
             }),
             appBarTheme:
                 AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
@@ -48,7 +48,7 @@ class ShuduApp extends StatelessWidget {
             colorScheme: const ColorScheme.dark(secondary: Colors.grey),
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
               TargetPlatform.iOS: SlidePageTransition(),
-              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()
+              TargetPlatform.android: SlidePageTransition()
             }),
             appBarTheme:
                 AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),

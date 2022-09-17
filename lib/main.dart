@@ -32,15 +32,12 @@ void main() {
         // );
 
         NopWidgetsFlutterBinding.ensureInitialized();
-        Nav.put(() => Repository.create()..init());
-        Nav.putContext((context) => OptionsNotifier(context.getType())..init());
-        Nav.putContext(
-            (context) => BookIndexNotifier(repository: context.getType()));
-        Nav.putContext((context) => SearchNotifier(context.getType())..init());
-        Nav.putContext((context) =>
-            ContentNotifier(repository: context.getType())..initConfigs());
-        Nav.putContext(
-            (context) => BookCacheNotifier(context.getType())..load());
+        Nav.put(() => Repository.create());
+        Nav.put(() => OptionsNotifier());
+        Nav.put(() => BookIndexNotifier());
+        Nav.put(() => SearchNotifier());
+        Nav.put(() => ContentNotifier());
+        Nav.put(() => BookCacheNotifier());
         Nav.put(() => TextStyleConfig());
 
         uiOverlay(hide: false);

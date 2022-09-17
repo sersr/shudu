@@ -75,7 +75,7 @@ class ConfigOptions {
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
       platform,
       pageBuilder,
       resample,
@@ -97,9 +97,10 @@ enum PageBuilder {
   fadeRightWards,
 }
 
-class OptionsNotifier extends ChangeNotifierBase {
-  OptionsNotifier(this.repository);
-  final Repository repository;
+class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
+  OptionsNotifier();
+  late final Repository repository = getType();
+
   final routeObserver = RouteObserver<PageRoute>();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
@@ -148,7 +149,12 @@ class OptionsNotifier extends ChangeNotifierBase {
 
   final eventQueueKey = Object();
 
-  Future<void> init() => EventQueue.run(this, _init);
+  @override
+  Future<void> nopInit() {
+    super.nopInit();
+    return EventQueue.run(this, _init);
+  }
+
   bool _initDone = false;
   Future<void> _init() async {
     if (_initDone) return;

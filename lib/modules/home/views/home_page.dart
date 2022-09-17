@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:nop/nop.dart';
 import 'package:nop_flutter/nop_flutter.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -58,7 +59,16 @@ class _MyHomePageState extends State<MyHomePage>
     final data = MediaQuery.of(context);
     painterBloc.metricsChange(data);
 
-    _future ??= opts.init();
+    _future ??= Future.wait([opts.nopInit(), painterBloc.initConfigs()])
+        .whenComplete(() {
+      if (opts.options.updateOnStart == true) {
+        SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+          if (mounted) {
+            _refreshKey.currentState!.show();
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -141,7 +151,11 @@ class _MyHomePageState extends State<MyHomePage>
                               textStyle: context
                                   .getType<TextStyleConfig>()
                                   .data
-                                  .body2)),
+                                  .body2
+                                  .copyWith(
+                                    inherit: false,
+                                    textBaseline: TextBaseline.alphabetic,
+                                  ))),
                       child: SizedBox(
                         height: height,
                         width: height,

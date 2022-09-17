@@ -1,13 +1,14 @@
 import 'package:hive/hive.dart';
 import 'package:nop/nop.dart';
+import 'package:nop_flutter/nop_state.dart';
 
 import '../../../data/biquge/search_data.dart';
 import '../../../event/export.dart';
 import 'search_state.dart';
 
-class SearchNotifier {
-  SearchNotifier(this.repository);
-  final Repository repository;
+class SearchNotifier with NopLifeCycle {
+  SearchNotifier();
+  late final Repository repository = getType();
   final state = SearchState();
 
   List<String> get searchHistory => state.searchHistory;
@@ -33,7 +34,9 @@ class SearchNotifier {
     }
   }
 
-  Future<void> init() async {
+  @override
+  Future<void> nopInit() async {
+    super.nopInit();
     return EventQueue.run(this, _init);
   }
 
