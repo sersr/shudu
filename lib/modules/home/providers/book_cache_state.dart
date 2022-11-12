@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:nop_flutter/change_notifier.dart';
+import 'package:flutter_nop/change_notifier.dart';
 
 import 'book_cache_notifier.dart';
 

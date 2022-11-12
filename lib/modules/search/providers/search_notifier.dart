@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:nop/nop.dart';
-import 'package:nop_flutter/nop_state.dart';
+import 'package:flutter_nop/nop_state.dart';
 
 import '../../../data/biquge/search_data.dart';
 import '../../../event/export.dart';
@@ -26,7 +26,6 @@ class SearchNotifier with NopLifeCycle {
     state.searchHistory
       ..remove(key)
       ..add(key);
-    state.updateSearchHistory();
 
     final ignore = EventQueue.currentTask?.canDiscard ?? false;
     if (!ignore) {
@@ -77,6 +76,5 @@ class SearchNotifier with NopLifeCycle {
 
   void delete(String key) {
     searchHistory.remove(key);
-    state.updateSearchHistory();
   }
 }

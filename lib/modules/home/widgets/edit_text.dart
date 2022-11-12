@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nop/utils.dart';
-import 'package:nop_flutter/nop_flutter.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 
 import '../../text_style/text_style.dart';
 

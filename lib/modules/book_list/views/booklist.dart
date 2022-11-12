@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nop/event_queue.dart';
-import 'package:nop_flutter/nop_flutter.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../data/data.dart';
@@ -248,7 +248,7 @@ class ShudanCategProvider extends ChangeNotifierBase {
   void _loadNext(int index) async {
     if (list != null && index < list!.length) return;
     if (_loop.ignore) return;
-
+    await idleWait;
     state = LoadingStatus.loading;
 
     notifyListeners();

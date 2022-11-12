@@ -3,8 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  battery_plus_windows
+  battery_plus
   permission_handler_windows
+  screen_brightness_windows
   sqlite3_flutter_libs
   sqlite3_windows_dll
   url_launcher_windows

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nop_flutter/nop_flutter.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 
 import '../../../event/export.dart';
 import '../../text_style/providers/text_styles.dart';

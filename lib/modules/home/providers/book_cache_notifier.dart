@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:nop/event_queue.dart';
 import 'package:nop/utils.dart';
-import 'package:nop_flutter/nop_flutter.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 
 import '../../../api/api.dart';
 import '../../../database/nop_database.dart';

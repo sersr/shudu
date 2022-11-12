@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:nop/utils.dart';
-import 'package:nop_flutter/change_notifier.dart';
+import 'package:flutter_nop/change_notifier.dart';
 
 import '../../widgets/app_bar.dart';
 

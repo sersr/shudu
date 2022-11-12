@@ -1,4 +1,4 @@
-import 'package:nop_flutter/change_notifier.dart';
+import 'package:flutter_nop/change_notifier.dart';
 
 import '../../../data/biquge/search_data.dart';
 
@@ -6,9 +6,6 @@ class SearchState {
   final _searchHistory = <String>[].cs;
 
   List<String> get searchHistory => _searchHistory.value;
-  void updateSearchHistory() {
-    _searchHistory.update();
-  }
 
   set searchHistory(List<String> value) => _searchHistory.value = value;
 

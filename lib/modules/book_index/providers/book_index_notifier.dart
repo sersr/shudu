@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
-import 'package:nop_flutter/change_notifier.dart';
-import 'package:nop_flutter/nop_state.dart';
+import 'package:flutter_nop/change_notifier.dart';
+import 'package:flutter_nop/nop_state.dart';
 
 import '../../../api/api.dart';
 import '../../../data/data.dart';

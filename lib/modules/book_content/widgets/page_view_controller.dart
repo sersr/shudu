@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nop_flutter/change_notifier.dart';
+import 'package:flutter_nop/change_notifier.dart';
 
 abstract class ContentViewControllerBase {
   double get pixels;

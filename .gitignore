@@ -12,7 +12,7 @@
 /hive
 filelock.lock
 *.sksl.*
-pubspec.lock
+# pubspec.lock
 
 # IntelliJ related
 *.iml

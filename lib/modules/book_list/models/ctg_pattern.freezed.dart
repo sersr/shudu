@@ -12,49 +12,12 @@ part of 'ctg_pattern.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more informations: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
-
-/// @nodoc
-class _$DataResolveTearOff {
-  const _$DataResolveTearOff();
-
-  Data<T> call<T>(T? data, int index) {
-    return Data<T>(
-      data,
-      index,
-    );
-  }
-
-  Loading<T> loading<T>(T? data, int index) {
-    return Loading<T>(
-      data,
-      index,
-    );
-  }
-
-  Failed<T> failed<T>(T? data, int index) {
-    return Failed<T>(
-      data,
-      index,
-    );
-  }
-
-  Done<T> done<T>(T? data, int index) {
-    return Done<T>(
-      data,
-      index,
-    );
-  }
-}
-
-/// @nodoc
-const $DataResolve = _$DataResolveTearOff();
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
 mixin _$DataResolve<T> {
   T? get data => throw _privateConstructorUsedError;
   int get index => throw _privateConstructorUsedError;
-
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(T? data, int index) $default, {
@@ -65,10 +28,10 @@ mixin _$DataResolve<T> {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult Function(T? data, int index)? $default, {
-    TResult Function(T? data, int index)? loading,
-    TResult Function(T? data, int index)? failed,
-    TResult Function(T? data, int index)? done,
+    TResult? Function(T? data, int index)? $default, {
+    TResult? Function(T? data, int index)? loading,
+    TResult? Function(T? data, int index)? failed,
+    TResult? Function(T? data, int index)? done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -90,10 +53,10 @@ mixin _$DataResolve<T> {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult Function(Data<T> value)? $default, {
-    TResult Function(Loading<T> value)? loading,
-    TResult Function(Failed<T> value)? failed,
-    TResult Function(Done<T> value)? done,
+    TResult? Function(Data<T> value)? $default, {
+    TResult? Function(Loading<T> value)? loading,
+    TResult? Function(Failed<T> value)? failed,
+    TResult? Function(Done<T> value)? done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -115,65 +78,69 @@ mixin _$DataResolve<T> {
 abstract class $DataResolveCopyWith<T, $Res> {
   factory $DataResolveCopyWith(
           DataResolve<T> value, $Res Function(DataResolve<T>) then) =
-      _$DataResolveCopyWithImpl<T, $Res>;
+      _$DataResolveCopyWithImpl<T, $Res, DataResolve<T>>;
+  @useResult
   $Res call({T? data, int index});
 }
 
 /// @nodoc
-class _$DataResolveCopyWithImpl<T, $Res>
+class _$DataResolveCopyWithImpl<T, $Res, $Val extends DataResolve<T>>
     implements $DataResolveCopyWith<T, $Res> {
   _$DataResolveCopyWithImpl(this._value, this._then);
 
-  final DataResolve<T> _value;
   // ignore: unused_field
-  final $Res Function(DataResolve<T>) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? data = freezed,
-    Object? index = freezed,
+    Object? index = null,
   }) {
     return _then(_value.copyWith(
-      data: data == freezed
+      data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as T?,
-      index: index == freezed
+      index: null == index
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
-    ));
+    ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class $DataCopyWith<T, $Res> implements $DataResolveCopyWith<T, $Res> {
-  factory $DataCopyWith(Data<T> value, $Res Function(Data<T>) then) =
-      _$DataCopyWithImpl<T, $Res>;
+abstract class _$$DataCopyWith<T, $Res>
+    implements $DataResolveCopyWith<T, $Res> {
+  factory _$$DataCopyWith(_$Data<T> value, $Res Function(_$Data<T>) then) =
+      __$$DataCopyWithImpl<T, $Res>;
   @override
+  @useResult
   $Res call({T? data, int index});
 }
 
 /// @nodoc
-class _$DataCopyWithImpl<T, $Res> extends _$DataResolveCopyWithImpl<T, $Res>
-    implements $DataCopyWith<T, $Res> {
-  _$DataCopyWithImpl(Data<T> _value, $Res Function(Data<T>) _then)
-      : super(_value, (v) => _then(v as Data<T>));
+class __$$DataCopyWithImpl<T, $Res>
+    extends _$DataResolveCopyWithImpl<T, $Res, _$Data<T>>
+    implements _$$DataCopyWith<T, $Res> {
+  __$$DataCopyWithImpl(_$Data<T> _value, $Res Function(_$Data<T>) _then)
+      : super(_value, _then);
 
-  @override
-  Data<T> get _value => super._value as Data<T>;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? data = freezed,
-    Object? index = freezed,
+    Object? index = null,
   }) {
-    return _then(Data<T>(
-      data == freezed
+    return _then(_$Data<T>(
+      freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as T?,
-      index == freezed
+      null == index
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
@@ -209,21 +176,20 @@ class _$Data<T> with DiagnosticableTreeMixin implements Data<T> {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is Data<T> &&
+            other is _$Data<T> &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            const DeepCollectionEquality().equals(other.index, index));
+            (identical(other.index, index) || other.index == index));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      const DeepCollectionEquality().hash(index));
+      runtimeType, const DeepCollectionEquality().hash(data), index);
 
   @JsonKey(ignore: true)
   @override
-  $DataCopyWith<T, Data<T>> get copyWith =>
-      _$DataCopyWithImpl<T, Data<T>>(this, _$identity);
+  @pragma('vm:prefer-inline')
+  _$$DataCopyWith<T, _$Data<T>> get copyWith =>
+      __$$DataCopyWithImpl<T, _$Data<T>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -239,10 +205,10 @@ class _$Data<T> with DiagnosticableTreeMixin implements Data<T> {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult Function(T? data, int index)? $default, {
-    TResult Function(T? data, int index)? loading,
-    TResult Function(T? data, int index)? failed,
-    TResult Function(T? data, int index)? done,
+    TResult? Function(T? data, int index)? $default, {
+    TResult? Function(T? data, int index)? loading,
+    TResult? Function(T? data, int index)? failed,
+    TResult? Function(T? data, int index)? done,
   }) {
     return $default?.call(data, index);
   }
@@ -276,10 +242,10 @@ class _$Data<T> with DiagnosticableTreeMixin implements Data<T> {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult Function(Data<T> value)? $default, {
-    TResult Function(Loading<T> value)? loading,
-    TResult Function(Failed<T> value)? failed,
-    TResult Function(Done<T> value)? done,
+    TResult? Function(Data<T> value)? $default, {
+    TResult? Function(Loading<T> value)? loading,
+    TResult? Function(Failed<T> value)? failed,
+    TResult? Function(Done<T> value)? done,
   }) {
     return $default?.call(this);
   }
@@ -301,7 +267,7 @@ class _$Data<T> with DiagnosticableTreeMixin implements Data<T> {
 }
 
 abstract class Data<T> implements DataResolve<T> {
-  const factory Data(T? data, int index) = _$Data<T>;
+  const factory Data(final T? data, final int index) = _$Data<T>;
 
   @override
   T? get data;
@@ -309,38 +275,41 @@ abstract class Data<T> implements DataResolve<T> {
   int get index;
   @override
   @JsonKey(ignore: true)
-  $DataCopyWith<T, Data<T>> get copyWith => throw _privateConstructorUsedError;
+  _$$DataCopyWith<T, _$Data<T>> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $LoadingCopyWith<T, $Res>
+abstract class _$$LoadingCopyWith<T, $Res>
     implements $DataResolveCopyWith<T, $Res> {
-  factory $LoadingCopyWith(Loading<T> value, $Res Function(Loading<T>) then) =
-      _$LoadingCopyWithImpl<T, $Res>;
+  factory _$$LoadingCopyWith(
+          _$Loading<T> value, $Res Function(_$Loading<T>) then) =
+      __$$LoadingCopyWithImpl<T, $Res>;
   @override
+  @useResult
   $Res call({T? data, int index});
 }
 
 /// @nodoc
-class _$LoadingCopyWithImpl<T, $Res> extends _$DataResolveCopyWithImpl<T, $Res>
-    implements $LoadingCopyWith<T, $Res> {
-  _$LoadingCopyWithImpl(Loading<T> _value, $Res Function(Loading<T>) _then)
-      : super(_value, (v) => _then(v as Loading<T>));
+class __$$LoadingCopyWithImpl<T, $Res>
+    extends _$DataResolveCopyWithImpl<T, $Res, _$Loading<T>>
+    implements _$$LoadingCopyWith<T, $Res> {
+  __$$LoadingCopyWithImpl(
+      _$Loading<T> _value, $Res Function(_$Loading<T>) _then)
+      : super(_value, _then);
 
-  @override
-  Loading<T> get _value => super._value as Loading<T>;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? data = freezed,
-    Object? index = freezed,
+    Object? index = null,
   }) {
-    return _then(Loading<T>(
-      data == freezed
+    return _then(_$Loading<T>(
+      freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as T?,
-      index == freezed
+      null == index
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
@@ -376,21 +345,20 @@ class _$Loading<T> with DiagnosticableTreeMixin implements Loading<T> {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is Loading<T> &&
+            other is _$Loading<T> &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            const DeepCollectionEquality().equals(other.index, index));
+            (identical(other.index, index) || other.index == index));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      const DeepCollectionEquality().hash(index));
+      runtimeType, const DeepCollectionEquality().hash(data), index);
 
   @JsonKey(ignore: true)
   @override
-  $LoadingCopyWith<T, Loading<T>> get copyWith =>
-      _$LoadingCopyWithImpl<T, Loading<T>>(this, _$identity);
+  @pragma('vm:prefer-inline')
+  _$$LoadingCopyWith<T, _$Loading<T>> get copyWith =>
+      __$$LoadingCopyWithImpl<T, _$Loading<T>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -406,10 +374,10 @@ class _$Loading<T> with DiagnosticableTreeMixin implements Loading<T> {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult Function(T? data, int index)? $default, {
-    TResult Function(T? data, int index)? loading,
-    TResult Function(T? data, int index)? failed,
-    TResult Function(T? data, int index)? done,
+    TResult? Function(T? data, int index)? $default, {
+    TResult? Function(T? data, int index)? loading,
+    TResult? Function(T? data, int index)? failed,
+    TResult? Function(T? data, int index)? done,
   }) {
     return loading?.call(data, index);
   }
@@ -443,10 +411,10 @@ class _$Loading<T> with DiagnosticableTreeMixin implements Loading<T> {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult Function(Data<T> value)? $default, {
-    TResult Function(Loading<T> value)? loading,
-    TResult Function(Failed<T> value)? failed,
-    TResult Function(Done<T> value)? done,
+    TResult? Function(Data<T> value)? $default, {
+    TResult? Function(Loading<T> value)? loading,
+    TResult? Function(Failed<T> value)? failed,
+    TResult? Function(Done<T> value)? done,
   }) {
     return loading?.call(this);
   }
@@ -468,7 +436,7 @@ class _$Loading<T> with DiagnosticableTreeMixin implements Loading<T> {
 }
 
 abstract class Loading<T> implements DataResolve<T> {
-  const factory Loading(T? data, int index) = _$Loading<T>;
+  const factory Loading(final T? data, final int index) = _$Loading<T>;
 
   @override
   T? get data;
@@ -476,39 +444,40 @@ abstract class Loading<T> implements DataResolve<T> {
   int get index;
   @override
   @JsonKey(ignore: true)
-  $LoadingCopyWith<T, Loading<T>> get copyWith =>
+  _$$LoadingCopyWith<T, _$Loading<T>> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $FailedCopyWith<T, $Res>
+abstract class _$$FailedCopyWith<T, $Res>
     implements $DataResolveCopyWith<T, $Res> {
-  factory $FailedCopyWith(Failed<T> value, $Res Function(Failed<T>) then) =
-      _$FailedCopyWithImpl<T, $Res>;
+  factory _$$FailedCopyWith(
+          _$Failed<T> value, $Res Function(_$Failed<T>) then) =
+      __$$FailedCopyWithImpl<T, $Res>;
   @override
+  @useResult
   $Res call({T? data, int index});
 }
 
 /// @nodoc
-class _$FailedCopyWithImpl<T, $Res> extends _$DataResolveCopyWithImpl<T, $Res>
-    implements $FailedCopyWith<T, $Res> {
-  _$FailedCopyWithImpl(Failed<T> _value, $Res Function(Failed<T>) _then)
-      : super(_value, (v) => _then(v as Failed<T>));
+class __$$FailedCopyWithImpl<T, $Res>
+    extends _$DataResolveCopyWithImpl<T, $Res, _$Failed<T>>
+    implements _$$FailedCopyWith<T, $Res> {
+  __$$FailedCopyWithImpl(_$Failed<T> _value, $Res Function(_$Failed<T>) _then)
+      : super(_value, _then);
 
-  @override
-  Failed<T> get _value => super._value as Failed<T>;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? data = freezed,
-    Object? index = freezed,
+    Object? index = null,
   }) {
-    return _then(Failed<T>(
-      data == freezed
+    return _then(_$Failed<T>(
+      freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as T?,
-      index == freezed
+      null == index
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
@@ -544,21 +513,20 @@ class _$Failed<T> with DiagnosticableTreeMixin implements Failed<T> {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is Failed<T> &&
+            other is _$Failed<T> &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            const DeepCollectionEquality().equals(other.index, index));
+            (identical(other.index, index) || other.index == index));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      const DeepCollectionEquality().hash(index));
+      runtimeType, const DeepCollectionEquality().hash(data), index);
 
   @JsonKey(ignore: true)
   @override
-  $FailedCopyWith<T, Failed<T>> get copyWith =>
-      _$FailedCopyWithImpl<T, Failed<T>>(this, _$identity);
+  @pragma('vm:prefer-inline')
+  _$$FailedCopyWith<T, _$Failed<T>> get copyWith =>
+      __$$FailedCopyWithImpl<T, _$Failed<T>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -574,10 +542,10 @@ class _$Failed<T> with DiagnosticableTreeMixin implements Failed<T> {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult Function(T? data, int index)? $default, {
-    TResult Function(T? data, int index)? loading,
-    TResult Function(T? data, int index)? failed,
-    TResult Function(T? data, int index)? done,
+    TResult? Function(T? data, int index)? $default, {
+    TResult? Function(T? data, int index)? loading,
+    TResult? Function(T? data, int index)? failed,
+    TResult? Function(T? data, int index)? done,
   }) {
     return failed?.call(data, index);
   }
@@ -611,10 +579,10 @@ class _$Failed<T> with DiagnosticableTreeMixin implements Failed<T> {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult Function(Data<T> value)? $default, {
-    TResult Function(Loading<T> value)? loading,
-    TResult Function(Failed<T> value)? failed,
-    TResult Function(Done<T> value)? done,
+    TResult? Function(Data<T> value)? $default, {
+    TResult? Function(Loading<T> value)? loading,
+    TResult? Function(Failed<T> value)? failed,
+    TResult? Function(Done<T> value)? done,
   }) {
     return failed?.call(this);
   }
@@ -636,7 +604,7 @@ class _$Failed<T> with DiagnosticableTreeMixin implements Failed<T> {
 }
 
 abstract class Failed<T> implements DataResolve<T> {
-  const factory Failed(T? data, int index) = _$Failed<T>;
+  const factory Failed(final T? data, final int index) = _$Failed<T>;
 
   @override
   T? get data;
@@ -644,38 +612,39 @@ abstract class Failed<T> implements DataResolve<T> {
   int get index;
   @override
   @JsonKey(ignore: true)
-  $FailedCopyWith<T, Failed<T>> get copyWith =>
+  _$$FailedCopyWith<T, _$Failed<T>> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $DoneCopyWith<T, $Res> implements $DataResolveCopyWith<T, $Res> {
-  factory $DoneCopyWith(Done<T> value, $Res Function(Done<T>) then) =
-      _$DoneCopyWithImpl<T, $Res>;
+abstract class _$$DoneCopyWith<T, $Res>
+    implements $DataResolveCopyWith<T, $Res> {
+  factory _$$DoneCopyWith(_$Done<T> value, $Res Function(_$Done<T>) then) =
+      __$$DoneCopyWithImpl<T, $Res>;
   @override
+  @useResult
   $Res call({T? data, int index});
 }
 
 /// @nodoc
-class _$DoneCopyWithImpl<T, $Res> extends _$DataResolveCopyWithImpl<T, $Res>
-    implements $DoneCopyWith<T, $Res> {
-  _$DoneCopyWithImpl(Done<T> _value, $Res Function(Done<T>) _then)
-      : super(_value, (v) => _then(v as Done<T>));
+class __$$DoneCopyWithImpl<T, $Res>
+    extends _$DataResolveCopyWithImpl<T, $Res, _$Done<T>>
+    implements _$$DoneCopyWith<T, $Res> {
+  __$$DoneCopyWithImpl(_$Done<T> _value, $Res Function(_$Done<T>) _then)
+      : super(_value, _then);
 
-  @override
-  Done<T> get _value => super._value as Done<T>;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? data = freezed,
-    Object? index = freezed,
+    Object? index = null,
   }) {
-    return _then(Done<T>(
-      data == freezed
+    return _then(_$Done<T>(
+      freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as T?,
-      index == freezed
+      null == index
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
@@ -711,21 +680,20 @@ class _$Done<T> with DiagnosticableTreeMixin implements Done<T> {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is Done<T> &&
+            other is _$Done<T> &&
             const DeepCollectionEquality().equals(other.data, data) &&
-            const DeepCollectionEquality().equals(other.index, index));
+            (identical(other.index, index) || other.index == index));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      const DeepCollectionEquality().hash(index));
+      runtimeType, const DeepCollectionEquality().hash(data), index);
 
   @JsonKey(ignore: true)
   @override
-  $DoneCopyWith<T, Done<T>> get copyWith =>
-      _$DoneCopyWithImpl<T, Done<T>>(this, _$identity);
+  @pragma('vm:prefer-inline')
+  _$$DoneCopyWith<T, _$Done<T>> get copyWith =>
+      __$$DoneCopyWithImpl<T, _$Done<T>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -741,10 +709,10 @@ class _$Done<T> with DiagnosticableTreeMixin implements Done<T> {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult Function(T? data, int index)? $default, {
-    TResult Function(T? data, int index)? loading,
-    TResult Function(T? data, int index)? failed,
-    TResult Function(T? data, int index)? done,
+    TResult? Function(T? data, int index)? $default, {
+    TResult? Function(T? data, int index)? loading,
+    TResult? Function(T? data, int index)? failed,
+    TResult? Function(T? data, int index)? done,
   }) {
     return done?.call(data, index);
   }
@@ -778,10 +746,10 @@ class _$Done<T> with DiagnosticableTreeMixin implements Done<T> {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult Function(Data<T> value)? $default, {
-    TResult Function(Loading<T> value)? loading,
-    TResult Function(Failed<T> value)? failed,
-    TResult Function(Done<T> value)? done,
+    TResult? Function(Data<T> value)? $default, {
+    TResult? Function(Loading<T> value)? loading,
+    TResult? Function(Failed<T> value)? failed,
+    TResult? Function(Done<T> value)? done,
   }) {
     return done?.call(this);
   }
@@ -803,7 +771,7 @@ class _$Done<T> with DiagnosticableTreeMixin implements Done<T> {
 }
 
 abstract class Done<T> implements DataResolve<T> {
-  const factory Done(T? data, int index) = _$Done<T>;
+  const factory Done(final T? data, final int index) = _$Done<T>;
 
   @override
   T? get data;
@@ -811,5 +779,6 @@ abstract class Done<T> implements DataResolve<T> {
   int get index;
   @override
   @JsonKey(ignore: true)
-  $DoneCopyWith<T, Done<T>> get copyWith => throw _privateConstructorUsedError;
+  _$$DoneCopyWith<T, _$Done<T>> get copyWith =>
+      throw _privateConstructorUsedError;
 }

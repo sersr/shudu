@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:nop_flutter/nop_flutter.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import 'modules/setting/setting.dart';
@@ -52,14 +52,14 @@ class ShuduApp extends StatelessWidget {
             }),
             appBarTheme:
                 AppBarTheme(systemOverlayStyle: getOverlayStyle(dark: true))),
-        showPerformanceOverlay: list[2] ?? false,
+        // showPerformanceOverlay: list[2] ?? false,
         // home: Builder(builder: (context) {
         //   return AnnotatedRegion<SystemUiOverlayStyle>(
         //       value:
         //           getOverlayStyle(dark: context.isDarkMode, statusDark: true),
         //       child: const MyHomePage());
         // }),
-        initialRoute: Routes.root.fullName,
+        // initialRoute: Routes.root.fullName,
         onGenerateRoute: (settings) {
           return Routes.root.onMatch(settings)?.wrapMaterial;
         },
