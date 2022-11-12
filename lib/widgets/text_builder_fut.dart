@@ -145,10 +145,11 @@ class ItemAsyncLayout extends StatelessWidget {
       layout: (BuildContext context, mounted) {
         return TextCache.runTextPainter(() async {
           await idleWait;
-          if (!mounted()) return const [];
 
           final topR = topRightScore;
           final width = maxWidth;
+          if (!mounted()) return const [];
+          // ignore: use_build_context_synchronously
           final ts = context.getType<TextStyleConfig>().data;
           final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
           List<TextPainter>? topRText;

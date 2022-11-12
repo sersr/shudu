@@ -234,8 +234,8 @@ class ListMainPage extends StatelessWidget {
                       builder: (context) => ViewOne(
                         title: Text('title'),
                         backgroundChild: Container(
-                            child: Center(child: Text('background')),
-                            color: Colors.cyan),
+                            color: Colors.cyan,
+                            child: Center(child: Text('background'))),
                         body: ListViewBuilder(
                           padding: const EdgeInsets.all(8.0),
                           itemCount: 200,
@@ -261,6 +261,20 @@ class ListMainPage extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => ViewOne(
                           scrollController: controller,
+                          title: Text('title', style: style),
+                          backgroundChild: Container(
+                              color: Colors.cyan,
+                              child: Center(child: Text('background'))),
+                          body: ListViewBuilder(
+                            padding: const EdgeInsets.all(8.0),
+                            itemCount: 200,
+                            itemBuilder: (context, index) {
+                              return SizedBox(
+                                height: 50,
+                                child: Text('$index'),
+                              );
+                            },
+                          ),
                           child: Center(
                             child: ElevatedButton(
                               onPressed: () {
@@ -273,20 +287,6 @@ class ListMainPage extends StatelessWidget {
                                 },
                               ),
                             ),
-                          ),
-                          title: Text('title', style: style),
-                          backgroundChild: Container(
-                              child: Center(child: Text('background')),
-                              color: Colors.cyan),
-                          body: ListViewBuilder(
-                            padding: const EdgeInsets.all(8.0),
-                            itemCount: 200,
-                            itemBuilder: (context, index) {
-                              return SizedBox(
-                                height: 50,
-                                child: Text('$index'),
-                              );
-                            },
                           )),
                     ),
                   );
@@ -298,17 +298,17 @@ class ListMainPage extends StatelessWidget {
                   Nav.push(
                     MaterialPageRoute(
                       builder: (context) => ViewOne(
-                        child: Center(child: Text('hello')),
                         title: Text('title'),
                         backgroundChild: Container(
-                            child: Center(child: Text('background')),
-                            color: Colors.cyan),
+                            color: Colors.cyan,
+                            child: Center(child: Text('background'))),
                         body: Center(
                           child: Container(
                             height: 500,
                             color: Colors.red,
                           ),
                         ),
+                        child: Center(child: Text('hello')),
                       ),
                     ),
                   );

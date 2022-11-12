@@ -60,9 +60,9 @@ class _AppBarHideState extends State<AppBarHide> {
             builder: (context, child) {
               final value = (widget.values.value / widget.max).clamp(0.0, 1.0);
               return AnimatedOpacity(
-                child: RepaintBoundary(child: widget.title),
                 opacity: value,
                 duration: const Duration(milliseconds: 100),
+                child: RepaintBoundary(child: widget.title),
               );
             },
           ),

@@ -257,9 +257,10 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
                           }
                           _cid ??= cid ?? firstChapterId!;
                           _page ??= currentPage ?? 1;
-
-                          BookContentPage.push(
-                              context, bookId, _cid, _page, widget.api);
+                          if (mounted) {
+                            BookContentPage.push(
+                                context, bookId, _cid, _page, widget.api);
+                          }
                         },
                       ),
                     ),

@@ -90,6 +90,7 @@ dependencies:
   logging: ^1.0.2
   scrollable_positioned_list: ^0.3.5
   syncfusion_flutter_charts: ^20.3.56
+  vector_math: any
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 

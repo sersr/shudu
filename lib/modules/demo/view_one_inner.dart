@@ -137,11 +137,11 @@ class _ViewOneState extends State<ViewOne> {
       min: min,
       max: max,
       onChanged: onChanged,
-      child: headChild,
       body: widget.body,
       initMax: widget.initMax,
       initOffset: topOffset.value,
       controller: widget.scrollController,
+      child: headChild,
     );
     return SafeArea(
       top: false,

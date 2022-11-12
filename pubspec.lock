@@ -1095,7 +1095,7 @@ packages:
     source: hosted
     version: "0.3.1"
   vector_math:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: vector_math
       url: "https://pub.flutter-io.cn"

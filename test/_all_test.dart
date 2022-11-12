@@ -38,11 +38,11 @@ void main() async {
       final buffer = StringBuffer();
       for (var i = 1; i <= match.groupCount; i++) {
         buffer.write(match[i]);
-        print(match[i]! + 'a');
+        print('${match[i]!}a');
       }
       return buffer.toString();
     });
-    print(r_1 + '...');
+    print('$r_1...');
   });
 
   test('stream', () {

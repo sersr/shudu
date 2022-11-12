@@ -10,6 +10,8 @@ linter:
     non_constant_identifier_names: false
     avoid_renaming_method_parameters: false
     prefer_const_constructors: false
+    no_leading_underscores_for_local_identifiers: false
+    library_private_types_in_public_api: false
 
 analyzer:
   errors:
