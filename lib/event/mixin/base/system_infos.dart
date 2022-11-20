@@ -62,17 +62,18 @@ mixin SystemInfos {
       default:
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
-      _waits.add(
-        AndroidExternalStorage.getExternalStorageDirectory().then((extPath) {
-          appDirExt = extPath ?? '/storage/emulated/0';
-        }),
-      );
+      _waits
+        ..add(
+          AndroidExternalStorage.getExternalStorageDirectory().then((extPath) {
+            appDirExt = extPath ?? '/storage/emulated/0';
+          }),
+        )
+        ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
+        ..add(Bangs.safePadding
+            .then((value) => _statusHeight = value.padding.top));
     }
 
     _waits
-      ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
-      ..add(
-          Bangs.safePadding.then((value) => _statusHeight = value.padding.top))
       ..add(Permission.manageExternalStorage.status.then((status) {
         if (status.isDenied) {
           return OptionsNotifier.extenalStorage.then((request) {
