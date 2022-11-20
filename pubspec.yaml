@@ -47,7 +47,6 @@ dependencies:
   useful_tools:
     git:
       url: https://github.com/sersr/useful_tools.git
-      # ref: aa4a8659967f2efbc3d17e8a5688b4a7d07d87df
   video_player: ^2.1.0
   wakelock: ^0.6.1+1
   infinite_listview: ^1.1.0
@@ -55,7 +54,7 @@ dependencies:
   # bitsdojo_window: ^0.1.1+1
   # web_socket_channel: ^2.1.0
   carousel_slider: ^4.0.0-nullsafety.0
-  nop: ^0.0.2+1
+  nop: ^0.0.3+1
   nop_db:
     git:
       url: https://github.com/sersr/nop_db.git
@@ -63,15 +62,12 @@ dependencies:
   nop_db_sqlite:
     git:
       url: https://github.com/sersr/nop_db_sqlite.git
-      ref: f9b3b06597e467b43aa8ffde8a7f6dcc47746108
   bangs:
     git:
       url: https://github.com/sersr/bangs.git
-      ref: 53124048826a2da474178433732d970104dc3798
   nop_db_sqflite:
     git:
       url: https://github.com/sersr/nop_db_sqflite.git
-      ref: 0766b8432c145b64d284f2a639eb6958474d7efa
   process: ^4.2.3
   args: ^2.3.0
   file: ^6.1.2
@@ -91,6 +87,7 @@ dependencies:
   scrollable_positioned_list: ^0.3.5
   syncfusion_flutter_charts: ^20.3.56
   vector_math: any
+  nop_annotations: 0.2.0
   # flutter_hooks:
   #   git: https://github.com/rrousselGit/flutter_hooks
 
@@ -106,13 +103,10 @@ dependency_overrides:
     path: ../packages/nop_db
   nop_annotations:
     path: ../packages/nop_annotations
-#     # ref: 5d68ec759a5eb00416236660bb82fe932fa645f4
   nop_db_sqlite:
     path: ../packages/nop_db_sqlite
   bangs:
     path: ../packages/bangs
-  # nop_gen:
-  #   path: ../packages/nop_gen
   nop_db_sqflite:
     path: ../packages/nop_db_sqflite
   nop_gen:
@@ -127,7 +121,7 @@ dev_dependencies:
   json_serializable: ^6.1.3
   flutter_lints: ^2.0.1
   flutter_launcher_icons: ^0.10.0
-  nop_gen: ^0.2.0
+  nop_gen: ^0.2.1
   # retrofit_generator: ^2.0.0-beta3
 
 flutter:

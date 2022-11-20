@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:nop_db/nop_db.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:nop_annotations/nop_annotations.dart';
 
 import '../api/api.dart';
 import '../modules/book_content/views/book_content_page.dart';
