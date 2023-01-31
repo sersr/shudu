@@ -7,7 +7,7 @@ import Foundation
 
 import battery_plus
 import flutter_local_notifications
-import path_provider_macos
+import path_provider_foundation
 import screen_brightness_macos
 import sqflite
 import sqlite3_flutter_libs

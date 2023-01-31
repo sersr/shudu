@@ -157,7 +157,11 @@ class ContentViewController extends ChangeNotifierBase
         (to.roundToDouble() * viewportDimension!).clamp(minExtent, maxExtent);
     if (end != pixels) {
       beginActivity(BallisticScrollActivity(
-          this, getSpringSimulation(velocity, end), vsync));
+        this,
+        getSpringSimulation(velocity, end),
+        vsync,
+        _activity?.shouldIgnorePointer ?? true,
+      ));
     } else {
       goIdle();
     }
@@ -169,8 +173,12 @@ class ContentViewController extends ChangeNotifierBase
       animateTo(velocity);
     } else {
       if (velocity != 0) {
-        beginActivity(
-            BallisticScrollActivity(this, getSimulation(velocity), vsync));
+        beginActivity(BallisticScrollActivity(
+          this,
+          getSimulation(velocity),
+          vsync,
+          _activity?.shouldIgnorePointer ?? true,
+        ));
       } else {
         goIdle();
       }

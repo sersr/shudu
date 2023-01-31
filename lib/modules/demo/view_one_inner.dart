@@ -529,7 +529,11 @@ class ClampedPosition extends ChangeNotifierBase
     animatingUp = to == min;
     velocity = -velocity;
     beginActivity(BallisticScrollActivity(
-        this, getSpringSimulation(velocity, to), vsync));
+      this,
+      getSpringSimulation(velocity, to),
+      vsync,
+      _activity?.shouldIgnorePointer ?? true,
+    ));
   }
 
   // 只有不在边界时可用,可能的出现打断动画的情况

@@ -70,7 +70,7 @@ class _AppBarHideState extends State<AppBarHide> {
       ),
     );
     final theme = Theme.of(context);
-    final background = theme.backgroundColor;
+    final background = theme.colorScheme.background;
 
     return RepaintBoundary(
       child: AnimatedBuilder(
