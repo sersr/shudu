@@ -44,7 +44,7 @@ abstract class BookCacheEvent {
 
 @NopServerEventItem(serverName: 'database', separate: true)
 abstract class DatabaseEvent
-    with BookCacheEvent, BookContentEvent, ServerEvent {}
+    implements BookCacheEvent, BookContentEvent, ServerEvent {}
 
 abstract class CustomEvent implements ServerNetEvent {
   FutureOr<SearchList?> getSearchData(String key);

@@ -13,8 +13,7 @@ abstract class ContentViewControllerBase {
 }
 
 class ContentViewController extends ChangeNotifierBase
-    with ScrollActivityDelegate
-    implements ContentViewControllerBase {
+    implements ScrollActivityDelegate, ContentViewControllerBase {
   ContentViewController({
     required this.onScrollingChanged,
     required this.vsync,

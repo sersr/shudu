@@ -540,6 +540,10 @@ class _SlideElement extends RenderObjectElement {
   void removeRenderObjectChild(covariant RenderBox child, covariant slot) {
     renderObject.remove(child, slot);
   }
+
+  @override
+  void moveRenderObjectChild(covariant RenderObject child,
+      covariant Object? oldSlot, covariant Object? newSlot) {}
 }
 
 class _SlideRenderObject extends RenderBox {

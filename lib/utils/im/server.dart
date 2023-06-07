@@ -160,7 +160,7 @@ class Message {
   }
 }
 
-class UserSink extends EventSink {
+class UserSink implements EventSink {
   UserSink(this._target, this.user);
   final WebSocket _target;
   final User user;

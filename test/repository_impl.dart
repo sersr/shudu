@@ -89,7 +89,6 @@ class Server {
 
 class BookEventIsolateTest extends BookEventMultiIsolate
     with
-        BookEvent,
         BookCacheEventResolve,
         BookContentEventResolve,
         ServerEventResolve,

@@ -145,6 +145,10 @@ class ContentViewElement extends RenderObjectElement {
   void removeRenderObjectChild(covariant RenderObject child, covariant slot) {
     renderObject.remove(child as RenderBox, slot);
   }
+
+  @override
+  void moveRenderObjectChild(covariant RenderObject child,
+      covariant Object? oldSlot, covariant Object? newSlot) {}
 }
 
 class NopPageViewParenData extends BoxParentData {

@@ -159,6 +159,10 @@ class ContentViewElement extends RenderObjectElement
     _childElements.remove(child.slot);
     super.forgetChild(child);
   }
+
+  @override
+  void moveRenderObjectChild(covariant RenderObject child,
+      covariant Object? oldSlot, covariant Object? newSlot) {}
 }
 
 class ContentParentData extends ContainerBoxParentData<RenderBox>

@@ -9,108 +9,145 @@ part of 'routes.dart';
 // ignore_for_file: prefer_const_constructors
 
 class Routes {
-  Routes._();
-  static final root = NopRoute(
-    name: '/',
-    fullName: '/',
-    children: [
-      _bookContentPage,
-      _bookInfoPage,
-      _bookHistory,
-      _booklistDetailPage,
-      _booklistPage,
-      _cacheManager,
-      _listCatetoryPage,
-      _setting,
-      _topPage
-    ],
-    builder: (context, arguments, group) => const Nop.page(
-      child: MyHomePage(),
-    ),
-  );
+  Routes._() {
+    _init();
+  }
 
-  static final _bookContentPage = NopRoute(
-    name: '/bookContentPage',
-    fullName: '/bookContentPage',
-    builder: (context, arguments, group) => const Nop.page(
-      child: BookContentPage(),
-    ),
-  );
+  static Routes? _instance;
 
-  static final _bookInfoPage = NopRoute(
-    name: '/bookInfoPage',
-    fullName: '/bookInfoPage',
-    builder: (context, arguments, group) => Nop.page(
-      builders: const [ShuduRoute._builder],
-      child: BookInfoPage(id: arguments['id'], api: arguments['api']),
-    ),
-  );
+  factory Routes({bool newInstance = false}) {
+    if (!newInstance && _instance != null) {
+      return _instance!;
+    }
+    return _instance = Routes._();
+  }
 
-  static final _bookHistory = NopRoute(
-    name: '/bookHistory',
-    fullName: '/bookHistory',
-    builder: (context, arguments, group) => const Nop.page(
-      child: BookHistory(),
-    ),
-  );
+  void _init() {
+    _root = NopRoute(
+      name: '/',
+      fullName: '/',
+      childrenLate: () => [
+        __bookContentPage,
+        __bookInfoPage,
+        __bookHistory,
+        __booklistDetailPage,
+        __booklistPage,
+        __cacheManager,
+        __listCatetoryPage,
+        __setting,
+        __topPage
+      ],
+      builder: (context, arguments, group) => const Nop.page(
+        child: MyHomePage(),
+      ),
+    );
 
-  static final _booklistDetailPage = NopRoute(
-    name: '/booklistDetailPage',
-    fullName: '/booklistDetailPage',
-    builder: (context, arguments, group) => Nop.page(
-      child: BooklistDetailPage(
-          total: arguments['total'], index: arguments['index']),
-    ),
-  );
+    __bookContentPage = NopRoute(
+      name: '/bookContentPage',
+      fullName: '/bookContentPage',
+      builder: (context, arguments, group) => const Nop.page(
+        child: BookContentPage(),
+      ),
+    );
 
-  static final _booklistPage = NopRoute(
-    name: '/booklistPage',
-    fullName: '/booklistPage',
-    builder: (context, arguments, group) => const Nop.page(
-      child: BooklistPage(),
-    ),
-  );
+    __bookInfoPage = NopRoute(
+      name: '/bookInfoPage',
+      fullName: '/bookInfoPage',
+      builder: (context, arguments, group) => Nop.page(
+        builders: const [ShuduRoute._builder],
+        child: BookInfoPage(id: arguments['id'], api: arguments['api']),
+      ),
+    );
 
-  static final _cacheManager = NopRoute(
-    name: '/cacheManager',
-    fullName: '/cacheManager',
-    builder: (context, arguments, group) => const Nop.page(
-      child: CacheManager(),
-    ),
-  );
+    __bookHistory = NopRoute(
+      name: '/bookHistory',
+      fullName: '/bookHistory',
+      builder: (context, arguments, group) => const Nop.page(
+        child: BookHistory(),
+      ),
+    );
 
-  static final _listCatetoryPage = NopRoute(
-    name: '/listCatetoryPage',
-    fullName: '/listCatetoryPage',
-    children: [_categegoryView],
-    builder: (context, arguments, group) => const Nop.page(
-      child: ListCatetoryPage(),
-    ),
-  );
+    __booklistDetailPage = NopRoute(
+      name: '/booklistDetailPage',
+      fullName: '/booklistDetailPage',
+      builder: (context, arguments, group) => Nop.page(
+        child: BooklistDetailPage(
+            total: arguments['total'], index: arguments['index']),
+      ),
+    );
 
-  static final _categegoryView = NopRoute(
-    name: '/categegoryView',
-    fullName: '/listCatetoryPage/categegoryView',
-    builder: (context, arguments, group) => Nop.page(
-      child: CategegoryView(title: arguments['title'], ctg: arguments['ctg']),
-    ),
-  );
+    __booklistPage = NopRoute(
+      name: '/booklistPage',
+      fullName: '/booklistPage',
+      builder: (context, arguments, group) => const Nop.page(
+        child: BooklistPage(),
+      ),
+    );
 
-  static final _setting = NopRoute(
-    name: '/setting',
-    fullName: '/setting',
-    builder: (context, arguments, group) => const Nop.page(
-      child: Setting(),
-    ),
-  );
+    __cacheManager = NopRoute(
+      name: '/cacheManager',
+      fullName: '/cacheManager',
+      builder: (context, arguments, group) => const Nop.page(
+        child: CacheManager(),
+      ),
+    );
 
-  static final _topPage = NopRoute(
-    name: '/topPage',
-    fullName: '/topPage',
-    builder: (context, arguments, group) => const Nop.page(
-      child: TopPage(),
-    ),
-  );
+    __listCatetoryPage = NopRoute(
+      name: '/listCatetoryPage',
+      fullName: '/listCatetoryPage',
+      childrenLate: () => [__categegoryView],
+      builder: (context, arguments, group) => const Nop.page(
+        child: ListCatetoryPage(),
+      ),
+    );
+
+    __categegoryView = NopRoute(
+      name: '/categegoryView',
+      fullName: '/listCatetoryPage/categegoryView',
+      builder: (context, arguments, group) => Nop.page(
+        child: CategegoryView(title: arguments['title'], ctg: arguments['ctg']),
+      ),
+    );
+
+    __setting = NopRoute(
+      name: '/setting',
+      fullName: '/setting',
+      builder: (context, arguments, group) => const Nop.page(
+        child: Setting(),
+      ),
+    );
+
+    __topPage = NopRoute(
+      name: '/topPage',
+      fullName: '/topPage',
+      builder: (context, arguments, group) => const Nop.page(
+        child: TopPage(),
+      ),
+    );
+  }
+
+  late final NopRoute _root;
+  static NopRoute get root => Routes()._root;
+  late final NopRoute __bookContentPage;
+  static NopRoute get _bookContentPage => Routes().__bookContentPage;
+  late final NopRoute __bookInfoPage;
+  static NopRoute get _bookInfoPage => Routes().__bookInfoPage;
+  late final NopRoute __bookHistory;
+  static NopRoute get _bookHistory => Routes().__bookHistory;
+  late final NopRoute __booklistDetailPage;
+  static NopRoute get _booklistDetailPage => Routes().__booklistDetailPage;
+  late final NopRoute __booklistPage;
+  static NopRoute get _booklistPage => Routes().__booklistPage;
+  late final NopRoute __cacheManager;
+  static NopRoute get _cacheManager => Routes().__cacheManager;
+  late final NopRoute __listCatetoryPage;
+  static NopRoute get _listCatetoryPage => Routes().__listCatetoryPage;
+  late final NopRoute __categegoryView;
+  static NopRoute get _categegoryView => Routes().__categegoryView;
+  late final NopRoute __setting;
+  static NopRoute get _setting => Routes().__setting;
+  late final NopRoute __topPage;
+  static NopRoute get _topPage => Routes().__topPage;
 }
 
 class NavRoutes {
