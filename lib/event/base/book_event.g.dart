@@ -45,7 +45,7 @@ enum ServerEventMessage {
 enum ComplexEventMessage { getContent, getIndexs, getInfo }
 
 /// 主入口
-abstract class MultiBookMessagerMain extends BookEvent
+abstract class MultiBookMessagerMain
     with
         ListenMixin,
         SendEventMixin,
@@ -70,7 +70,7 @@ abstract class MultiBookMessagerMain extends BookEvent
 }
 
 /// book Server
-abstract class MultiBookResolveMain extends BookEvent
+abstract class MultiBookResolveMain
     with
         ListenMixin,
         Resolve,

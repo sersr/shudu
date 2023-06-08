@@ -8,7 +8,12 @@ import 'mixin/base/system_infos.dart';
 import 'mixin/multi_Isolate_repository.dart';
 
 abstract class Repository extends MultiBookMessagerMain
-    with SendInitCloseMixin, NotifyStateMixin, SystemInfos, NopLifeCycle {
+    with
+        BookEvent,
+        SendInitCloseMixin,
+        NotifyStateMixin,
+        SystemInfos,
+        NopLifeCycle {
   Repository();
 
   static Repository? _instance;

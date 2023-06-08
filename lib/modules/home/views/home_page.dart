@@ -221,8 +221,10 @@ class _MyHomePageState extends State<MyHomePage>
   void changed(index) {
     if (notifier.value == index && index == 0) {
       // refreshDelegate.show();
-      scrollController.position
-          .jumpTo(scrollController.position.minScrollExtent);
+      if (cache.showChildren.isNotEmpty) {
+        scrollController.position
+            .jumpTo(scrollController.position.minScrollExtent);
+      }
       _refreshKey.currentState!.show();
     }
     notifier.value = index;

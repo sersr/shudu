@@ -5,8 +5,8 @@ class Api {
 
   // pigqq, pysmei
   // static final _domains = Queue.of(const ['pigqq']);
-  static final domains = Queue.of(const ['pigqq', 'pysmei']);
-  static final domainsSearch = Queue.of(const ['pigqq', 'leeyegy']);
+  static final domains = Queue.of(const ['pysmei']);
+  static final domainsSearch = Queue.of(const ['pysmei']);
 
   // 由于 api 解析几乎（都）相同，
   static void moveNext() {
@@ -20,7 +20,7 @@ class Api {
   static int shortid(int id) => (id / 1000 + 1).toInt();
 
   static String imageUrl(String img) =>
-      'https://imgapixs.pigqq.com/BookFiles/BookImages/$img';
+      'https://imgapixs.pysmei.com/BookFiles/BookImages/$img';
 
   static String contentUrl(int id, int? cid) {
     final sd = shortid(id);
@@ -38,7 +38,7 @@ class Api {
   }
 
   static String shudanUrl(String c, int index) {
-    return 'https://scxs.${domains.first}.com/shudan/man/all/$c/$index.html';
+    return 'http://scxs.${domains.first}.com/shudan/man/all/$c/$index.html';
   }
 
   static String shudanDetailUrl(int? index) {
@@ -66,7 +66,6 @@ class Api {
   }
 
   ///API------------------------------------------------ end
-
 }
 
 // class ZhangduApi {
