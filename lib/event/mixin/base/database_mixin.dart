@@ -50,7 +50,6 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
   @override
   FutureOr<int> updateBook(int id, BookCache book) {
     final update = bookCache.update..where.bookId.equalTo(id);
-    Log.w('...$update');
     bookCache.updateBookCache(update, book);
     return update.go;
   }
@@ -108,9 +107,7 @@ mixin DatabaseMixin on Resolve implements DatabaseEvent {
 
   @override
   FutureOr<Option<List<BookCache>>> getMainList() {
-    final d = bookCache.query;
-    Log.w(d);
-    return d.goToTable.then((v) => Some(v));
+    return bookCache.query.goToTable.then((v) => Some(v));
   }
 
   @override
