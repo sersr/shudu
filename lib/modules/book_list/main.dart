@@ -47,13 +47,13 @@ class ListMainPage extends StatelessWidget {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return BooklistPage();
                   // }));
-                  NavRoutes.booklistPage().go;
+                  NavRoutes.booklistPage().go();
                 }),
                 right: _builder('分类', () {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return RepaintBoundary(child: ListCatetoryPage());
                   // }));
-                  NavRoutes.listCatetoryPage().go;
+                  NavRoutes.listCatetoryPage().go();
                 }),
               ),
               const SizedBox(height: 5),
@@ -62,13 +62,13 @@ class ListMainPage extends StatelessWidget {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return RepaintBoundary(child: CacheManager());
                   // }));
-                  NavRoutes.cacheManager().go;
+                  NavRoutes.cacheManager().go();
                 }),
                 right: _builder('浏览历史', () {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return RepaintBoundary(child: BookHistory());
                   // }));
-                  NavRoutes.bookHistory().go;
+                  NavRoutes.bookHistory().go();
                 }),
               ),
               const SizedBox(height: 5),
@@ -77,13 +77,13 @@ class ListMainPage extends StatelessWidget {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return RepaintBoundary(child: TopPage());
                   // }));
-                  NavRoutes.topPage().go;
+                  NavRoutes.topPage().go();
                 }),
                 right: _builder('设置', () {
                   // Nav.push(MaterialPageRoute(builder: (context) {
                   //   return Setting();
                   // }));
-                  NavRoutes.setting().go;
+                  NavRoutes.setting().go();
                 }),
               ),
               const SizedBox(height: 5),

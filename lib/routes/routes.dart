@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop_annotations/nop_annotations.dart';
 
 import '../api/api.dart';
@@ -17,23 +18,25 @@ import '../modules/setting/views/setting.dart';
 
 part 'routes.g.dart';
 
-@NopRouteMain(
-  main: MyHomePage,
+final router = Routes.router;
+
+@RouterMain(
+  page: MyHomePage,
   pages: [
-    RouteItem(page: BookContentPage),
-    RouteItem(page: BookInfoPage),
-    RouteItem(page: BookHistory),
-    RouteItem(page: BooklistDetailPage),
-    RouteItem(page: BooklistPage),
-    RouteItem(page: CacheManager),
-    RouteItem(
+    RouterPage(page: BookContentPage),
+    RouterPage(page: BookInfoPage),
+    RouterPage(page: BookHistory),
+    RouterPage(page: BooklistDetailPage),
+    RouterPage(page: BooklistPage),
+    RouterPage(page: CacheManager),
+    RouterPage(
       page: ListCatetoryPage,
       pages: [
-        RouteItem(page: CategegoryView),
+        RouterPage(page: CategegoryView),
       ],
     ),
-    RouteItem(page: Setting),
-    RouteItem(page: TopPage),
+    RouterPage(page: Setting),
+    RouterPage(page: TopPage),
   ],
 )
 class ShuduRoute {

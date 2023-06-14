@@ -3,7 +3,7 @@
 part of 'routes.dart';
 
 // **************************************************************************
-// RouteGenerator
+// RouterGenerator
 // **************************************************************************
 
 // ignore_for_file: prefer_const_constructors
@@ -23,10 +23,103 @@ class Routes {
   }
 
   void _init() {
-    _root = NopRoute(
-      name: '/',
-      fullName: '/',
-      childrenLate: () => [
+    __bookContentPage = NPage(
+      path: 'bookContentPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: BookContentPage(),
+          )),
+    );
+
+    __bookInfoPage = NPage(
+      path: 'bookInfoPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: Nop.page(
+            builders: const [ShuduRoute._builder],
+            child:
+                BookInfoPage(id: entry.params['id'], api: entry.params['api']),
+          )),
+    );
+
+    __bookHistory = NPage(
+      path: 'bookHistory',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: BookHistory(),
+          )),
+    );
+
+    __booklistDetailPage = NPage(
+      path: 'booklistDetailPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: Nop.page(
+            child: BooklistDetailPage(
+                total: entry.params['total'], index: entry.params['index']),
+          )),
+    );
+
+    __booklistPage = NPage(
+      path: 'booklistPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: BooklistPage(),
+          )),
+    );
+
+    __cacheManager = NPage(
+      path: 'cacheManager',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: CacheManager(),
+          )),
+    );
+
+    __categegoryView = NPage(
+      path: 'categegoryView',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: Nop.page(
+            child: CategegoryView(
+                title: entry.params['title'], ctg: entry.params['ctg']),
+          )),
+    );
+
+    __listCatetoryPage = NPage(
+      pages: [__categegoryView],
+      path: 'listCatetoryPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: ListCatetoryPage(),
+          )),
+    );
+
+    __setting = NPage(
+      path: 'setting',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: Setting(),
+          )),
+    );
+
+    __topPage = NPage(
+      path: 'topPage',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: TopPage(),
+          )),
+    );
+
+    _myHomePage = NPageMain(
+      pages: [
         __bookContentPage,
         __bookInfoPage,
         __bookHistory,
@@ -37,198 +130,89 @@ class Routes {
         __setting,
         __topPage
       ],
-      builder: (context, arguments, group) => const Nop.page(
-        child: MyHomePage(),
-      ),
-    );
-
-    __bookContentPage = NopRoute(
-      name: '/bookContentPage',
-      fullName: '/bookContentPage',
-      builder: (context, arguments, group) => const Nop.page(
-        child: BookContentPage(),
-      ),
-    );
-
-    __bookInfoPage = NopRoute(
-      name: '/bookInfoPage',
-      fullName: '/bookInfoPage',
-      builder: (context, arguments, group) => Nop.page(
-        builders: const [ShuduRoute._builder],
-        child: BookInfoPage(id: arguments['id'], api: arguments['api']),
-      ),
-    );
-
-    __bookHistory = NopRoute(
-      name: '/bookHistory',
-      fullName: '/bookHistory',
-      builder: (context, arguments, group) => const Nop.page(
-        child: BookHistory(),
-      ),
-    );
-
-    __booklistDetailPage = NopRoute(
-      name: '/booklistDetailPage',
-      fullName: '/booklistDetailPage',
-      builder: (context, arguments, group) => Nop.page(
-        child: BooklistDetailPage(
-            total: arguments['total'], index: arguments['index']),
-      ),
-    );
-
-    __booklistPage = NopRoute(
-      name: '/booklistPage',
-      fullName: '/booklistPage',
-      builder: (context, arguments, group) => const Nop.page(
-        child: BooklistPage(),
-      ),
-    );
-
-    __cacheManager = NopRoute(
-      name: '/cacheManager',
-      fullName: '/cacheManager',
-      builder: (context, arguments, group) => const Nop.page(
-        child: CacheManager(),
-      ),
-    );
-
-    __listCatetoryPage = NopRoute(
-      name: '/listCatetoryPage',
-      fullName: '/listCatetoryPage',
-      childrenLate: () => [__categegoryView],
-      builder: (context, arguments, group) => const Nop.page(
-        child: ListCatetoryPage(),
-      ),
-    );
-
-    __categegoryView = NopRoute(
-      name: '/categegoryView',
-      fullName: '/listCatetoryPage/categegoryView',
-      builder: (context, arguments, group) => Nop.page(
-        child: CategegoryView(title: arguments['title'], ctg: arguments['ctg']),
-      ),
-    );
-
-    __setting = NopRoute(
-      name: '/setting',
-      fullName: '/setting',
-      builder: (context, arguments, group) => const Nop.page(
-        child: Setting(),
-      ),
-    );
-
-    __topPage = NopRoute(
-      name: '/topPage',
-      fullName: '/topPage',
-      builder: (context, arguments, group) => const Nop.page(
-        child: TopPage(),
-      ),
+      path: '/',
+      pageBuilder: (entry) => MaterialIgnorePage(
+          key: entry.pageKey,
+          child: const Nop.page(
+            child: MyHomePage(),
+          )),
     );
   }
 
-  late final NopRoute _root;
-  static NopRoute get root => Routes()._root;
-  late final NopRoute __bookContentPage;
-  static NopRoute get _bookContentPage => Routes().__bookContentPage;
-  late final NopRoute __bookInfoPage;
-  static NopRoute get _bookInfoPage => Routes().__bookInfoPage;
-  late final NopRoute __bookHistory;
-  static NopRoute get _bookHistory => Routes().__bookHistory;
-  late final NopRoute __booklistDetailPage;
-  static NopRoute get _booklistDetailPage => Routes().__booklistDetailPage;
-  late final NopRoute __booklistPage;
-  static NopRoute get _booklistPage => Routes().__booklistPage;
-  late final NopRoute __cacheManager;
-  static NopRoute get _cacheManager => Routes().__cacheManager;
-  late final NopRoute __listCatetoryPage;
-  static NopRoute get _listCatetoryPage => Routes().__listCatetoryPage;
-  late final NopRoute __categegoryView;
-  static NopRoute get _categegoryView => Routes().__categegoryView;
-  late final NopRoute __setting;
-  static NopRoute get _setting => Routes().__setting;
-  late final NopRoute __topPage;
-  static NopRoute get _topPage => Routes().__topPage;
+  static NRouter get router => Routes()._router;
+  late final NRouter _router = NRouter(rootPage: myHomePage);
+  late final NPage __bookContentPage;
+  static NPage get _bookContentPage => Routes().__bookContentPage;
+  late final NPage __bookInfoPage;
+  static NPage get _bookInfoPage => Routes().__bookInfoPage;
+  late final NPage __bookHistory;
+  static NPage get _bookHistory => Routes().__bookHistory;
+  late final NPage __booklistDetailPage;
+  static NPage get _booklistDetailPage => Routes().__booklistDetailPage;
+  late final NPage __booklistPage;
+  static NPage get _booklistPage => Routes().__booklistPage;
+  late final NPage __cacheManager;
+  static NPage get _cacheManager => Routes().__cacheManager;
+  late final NPage __categegoryView;
+  static NPage get _categegoryView => Routes().__categegoryView;
+  late final NPage __listCatetoryPage;
+  static NPage get _listCatetoryPage => Routes().__listCatetoryPage;
+  late final NPage __setting;
+  static NPage get _setting => Routes().__setting;
+  late final NPage __topPage;
+  static NPage get _topPage => Routes().__topPage;
+  late final NPageMain _myHomePage;
+  static NPageMain get myHomePage => Routes()._myHomePage;
 }
 
 class NavRoutes {
   NavRoutes._();
-  static NopRouteAction<T> root<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes.root, arguments: const {});
+
+  static RouterAction bookContentPage() {
+    return RouterAction(Routes._bookContentPage, Routes.router);
   }
 
-  static NopRouteAction<T> bookContentPage<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._bookContentPage, arguments: const {});
+  static RouterAction bookInfoPage({required int id, required ApiType api}) {
+    return RouterAction(Routes._bookInfoPage, Routes.router,
+        params: {'id': id, 'api': api});
   }
 
-  static NopRouteAction<T> bookInfoPage<T>(
-      {BuildContext? context, required int id, required ApiType api}) {
-    return NopRouteAction(
-        context: context,
-        route: Routes._bookInfoPage,
-        arguments: {'id': id, 'api': api});
+  static RouterAction bookHistory() {
+    return RouterAction(Routes._bookHistory, Routes.router);
   }
 
-  static NopRouteAction<T> bookHistory<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._bookHistory, arguments: const {});
+  static RouterAction booklistDetailPage({int? total, int? index}) {
+    return RouterAction(Routes._booklistDetailPage, Routes.router,
+        params: {'total': total, 'index': index});
   }
 
-  static NopRouteAction<T> booklistDetailPage<T>(
-      {BuildContext? context, int? total, int? index}) {
-    return NopRouteAction(
-        context: context,
-        route: Routes._booklistDetailPage,
-        arguments: {'total': total, 'index': index});
+  static RouterAction booklistPage() {
+    return RouterAction(Routes._booklistPage, Routes.router);
   }
 
-  static NopRouteAction<T> booklistPage<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._booklistPage, arguments: const {});
+  static RouterAction cacheManager() {
+    return RouterAction(Routes._cacheManager, Routes.router);
   }
 
-  static NopRouteAction<T> cacheManager<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._cacheManager, arguments: const {});
+  static RouterAction categegoryView(
+      {required String title, required int ctg}) {
+    return RouterAction(Routes._categegoryView, Routes.router,
+        params: {'title': title, 'ctg': ctg});
   }
 
-  static NopRouteAction<T> listCatetoryPage<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._listCatetoryPage, arguments: const {});
+  static RouterAction listCatetoryPage() {
+    return RouterAction(Routes._listCatetoryPage, Routes.router);
   }
 
-  static NopRouteAction<T> categegoryView<T>(
-      {BuildContext? context, required String title, required int ctg}) {
-    return NopRouteAction(
-        context: context,
-        route: Routes._categegoryView,
-        arguments: {'title': title, 'ctg': ctg});
+  static RouterAction setting() {
+    return RouterAction(Routes._setting, Routes.router);
   }
 
-  static NopRouteAction<T> setting<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._setting, arguments: const {});
+  static RouterAction topPage() {
+    return RouterAction(Routes._topPage, Routes.router);
   }
 
-  static NopRouteAction<T> topPage<T>({
-    BuildContext? context,
-  }) {
-    return NopRouteAction(
-        context: context, route: Routes._topPage, arguments: const {});
+  static RouterAction myHomePage() {
+    return RouterAction(Routes.myHomePage, Routes.router);
   }
 }

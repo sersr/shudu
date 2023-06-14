@@ -188,7 +188,7 @@ class _WrapWidgetState extends State<WrapWidget>
               // Nav.push(route);
               NavRoutes.booklistDetailPage(
                       total: bookList.bookCount, index: bookList.listId)
-                  .go;
+                  .go();
             },
             child: ImageTextLayout(
               img: bookList.cover,

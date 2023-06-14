@@ -33,7 +33,8 @@ class BookInfoPage extends StatefulWidget {
   static Future push(int bookid, ApiType api) async {
     final notifier = ShuduRoute.getInfo;
     notifier.value += 1;
-    return NavRoutes.bookInfoPage(id: bookid, api: api).go
+    final entry = NavRoutes.bookInfoPage(id: bookid, api: api)..go();
+    entry.entry.future
       ..whenComplete(() {
         notifier.value -= 1;
         if (notifier.value == 0) ShuduRoute.removeInfo;

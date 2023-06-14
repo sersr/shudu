@@ -60,13 +60,15 @@ class ShuduApp extends StatelessWidget {
         //       child: const MyHomePage());
         // }),
         // initialRoute: Routes.root.fullName,
-        onGenerateRoute: (settings) {
-          return Routes.root.onMatch(settings)?.wrapMaterial;
+        // onGenerateRoute: (settings) {
+        //   return Routes.root.onMatch(settings)?.wrapMaterial;
+        // },
+        builder: (context, __) {
+          return router.build(context);
         },
-        navigatorObservers: [
-          context.getType<OptionsNotifier>().routeObserver,
-          Nav.observer
-        ],
+        // navigatorObservers: [
+        //   // Nav.observer
+        // ],
       );
     });
     // return Selector<OptionsNotifier, List>(
