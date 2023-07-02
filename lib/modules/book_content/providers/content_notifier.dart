@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:flutter_nop/router.dart';
-import 'package:nop/utils.dart';
 
 import '../../../event/export.dart';
 import '../../book_info/views/info_page.dart';
@@ -103,8 +103,11 @@ class ContentNotifier with NopLifeCycle {
 
     final data = handle.saveStateOnOut();
     final entry = BookInfoPage.push(data.saveBookId, data.saveApi);
-    final content = context.getType<RestorationContent>();
-    content.onChanged?.call(entry);
+    final current = RouteQueueEntry.of(context);
+    final content =
+        context.getType<RestorationContent>(group: current?.restorationId);
+    content.update(entry);
+    content.data = data;
     return (entry, data);
   }
 
@@ -141,7 +144,13 @@ class RestorationContent extends RestorableProperty<Map<dynamic, dynamic>?> {
   ContentNotifierImpl? _handle;
   void setHandle(ContentNotifierImpl? handle) {
     _handle = handle;
-    notifyListeners();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
+  void update(RouteQueueEntry entry) {
+    onChanged?.call(entry);
   }
 
   void Function(RouteQueueEntry entry)? onChanged;
@@ -172,25 +181,6 @@ class RestorationContent extends RestorableProperty<Map<dynamic, dynamic>?> {
     if (newData is SaveStateData) {
       _data = newData;
     }
-    Log.w('...$value');
-    // final cid = value['cid'];
-    // final bookId = value['bookId'];
-    // final page = value['currentPage'];
-    // if (cid is int && bookId is int && page is int) {
-    //   if (!handle.inBook) handle.resetController();
-
-    //   if (!handle.config.value.orientation!) {
-    //     uiOverlay();
-    //     uiStyle(dark: true);
-    //   }
-    //   setOrientation(handle.config.value.orientation!);
-
-    //   handle.setInBook();
-    //   handle.startFirstEvent(
-    //       only: false,
-    //       clear: true,
-    //       onStart: () => handle.updateBook(bookId, cid, page),
-    //       onDone: handle.resetController);
   }
 
   @override

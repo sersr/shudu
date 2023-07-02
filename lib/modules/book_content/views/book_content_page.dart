@@ -64,7 +64,8 @@ class BookContentPageState extends State<BookContentPage>
 
   @override
   void didChangeDependencies() {
-    content = context.getType();
+    final entry = RouteQueueEntry.of(context);
+    content = context.getType(group: entry?.restorationId);
     bloc = context.getType<ContentNotifier>();
     blocCache = context.getType<BookCacheNotifier>();
     notifier = context.getType();

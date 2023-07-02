@@ -15,11 +15,11 @@ mixin ContentRestore on ContentDataBase, ContentStatus, Configs {
     out();
     setOrientation(true);
     uiOverlay(hide: false);
-    return SaveStateData(bookId, tData.cid!, currentPage, tData.api);
+    return SaveStateData(bookId, tData.cid ?? cid, currentPage, tData.api);
   }
 
   SaveStateData get saveData =>
-      SaveStateData(bookId, tData.cid!, currentPage, tData.api);
+      SaveStateData(bookId, tData.cid ?? cid, currentPage, tData.api);
 
   @override
   FutureOr<void> onOut() async {

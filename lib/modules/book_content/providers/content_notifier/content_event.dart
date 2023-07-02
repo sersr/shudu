@@ -173,7 +173,8 @@ mixin ContentEvent
     if (_reset || tData.contentIsEmpty) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
-
+      // set cid
+      this.cid = cid;
       await startFirstEvent(
           only: false,
           clear: clear,

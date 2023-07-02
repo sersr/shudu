@@ -12,6 +12,7 @@ mixin ContentDataBase on ChangeNotifier {
   Repository get repository;
   int bookId = -1;
   int currentPage = 1;
+  int cid = -1;
 
   ContentViewControllerBase? controller;
   int _innerIndex = 0;
@@ -63,6 +64,7 @@ mixin ContentDataBase on ChangeNotifier {
   set tData(TextData data) {
     if (data == _tData) return;
     assert(data.contentIsNotEmpty, '不该为 空');
+    cid = _tData.cid ?? cid;
     needUpdateContentDimension();
     _tData.dispose();
     _tData = data.clone(); // 复制
