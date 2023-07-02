@@ -64,8 +64,8 @@ class BookContentPageState extends State<BookContentPage>
 
   @override
   void didChangeDependencies() {
-    final entry = RouteQueueEntry.of(context);
-    content = context.getType(group: entry?.restorationId);
+    content = RestorationContent.getFromEntry(context);
+
     bloc = context.getType<ContentNotifier>();
     blocCache = context.getType<BookCacheNotifier>();
     notifier = context.getType();
@@ -105,7 +105,7 @@ class BookContentPageState extends State<BookContentPage>
       Log.e('error: data == null.');
       return;
     }
-    handle.restoreState(() async {
+    handle.restoreState(content.uiOverlayShow, () async {
       final list = await cache.getList;
       int? cid, page;
       for (final bookCache in list) {
@@ -130,7 +130,7 @@ class BookContentPageState extends State<BookContentPage>
     super.initOnceTask();
     if (bloc.config.value.orientation!) {
       tqGlobal.pushOne(() async {
-        if (!bloc.uiOverlayShow && entry == null) await uiOverlay();
+        if (!content.uiOverlayShow && entry == null) await uiOverlay();
       });
     }
   }

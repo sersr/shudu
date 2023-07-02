@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'content_base.dart';
 import 'content_brightness.dart';
 
@@ -8,8 +6,6 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
   @override
   bool get inBook => _inBookView;
 
-  //状态栏显隐状态
-  bool uiOverlayShow = false;
   void out() {
     if (!inBook) return;
     _inBookView = false;
@@ -18,11 +14,11 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
     outResetDefault();
   }
 
-  @override
-  FutureOr<void> onOut() {
-    uiOverlayShow = false;
-    return super.onOut();
-  }
+  // @override
+  // FutureOr<void> onOut() {
+  //   uiOverlayShow = false;
+  //   return super.onOut();
+  // }
 
   void setInBook() {
     if (_inBookView) return;

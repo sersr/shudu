@@ -27,7 +27,8 @@ mixin ContentRestore on ContentDataBase, ContentStatus, Configs {
     return super.onOut();
   }
 
-  void restoreState([FutureOr<SaveStateData> Function()? callback]) {
+  void restoreState(bool uiOverlayShow,
+      [FutureOr<SaveStateData> Function()? callback]) {
     if (callback != null) {
       EventQueue.run(restoreState, () async {
         final data = await callback();

@@ -50,7 +50,7 @@ class ContentPageViewState extends State<ContentPageView>
     indexBloc.addRegisterKey(lKey);
 
     if (bloc.config.value.orientation! && bloc.inBook) {
-      bloc.uiOverlayShow = true;
+      content.uiOverlayShow = true;
       return uiOverlay(hide: false);
     }
   }
@@ -59,7 +59,7 @@ class ContentPageViewState extends State<ContentPageView>
     indexBloc.removeRegisterKey(lKey);
 
     if (bloc.config.value.orientation! && bloc.inBook) {
-      bloc.uiOverlayShow = false;
+      content.uiOverlayShow = false;
       return uiOverlay();
     }
   }
@@ -128,6 +128,7 @@ class ContentPageViewState extends State<ContentPageView>
     EventQueue.pushOne(toggle, delegate.hide);
   }
 
+  late RestorationContent content;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -135,6 +136,7 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc = context.getType<ContentNotifier>()..controller = offsetPosition;
     _bloc!.handle.addListener(update);
     indexBloc = context.getType<BookIndexNotifier>();
+    content = RestorationContent.getFromEntry(context);
     update();
   }
 

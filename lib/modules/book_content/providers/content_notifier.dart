@@ -59,8 +59,8 @@ class ContentNotifier with NopLifeCycle {
 
   ValueNotifier<ContentViewConfig> get config => handle.config;
   bool get inBook => handle.inBook;
-  bool get uiOverlayShow => handle.uiOverlayShow;
-  set uiOverlayShow(bool v) => handle.uiOverlayShow = v;
+  // bool get uiOverlayShow => handle.uiOverlayShow;
+  // set uiOverlayShow(bool v) => handle.uiOverlayShow = v;
   Future<void>? get runner => handle.initQueue.runner;
   set controller(ContentViewControllerBase? base) => handle.controller = base;
   void scheduleTask() => handle.scheduleTask();
@@ -103,9 +103,7 @@ class ContentNotifier with NopLifeCycle {
 
     final data = handle.saveStateOnOut();
     final entry = BookInfoPage.push(data.saveBookId, data.saveApi);
-    final current = RouteQueueEntry.of(context);
-    final content =
-        context.getType<RestorationContent>(group: current?.restorationId);
+    final content = RestorationContent.getFromEntry(context);
     content.update(entry);
     content.data = data;
     return (entry, data);
@@ -142,12 +140,20 @@ class ContentNotifierImpl extends ChangeNotifierBase
 
 class RestorationContent extends RestorableProperty<Map<dynamic, dynamic>?> {
   ContentNotifierImpl? _handle;
+
+  static RestorationContent getFromEntry(BuildContext context) {
+    final current = RouteQueueEntry.of(context);
+    return context.getType<RestorationContent>(group: current?.restorationId);
+  }
+
   void setHandle(ContentNotifierImpl? handle) {
     _handle = handle;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
     });
   }
+
+  bool uiOverlayShow = false;
 
   void update(RouteQueueEntry entry) {
     onChanged?.call(entry);
