@@ -22,6 +22,7 @@ final router = Routes.router;
 
 @RouterMain(
   page: MyHomePage,
+  restorationId: 'main',
   pages: [
     RouterPage(page: BookContentPage),
     RouterPage(page: BookInfoPage),

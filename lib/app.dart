@@ -22,9 +22,11 @@ class ShuduApp extends StatelessWidget {
     return Cs(() {
       final List<dynamic> list = listenable.al.value;
       final themeMode = list[0] ?? mode;
-      return MaterialApp(
+      return MaterialApp.router(
+        routerConfig: router,
         themeMode: themeMode,
         title: 'shudu',
+        restorationScopeId: 'app',
         theme: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
               primary: Color.fromARGB(255, 15, 152, 231),
@@ -63,9 +65,9 @@ class ShuduApp extends StatelessWidget {
         // onGenerateRoute: (settings) {
         //   return Routes.root.onMatch(settings)?.wrapMaterial;
         // },
-        builder: (context, __) {
-          return router.build(context);
-        },
+        // builder: (context, __) {
+        //   return router.build(context);
+        // },
         // navigatorObservers: [
         //   // Nav.observer
         // ],

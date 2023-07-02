@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:nop/utils.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
@@ -43,7 +45,11 @@ class BookContentPage extends StatefulWidget {
 }
 
 class BookContentPageState extends State<BookContentPage>
-    with WidgetsBindingObserver, PageAnimationMixin {
+    with
+        WidgetsBindingObserver,
+        PageAnimationMixin,
+        RestorationMixin,
+        RouteQueueEntryStateMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
@@ -58,11 +64,58 @@ class BookContentPageState extends State<BookContentPage>
 
   @override
   void didChangeDependencies() {
-    super.didChangeDependencies();
+    content = context.getType();
     bloc = context.getType<ContentNotifier>();
     blocCache = context.getType<BookCacheNotifier>();
     notifier = context.getType();
     notifyColor = bloc.config.select((parent) => parent.value.bgcolor);
+    super.didChangeDependencies();
+  }
+
+  @override
+  String? get restorationId => 'entry_id';
+
+  late RestorationContent content;
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(content, 'content');
+    content.setHandle(bloc.handle);
+    content.onChanged = onChanged;
+    super.restoreState(oldBucket, initialRestore);
+    if (entry == null) {
+      _restore();
+    }
+  }
+
+  void onChanged(RouteQueueEntry value) {
+    entry = value;
+  }
+
+  @override
+  void whenComplete(_) {
+    _restore();
+  }
+
+  void _restore() {
+    final handle = bloc.handle;
+    final cache = context.getType<BookCacheNotifier>();
+    final data = content.data;
+    if (data == null) {
+      Log.e('error: data == null.');
+      return;
+    }
+    handle.restoreState(() async {
+      final list = await cache.getList;
+      int? cid, page;
+      for (final bookCache in list) {
+        if (bookCache.bookId == data.saveBookId) {
+          cid = bookCache.chapterId ?? cid;
+          page = bookCache.page ?? page;
+          break;
+        }
+      }
+      return data.copyWith(cid: cid, page: page);
+    });
   }
 
   @override
@@ -76,7 +129,7 @@ class BookContentPageState extends State<BookContentPage>
     super.initOnceTask();
     if (bloc.config.value.orientation!) {
       tqGlobal.pushOne(() async {
-        if (!bloc.uiOverlayShow) await uiOverlay();
+        if (!bloc.uiOverlayShow && entry == null) await uiOverlay();
       });
     }
   }

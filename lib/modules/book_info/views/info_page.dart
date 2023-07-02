@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:useful_tools/useful_tools.dart';
 
@@ -30,15 +29,15 @@ class BookInfoPage extends StatefulWidget {
   @override
   _BookInfoPageState createState() => _BookInfoPageState();
 
-  static Future push(int bookid, ApiType api) async {
+  static RouteQueueEntry push(int bookid, ApiType api) {
     final notifier = ShuduRoute.getInfo;
     notifier.value += 1;
-    final entry = NavRoutes.bookInfoPage(id: bookid, api: api)..go();
-    entry.entry.future
-      ..whenComplete(() {
-        notifier.value -= 1;
-        if (notifier.value == 0) ShuduRoute.removeInfo;
-      });
+    final entry = NavRoutes.bookInfoPage(id: bookid, api: api).go();
+    entry.future.whenComplete(() {
+      notifier.value -= 1;
+      if (notifier.value == 0) ShuduRoute.removeInfo;
+    });
+    return entry;
     // return pushRecoder(
     //   key: 'navigator.push',
     //   saveCount: 3,

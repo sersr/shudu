@@ -93,6 +93,18 @@ class Api {
 //     return 'http://statics.rungean.com/static/book/author/$m.json';
 //   }
 // }
+
 enum ApiType {
-  biquge,
+  biquge;
+
+  static dynamic fromJson(Object data) {
+    if (data is int && data < values.length) {
+      return values[data];
+    }
+    return null;
+  }
+
+  int toJson() {
+    return index;
+  }
 }

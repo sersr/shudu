@@ -105,9 +105,9 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
       splashColor: splashColor,
       onTap: () {
         _cacheNotifier.exit = true;
-        BookInfoPage.push(_e.id, _e.api).whenComplete(() => Future.delayed(
-            const Duration(milliseconds: 300),
-            () => _cacheNotifier.exit = false));
+        BookInfoPage.push(_e.id, _e.api).future.whenComplete(() =>
+            Future.delayed(const Duration(milliseconds: 300),
+                () => _cacheNotifier.exit = false));
       },
       child: Row(
         children: [

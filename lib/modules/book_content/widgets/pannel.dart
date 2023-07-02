@@ -6,9 +6,9 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../../book_index/providers/book_index_notifier.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
+import '../../book_index/providers/book_index_notifier.dart';
 import '../providers/content_notifier.dart';
 import '../views/book_content_page.dart';
 import 'page_view_controller.dart';
@@ -729,8 +729,8 @@ class _TopPannelState extends State<TopPannel> {
   late ContentNotifier contentNtf;
   @override
   void didChangeDependencies() {
-    super.didChangeDependencies();
     contentNtf = context.getType<ContentNotifier>();
+    super.didChangeDependencies();
   }
 
   @override

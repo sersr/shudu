@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
+import 'package:nop/utils.dart';
 
 import '../../../event/export.dart';
 import '../../book_info/views/info_page.dart';
-import '../../home.dart';
 import '../import.dart';
 import '../widgets/page_view_controller.dart';
 import 'content_notifier/export.dart';
@@ -20,7 +21,7 @@ class ContentNotifier with NopLifeCycle {
   @override
   void nopInit() {
     super.nopInit();
-    initConfigs();
+    handle.init(this);
   }
 
   void notifyState(
@@ -95,30 +96,16 @@ class ContentNotifier with NopLifeCycle {
 
   void setPrefs(ContentViewConfig config) => handle.setPrefs(config);
 
-  Future<void> initConfigs() => handle.initConfigs();
-
   // 从阅读页面跳转到详情页
-  void goInfoPage(BuildContext context) {
+  (RouteQueueEntry, SaveStateData) goInfoPage(BuildContext context) {
     showCname.value = false;
     handle.controller?.goIdle();
 
     final data = handle.saveStateOnOut();
-
-    final cache = context.getType<BookCacheNotifier>();
-    BookInfoPage.push(data.saveBookId, data.saveApi).then((_) {
-      handle.restoreState(() async {
-        final list = await cache.getList;
-        int? cid, page;
-        for (final bookCache in list) {
-          if (bookCache.bookId == data.saveBookId) {
-            cid = bookCache.chapterId ?? cid;
-            page = bookCache.page ?? page;
-            break;
-          }
-        }
-        return data.copyWith(cid: cid, page: page);
-      });
-    });
+    final entry = BookInfoPage.push(data.saveBookId, data.saveApi);
+    final content = context.getType<RestorationContent>();
+    content.onChanged?.call(entry);
+    return (entry, data);
   }
 
   void dispose() {
@@ -147,5 +134,67 @@ class ContentNotifierImpl extends ChangeNotifierBase
   void dispose() {
     clear();
     super.dispose();
+  }
+}
+
+class RestorationContent extends RestorableProperty<Map<dynamic, dynamic>?> {
+  ContentNotifierImpl? _handle;
+  void setHandle(ContentNotifierImpl? handle) {
+    _handle = handle;
+    notifyListeners();
+  }
+
+  void Function(RouteQueueEntry entry)? onChanged;
+
+  @override
+  Map? createDefaultValue() {
+    return null;
+  }
+
+  @override
+  Map? fromPrimitives(Object? data) {
+    if (data is! Map) return null;
+    return data;
+  }
+
+  SaveStateData? _data;
+  SaveStateData? get data => _data;
+  set data(SaveStateData? value) {
+    _data = value;
+    notifyListeners();
+  }
+
+  @override
+  void initWithValue(Map? value) {
+    if (value == null) return;
+
+    final newData = SaveStateData.fromJson(value);
+    if (newData is SaveStateData) {
+      _data = newData;
+    }
+    Log.w('...$value');
+    // final cid = value['cid'];
+    // final bookId = value['bookId'];
+    // final page = value['currentPage'];
+    // if (cid is int && bookId is int && page is int) {
+    //   if (!handle.inBook) handle.resetController();
+
+    //   if (!handle.config.value.orientation!) {
+    //     uiOverlay();
+    //     uiStyle(dark: true);
+    //   }
+    //   setOrientation(handle.config.value.orientation!);
+
+    //   handle.setInBook();
+    //   handle.startFirstEvent(
+    //       only: false,
+    //       clear: true,
+    //       onStart: () => handle.updateBook(bookId, cid, page),
+    //       onDone: handle.resetController);
+  }
+
+  @override
+  Object? toPrimitives() {
+    return (data ?? _handle?.saveData)?.toJson();
   }
 }

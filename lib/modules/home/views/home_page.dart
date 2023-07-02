@@ -59,8 +59,7 @@ class _MyHomePageState extends State<MyHomePage>
     final data = MediaQuery.of(context);
     painterBloc.metricsChange(data);
 
-    _future ??= Future.wait([opts.nopInit(), painterBloc.initConfigs()])
-        .whenComplete(() {
+    _future ??= Future.wait([opts.nopInit()]).whenComplete(() {
       if (opts.options.updateOnStart == true) {
         SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
           if (mounted) {
@@ -91,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage>
       painterBloc.stopSave();
     } else if (initIsolateState) {
       painterBloc.stopAutoRun();
-      ui.window.scheduleFrame();
+      ui.PlatformDispatcher.instance.scheduleFrame();
     }
   }
 
@@ -131,10 +130,12 @@ class _MyHomePageState extends State<MyHomePage>
       RepaintBoundary(child: buildBlocBuilder()),
       RepaintBoundary(child: ListMainPage()),
     ];
+    final ratio = MediaQuery.of(context).devicePixelRatio;
+
     final child = Scaffold(
       appBar: AppBar(
         title: Text('shudu'),
-        elevation: 1 / ui.window.devicePixelRatio,
+        elevation: 1 / ratio,
         centerTitle: true,
         actions: [
           Column(

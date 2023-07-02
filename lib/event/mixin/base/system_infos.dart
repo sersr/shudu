@@ -171,6 +171,7 @@ mixin SystemInfos {
   double get height => _height;
   void _navState(bool isShow, int height) {
     assert(Log.i('navHeight: $height | $isShow'));
+    // ignore: deprecated_member_use
     _height = height / ui.window.devicePixelRatio;
   }
 

@@ -9,12 +9,14 @@ import 'package:useful_tools/useful_tools.dart';
 import 'app.dart';
 import 'event/repository.dart';
 import 'modules/book_content.dart';
+import 'modules/book_content/import.dart';
 import 'modules/book_index.dart';
 import 'modules/home.dart';
 import 'modules/search.dart';
 import 'modules/setting/providers/options_notifier.dart';
 import 'modules/setting/setting.dart';
 import 'modules/text_style/text_style.dart';
+import 'routes/routes.dart';
 import 'utils/type_adapter.dart';
 
 void main() {
@@ -32,6 +34,8 @@ void main() {
         // );
 
         NopWidgetsFlutterBinding.ensureInitialized();
+        Routes.init();
+
         Nav.put(() => Repository.create());
         Nav.put(() => OptionsNotifier());
         Nav.put(() => BookIndexNotifier());
@@ -39,6 +43,8 @@ void main() {
         Nav.put(() => ContentNotifier());
         Nav.put(() => BookCacheNotifier());
         Nav.put(() => TextStyleConfig());
+        Nav.put(() => RestorationContent());
+        Nav.put(() => ContentViewConfigProvider());
 
         uiOverlay(hide: false);
         try {
@@ -57,6 +63,9 @@ void main() {
           hiveInit('shudu/hive');
           Log.e('error: $e', onlyDebug: false);
         }
+
+        /// 全局变量，初始化配置
+        await Nop.of<ContentViewConfigProvider>(null).initConfigs();
 
         runApp(Nop(
             // 提供 Nop.of 支持

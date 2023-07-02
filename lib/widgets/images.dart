@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -45,10 +43,10 @@ class _ImageResolveState extends State<ImageResolve> {
   }
 
   String? path;
-  final ratio = ui.window.devicePixelRatio;
 
   Widget _layoutBuilder() {
     return LayoutBuilder(builder: (context, constraints) {
+      final ratio = MediaQuery.of(context).devicePixelRatio;
       final height = constraints.maxHeight;
       final width = constraints.maxWidth;
       final _img = widget.img;
