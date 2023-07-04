@@ -23,7 +23,9 @@ class Routes {
     if (!newInstance && _instance != null) {
       return _instance!;
     }
-    return _instance = Routes._().._init(params, extra, groupId, observers);
+    final instance = _instance = Routes._();
+    instance._init(params, extra, groupId, observers);
+    return instance;
   }
 
   void _init(
