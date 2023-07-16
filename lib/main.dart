@@ -35,7 +35,7 @@ void main() {
         // );
 
         NopWidgetsFlutterBinding.ensureInitialized();
-        Routes.init();
+        Routes.init(observers: [Nav.observer]);
 
         Nav.put(() => Repository.create());
         Nav.put(() => OptionsNotifier());

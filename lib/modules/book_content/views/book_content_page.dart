@@ -32,12 +32,7 @@ class BookContentPage extends StatefulWidget {
       await bloc.touchBook(newBookid, cid, page, api: api);
     } catch (_) {}
     _lock = null;
-    return NavRoutes.bookContentPage().go();
-    // return Nav.push(MaterialPageRoute(builder: (context) {
-    //   return AnnotatedRegion<SystemUiOverlayStyle>(
-    //       value: getOverlayStyle(dark: context.isDarkMode, statusDark: true),
-    //       child: const RepaintBoundary(child: BookContentPage()));
-    // }));
+    return NavRoutes.bookContentPage().go().future;
   }
 
   @override

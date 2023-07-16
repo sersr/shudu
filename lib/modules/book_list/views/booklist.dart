@@ -182,11 +182,6 @@ class _WrapWidgetState extends State<WrapWidget>
             bgColor: isLight ? null : Colors.grey.shade900,
             splashColor: isLight ? null : Color.fromRGBO(60, 60, 60, 1),
             onTap: () {
-              // final route = MaterialPageRoute(builder: (_) {
-              //   return BooklistDetailPage(
-              //       total: bookList.bookCount, index: bookList.listId);
-              // });
-              // Nav.push(route);
               NavRoutes.booklistDetailPage(
                       total: bookList.bookCount, index: bookList.listId)
                   .go();

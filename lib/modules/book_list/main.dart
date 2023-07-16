@@ -45,60 +45,35 @@ class ListMainPage extends StatelessWidget {
             children: [
               row(
                 left: _builder('书单', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return BooklistPage();
-                  // }));
                   NavRoutes.booklistPage().go();
                 }),
                 right: _builder('分类', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return RepaintBoundary(child: ListCatetoryPage());
-                  // }));
                   NavRoutes.listCatetoryPage().go();
                 }),
               ),
               const SizedBox(height: 5),
               row(
                 left: _builder('缓存管理', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return RepaintBoundary(child: CacheManager());
-                  // }));
                   NavRoutes.cacheManager().go();
                 }),
                 right: _builder('浏览历史', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return RepaintBoundary(child: BookHistory());
-                  // }));
                   NavRoutes.bookHistory().go();
                 }),
               ),
               const SizedBox(height: 5),
               row(
                 left: _builder('榜单', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return RepaintBoundary(child: TopPage());
-                  // }));
                   NavRoutes.topPage().go();
                 }),
                 right: _builder('设置', () {
-                  // Nav.push(MaterialPageRoute(builder: (context) {
-                  //   return Setting();
-                  // }));
                   NavRoutes.setting().go();
                 }),
               ),
               const SizedBox(height: 5),
               row(
                 left: _builder('nav snackbar', () {
-                  // setOrientation(false);
-                  // Timer(const Duration(seconds: 5), () {
-                  //   ScaffoldMessenger.of(context)
-                  //       .showSnackBar(SnackBar(content: Text('.hello')));
-                  // });
-
                   Nav.snackBar(
                     Container(
-                      // color: Color.fromARGB(255, 61, 61, 61),
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       height: 50,
                       child: Align(
@@ -119,7 +94,6 @@ class ListMainPage extends StatelessWidget {
                 right: _builder('nav banner', () {
                   Nav.banner(
                     Container(
-                      // color: Color.fromARGB(255, 61, 61, 61),
                       padding: const EdgeInsets.all(8),
                       height: 76,
                       child: Text('hello banner'),

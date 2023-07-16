@@ -38,21 +38,6 @@ class BookInfoPage extends StatefulWidget {
       if (notifier.value == 0) ShuduRoute.removeInfo;
     });
     return entry;
-    // return pushRecoder(
-    //   key: 'navigator.push',
-    //   saveCount: 3,
-    //   callback: (pushNotifier) =>
-    //       Nav.push(MaterialPageRoute(builder: (context) {
-    //     return AnimatedBuilder(
-    //         animation: pushNotifier,
-    //         builder: (context, child) {
-    //           return TickerMode(
-    //               enabled: !pushNotifier.value,
-    //               child: Offstage(offstage: pushNotifier.value, child: child));
-    //         },
-    //         child: RepaintBoundary(child: BookInfoPage(id: bookid, api: api)));
-    //   })),
-    // );
   }
 }
 

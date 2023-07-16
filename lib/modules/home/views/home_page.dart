@@ -262,9 +262,6 @@ class _MyHomePageState extends State<MyHomePage>
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                // Nav.pushReplacement(MaterialPageRoute(builder: (context) {
-                //   return BookInfoPage(id: item.bookId!, api: item.api);
-                // }));
                 NavRoutes.bookInfoPage(id: item.bookId!, api: api)
                     .goReplacement();
               }),
