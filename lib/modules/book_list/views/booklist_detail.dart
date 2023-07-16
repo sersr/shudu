@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -39,7 +40,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    provider.repository = context.getType<Repository>();
+    provider.repository = context.grass<Repository>();
     provider.load(widget.index);
   }
 
@@ -52,7 +53,7 @@ class _BooklistDetailPageState extends State<BooklistDetailPage> {
   bool get isLight => !context.isDarkMode;
   @override
   Widget build(BuildContext context) {
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
     final listColor = isLight
         ? const Color.fromRGBO(236, 236, 236, 1)
         : Color.fromRGBO(25, 25, 25, 1);
@@ -145,7 +146,7 @@ class _DescWidget extends StatelessWidget {
         ? Color.fromARGB(255, 250, 250, 250)
         : Colors.grey.shade900;
 
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
 
     final title = Text('简介', style: ts.title2);
     final body = Padding(
@@ -200,7 +201,7 @@ class TitleWidget extends StatelessWidget {
   final int? total;
   @override
   Widget build(BuildContext context) {
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
     return Container(
       height: 120,
       color: !context.isDarkMode

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/nop.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -47,10 +48,10 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    painterBloc = context.getType();
-    opts = context.getType();
-    cache = context.getType();
-    config = context.getType();
+    painterBloc = context.grass();
+    opts = context.grass();
+    cache = context.grass();
+    config = context.grass();
     final brightness = Theme.of(context).brightness;
     scheduleMicrotask(() {
       config.notify(brightness);
@@ -269,7 +270,7 @@ class _MyHomePageState extends State<MyHomePage>
               }),
           Cs(() {
             final isTop =
-                context.getType<BookCacheNotifier>().state.isTop(item).value;
+                context.grass<BookCacheNotifier>().state.isTop(item).value;
             return btn2(
                 icon: Icons.touch_app_sharp,
                 text: isTop ? '取消置顶' : '书籍置顶',
@@ -278,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage>
           // ValueListenableBuilder<bool>(
           //   // selector: select,
           //   valueListenable:
-          //       context.getType<BookCacheNotifier>().select((notifier) {
+          //       context.grass<BookCacheNotifier>().select((notifier) {
           //     final child = notifier.sortChildren;
           //     final it = child.iterator;
           //     Cache? current;

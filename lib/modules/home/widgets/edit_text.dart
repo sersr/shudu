@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/utils.dart';
-import 'package:flutter_nop/flutter_nop.dart';
 
 import '../../text_style/text_style.dart';
 
@@ -25,7 +25,7 @@ class _EditTextState extends State<EditText> {
 
   @override
   Widget build(BuildContext context) {
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
     return EditableText(
       controller: controller,
       backgroundCursorColor: Colors.grey,

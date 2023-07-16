@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -33,7 +34,7 @@ class TextAsyncLayout extends StatelessWidget {
   final int bottomLines;
   @override
   Widget build(BuildContext context) {
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
     final child = ItemWidget(
         topRight: topRightScore != null
             ? Text(topRightScore ?? '',
@@ -150,7 +151,7 @@ class ItemAsyncLayout extends StatelessWidget {
           final width = maxWidth;
           if (!mounted()) return const [];
           // ignore: use_build_context_synchronously
-          final ts = context.getType<TextStyleConfig>().data;
+          final ts = context.grass<TextStyleConfig>().data;
           final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
           List<TextPainter>? topRText;
           if (topR != null) {

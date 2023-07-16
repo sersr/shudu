@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -20,7 +21,7 @@ class IndexsWidget extends StatelessWidget {
       context: context,
       child: DefaultTextStyle(
         style: context
-            .getType<TextStyleConfig>()
+            .grass<TextStyleConfig>()
             .data
             .title3
             .copyWith(color: Colors.grey.shade800),
@@ -95,7 +96,7 @@ class _IndexsState extends State<_Indexs> {
       ?..removeRegisterKey(lKey)
       ..removeListener(_listenOnUpdate);
 
-    indexBloc = context.getType<BookIndexNotifier>();
+    indexBloc = context.grass<BookIndexNotifier>();
 
     indexBloc!
       ..addRegisterKey(lKey)
@@ -225,7 +226,7 @@ class _StickyBody extends StatelessWidget {
   final bool Function(int index) isCached;
   @override
   Widget build(BuildContext context) {
-    final styleConfig = context.getType<TextStyleConfig>().data;
+    final styleConfig = context.grass<TextStyleConfig>().data;
     final style = styleConfig.body3;
     final title = styleConfig.title2;
 

@@ -38,12 +38,7 @@ class Routes {
       path: 'bookContentPage',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: BookContentPage(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const BookContentPage());
       },
     );
 
@@ -59,13 +54,9 @@ class Routes {
           api = ApiType.fromJson(api);
         }
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: Nop.page(
-            builders: const [ShuduRoute._builder],
-            child: BookInfoPage(id: id, api: api),
-          ),
-        );
+            key: entry.pageKey,
+            entry: entry,
+            child: ShuduRoute._builder(BookInfoPage(id: id, api: api)));
       },
     );
 
@@ -73,12 +64,7 @@ class Routes {
       path: 'bookHistory',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: BookHistory(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const BookHistory());
       },
     );
 
@@ -94,12 +80,9 @@ class Routes {
           index = jsonDecodeCustom(index);
         }
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: Nop.page(
-            child: BooklistDetailPage(total: total, index: index),
-          ),
-        );
+            key: entry.pageKey,
+            entry: entry,
+            child: BooklistDetailPage(total: total, index: index));
       },
     );
 
@@ -107,12 +90,7 @@ class Routes {
       path: 'booklistPage',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: BooklistPage(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const BooklistPage());
       },
     );
 
@@ -120,12 +98,7 @@ class Routes {
       path: 'cacheManager',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: CacheManager(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const CacheManager());
       },
     );
 
@@ -138,12 +111,9 @@ class Routes {
           ctg = jsonDecodeCustom(ctg);
         }
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: Nop.page(
-            child: CategegoryView(title: title, ctg: ctg),
-          ),
-        );
+            key: entry.pageKey,
+            entry: entry,
+            child: CategegoryView(title: title, ctg: ctg));
       },
     );
 
@@ -152,12 +122,7 @@ class Routes {
       path: 'listCatetoryPage',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: ListCatetoryPage(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const ListCatetoryPage());
       },
     );
 
@@ -165,12 +130,7 @@ class Routes {
       path: 'setting',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: Setting(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const Setting());
       },
     );
 
@@ -178,12 +138,7 @@ class Routes {
       path: 'topPage',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: TopPage(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const TopPage());
       },
     );
 
@@ -202,12 +157,7 @@ class Routes {
       path: '/',
       pageBuilder: (entry) {
         return MaterialIgnorePage(
-          key: entry.pageKey,
-          entry: entry,
-          child: const Nop.page(
-            child: MyHomePage(),
-          ),
-        );
+            key: entry.pageKey, entry: entry, child: const MyHomePage());
       },
     );
 

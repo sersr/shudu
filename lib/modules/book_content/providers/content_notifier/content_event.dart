@@ -58,13 +58,13 @@ mixin ContentEvent
     newBookOrCid(newBookId, cid, page, api: api);
   }
 
-  bool _shouldUpdate(int newBookId, int cid, int page, ApiType api) {
+  bool _shouldUpdate(int newBookId, int cid, ApiType api) {
     return tData.cid != cid || bookId != newBookId || this.api != api;
   }
 
   void updateBook(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) {
-    if (_shouldUpdate(newBookId, cid, page, api)) {
+    if (_shouldUpdate(newBookId, cid, api) || currentPage != page) {
       tData.dispose();
       resetData(TextData(cid: cid, api: api));
       this.api = api;
@@ -107,7 +107,6 @@ mixin ContentEvent
         loadTasks(localBookId, localCid);
 
         await awaitKey(localCid);
-        if (debugTest) await release(const Duration(milliseconds: 500));
 
         final currentText = getTextData(localCid);
         if (localBookId == bookId &&
@@ -168,7 +167,7 @@ mixin ContentEvent
       footer.value = '';
       header.value = '';
     }
-    final _reset = _shouldUpdate(newBookId, cid, page, api);
+    final _reset = _shouldUpdate(newBookId, cid, api);
 
     if (_reset || tData.contentIsEmpty) {
       final _t = Timer(
@@ -182,6 +181,9 @@ mixin ContentEvent
           onDone: resetController);
 
       _t.cancel();
+    } else {
+      if (page < tData.content.length) currentPage = page;
+      notifyListeners();
     }
   }
 

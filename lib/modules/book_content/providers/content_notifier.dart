@@ -143,7 +143,7 @@ class RestorationContent extends RestorableProperty<Map<dynamic, dynamic>?> {
 
   static RestorationContent getFromEntry(BuildContext context) {
     final current = RouteQueueEntry.of(context);
-    return context.getType<RestorationContent>(group: current?.restorationId);
+    return context.grass<RestorationContent>(group: current?.restorationId);
   }
 
   void setHandle(ContentNotifierImpl? handle) {

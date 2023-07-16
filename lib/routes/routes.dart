@@ -62,7 +62,7 @@ class ShuduRoute {
   }
 
   @RouteBuilderItem(pages: [BookInfoPage])
-  static Widget _builder(BuildContext context, Widget child) {
+  static Widget _builder(Widget child) {
     final listenable = getNotifier('info');
     return AnimatedBuilder(
       animation: listenable,

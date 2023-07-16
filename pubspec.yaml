@@ -93,8 +93,8 @@ dependencies:
 
 # 下面为本地覆盖，如果本地没有对应插件需要手动注释
 dependency_overrides:
-# useful_tools:
-#   path: ../packages/useful_tools
+  useful_tools:
+    path: ../packages/useful_tools
   flutter_nop:
     path: ../packages/flutter_nop
   nop:

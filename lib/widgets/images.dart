@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../event/export.dart';
@@ -39,7 +40,7 @@ class _ImageResolveState extends State<ImageResolve> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    repository = context.getType();
+    repository = context.grass();
   }
 
   String? path;
@@ -55,11 +56,11 @@ class _ImageResolveState extends State<ImageResolve> {
           ? _errorBuilder(width, height)
           : ValueListenableBuilder<bool>(
               valueListenable: context
-                  .getType<OptionsNotifier>()
+                  .grass<OptionsNotifier>()
                   .select((parent) => parent.options.useImageCache ?? false),
               builder: (context, useImageCache, _) {
                 if (!useImageCache) {
-                  final repository = context.getType<Repository>();
+                  final repository = context.grass<Repository>();
 
                   final getImageBytes = repository.getImageBytes;
                   final rw = (width * ratio).toInt();

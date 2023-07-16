@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:nop/utils.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
+import 'package:nop/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -84,10 +85,8 @@ void main() {
         }());
 
         /// 全局变量，初始化配置
-        await Nop.of<ContentViewConfigProvider>(null).initConfigs();
+        await Green.of<ContentViewConfigProvider>(null).initConfigs();
 
-        runApp(Nop(
-            // 提供 Nop.of 支持
-            child: ShuduApp(mode: await OptionsNotifier.getThemeModeUnSafe())));
+        runApp(ShuduApp(mode: await OptionsNotifier.getThemeModeUnSafe()));
       }));
 }

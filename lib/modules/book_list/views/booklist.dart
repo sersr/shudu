@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -90,7 +91,7 @@ class _WrapWidgetState extends State<WrapWidget>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    shudanProvider.repository = context.getType<Repository>();
+    shudanProvider.repository = context.grass<Repository>();
     // shudanProvider.load();
     tabController?.removeListener(onUpdate);
     tabController = DefaultTabController.of(context);
@@ -338,7 +339,7 @@ class BarLayout extends StatelessWidget {
   final Widget body;
   @override
   Widget build(BuildContext context) {
-    final ts = context.getType<TextStyleConfig>().data;
+    final ts = context.grass<TextStyleConfig>().data;
     final canPop = ModalRoute.of(context)?.canPop ?? false;
     Widget? leading;
     if (canPop) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
@@ -22,7 +23,7 @@ class _BookHistoryState extends State<BookHistory> with PageAnimationMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    notifier = context.getType<BookCacheNotifier>();
+    notifier = context.grass<BookCacheNotifier>();
     if (!show.value) {
       _listenable = show;
       addListener(complete);

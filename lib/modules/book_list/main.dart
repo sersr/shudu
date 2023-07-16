@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:nop/nop.dart';
 import 'package:flutter_nop/flutter_nop.dart';
@@ -253,7 +254,7 @@ class ListMainPage extends StatelessWidget {
                 right: _builder('list body, header', () {
                   final controller = ClampedScrollController();
                   final expanded = ValueNotifier(false);
-                  final ts = context.getType<TextStyleConfig>().data;
+                  final ts = context.grass<TextStyleConfig>().data;
 
                   final style = ts.bigTitle1
                       .copyWith(fontSize: 20, color: Colors.grey.shade100);

@@ -105,8 +105,6 @@ mixin ContentDataBase on ChangeNotifier {
     notifyListeners();
   }
 
-  bool debugTest = false;
-
   bool get inBook;
   Future<void> newBookOrCid(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge});

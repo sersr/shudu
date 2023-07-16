@@ -4,8 +4,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../../routes/routes.dart';
 import '../../../widgets/indexs.dart';
 import '../../../widgets/pan_slide.dart';
 import '../../book_index/providers/book_index_notifier.dart';
@@ -34,8 +36,8 @@ class _PannelState extends State<Pannel> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.getType<ContentNotifier>();
-    indexBloc = context.getType<BookIndexNotifier>();
+    bloc = context.grass<ContentNotifier>();
+    indexBloc = context.grass<BookIndexNotifier>();
   }
 
   @override
@@ -341,8 +343,8 @@ class _BottomEndState extends State<BottomEnd> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.getType<ContentNotifier>();
-    indexBloc = context.getType<BookIndexNotifier>();
+    bloc = context.grass<ContentNotifier>();
+    indexBloc = context.grass<BookIndexNotifier>();
   }
 
   final op = Tween<Offset>(begin: const Offset(-0.120, 0), end: Offset.zero);
@@ -385,7 +387,7 @@ class _BottomEndState extends State<BottomEnd> {
     }
     return _delegate =
         OverlayMixinDelegate(pannels, const Duration(milliseconds: 350))
-          ..overlay = context.getType<OverlayObserver>();
+          ..overlay = context.grass<OverlayObserver>();
   }
 
   final _callbacks = <VoidCallback>[];
@@ -599,7 +601,7 @@ class SettingsTransition extends StatelessWidget {
         builder: (context, animation) {
           final position = animation.drive(op);
           final colors = debx.animate(animation);
-          final bloc = context.getType<ContentNotifier>();
+          final bloc = context.grass<ContentNotifier>();
 
           final bottomChild = LayoutId(
             id: 'bottom',
@@ -729,7 +731,7 @@ class _TopPannelState extends State<TopPannel> {
   late ContentNotifier contentNtf;
   @override
   void didChangeDependencies() {
-    contentNtf = context.getType<ContentNotifier>();
+    contentNtf = context.grass<ContentNotifier>();
     super.didChangeDependencies();
   }
 
@@ -752,7 +754,7 @@ class _TopPannelState extends State<TopPannel> {
                 child: Row(
                   children: [
                     _topButton(
-                      onTap: Nav.maybePop,
+                      onTap: router.maybePop,
                       child: Icon(Icons.arrow_back_ios, color: Colors.white),
                     ),
                     Expanded(
@@ -816,7 +818,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    bloc = context.getType<ContentNotifier>();
+    bloc = context.grass<ContentNotifier>();
     update();
   }
 
@@ -1191,7 +1193,7 @@ class _BookSettingsViewState extends State<BookSettingsView> {
         final children = [
           IndexsWidget(
             onTap: (context, id, cid) {
-              final index = context.getType<BookIndexNotifier>();
+              final index = context.grass<BookIndexNotifier>();
               // 先完成动画再调用
               widget.close(() {
                 index.loadIndexs(id, cid, api: bloc.api);

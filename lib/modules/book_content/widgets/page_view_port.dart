@@ -151,7 +151,7 @@ class ContentViewElement extends RenderObjectElement {
       covariant Object? oldSlot, covariant Object? newSlot) {}
 }
 
-class NopPageViewParenData extends BoxParentData {
+class GreenPageViewParenData extends BoxParentData {
   Offset? layoutOffset;
   @override
   String toString() {
@@ -185,8 +185,8 @@ class RenderContentViewPort extends RenderBox {
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! NopPageViewParenData) {
-      child.parentData = NopPageViewParenData();
+    if (child.parentData is! GreenPageViewParenData) {
+      child.parentData = GreenPageViewParenData();
     }
   }
 
@@ -298,7 +298,7 @@ class RenderContentViewPort extends RenderBox {
 
       for (var i = firstIndex!; i <= lastIndex!; i++) {
         final child = children[i]!;
-        final data = child.parentData as NopPageViewParenData;
+        final data = child.parentData as GreenPageViewParenData;
 
         child.layout(constraints, parentUsesSize: true);
 
@@ -324,7 +324,7 @@ class RenderContentViewPort extends RenderBox {
 
   Offset? childScrollOffset(RenderObject child) {
     assert(child.parent == this);
-    final childParentData = child.parentData as NopPageViewParenData;
+    final childParentData = child.parentData as GreenPageViewParenData;
     return childParentData.layoutOffset;
   }
 

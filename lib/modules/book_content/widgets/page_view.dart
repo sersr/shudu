@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/nop.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -113,7 +114,7 @@ class ContentPageViewState extends State<ContentPageView>
 
     return _delegate =
         OverlayMixinDelegate(pannels, const Duration(milliseconds: 350))
-          ..overlay = context.getType<OverlayObserver>();
+          ..overlay = context.grass<OverlayObserver>();
   }
 
   void toggle() {
@@ -133,9 +134,9 @@ class ContentPageViewState extends State<ContentPageView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _bloc?.handle.removeListener(update);
-    _bloc = context.getType<ContentNotifier>()..controller = offsetPosition;
+    _bloc = context.grass<ContentNotifier>()..controller = offsetPosition;
     _bloc!.handle.addListener(update);
-    indexBloc = context.getType<BookIndexNotifier>();
+    indexBloc = context.grass<BookIndexNotifier>();
     content = RestorationContent.getFromEntry(context);
     update();
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import 'modules/setting/setting.dart';
@@ -11,7 +12,7 @@ class ShuduApp extends StatelessWidget {
   final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
-    final listenable = context.getType<OptionsNotifier>().select((opt) => [
+    final listenable = context.grass<OptionsNotifier>().select((opt) => [
           opt.options.themeMode,
           opt.options.platform,
           opt.options.showPerformanceOverlay,
@@ -125,7 +126,7 @@ class ShuduApp extends StatelessWidget {
     //         return Routes.root.onMatch(settings)?.wrapMaterial;
     //       },
     //       navigatorObservers: [
-    //         context.getType<OptionsNotifier>().routeObserver,
+    //         context.grass<OptionsNotifier>().routeObserver,
     //         Nav.observer
     //       ],
     //     );
@@ -145,19 +146,19 @@ class ShuduApp extends StatelessWidget {
 //       providers: [
 //         Provider(create: (_) => Repository.create()..init()),
 //         ChangeNotifierProvider(
-//             create: (context) => OptionsNotifier( context.getType())..init()),
+//             create: (context) => OptionsNotifier( context.grass())..init()),
 //         ChangeNotifierProvider(
-//           create: (context) => BookIndexNotifier(repository:  context.getType()),
+//           create: (context) => BookIndexNotifier(repository:  context.grass()),
 //         ),
 //         ChangeNotifierProvider(
-//             create: (context) => SearchNotifier( context.getType())..init()),
+//             create: (context) => SearchNotifier( context.grass())..init()),
 //         Provider<ContentNotifier>(
 //           create: (context) =>
-//               ContentNotifier(repository:  context.getType())..initConfigs(),
+//               ContentNotifier(repository:  context.grass())..initConfigs(),
 //           dispose: (_, self) => self.dispose(),
 //         ),
 //         ChangeNotifierProvider(
-//           create: (context) => BookCacheNotifier( context.getType())..load(),
+//           create: (context) => BookCacheNotifier( context.grass())..load(),
 //         ),
 //         ChangeNotifierProvider(create: (_) => TextStyleConfig()),
 //       ],

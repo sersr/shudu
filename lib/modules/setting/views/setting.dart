@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/utils.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -21,7 +22,7 @@ class _SettingState extends State<Setting> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    optionsNotifier = context.getType();
+    optionsNotifier = context.grass();
   }
 
   String getThemeName(ThemeMode mode) {
@@ -95,7 +96,7 @@ class _SettingState extends State<Setting> {
       color: !context.isDarkMode ? Colors.white : Colors.grey.shade900,
       child: ValueListenableBuilder<bool>(
         // selector: select,
-        valueListenable: context.getType<T>().select(select),
+        valueListenable: context.grass<T>().select(select),
         builder: (context, value, _) {
           return SwitchListTile.adaptive(
             visualDensity: VisualDensity.compact,
@@ -238,7 +239,7 @@ class _SettingState extends State<Setting> {
           children: [
             ValueListenableBuilder<TargetPlatform>(
                 // selector: select,
-                valueListenable: context.getType<OptionsNotifier>().select(
+                valueListenable: context.grass<OptionsNotifier>().select(
                     (opt) => opt.options.platform ?? defaultTargetPlatform),
                 builder: (context, updateValue, _) {
                   return RadioListTile(

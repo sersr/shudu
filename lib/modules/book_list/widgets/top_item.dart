@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -11,7 +12,7 @@ import '../../../widgets/image_text.dart';
 import '../../book_info/views/info_page.dart';
 import '../models/pattern.dart';
 
-/// [T]:  context.getType()使用
+/// [T]:  context.grass()使用
 class TopCtgListView<T> extends StatefulWidget {
   const TopCtgListView({
     Key? key,
@@ -31,7 +32,7 @@ class _TopCtgListViewState<T> extends State<TopCtgListView<T>>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _categNotifier = context.getType();
+    _categNotifier = context.grass();
     controller?.removeListener(onUpdate);
     controller = DefaultTabController.of(context);
     controller?.addListener(onUpdate);

@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/Material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../widgets/image_text.dart';
@@ -47,10 +48,10 @@ class BookSearchPage extends SearchDelegate<void> {
 
   Widget suggestions(BuildContext context) {
     return Cs(() {
-      final bloc = context.getType<SearchNotifier>();
+      final bloc = context.grass<SearchNotifier>();
       final isLight = !context.isDarkMode;
       bloc.searchHistory;
-      final ts = context.getType<TextStyleConfig>().data;
+      final ts = context.grass<TextStyleConfig>().data;
       return Padding(
         padding: const EdgeInsets.only(top: 6.0),
         child: SingleChildScrollView(
@@ -134,7 +135,7 @@ class BookSearchPage extends SearchDelegate<void> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final search = context.getType<SearchNotifier>();
+    final search = context.grass<SearchNotifier>();
 
     return wrap(
       context,
@@ -203,7 +204,7 @@ class BookSearchPage extends SearchDelegate<void> {
   @override
   void showResults(BuildContext context) {
     if (query.isEmpty) return;
-    context.getType<SearchNotifier>().load(query);
+    context.grass<SearchNotifier>().load(query);
     super.showResults(context);
   }
 }

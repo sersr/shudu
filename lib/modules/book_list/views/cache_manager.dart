@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/utils.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -25,7 +26,7 @@ class _CacheManagerState extends State<CacheManager> with PageAnimationMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final repository = context.getType<Repository>();
+    final repository = context.grass<Repository>();
     _cacheNotifier.repository = repository;
     if (_cacheNotifier.initlized) addListener(complete);
   }

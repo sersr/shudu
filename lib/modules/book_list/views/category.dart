@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../data/data.dart';
@@ -34,8 +35,8 @@ class _ListCatetoryPageState extends State<ListCatetoryPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final repository = context.getType<Repository>();
-    ts = context.getType<TextStyleConfig>().data;
+    final repository = context.grass<Repository>();
+    ts = context.grass<TextStyleConfig>().data;
 
     _category.repository = repository;
   }
@@ -167,9 +168,9 @@ class _CategoriesState extends State<Categories> {
       children: List.generate(
         _titles.length,
         (index) {
-          return Nop(
+          return Green(
             create: (context) => TopNotifier<int>(
-              context.getType<Repository>().getCategLists,
+              context.grass<Repository>().getCategLists,
               widget.index,
               _urlKeys[index],
             ),

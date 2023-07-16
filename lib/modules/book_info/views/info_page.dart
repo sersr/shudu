@@ -69,10 +69,10 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final repository = context.getType<Repository>();
-    ts = context.getType<TextStyleConfig>().data;
+    final repository = context.grass<Repository>();
+    ts = context.grass<TextStyleConfig>().data;
     info.repository = repository;
-    cache = context.getType<BookCacheNotifier>();
+    cache = context.grass<BookCacheNotifier>();
   }
 
   @override

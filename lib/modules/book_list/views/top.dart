@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/router.dart';
 
 import '../../../event/export.dart';
 import '../../text_style/providers/text_styles.dart';
@@ -18,7 +19,7 @@ class _TopPageState extends State<TopPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ts = context.getType();
+    ts = context.grass();
   }
 
   @override
@@ -109,11 +110,11 @@ class _TopState extends State<Top> with AutomaticKeepAliveClientMixin {
             )),
         Expanded(
             child: RepaintBoundary(
-          child: Nop(
+          child: Green(
             key: ValueKey(key),
             create: (context) {
               return TopNotifier<String>(
-                  context.getType<Repository>().getTopLists, key, date);
+                  context.grass<Repository>().getTopLists, key, date);
             },
             child: TopCtgListView<String>(index: widget.index),
           ),

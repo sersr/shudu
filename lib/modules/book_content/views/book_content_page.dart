@@ -28,7 +28,7 @@ class BookContentPage extends StatefulWidget {
     if (_lock != null) return;
     _lock = const Object();
     try {
-      final bloc = context.getType<ContentNotifier>();
+      final bloc = context.grass<ContentNotifier>();
       await bloc.touchBook(newBookid, cid, page, api: api);
     } catch (_) {}
     _lock = null;
@@ -66,9 +66,9 @@ class BookContentPageState extends State<BookContentPage>
   void didChangeDependencies() {
     content = RestorationContent.getFromEntry(context);
 
-    bloc = context.getType<ContentNotifier>();
-    blocCache = context.getType<BookCacheNotifier>();
-    notifier = context.getType();
+    bloc = context.grass<ContentNotifier>();
+    blocCache = context.grass<BookCacheNotifier>();
+    notifier = context.grass();
     notifyColor = bloc.config.select((parent) => parent.value.bgcolor);
     super.didChangeDependencies();
   }
@@ -99,7 +99,7 @@ class BookContentPageState extends State<BookContentPage>
 
   void _restore() {
     final handle = bloc.handle;
-    final cache = context.getType<BookCacheNotifier>();
+    final cache = context.grass<BookCacheNotifier>();
     final data = content.data;
     if (data == null) {
       Log.e('error: data == null.');
@@ -212,7 +212,8 @@ class BookContentPageState extends State<BookContentPage>
         child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: Nop<OverlayObserver>.value(value: observer, child: child)));
+            child:
+                Green<OverlayObserver>.value(value: observer, child: child)));
   }
 
   final key = GlobalKey<OverlayState>();
