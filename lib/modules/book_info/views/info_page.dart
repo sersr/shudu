@@ -418,7 +418,7 @@ class _BookInfoPageState extends State<BookInfoPage> with PageAnimationMixin {
               final _cid = cid ?? firstChapterId;
 
               context
-                  .getType<BookIndexNotifier>()
+                  .grass<BookIndexNotifier>()
                   .loadIndexs(bookid, _cid, api: widget.api);
               showIndexs.value = !showIndexs.value;
             },

@@ -151,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage>
                           context: context,
                           delegate: BookSearchPage(
                               textStyle: context
-                                  .getType<TextStyleConfig>()
+                                  .grass<TextStyleConfig>()
                                   .data
                                   .body2
                                   .copyWith(

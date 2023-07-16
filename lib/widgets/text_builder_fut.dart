@@ -56,7 +56,7 @@ class TextAsyncLayout extends StatelessWidget {
     return RepaintBoundary(
       child: ValueListenableBuilder<bool>(
           valueListenable: context
-              .getType<OptionsNotifier>()
+              .grass<OptionsNotifier>()
               .select((parent) => parent.options.useTextCache ?? false),
           // selector: (_, opt) => opt.options.useTextCache ?? false,
           builder: (context, useTextCache, child) {
