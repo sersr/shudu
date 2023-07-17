@@ -1,5 +1,4 @@
 import 'package:nop/nop.dart';
-import 'package:useful_tools/utils.dart';
 
 import '../base/export.dart';
 import 'base/export.dart';
@@ -7,10 +6,7 @@ import 'base/system_infos.dart';
 
 // 子隔离，数据库 入口
 Runner dataBaseEntryPoint(ServerConfigurations<BookIsolateArgs> configs) {
-  return Runner(
-    runDelegate: OneFile.runZoned,
-    runner: DatabaseImpl(configurations: configs),
-  );
+  return Runner(runner: DatabaseImpl(configurations: configs));
 }
 
 /// 只处理数据库相关操作

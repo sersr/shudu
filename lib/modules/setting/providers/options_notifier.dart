@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/flutter_nop.dart';
 import 'package:hive/hive.dart';
 import 'package:nop/nop.dart';
-import 'package:flutter_nop/flutter_nop.dart';
-import 'package:useful_tools/useful_tools.dart';
 
 import '../../../event/repository.dart';
 
@@ -14,10 +12,7 @@ class ConfigOptions {
   ConfigOptions(
       {this.pageBuilder,
       this.platform,
-      this.resample,
-      this.useImageCache,
       this.useTextCache,
-      this.nopResample,
       // this.useSqflite,
       this.updateOnStart,
       this.themeMode,
@@ -26,12 +21,9 @@ class ConfigOptions {
 
   TargetPlatform? platform;
   PageBuilder? pageBuilder;
-  bool? resample;
   bool? showPerformanceOverlay;
-  bool? useImageCache;
   bool? useTextCache;
   // bool? useSqflite;
-  bool? nopResample;
   bool? updateOnStart;
   ThemeMode? themeMode;
   bool? extenalStorage;
@@ -40,11 +32,8 @@ class ConfigOptions {
     return o
       ..pageBuilder ??= pageBuilder
       ..platform ??= platform
-      ..resample ??= resample
-      ..useImageCache ??= useImageCache
       ..useTextCache ??= useTextCache
       // ..useSqflite ??= useSqflite
-      ..nopResample ??= nopResample
       ..updateOnStart ??= updateOnStart
       ..themeMode ??= themeMode
       ..extenalStorage ??= extenalStorage
@@ -57,12 +46,9 @@ class ConfigOptions {
         other is ConfigOptions &&
             other.platform == platform &&
             other.pageBuilder == pageBuilder &&
-            other.resample == resample &&
             other.updateOnStart == updateOnStart &&
             other.themeMode == themeMode &&
             other.extenalStorage == extenalStorage &&
-            other.useImageCache == useImageCache &&
-            other.nopResample == nopResample &&
             // other.useSqflite == useSqflite &&
             other.useTextCache == useTextCache &&
             other.showPerformanceOverlay == showPerformanceOverlay;
@@ -70,19 +56,16 @@ class ConfigOptions {
 
   @override
   String toString() {
-    return '$runtimeType: $platform, $pageBuilder, '
-        'resample: $resample, nopResample: $nopResample';
+    return '$runtimeType: $platform, $pageBuilder, ';
   }
 
   @override
   int get hashCode => Object.hash(
       platform,
       pageBuilder,
-      resample,
       updateOnStart,
       themeMode,
       extenalStorage,
-      useImageCache,
       // useSqflite,
       useTextCache,
       showPerformanceOverlay);
@@ -116,9 +99,6 @@ class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
   static const _options_ = 'options';
   static const _platform = 'platform';
   static const _pageBuilder = 'pageBuilder';
-  static const _resample = 'resample';
-  static const _nopResample = 'nopResample';
-  static const _useImageCache = 'useImageCache';
   static const _useTextCache = 'useTextCache';
   static const _updateOnStart = 'updateOnStart';
 
@@ -191,24 +171,16 @@ class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
     final PageBuilder pageBuilder =
         box.get(_pageBuilder, defaultValue: PageBuilder.zoom);
 
-    final bool resample = box.get(_resample, defaultValue: false);
-    final bool useImageCache = box.get(_useImageCache, defaultValue: true);
     final bool useTextCache = box.get(_useTextCache, defaultValue: !kDartIsWeb);
-    final bool nopResample = box.get(_nopResample, defaultValue: false);
     final bool updateOnStart = box.get(_updateOnStart, defaultValue: true);
     // final bool followSystem = box.get(_followSystem, defaultValue: true);
     final ThemeMode themeMode =
         box.get(_themeMode, defaultValue: ThemeMode.system);
-    GestureBinding.instance.resamplingEnabled = resample;
-    NopGestureBinding.instance!.nopResamplingEnabled = nopResample;
     await box.close();
 
     options = ConfigOptions(
       platform: platform,
       pageBuilder: pageBuilder,
-      resample: resample,
-      useImageCache: useImageCache,
-      nopResample: nopResample,
       // useSqflite: await sqfliteBox,
       useTextCache: useTextCache,
       updateOnStart: updateOnStart,
@@ -231,16 +203,10 @@ class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
     _updateOptions(box, any, _platform, options.platform);
     _updateOptions(box, any, _pageBuilder, options.pageBuilder);
     _updateOptions(box, any, _useTextCache, options.useTextCache);
-    _updateOptions(box, any, _useImageCache, options.useImageCache);
+    // _updateOptions(box, any, _useImageCache, options.useImageCache);
     _updateOptions(box, any, _updateOnStart, options.updateOnStart);
 
     _updateOptions(box, any, _themeMode, options.themeMode);
-
-    if (_updateOptions(box, any, _resample, options.resample))
-      GestureBinding.instance.resamplingEnabled = options.resample!;
-
-    if (_updateOptions(box, any, _nopResample, options.nopResample))
-      NopGestureBinding.instance!.nopResamplingEnabled = options.nopResample!;
 
     await any.wait;
     if (kDebugMode) await release(const Duration(milliseconds: 200));

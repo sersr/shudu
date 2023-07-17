@@ -152,10 +152,6 @@ class ListMainPage extends StatelessWidget {
                 }),
               ),
               if (kDebugMode) const SizedBox(height: 5),
-              if (kDebugMode)
-                _builder('clear', () {
-                  CacheBinding.instance?.imageRefCache?.clear();
-                }),
               const SizedBox(height: 5),
               row(
                 left: AnimatedBuilder(

@@ -187,13 +187,6 @@ class _SettingState extends State<Setting> {
                       onChanged: _onChanged);
                 })
           ]),
-      line,
-      selector<OptionsNotifier>(
-          title: '指针采样',
-          select: (opt) => opt.options.nopResample ?? false,
-          onChanged: (updateValue) {
-            optionsNotifier.options = ConfigOptions(nopResample: updateValue);
-          }),
       if (!kDartIsWeb) line,
       if (!kDartIsWeb)
         selector<OptionsNotifier>(
@@ -203,13 +196,13 @@ class _SettingState extends State<Setting> {
               optionsNotifier.options =
                   ConfigOptions(showPerformanceOverlay: updateValue);
             }),
-      line,
-      selector<OptionsNotifier>(
-          title: '使用图片缓存',
-          select: (opt) => opt.options.useImageCache ?? false,
-          onChanged: (updateValue) {
-            optionsNotifier.options = ConfigOptions(useImageCache: updateValue);
-          }),
+      // line,
+      // selector<OptionsNotifier>(
+      //     title: '使用图片缓存',
+      //     select: (opt) => opt.options.useImageCache ?? false,
+      //     onChanged: (updateValue) {
+      //       optionsNotifier.options = ConfigOptions(useImageCache: updateValue);
+      //     }),
       line,
       selector<OptionsNotifier>(
           title: '使用文本缓存',

@@ -28,6 +28,7 @@ class ShuduApp extends StatelessWidget {
         themeMode: themeMode,
         title: 'shudu',
         restorationScopeId: 'app',
+        showPerformanceOverlay: list[2] ?? false,
         theme: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
               primary: Color.fromARGB(255, 15, 152, 231),

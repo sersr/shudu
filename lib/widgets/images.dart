@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_nop/flutter_nop.dart';
 import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../event/export.dart';
-import '../modules/setting/setting.dart';
-import 'image_shadow.dart';
 
 class ImageResolve extends StatefulWidget {
   const ImageResolve(
@@ -51,99 +48,56 @@ class _ImageResolveState extends State<ImageResolve> {
       final height = constraints.maxHeight;
       final width = constraints.maxWidth;
       final _img = widget.img;
+      if (_img == null) {
+        return _errorBuilder(width, height);
+      }
 
-      return _img == null
-          ? _errorBuilder(width, height)
-          : ValueListenableBuilder<bool>(
-              valueListenable: context
-                  .grass<OptionsNotifier>()
-                  .select((parent) => parent.options.useImageCache ?? false),
-              builder: (context, useImageCache, _) {
-                if (!useImageCache) {
-                  final repository = context.grass<Repository>();
+      final repository = context.grass<Repository>();
 
-                  final getImageBytes = repository.getImageBytes;
-                  final rw = (width * ratio).toInt();
-                  final plh = CallbackWithKeyImage(
-                          keys: errorImg,
-                          callback: () => getImageBytes(errorImg))
-                      .resize(width: rw);
-                  Widget child = FadeInImage(
-                    width: widget.boxFit == BoxFit.fitWidth ? width : null,
-                    height: widget.boxFit == BoxFit.fitHeight ? height : null,
-                    fit: widget.boxFit,
-                    placeholder: plh,
-                    image: CallbackWithKeyImage(
-                        keys: _img,
-                        callback: () => getImageBytes(_img)).resize(width: rw),
-                    imageErrorBuilder: (_, o, s) {
-                      return Image(
-                          image: plh,
-                          width:
-                              widget.boxFit == BoxFit.fitWidth ? width : null,
-                          height:
-                              widget.boxFit == BoxFit.fitHeight ? height : null,
-                          fit: widget.boxFit);
-                    },
-                    placeholderErrorBuilder: (_, o, s) {
-                      return const SizedBox();
-                    },
-                  );
-                  if (widget.builder != null) child = widget.builder!(child);
-                  // if (widget.shadow) child = ImageShadow(child: child);
-                  return child;
-                }
+      final getImageBytes = repository.getImageBytes;
+      final rw = (width * ratio).toInt();
+      final plh = CallbackWithKeyImage(
+          keys: errorImg,
+          callback: () => getImageBytes(errorImg)).resize(width: rw);
 
-                return _useMemoryImage(_img, height, width);
-              },
-            );
+      Widget child = FadeInImage(
+        width: widget.boxFit == BoxFit.fitWidth ? width : null,
+        height: widget.boxFit == BoxFit.fitHeight ? height : null,
+        fit: widget.boxFit,
+        placeholder: plh,
+        image: CallbackWithKeyImage(
+            keys: _img, callback: () => getImageBytes(_img)).resize(width: rw),
+        imageErrorBuilder: (_, o, s) {
+          return Image(
+              image: plh,
+              width: widget.boxFit == BoxFit.fitWidth ? width : null,
+              height: widget.boxFit == BoxFit.fitHeight ? height : null,
+              fit: widget.boxFit);
+        },
+        placeholderErrorBuilder: (_, o, s) {
+          return const SizedBox();
+        },
+      );
+      if (widget.builder != null) child = widget.builder!(child);
+      // if (widget.shadow) child = ImageShadow(child: child);
+      return child;
     });
-  }
-
-  Widget _useMemoryImage(String _img, double height, double width) {
-    final bookEvent = repository;
-    final callback = bookEvent.getImageBytes;
-    // final image = _errorBuilder(true, width, height);
-
-    return ImageFuture.memory(
-      imageKey: [_img, callback],
-      height: height,
-      width: width,
-      boxFit: widget.boxFit,
-      getMemory: () => callback(_img),
-      builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
-      errorBuilder: (context) => _errorBuilder(width, height),
-    );
   }
 
   Widget _errorBuilder(double width, double height) {
     if (widget.errorBuilder != null) {
       return widget.errorBuilder!(context);
     } else {
-      final callback = repository.getImageBytes;
-      return ImageFuture.memory(
-        imageKey: [errorImg, callback],
+      final getImageBytes = repository.getImageBytes;
+
+      final plh = CallbackWithKeyImage(
+          keys: errorImg, callback: () => getImageBytes(errorImg));
+      return Image(
+        image: plh,
         width: width,
         height: height,
-        boxFit: widget.boxFit,
-        getMemory: () => callback(errorImg),
-        builder: (child, hasImage) => _imageBuilder(child, false, hasImage),
-        // errorBuilder: (context) => _errorBuilder(false, width, height),
+        fit: widget.boxFit,
       );
     }
-  }
-
-  Widget _imageBuilder(Widget child, bool sync, bool hasImage) {
-    if (hasImage) {
-      if (widget.builder != null) child = widget.builder!(child);
-      if (widget.shadow && !context.isDarkMode)
-        child = ImageShadow(child: child);
-      child = Center(child: child);
-    }
-
-    return AnimatedOpacity(
-        opacity: hasImage ? 1 : 0,
-        duration: const Duration(milliseconds: 300),
-        child: RepaintBoundary(child: child));
   }
 }
