@@ -18,13 +18,14 @@ class Routes {
     Map<String, dynamic> params = const {},
     Map<String, dynamic>? extra,
     Object? groupId,
+    bool updateLocation = false,
     List<NavigatorObserver> observers = const [],
   }) {
     if (!newInstance && _instance != null) {
       return _instance!;
     }
     final instance = _instance = Routes._();
-    instance._init(params, extra, groupId, observers);
+    instance._init(params, extra, groupId, observers, updateLocation);
     return instance;
   }
 
@@ -33,6 +34,7 @@ class Routes {
     Map<String, dynamic>? extra,
     Object? groupId,
     List<NavigatorObserver> observers,
+    bool updateLocation,
   ) {
     __bookContentPage = NPage(
       path: 'bookContentPage',
@@ -168,6 +170,7 @@ class Routes {
       extra: extra,
       groupId: groupId,
       observers: observers,
+      updateLocation: updateLocation,
     );
   }
 
@@ -200,51 +203,76 @@ class Routes {
 class NavRoutes {
   NavRoutes._();
 
-  static RouterAction bookContentPage() {
-    return RouterAction(Routes._bookContentPage, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction bookContentPage({groupId}) {
+    return RouterAction(Routes._bookContentPage, Routes.router,
+        groupId: groupId);
   }
 
-  static RouterAction bookInfoPage({required int id, required ApiType api}) {
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction bookInfoPage(
+      {required int id, required ApiType api, groupId}) {
     return RouterAction(Routes._bookInfoPage, Routes.router,
-        extra: {'id': id, 'api': api});
+        extra: {'id': id, 'api': api}, groupId: groupId);
   }
 
-  static RouterAction bookHistory() {
-    return RouterAction(Routes._bookHistory, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction bookHistory({groupId}) {
+    return RouterAction(Routes._bookHistory, Routes.router, groupId: groupId);
   }
 
-  static RouterAction booklistDetailPage({int? total, int? index}) {
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction booklistDetailPage({int? total, int? index, groupId}) {
     return RouterAction(Routes._booklistDetailPage, Routes.router,
-        extra: {'total': total, 'index': index});
+        extra: {'total': total, 'index': index}, groupId: groupId);
   }
 
-  static RouterAction booklistPage() {
-    return RouterAction(Routes._booklistPage, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction booklistPage({groupId}) {
+    return RouterAction(Routes._booklistPage, Routes.router, groupId: groupId);
   }
 
-  static RouterAction cacheManager() {
-    return RouterAction(Routes._cacheManager, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction cacheManager({groupId}) {
+    return RouterAction(Routes._cacheManager, Routes.router, groupId: groupId);
   }
 
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
   static RouterAction categegoryView(
-      {required String title, required int ctg}) {
+      {required String title, required int ctg, groupId}) {
     return RouterAction(Routes._categegoryView, Routes.router,
-        extra: {'title': title, 'ctg': ctg});
+        extra: {'title': title, 'ctg': ctg}, groupId: groupId);
   }
 
-  static RouterAction listCatetoryPage() {
-    return RouterAction(Routes._listCatetoryPage, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction listCatetoryPage({groupId}) {
+    return RouterAction(Routes._listCatetoryPage, Routes.router,
+        groupId: groupId);
   }
 
-  static RouterAction setting() {
-    return RouterAction(Routes._setting, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction setting({groupId}) {
+    return RouterAction(Routes._setting, Routes.router, groupId: groupId);
   }
 
-  static RouterAction topPage() {
-    return RouterAction(Routes._topPage, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction topPage({groupId}) {
+    return RouterAction(Routes._topPage, Routes.router, groupId: groupId);
   }
 
-  static RouterAction myHomePage() {
-    return RouterAction(Routes.myHomePage, Routes.router);
+  /// [groupId]
+  /// see: [NPage.newGroupKey]
+  static RouterAction myHomePage({groupId}) {
+    return RouterAction(Routes.myHomePage, Routes.router, groupId: groupId);
   }
 }
