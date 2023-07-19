@@ -13,7 +13,6 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
   void out() {
     if (!inBook) return;
     _inBookView = false;
-    assert((debugTest = false) || true);
     notifyCustom();
     outResetDefault();
   }
@@ -27,7 +26,6 @@ mixin ContentStatus on ContentDataBase, ContentBrightness {
   void setInBook() {
     if (_inBookView) return;
     _inBookView = true;
-    assert(debugTest = true);
     brightnessResetUser();
   }
 }

@@ -5,6 +5,8 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/nop_state.dart';
+import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
@@ -57,10 +59,8 @@ class TextAsyncLayout extends StatelessWidget {
           valueListenable: context
               .getType<OptionsNotifier>()
               .select((parent) => parent.options.useTextCache ?? false),
-          // selector: (_, opt) => opt.options.useTextCache ?? false,
           builder: (context, useTextCache, child) {
-            /// 只有绑定 [CacheBinding] 才能启用
-            if (useTextCache && textCache != null)
+            if (useTextCache)
               return LayoutBuilder(builder: (context, constraints) {
                 return ItemAsyncLayout(
                     bottom: bottom,
@@ -143,7 +143,7 @@ class ItemAsyncLayout extends StatelessWidget {
         return child;
       },
       layout: (BuildContext context, mounted) {
-        return TextCache.runTextPainter(() async {
+        return TextAsyncBuilder.runTextPainter(() async {
           await idleWait;
 
           final topR = topRightScore;
@@ -154,7 +154,7 @@ class ItemAsyncLayout extends StatelessWidget {
           final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
           List<TextPainter>? topRText;
           if (topR != null) {
-            topRText = await TextCache.oneTextPainter(
+            topRText = await TextAsyncBuilder.oneTextPainter(
                 text: topR,
                 width: width,
                 dir: TextDirection.ltr,
@@ -170,7 +170,7 @@ class ItemAsyncLayout extends StatelessWidget {
           final style = ts.title2;
           if (!mounted()) return const [];
 
-          final topText = await TextCache.oneTextPainter(
+          final topText = await TextAsyncBuilder.oneTextPainter(
               text: top,
               width: topWidth,
               dir: TextDirection.ltr,
@@ -181,7 +181,7 @@ class ItemAsyncLayout extends StatelessWidget {
           await idleWait;
           if (!mounted()) return const [];
 
-          final centerText = await TextCache.oneTextPainter(
+          final centerText = await TextAsyncBuilder.oneTextPainter(
               text: center,
               width: width,
               dir: TextDirection.ltr,
@@ -191,7 +191,7 @@ class ItemAsyncLayout extends StatelessWidget {
 
           await idleWait;
           if (!mounted()) return const [];
-          final bottomText = await TextCache.oneTextPainter(
+          final bottomText = await TextAsyncBuilder.oneTextPainter(
               text: bottom,
               width: width,
               dir: TextDirection.ltr,

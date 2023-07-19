@@ -1,13 +1,13 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/nop_state.dart';
 import 'package:nop/event_queue.dart';
 import 'package:nop/nop.dart';
-import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
-import '../text_style/providers/text_styles.dart';
 import '../../routes/routes.dart';
 import '../demo/view_one_inner.dart';
+import '../text_style/providers/text_styles.dart';
 
 class ListMainPage extends StatelessWidget {
   ListMainPage({Key? key}) : super(key: key);
@@ -176,11 +176,6 @@ class ListMainPage extends StatelessWidget {
                           .whenComplete(delegate.hide));
                 }),
               ),
-              if (kDebugMode) const SizedBox(height: 5),
-              if (kDebugMode)
-                _builder('clear', () {
-                  CacheBinding.instance?.imageRefCache?.clear();
-                }),
               const SizedBox(height: 5),
               row(
                 left: AnimatedBuilder(
@@ -314,6 +309,10 @@ class ListMainPage extends StatelessWidget {
                   );
                 }),
               ),
+              const SizedBox(height: 5),
+              _builder('test: nop_state', () {
+                NavRoutes.root().goAndRemoveUntil((p0) => false);
+              }),
             ],
           ),
         ),

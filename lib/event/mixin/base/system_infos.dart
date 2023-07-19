@@ -112,27 +112,6 @@ mixin SystemInfos {
         ? cacheDirs!.first.path
         : join(appPath, 'cache');
 
-    if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      final memory = await getMemoryInfo();
-      final freeMem = memory.freeMem;
-      const size = 1.5 * 1024;
-      if (freeMem != null && freeMem < size) {
-        CacheBinding.instance!.imageRefCache!.length = 250;
-      }
-    }
-
-    if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      getMemoryInfo().then((memory) {
-        final freeMem = memory.freeMem;
-        const size = 1.5 * 1024;
-        if (freeMem != null && freeMem < size) {
-          CacheBinding.instance!.imageRefCache!.length = 250;
-        }
-      });
-    }
-
     return BookIsolateArgs(appPath, cachePath);
   }
 

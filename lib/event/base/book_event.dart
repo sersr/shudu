@@ -17,7 +17,7 @@ part 'book_event.g.dart';
 
 @NopServerEvent()
 @NopServerEventItem(connectToServer: ['database'], serverName: 'book')
-abstract class BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
+mixin BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
   CustomEvent get customEvent => this;

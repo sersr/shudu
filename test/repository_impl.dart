@@ -9,7 +9,7 @@ import 'package:shudu/event/mixin/base/system_infos.dart';
 import 'package:shudu/event/mixin/multi_isolate_repository.dart';
 
 class RepositoryImplTest extends MultiBookMessagerMain
-    with SendCacheMixin, SendEventPortStreamMixin {
+    with BookEvent, SendCacheMixin, SendEventPortStreamMixin {
   RepositoryImplTest();
   late Server server;
   late Client client;
@@ -89,6 +89,7 @@ class Server {
 
 class BookEventIsolateTest extends BookEventMultiIsolate
     with
+        BookEvent,
         BookCacheEventResolve,
         BookContentEventResolve,
         ServerEventResolve,

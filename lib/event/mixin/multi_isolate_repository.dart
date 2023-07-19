@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:nop/nop.dart';
-import 'package:useful_tools/utils.dart';
 
 import '../base/export.dart';
 import '../repository.dart';
@@ -52,11 +51,7 @@ class MultiIsolateRepository extends Repository
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
 Runner _multiIsolateEntryPoint(ServerConfigurations<BookIsolateArgs> configs) {
-  return Runner(
-      runDelegate: OneFile.runZoned,
-      runner: BookEventMultiIsolate(
-        configurations: configs,
-      ));
+  return Runner(runner: BookEventMultiIsolate(configurations: configs));
 }
 
 /// 与 [MultiIsolateRepository] 配合使用

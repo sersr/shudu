@@ -138,7 +138,7 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     if (localBookId != bookId || localKey != key || !inBook) return;
 
     if (lines != null && lines.contentIsNotEmpty) {
-      final allLines = debugTest ? ['debugTest'] : lines.source;
+      final allLines = lines.source;
       final pages = await _genTextData(localBookId, allLines, lines.cname!);
 
       if (pages.isEmpty) return;
@@ -147,10 +147,9 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
         nid: lines.nid,
         pid: lines.pid,
         cid: lines.cid,
-        hasContent: debugTest ? false : lines.hasContent,
+        hasContent: lines.hasContent,
         cname: lines.cname,
       );
-      debugTest = false;
     }
     if (newText != null) {
       final old = removeText(newText.cid);

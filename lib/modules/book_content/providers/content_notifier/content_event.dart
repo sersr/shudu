@@ -107,7 +107,6 @@ mixin ContentEvent
         loadTasks(localBookId, localCid);
 
         await awaitKey(localCid);
-        if (debugTest) await release(const Duration(milliseconds: 500));
 
         final currentText = getTextData(localCid);
         if (localBookId == bookId &&

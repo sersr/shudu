@@ -1,6 +1,6 @@
+import 'package:flutter_nop/flutter_nop.dart';
 import 'package:hive/hive.dart';
 import 'package:nop/nop.dart';
-import 'package:flutter_nop/nop_state.dart';
 
 import '../../../data/biquge/search_data.dart';
 import '../../../event/export.dart';

@@ -106,7 +106,7 @@ mixin ContentLayout on ContentDataBase, Configs {
     // 分行布局
     for (var i = 0; i < paragraphs.length; i++) {
       if (_key != key || !inBook) return const [];
-      final para = await TextCache.textPainter(
+      final para = await TextAsyncBuilder.textPainter(
           text: paragraphs[i], width: width, style: style, addText: _addText);
       lines.addAll(para);
     }

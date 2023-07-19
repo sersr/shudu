@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:nop/event_queue.dart';
 import 'package:flutter_nop/flutter_nop.dart';
+import 'package:flutter_nop/nop_state.dart';
+import 'package:nop/event_queue.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import '../../../api/api.dart';
