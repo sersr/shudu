@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
-import 'package:flutter_nop/router.dart';
 import 'package:nop/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,15 +35,16 @@ void main() {
 
     Routes.init(observers: [Nav.observer]);
 
-    Nav.put(() => Repository.create());
-    Nav.put(() => OptionsNotifier());
-    Nav.put(() => BookIndexNotifier());
-    Nav.put(() => SearchNotifier());
-    Nav.put(() => ContentNotifier());
-    Nav.put(() => BookCacheNotifier());
-    Nav.put(() => TextStyleConfig());
-    Nav.put(() => RestorationContent());
-    Nav.put(() => ContentViewConfigProvider());
+    router.put(() => Repository.create());
+    router.put(() => OptionsNotifier());
+    router.put(() => BookIndexNotifier());
+    router.put(() => SearchNotifier());
+    router.put(() => ContentNotifier());
+    router.put(() => BookCacheNotifier());
+    router.put(() => TextStyleConfig());
+    router.put(() => RestorationContent());
+    router.put(() => ContentViewConfigProvider());
+    router.grass<Repository>();
 
     uiOverlay(hide: false);
     try {
@@ -84,7 +84,7 @@ void main() {
     }());
 
     /// 全局变量，初始化配置
-    await Green.of<ContentViewConfigProvider>(null).initConfigs();
+    await router.grass<ContentViewConfigProvider>().initConfigs();
 
     runApp(ShuduApp(mode: await OptionsNotifier.getThemeModeUnSafe()));
   });

@@ -285,6 +285,10 @@ class ListMainPage extends StatelessWidget {
                   );
                 }),
               ),
+              const SizedBox(height: 5),
+              _builder('test: nop_state', () {
+                NavRoutes.myHomePage().goUntil((p0) => false);
+              }),
             ],
           ),
         ),

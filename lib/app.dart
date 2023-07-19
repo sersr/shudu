@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nop/flutter_nop.dart';
-import 'package:flutter_nop/router.dart';
 import 'package:useful_tools/useful_tools.dart';
 
 import 'modules/setting/setting.dart';
@@ -12,7 +11,7 @@ class ShuduApp extends StatelessWidget {
   final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
-    final listenable = context.grass<OptionsNotifier>().select((opt) => [
+    final listenable = router.grass<OptionsNotifier>().select((opt) => [
           opt.options.themeMode,
           opt.options.platform,
           opt.options.showPerformanceOverlay,
