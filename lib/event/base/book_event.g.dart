@@ -136,7 +136,7 @@ mixin CustomEventMessager on SendEvent, Messager {
       ..putIfAbsent(book, () => []).add(CustomEventMessage);
   }
 
-  FutureOr<SearchList?> getSearchData(String key) {
+  FutureOr<SearchList> getSearchData(String key) {
     return sendMessage(CustomEventMessage.getSearchData, key, serverName: book);
   }
 
@@ -144,32 +144,32 @@ mixin CustomEventMessager on SendEvent, Messager {
     return sendMessage(CustomEventMessage.getImageBytes, img, serverName: book);
   }
 
-  FutureOr<List<BookList>?> getHiveShudanLists(String c) {
+  FutureOr<List<BookList>> getHiveShudanLists(String c) {
     return sendMessage(CustomEventMessage.getHiveShudanLists, c,
         serverName: book);
   }
 
-  FutureOr<List<BookList>?> getShudanLists(String c, int index) {
+  FutureOr<List<BookList>> getShudanLists(String c, int index) {
     return sendMessage(CustomEventMessage.getShudanLists, [c, index],
         serverName: book);
   }
 
-  FutureOr<BookTopData?> getTopLists(String c, String date, int index) {
+  FutureOr<BookTopData> getTopLists(String c, String date, int index) {
     return sendMessage(CustomEventMessage.getTopLists, [c, date, index],
         serverName: book);
   }
 
-  FutureOr<BookTopData?> getCategLists(int c, String date, int index) {
+  FutureOr<BookTopData> getCategLists(int c, String date, int index) {
     return sendMessage(CustomEventMessage.getCategLists, [c, date, index],
         serverName: book);
   }
 
-  FutureOr<BookListDetailData?> getShudanDetail(int index) {
+  FutureOr<BookListDetailData> getShudanDetail(int index) {
     return sendMessage(CustomEventMessage.getShudanDetail, index,
         serverName: book);
   }
 
-  FutureOr<List<BookCategoryData>?> getCategoryData() {
+  FutureOr<List<BookCategoryData>> getCategoryData() {
     return sendMessage(CustomEventMessage.getCategoryData, null,
         serverName: book);
   }
@@ -220,32 +220,32 @@ mixin BookCacheEventMessager on SendEvent, Messager {
         serverName: database);
   }
 
-  Stream<List<BookCache>?> watchMainList() {
+  Stream<List<BookCache>> watchMainList() {
     return sendMessageStream(BookCacheEventMessage.watchMainList, null,
         serverName: database);
   }
 
-  FutureOr<int?> updateBook(int id, BookCache book) {
+  FutureOr<int> updateBook(int id, BookCache book) {
     return sendMessage(BookCacheEventMessage.updateBook, [id, book],
         serverName: database);
   }
 
-  FutureOr<int?> insertBook(BookCache bookCache) {
+  FutureOr<int> insertBook(BookCache bookCache) {
     return sendMessage(BookCacheEventMessage.insertBook, bookCache,
         serverName: database);
   }
 
-  FutureOr<int?> deleteBook(int id) {
+  FutureOr<int> deleteBook(int id) {
     return sendMessage(BookCacheEventMessage.deleteBook, id,
         serverName: database);
   }
 
-  Stream<List<BookCache>?> watchCurrentCid(int id) {
+  Stream<List<BookCache>> watchCurrentCid(int id) {
     return sendMessageStream(BookCacheEventMessage.watchCurrentCid, id,
         serverName: database);
   }
 
-  FutureOr<List<CacheItem>?> getCacheItems() {
+  FutureOr<List<CacheItem>> getCacheItems() {
     return sendMessage(BookCacheEventMessage.getCacheItems, null,
         serverName: database);
   }
@@ -270,13 +270,13 @@ mixin BookContentEventMessager on SendEvent, Messager {
       ..putIfAbsent(database, () => []).add(BookContentEventMessage);
   }
 
-  Stream<List<BookContentDb>?> watchBookContentCid(int bookid) {
+  Stream<List<BookContentDb>> watchBookContentCid(int bookid) {
     return sendMessageStream(
         BookContentEventMessage.watchBookContentCid, bookid,
         serverName: database);
   }
 
-  FutureOr<int?> deleteCache(int bookId) {
+  FutureOr<int> deleteCache(int bookId) {
     return sendMessage(BookContentEventMessage.deleteCache, bookId,
         serverName: database);
   }

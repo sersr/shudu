@@ -291,13 +291,13 @@ class ShudanCategProvider extends ChangeNotifierBase {
     if (_list == null) {
       var data = await _repository.customEvent.getHiveShudanLists(key);
       Timer? timer;
-      if (data?.isNotEmpty == true) {
+      if (data.isNotEmpty) {
         list = data;
         _listCounts = 1;
         timer = Timer(const Duration(milliseconds: 300), notifyListeners);
       }
       data = await _repository.customEvent.getShudanLists(key, 1);
-      if (data != null && data.isNotEmpty) {
+      if (data.isNotEmpty) {
         list = data;
         _listCounts = 1;
       }
@@ -306,7 +306,7 @@ class ShudanCategProvider extends ChangeNotifierBase {
       final data =
           await _repository.customEvent.getShudanLists(key, _listCounts + 1);
 
-      if (data != null && data.isNotEmpty) {
+      if (data.isNotEmpty) {
         _listCounts += 1;
         _list.addAll(data);
       }

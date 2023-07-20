@@ -17,7 +17,8 @@ part 'book_event.g.dart';
 
 @NopServerEvent()
 @NopServerEventItem(connectToServer: ['database'], serverName: 'book')
-mixin BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
+abstract mixin class BookEvent
+    implements CustomEvent, DatabaseEvent, ComplexEvent {
   BookCacheEvent get bookCacheEvent => this;
   BookContentEvent get bookContentEvent => this;
   CustomEvent get customEvent => this;
@@ -26,20 +27,20 @@ mixin BookEvent implements CustomEvent, DatabaseEvent, ComplexEvent {
 }
 
 abstract class BookContentEvent {
-  Stream<List<BookContentDb>?> watchBookContentCid(int bookid);
-  FutureOr<int?> deleteCache(int bookId);
+  Stream<List<BookContentDb>> watchBookContentCid(int bookid);
+  FutureOr<int> deleteCache(int bookId);
 }
 
 abstract class BookCacheEvent {
   FutureOr<Option<List<BookCache>>> getMainList();
-  Stream<List<BookCache>?> watchMainList();
+  Stream<List<BookCache>> watchMainList();
 
-  FutureOr<int?> updateBook(int id, BookCache book);
-  FutureOr<int?> insertBook(BookCache bookCache);
-  FutureOr<int?> deleteBook(int id);
+  FutureOr<int> updateBook(int id, BookCache book);
+  FutureOr<int> insertBook(BookCache bookCache);
+  FutureOr<int> deleteBook(int id);
 
-  Stream<List<BookCache>?> watchCurrentCid(int id);
-  FutureOr<List<CacheItem>?> getCacheItems();
+  Stream<List<BookCache>> watchCurrentCid(int id);
+  FutureOr<List<CacheItem>> getCacheItems();
 }
 
 @NopServerEventItem(serverName: 'database', separate: true)
@@ -47,17 +48,17 @@ abstract class DatabaseEvent
     implements BookCacheEvent, BookContentEvent, ServerEvent {}
 
 abstract class CustomEvent implements ServerNetEvent {
-  FutureOr<SearchList?> getSearchData(String key);
+  FutureOr<SearchList> getSearchData(String key);
 
   @NopServerMethod(useTransferType: true)
   FutureOr<Uint8List?> getImageBytes(String img);
 
-  FutureOr<List<BookList>?> getHiveShudanLists(String c);
+  FutureOr<List<BookList>> getHiveShudanLists(String c);
 
-  FutureOr<List<BookList>?> getShudanLists(String c, int index);
-  FutureOr<BookTopData?> getTopLists(String c, String date, int index);
-  FutureOr<BookTopData?> getCategLists(int c, String date, int index);
+  FutureOr<List<BookList>> getShudanLists(String c, int index);
+  FutureOr<BookTopData> getTopLists(String c, String date, int index);
+  FutureOr<BookTopData> getCategLists(int c, String date, int index);
 
-  FutureOr<BookListDetailData?> getShudanDetail(int index);
-  FutureOr<List<BookCategoryData>?> getCategoryData();
+  FutureOr<BookListDetailData> getShudanDetail(int index);
+  FutureOr<List<BookCategoryData>> getCategoryData();
 }

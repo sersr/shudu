@@ -216,7 +216,7 @@ class _CacheNotifier extends ChangeNotifierBase
     _out = false;
     _cacheSub?.cancel();
     _cacheSub = repository!.bookCacheEvent.watchMainList().listen(_listen);
-    final remoteItems = await repository!.getCacheItems() ?? const [];
+    final remoteItems = await repository!.getCacheItems();
     if (_out) return;
 
     _items

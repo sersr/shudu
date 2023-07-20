@@ -41,7 +41,7 @@ mixin ContentEvent
     }
   }
 
-  Future<void> updateCurrent() => reload().then((_) => notify());
+  Future<void> updateCurrent() => reload().whenComplete(notify);
 
   /// 进入阅读页面前，必须调用的方法
   Future<void> touchBook(int newBookId, int cid, int page,
@@ -106,7 +106,9 @@ mixin ContentEvent
       if (localCid != null) {
         loadTasks(localBookId, localCid);
 
-        await awaitKey(localCid);
+        try {
+          await awaitKey(localCid);
+        } catch (_) {}
 
         final currentText = getTextData(localCid);
         if (localBookId == bookId &&

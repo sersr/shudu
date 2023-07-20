@@ -84,6 +84,6 @@ class BookEventMultiIsolate extends MultiBookResolveMain
 
   @override
   void onError(msg, error) {
-    Log.e('onError: $msg\n$error', onlyDebug: false);
+    // Log.e('onError: $msg\n$error', onlyDebug: false);
   }
 }

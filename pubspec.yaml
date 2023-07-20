@@ -33,7 +33,7 @@ dependencies:
   #   path: ../packages/hot_fix
   infinite_scroll_pagination: ^3.1.0
   intl: ^0.17.0
-  json_annotation: ^4.7.0
+  json_annotation: ^4.8.1
   logger: ^1.0.0
   lpinyin: ^2.0.3
   path: any

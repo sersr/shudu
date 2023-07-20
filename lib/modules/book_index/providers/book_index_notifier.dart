@@ -224,7 +224,7 @@ class BookIndexNotifier extends ChangeNotifierBase
         repository.bookCacheEvent.watchCurrentCid(bookid).listen((_bookCaches) {
       if (_data?.isValidBqg != true) return;
       EventQueue.runOne(_watchCurrentCid, () {
-        if (_bookCaches != null && _bookCaches.isNotEmpty) {
+        if (_bookCaches.isNotEmpty) {
           final _cid = _bookCaches.last.chapterId;
           final _bookid = _data!.bookid!;
           final cid = _data!.contentid!;
@@ -240,10 +240,8 @@ class BookIndexNotifier extends ChangeNotifierBase
 
     _cids ??= repository.bookContentEvent
         .watchBookContentCid(bookid)
-        .map((e) => e?.map((e) => e.cid).whereType<int>())
+        .map((e) => e.map((e) => e.cid).whereType<int>())
         .listen((listData) {
-      if (listData == null) return;
-
       EventQueue.runOne(_cids, () {
         if (_data?.isValidBqg != true) return;
         if (_data?.bookid == bookid) {

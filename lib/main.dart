@@ -16,6 +16,7 @@ import 'modules/search.dart';
 import 'modules/setting/providers/options_notifier.dart';
 import 'modules/setting/setting.dart';
 import 'modules/text_style/text_style.dart';
+import 'routes/routes.dart';
 import 'utils/type_adapter.dart';
 
 void main() {
@@ -35,6 +36,8 @@ void main() {
     //   delayDuration: const Duration(milliseconds: 3000),
     // );
     WidgetsFlutterBinding.ensureInitialized();
+
+    Routes.init();
     Nav.put(() => Repository.create());
     Nav.put(() => OptionsNotifier());
     Nav.put(() => BookIndexNotifier());
