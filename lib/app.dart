@@ -11,7 +11,7 @@ class ShuduApp extends StatelessWidget {
   final ThemeMode mode;
   @override
   Widget build(BuildContext context) {
-    final listenable = router.grass<OptionsNotifier>().select((opt) => [
+    final listenable = router.global<OptionsNotifier>().select((opt) => [
           opt.options.themeMode,
           opt.options.platform,
           opt.options.showPerformanceOverlay,

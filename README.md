@@ -1,27 +1,18 @@
 # shudu
 
-    ! api 已失效, 今后只用于测试正在开发的插件
+> api 失效了！
 
-提供简易小说阅读方式
+这个是早期入门flutter时写的，项目结构比较粗糙，不想改了，QAQ
 
-## 包含的库：
- - nop_db: 数据库工具包，代码生成，
- - nop: `Isolate`通信协议，动态传输
- - nop_db_sqlite: 使用 sqlite3 作为 nop_db 数据库底层实现
- - useful_tools: 指针采样，图片缓存库（包含flutter相关的库）
 
-## flutter version
+## 更新说明
 
-    3.0
+主要用于测试自己的想法；比如自己开发的插件，如果可以在这里测试一般会在这里使用。
 
-## 构建
-- 注释`pubspec.yaml`下`dependency_overrides`项
-- flutter channel stable
-- 运行下面命令获取最新状态：
+## 插件说明
 
-        flutter pub upgrade
+[flutter_nop](https://github.com/sersr/flutter_nop) : 路由和状态管理方案
 
-  note: 如果有插件在本地的要及时拉取最新
-- flutter build apk
+> 包含Navigator和Router两种路由方式; master分支使用 `Router` 方案；[shudu_nav](https://github.com/sersr/shudu/tree/shudu_nav)分支使用的 `Navigator`;
 
-声明：本项目仅供学习参考
+[nop](https://github.com/sersr/nop) : Isolate 解决方案

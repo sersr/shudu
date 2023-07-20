@@ -44,7 +44,7 @@ void main() {
     router.put(() => TextStyleConfig());
     router.put(() => RestorationContent());
     router.put(() => ContentViewConfigProvider());
-    router.grass<Repository>();
+    router.global<Repository>();
 
     uiOverlay(hide: false);
     try {
@@ -84,7 +84,7 @@ void main() {
     }());
 
     /// 全局变量，初始化配置
-    await router.grass<ContentViewConfigProvider>().initConfigs();
+    await router.global<ContentViewConfigProvider>().initConfigs();
 
     runApp(ShuduApp(mode: await OptionsNotifier.getThemeModeUnSafe()));
   });

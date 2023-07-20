@@ -92,9 +92,7 @@ class _PannelState extends State<Pannel> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 14, vertical: 7),
                                   onTap: () {
-                                    if (!bloc.loading.value) {
-                                      bloc.goPre();
-                                    }
+                                    bloc.goPre();
                                   },
                                   child: Center(
                                       child: Text(
@@ -142,9 +140,7 @@ class _PannelState extends State<Pannel> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 7),
                                 onTap: () {
-                                  if (!bloc.loading.value) {
-                                    bloc.goNext();
-                                  }
+                                  bloc.goNext();
                                 },
                                 child: Center(
                                   child: Text(
