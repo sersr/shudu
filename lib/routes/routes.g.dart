@@ -29,10 +29,13 @@ class Routes {
         builder: (context, arguments, group) => const BookContentPage());
 
     __bookInfoPage = NopRoute(
-        name: '/bookInfoPage',
-        fullName: '/bookInfoPage',
-        builder: (context, arguments, group) =>
-            BookInfoPage(id: arguments['id'], api: arguments['api']));
+      name: '/bookInfoPage',
+      fullName: '/bookInfoPage',
+      builder: (context, arguments, group) => Nop(
+        builders: const [ShuduRoute._builder],
+        child: BookInfoPage(id: arguments['id'], api: arguments['api']),
+      ),
+    );
 
     __bookHistory = NopRoute(
         name: '/bookHistory',
