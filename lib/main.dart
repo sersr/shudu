@@ -20,6 +20,11 @@ import 'routes/routes.dart';
 import 'utils/type_adapter.dart';
 
 void main() {
+  assert(() {
+    Log.logPathFn = (path) => path;
+    return true;
+  }());
+
   Log.logRun(() async {
     // 异步
     // final style =
@@ -63,25 +68,6 @@ void main() {
       hiveInit('shudu/hive');
       Log.e('error: $e', onlyDebug: false);
     }
-
-    assert(() {
-      final reg = RegExp(r'\((package:)(.+?)/(.*)');
-      Log.logPathFn = (path) {
-        final newPath = path.replaceFirstMapped(reg, (match) {
-          final package = match[2];
-          if (package == 'shudu') {
-            return '(./lib/${match[3]}';
-          }
-
-          return '';
-        });
-        if (newPath.isEmpty) {
-          return null;
-        }
-        return newPath;
-      };
-      return true;
-    }());
 
     /// 全局变量，初始化配置
     await router.global<ContentViewConfigProvider>().initConfigs();
