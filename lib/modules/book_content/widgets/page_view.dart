@@ -10,6 +10,7 @@ import 'package:useful_tools/useful_tools.dart';
 
 import '../../book_index/providers/book_index_notifier.dart';
 import '../../constants.dart';
+import '../../setting/setting.dart';
 import '../providers/content_notifier.dart';
 import '../text_data.dart';
 import 'battery_view.dart';
@@ -30,7 +31,7 @@ class ContentPageView extends StatefulWidget {
 }
 
 class ContentPageViewState extends State<ContentPageView>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, RouteAware {
   late ContentViewController offsetPosition;
   ContentNotifier? _bloc;
   ContentNotifier get bloc => _bloc!;
@@ -129,6 +130,8 @@ class ContentPageViewState extends State<ContentPageView>
     EventQueue.pushOne(toggle, delegate.hide);
   }
 
+  late OptionsNotifier option;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -137,6 +140,15 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc!.handle.addListener(update);
     indexBloc = context.getType<BookIndexNotifier>();
     update();
+
+    final route = ModalRoute.of(context);
+    option = context.getType<OptionsNotifier>();
+    if (route != null) option.routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPopNext() {
+    _bloc?.controller = offsetPosition;
   }
 
   void update() {
@@ -307,6 +319,7 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc?.handle.removeListener(update);
     bloc.controller = null;
     indexBloc.removeRegisterKey(lKey);
+    option.routeObserver.unsubscribe(this);
     super.dispose();
   }
 }

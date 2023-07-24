@@ -86,7 +86,7 @@ class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
   OptionsNotifier();
   late final Repository repository = getType();
 
-  final routeObserver = RouteObserver<PageRoute>();
+  final routeObserver = RouteObserver();
   ConfigOptions _options = ConfigOptions(platform: defaultTargetPlatform);
   ConfigOptions get options => _options;
 

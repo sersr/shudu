@@ -106,7 +106,7 @@ class ContentNotifier with NopLifeCycle {
     final data = handle.saveStateOnOut();
 
     final cache = context.getType<BookCacheNotifier>();
-    BookInfoPage.push(data.saveBookId, data.saveApi).then((_) {
+    BookInfoPage.push(data.saveBookId, data.saveApi).whenComplete(() {
       handle.restoreState(() async {
         final list = await cache.getList;
         int? cid, page;

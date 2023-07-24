@@ -58,20 +58,17 @@ mixin ContentEvent
     newBookOrCid(newBookId, cid, page, api: api);
   }
 
-  bool _shouldUpdate(int newBookId, int cid, int page, ApiType api) {
-    return tData.cid != cid || bookId != newBookId || this.api != api;
-  }
 
-  Future<void> _getStateOrSetBook(int newBookId, int cid, int page,
-      {ApiType api = ApiType.biquge}) async {
-    if (_shouldUpdate(newBookId, cid, page, api)) {
-      notify();
-      notifyState(notEmptyOrIgnore: true, loading: false);
+  void updateBook(int newBookId, int cid, int page,
+      {ApiType api = ApiType.biquge}) {
+    if (shouldUpdate(newBookId, cid, api) || currentPage != page) {
       tData.dispose();
       resetData(TextData(cid: cid, api: api));
       this.api = api;
       currentPage = page;
       bookId = newBookId;
+      notify();
+      notifyState(notEmptyOrIgnore: true, loading: false);
     }
   }
 
@@ -169,16 +166,16 @@ mixin ContentEvent
       footer.value = '';
       header.value = '';
     }
-    final _reset = _shouldUpdate(newBookId, cid, page, api);
+    final _reset = shouldUpdate(newBookId, cid, api);
 
-    if (_reset || tData.contentIsEmpty) {
+    if (_reset) {
       final _t = Timer(
           const Duration(milliseconds: 600), () => notifyState(loading: true));
 
       await startFirstEvent(
           only: false,
           clear: clear,
-          onStart: () => _getStateOrSetBook(newBookId, cid, page, api: api),
+          onStart: () => updateBook(newBookId, cid, page, api: api),
           onDone: resetController);
 
       _t.cancel();

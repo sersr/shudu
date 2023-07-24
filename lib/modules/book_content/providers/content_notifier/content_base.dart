@@ -70,6 +70,15 @@ mixin ContentDataBase on ChangeNotifier {
     updateCaches(data);
   }
 
+  ApiType api = ApiType.biquge;
+
+  bool shouldUpdate(int newBookId, int cid, ApiType api) {
+    return tData.cid != cid ||
+        bookId != newBookId ||
+        this.api != api ||
+        tData.contentIsEmpty;
+  }
+
   var _key = Object();
   Object get key => _key;
   void didChangeKey() => _key = Object();

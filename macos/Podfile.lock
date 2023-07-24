@@ -1,5 +1,5 @@
 PODS:
-  - battery_plus_macos (0.0.1):
+  - battery_plus (0.0.1):
     - FlutterMacOS
   - flutter_local_notifications (0.0.1):
     - FlutterMacOS
@@ -7,27 +7,27 @@ PODS:
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - path_provider_macos (0.0.1):
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - screen_brightness_macos (0.1.0):
     - FlutterMacOS
   - sqflite (0.0.2):
     - FlutterMacOS
     - FMDB (>= 2.7.5)
-  - sqlite3 (3.38.5):
-    - sqlite3/common (= 3.38.5)
-  - sqlite3/common (3.38.5)
-  - sqlite3/fts5 (3.38.5):
+  - sqlite3 (3.41.2):
+    - sqlite3/common (= 3.41.2)
+  - sqlite3/common (3.41.2)
+  - sqlite3/fts5 (3.41.2):
     - sqlite3/common
-  - sqlite3/json1 (3.38.5):
+  - sqlite3/perf-threadsafe (3.41.2):
     - sqlite3/common
-  - sqlite3/perf-threadsafe (3.38.5):
-    - sqlite3/common
-  - sqlite3/rtree (3.38.5):
+  - sqlite3/rtree (3.41.2):
     - sqlite3/common
   - sqlite3_flutter_libs (0.0.1):
     - FlutterMacOS
-    - sqlite3 (~> 3.38.5)
+    - sqlite3 (~> 3.41.2)
     - sqlite3/fts5
-    - sqlite3/json1
     - sqlite3/perf-threadsafe
     - sqlite3/rtree
   - url_launcher_macos (0.0.1):
@@ -36,10 +36,11 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
-  - battery_plus_macos (from `Flutter/ephemeral/.symlinks/plugins/battery_plus_macos/macos`)
+  - battery_plus (from `Flutter/ephemeral/.symlinks/plugins/battery_plus/macos`)
   - flutter_local_notifications (from `Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - path_provider_macos (from `Flutter/ephemeral/.symlinks/plugins/path_provider_macos/macos`)
+  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - screen_brightness_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_brightness_macos/macos`)
   - sqflite (from `Flutter/ephemeral/.symlinks/plugins/sqflite/macos`)
   - sqlite3_flutter_libs (from `Flutter/ephemeral/.symlinks/plugins/sqlite3_flutter_libs/macos`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
@@ -51,14 +52,16 @@ SPEC REPOS:
     - sqlite3
 
 EXTERNAL SOURCES:
-  battery_plus_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/battery_plus_macos/macos
+  battery_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/battery_plus/macos
   flutter_local_notifications:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
-  path_provider_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_macos/macos
+  path_provider_foundation:
+    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  screen_brightness_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/screen_brightness_macos/macos
   sqflite:
     :path: Flutter/ephemeral/.symlinks/plugins/sqflite/macos
   sqlite3_flutter_libs:
@@ -69,17 +72,18 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/wakelock_macos/macos
 
 SPEC CHECKSUMS:
-  battery_plus_macos: 6011b4f68b8845e0a7dda4787b90f455fb67c2d1
+  battery_plus: 906cd081df7f2274f5235581515b59a628dcaec7
   flutter_local_notifications: 3805ca215b2fb7f397d78b66db91f6a747af52e4
-  FlutterMacOS: ae6af50a8ea7d6103d888583d46bd8328a7e9811
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  path_provider_macos: 3c0c3b4b0d4a76d2bf989a913c2de869c5641a19
+  path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
+  screen_brightness_macos: 2d6d3af2165592d9a55ffcd95b7550970e41ebda
   sqflite: a5789cceda41d54d23f31d6de539d65bb14100ea
-  sqlite3: 93442daab2ab1825bc9c05faa85814a1996f5b65
-  sqlite3_flutter_libs: d287f671098024f9cde4dc211319335a6a379042
-  url_launcher_macos: 597e05b8e514239626bcf4a850fcf9ef5c856ec3
+  sqlite3: fd89671d969f3e73efe503ce203e28b016b58f68
+  sqlite3_flutter_libs: 00a50503d69f7ab0fe85a5ff25b33082f4df4ce9
+  url_launcher_macos: 5335912b679c073563f29d89d33d10d459f95451
   wakelock_macos: bc3f2a9bd8d2e6c89fee1e1822e7ddac3bd004a9
 
-PODFILE CHECKSUM: 6eac6b3292e5142cfc23bdeb71848a40ec51c14c
+PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
 
 COCOAPODS: 1.11.3

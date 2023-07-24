@@ -127,8 +127,6 @@ mixin ContentLoad on ContentDataBase, ContentLayout {
     return pages;
   }
 
-  ApiType api = ApiType.biquge;
-
   Future<void> _load(int localBookId, int contentId, bool update) async {
     if (localBookId == -1 || contentId == -1) return;
     final localKey = key;

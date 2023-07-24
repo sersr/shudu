@@ -71,26 +71,26 @@ mixin SystemInfos {
         ..add(getExternalCacheDirectories().then((dirs) => cacheDirs = dirs))
         ..add(Bangs.safePadding
             .then((value) => _statusHeight = value.padding.top));
-    }
 
-    _waits
-      ..add(Permission.manageExternalStorage.status.then((status) {
-        if (status.isDenied) {
-          return OptionsNotifier.extenalStorage.then((request) {
-            return OptionsNotifier.setextenalStorage(false).whenComplete(() {
-              if (request) {
-                return Permission.manageExternalStorage
-                    .request()
-                    .then((status) {
-                  if (status.isDenied) externalDir = false;
-                });
-              } else {
-                externalDir = false;
-              }
+      _waits
+        ..add(Permission.manageExternalStorage.status.then((status) {
+          if (status.isDenied) {
+            return OptionsNotifier.extenalStorage.then((request) {
+              return OptionsNotifier.setextenalStorage(false).whenComplete(() {
+                if (request) {
+                  return Permission.manageExternalStorage
+                      .request()
+                      .then((status) {
+                    if (status.isDenied) externalDir = false;
+                  });
+                } else {
+                  externalDir = false;
+                }
+              });
             });
-          });
-        }
-      }));
+          }
+        }));
+    }
 
     late Directory appDir;
 

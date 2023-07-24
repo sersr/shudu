@@ -238,10 +238,9 @@ class BookIndexNotifier extends ChangeNotifierBase
       _watchCurrentCid = null;
     });
 
-    _cids ??= repository.bookContentEvent
-        .watchBookContentCid(bookid)
-        .map((e) => e.map((e) => e.cid).whereType<int>())
-        .listen((listData) {
+    _cids ??= repository.bookContentEvent.watchBookContentCid(bookid).map((e) {
+      return e.map((e) => e.cid).whereType<int>();
+    }).listen((listData) {
       EventQueue.runOne(_cids, () {
         if (_data?.isValidBqg != true) return;
         if (_data?.bookid == bookid) {

@@ -44,7 +44,7 @@ class BookContentPage extends StatefulWidget {
 }
 
 class BookContentPageState extends State<BookContentPage>
-    with WidgetsBindingObserver, PageAnimationMixin {
+    with PageAnimationMixin {
   late ContentNotifier bloc;
   late BookCacheNotifier blocCache;
   late ValueListenable<Color?> notifyColor;
@@ -53,7 +53,6 @@ class BookContentPageState extends State<BookContentPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     observer = OverlayObserverState(overlayGetter: overlayGetter);
   }
 
@@ -64,12 +63,6 @@ class BookContentPageState extends State<BookContentPage>
     blocCache = context.getType<BookCacheNotifier>();
     notifier = context.getType();
     notifyColor = bloc.config.select((parent) => parent.value.bgcolor);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
   }
 
   @override

@@ -18,6 +18,9 @@ mixin ContentRestore on ContentDataBase, ContentStatus, Configs {
     return SaveStateData(bookId, tData.cid!, currentPage, tData.api);
   }
 
+  SaveStateData get saveData =>
+      SaveStateData(bookId, tData.cid!, currentPage, tData.api);
+
   @override
   FutureOr<void> onOut() async {
     await EventQueue.getQueueRunner(restoreState);
@@ -29,12 +32,17 @@ mixin ContentRestore on ContentDataBase, ContentStatus, Configs {
       EventQueue.run(restoreState, () async {
         final data = await callback();
         setInBook();
-        newBookOrCid(data.saveBookId, data.saveCid, data.savePage,
-            api: data.saveApi);
-
+        // resetController();
+        if (shouldUpdate(data.saveBookId, data.saveCid, api)) {
+          newBookOrCid(data.saveBookId, data.saveCid, data.savePage,
+              api: data.saveApi);
+        } else {
+          resetController();
+          notifyListeners();
+        }
         final isPortrait = config.value.orientation!;
 
-        uiOverlay(hide: !isPortrait);
+        uiOverlay(hide: !uiOverlayShow || !isPortrait);
         setOrientation(isPortrait);
         uiStyle(dark: true);
       });
@@ -51,5 +59,21 @@ class SaveStateData {
   SaveStateData copyWith({int? bookId, int? cid, int? page, ApiType? api}) {
     return SaveStateData(
         bookId ?? saveBookId, cid ?? saveCid, page ?? savePage, api ?? saveApi);
+  }
+
+  static dynamic fromJson(Object? data) {
+    if (data is! Map) return data;
+    final saveBookId = data['saveBookId'];
+    final saveCid = data['saveCid'];
+    final savePage = data['savePage'];
+    return SaveStateData(saveBookId, saveCid, savePage, ApiType.biquge);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'saveBookId': saveBookId,
+      'saveCid': saveCid,
+      'savePage': savePage,
+    };
   }
 }
