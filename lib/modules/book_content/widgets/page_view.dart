@@ -8,6 +8,7 @@ import 'package:nop/nop.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:useful_tools/useful_tools.dart';
 
+import '../../../routes/routes.dart';
 import '../../book_index/providers/book_index_notifier.dart';
 import '../../constants.dart';
 import '../providers/content_notifier.dart';
@@ -30,7 +31,7 @@ class ContentPageView extends StatefulWidget {
 }
 
 class ContentPageViewState extends State<ContentPageView>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, RouteAware {
   late ContentViewController offsetPosition;
   ContentNotifier? _bloc;
   ContentNotifier get bloc => _bloc!;
@@ -139,6 +140,15 @@ class ContentPageViewState extends State<ContentPageView>
     indexBloc = context.grass<BookIndexNotifier>();
     content = RestorationContent.getFromEntry(context);
     update();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      ShuduRoute.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    _bloc?.controller = offsetPosition;
   }
 
   void update() {
@@ -309,6 +319,7 @@ class ContentPageViewState extends State<ContentPageView>
     _bloc?.handle.removeListener(update);
     bloc.controller = null;
     indexBloc.removeRegisterKey(lKey);
+    ShuduRoute.routeObserver.unsubscribe(this);
     super.dispose();
   }
 }

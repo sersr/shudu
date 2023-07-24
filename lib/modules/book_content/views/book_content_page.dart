@@ -32,7 +32,7 @@ class BookContentPage extends StatefulWidget {
       await bloc.touchBook(newBookid, cid, page, api: api);
     } catch (_) {}
     _lock = null;
-    return NavRoutes.bookContentPage().go().future;
+    return NavRoutes.bookContentPage().go().popped;
   }
 
   @override

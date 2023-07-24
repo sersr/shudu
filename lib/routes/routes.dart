@@ -43,6 +43,8 @@ final router = Routes.router;
 class ShuduRoute {
   ShuduRoute._(); // 智能提示中不显示构造器
 
+  static final routeObserver = RouteObserver();
+
   static final _notifierMap = <Object, ValueNotifier<int>>{};
 
   static ValueNotifier<int> get(Object key) =>

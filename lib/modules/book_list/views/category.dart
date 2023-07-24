@@ -137,7 +137,7 @@ class CategegoryView extends StatelessWidget {
 
   static Future push(context, String title, int ctg) {
     final entry = NavRoutes.categegoryView(title: title, ctg: ctg);
-    return entry.go().future;
+    return entry.go().popped;
   }
 
   @override

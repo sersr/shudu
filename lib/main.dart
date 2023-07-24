@@ -33,7 +33,7 @@ void main() {
     //   delayDuration: const Duration(milliseconds: 3000),
     // );
 
-    Routes.init(observers: [Nav.observer]);
+    Routes.init(observers: [Nav.observer, ShuduRoute.routeObserver]);
 
     router.put(() => Repository.create());
     router.put(() => OptionsNotifier());

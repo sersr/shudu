@@ -185,6 +185,8 @@ mixin ContentEvent
       _t.cancel();
     } else {
       if (page < tData.content.length) currentPage = page;
+      if (controller == null) setInnerIndex(0);
+
       notifyListeners();
     }
   }
