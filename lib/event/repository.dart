@@ -12,7 +12,7 @@ abstract class Repository extends MultiBookMessagerMain
         SendInitCloseMixin,
         NotifyStateMixin,
         SystemInfos,
-        NopLifeCycle {
+        NopLifecycle {
   Repository();
 
   static Repository? _instance;

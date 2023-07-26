@@ -6,7 +6,7 @@ import '../../../data/biquge/search_data.dart';
 import '../../../event/export.dart';
 import 'search_state.dart';
 
-class SearchNotifier with NopLifeCycle {
+class SearchNotifier with NopLifecycle {
   SearchNotifier();
   late final Repository repository = getType();
   final state = SearchState();

@@ -57,7 +57,7 @@ class Cache {
   final ApiType api;
 }
 
-class BookCacheNotifier with NopLifeCycle {
+class BookCacheNotifier with NopLifecycle {
   BookCacheNotifier();
   late final Repository repository = getType();
   final state = BookCacheState();

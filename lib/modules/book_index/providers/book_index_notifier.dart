@@ -116,7 +116,7 @@ class BookIndexsData {
 }
 
 class BookIndexNotifier extends ChangeNotifierBase
-    with NotifyStateOnChangeNotifier, NopLifeCycle {
+    with NotifyStateOnChangeNotifier, NopLifecycle {
   BookIndexNotifier();
 
   late final Repository repository = getType();
