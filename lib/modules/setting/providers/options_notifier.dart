@@ -80,7 +80,7 @@ enum PageBuilder {
   fadeRightWards,
 }
 
-class OptionsNotifier extends ChangeNotifierBase with NopLifeCycle {
+class OptionsNotifier extends ChangeNotifierBase with NopLifecycle {
   OptionsNotifier();
   late final Repository repository = getType();
 

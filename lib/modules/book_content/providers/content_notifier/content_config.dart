@@ -11,7 +11,7 @@ mixin Configs on ContentDataBase, ContentStatus {
   late final ContentViewConfigProvider configProvider;
 
   ValueNotifier<ContentViewConfig> get config => configProvider.config;
-  void init(NopLifeCycle delegate) {
+  void init(NopLifecycle delegate) {
     configProvider = delegate.getType();
     initConfigs();
   }

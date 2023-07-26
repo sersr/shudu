@@ -262,8 +262,8 @@ class _MyHomePageState extends State<MyHomePage>
               icon: Icons.book,
               text: '书籍详情',
               onTap: () {
-                NavRoutes.bookInfoPage(id: item.bookId!, api: api)
-                    .goReplacement();
+                NRouter.of(context).pop();
+                NavRoutes.bookInfoPage(id: item.bookId!, api: api).go();
               }),
           Cs(() {
             final isTop =
@@ -382,8 +382,11 @@ class _MyHomePageState extends State<MyHomePage>
                     },
                     onLongPress: () {
                       showModalBottomSheet(
-                          context: context,
-                          builder: (_) => bottomSheet(item, item.api));
+                              context: context,
+                              builder: (_) => bottomSheet(item, item.api))
+                          .then((value) {
+                        Log.w('result: $value');
+                      });
                     },
                     child: BookItem(
                       img: item.img,

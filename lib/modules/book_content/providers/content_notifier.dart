@@ -13,7 +13,7 @@ import '../widgets/page_view_controller.dart';
 import 'content_notifier/export.dart';
 
 /// 只提供向外暴露的api
-class ContentNotifier with NopLifeCycle {
+class ContentNotifier with NopLifecycle {
   ContentNotifier();
 
   late final Repository repository = getType();
