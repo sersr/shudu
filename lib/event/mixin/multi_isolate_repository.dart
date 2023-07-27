@@ -51,6 +51,7 @@ class MultiIsolateRepository extends Repository
 
 /// 统一由主隔离创建，并分配[SendPortOwner]
 Runner _multiIsolateEntryPoint(ServerConfigurations<BookIsolateArgs> configs) {
+  Log.logPathFn = (path) => path;
   return Runner(runner: BookEventMultiIsolate(configurations: configs));
 }
 

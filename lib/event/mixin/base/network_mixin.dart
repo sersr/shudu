@@ -331,7 +331,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEvent, CustomEventResolve {
     }
 
     if (data == null) {
-      throw Exception('data == null');
+      return const [];
     } else {
       try {
         return BookListRoot.fromJson(jsonDecode(data)).data ??
@@ -573,7 +573,7 @@ mixin NetworkMixin on HiveDioMixin, CustomEvent, CustomEventResolve {
         success = _isValid(data.headers);
       } catch (e) {
         success = false;
-        assert(Log.w('error: $imgName | $url$e', lines: 4));
+        assert(Log.w('error: $imgName | $url\n$e', lines: 10));
       } finally {
         if (success)
           _errorLoading.remove(imgName);

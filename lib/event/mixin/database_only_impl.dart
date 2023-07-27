@@ -6,6 +6,7 @@ import 'base/system_infos.dart';
 
 // 子隔离，数据库 入口
 Runner dataBaseEntryPoint(ServerConfigurations<BookIsolateArgs> configs) {
+  Log.logPathFn = (path) => path;
   return Runner(runner: DatabaseImpl(configurations: configs));
 }
 

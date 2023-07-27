@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
@@ -286,8 +287,8 @@ class ListMainPage extends StatelessWidget {
                 }),
               ),
               const SizedBox(height: 5),
-              _builder('test: nop_state', () {
-                NavRoutes.myHomePage().goUntil((p0) => false);
+              _builder('test: nop_state(replacement)', () {
+                NavRoutes.myHomePage().goReplacement();
               }),
             ],
           ),

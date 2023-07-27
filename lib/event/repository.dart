@@ -15,6 +15,9 @@ abstract class Repository extends MultiBookMessagerMain
         NopLifecycle {
   Repository();
 
+  @override
+  bool get nullOnError => true;
+
   static Repository? _instance;
 
   factory Repository.create() {
