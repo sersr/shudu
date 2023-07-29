@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_nop/flutter_nop.dart';
 import 'package:flutter_nop/router.dart';
 import 'package:nop/event_queue.dart';
@@ -36,6 +35,7 @@ class ListMainPage extends StatelessWidget {
 
     var count = 0;
     var index = 0;
+
     return Container(
       color: light ? Color.fromARGB(255, 231, 231, 231) : Colors.grey.shade900,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
