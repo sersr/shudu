@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage>
       painterBloc.stopSave();
     } else if (initIsolateState) {
       painterBloc.stopAutoRun();
-      ui.window.scheduleFrame();
+      WidgetsBinding.instance.scheduleFrame();
     }
   }
 
@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage>
     final child = Scaffold(
       appBar: AppBar(
         title: Text('shudu'),
-        elevation: 1 / ui.window.devicePixelRatio,
+        elevation: 1 / MediaQuery.of(context).devicePixelRatio,
         centerTitle: true,
         actions: [
           Column(

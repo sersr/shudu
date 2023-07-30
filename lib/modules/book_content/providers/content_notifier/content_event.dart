@@ -58,7 +58,6 @@ mixin ContentEvent
     newBookOrCid(newBookId, cid, page, api: api);
   }
 
-
   void updateBook(int newBookId, int cid, int page,
       {ApiType api = ApiType.biquge}) {
     if (shouldUpdate(newBookId, cid, api) || currentPage != page) {
@@ -288,7 +287,8 @@ mixin ContentEvent
     }
 
     scheduleMicrotask(() {
-      pannelPadding = _pannelPadding.copyWith(bottom: repository.height);
+      pannelPadding = _pannelPadding.copyWith(
+          bottom: repository.height / data.devicePixelRatio);
     });
 
     if (size != _size || _contentLayoutPadding != contentLayoutPadding) {

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:android_external_storage/android_external_storage.dart';
 import 'package:bangs/bangs.dart';
@@ -146,11 +145,12 @@ mixin SystemInfos {
   double get statusHeight => _statusHeight;
 
   // 底部导航栏高度
-  double _height = 0;
-  double get height => _height;
+  int _height = 0;
+  int get height => _height;
+
   void _navState(bool isShow, int height) {
     assert(Log.i('navHeight: $height | $isShow'));
-    _height = height / ui.window.devicePixelRatio;
+    _height = height;
   }
 
   MemoryInfoPlugin? memoryInfoPlugin;
