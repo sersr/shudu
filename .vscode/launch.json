@@ -10,10 +10,6 @@
             "request": "launch",
             "program": "lib/main.dart",
             "flutterMode": "release",
-            "args": [
-                "--bundle-sksl-path",
-                "flutter_01.sksl.json"
-            ]
         },
         {
             "name": "release",

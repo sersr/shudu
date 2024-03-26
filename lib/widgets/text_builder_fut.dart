@@ -142,7 +142,7 @@ class ItemAsyncLayout extends StatelessWidget {
         return child;
       },
       layout: (BuildContext context, mounted) {
-        return TextAsyncBuilder.runTextPainter(() async {
+        return TextCache.runTextPainter(() async {
           await idleWait;
 
           final topR = topRightScore;
@@ -153,7 +153,7 @@ class ItemAsyncLayout extends StatelessWidget {
           final trs = ts.body2.copyWith(color: Colors.yellow.shade700);
           List<TextPainter>? topRText;
           if (topR != null) {
-            topRText = await TextAsyncBuilder.oneTextPainter(
+            topRText = await TextCache.oneTextPainter(
                 text: topR,
                 width: width,
                 dir: TextDirection.ltr,
@@ -169,7 +169,7 @@ class ItemAsyncLayout extends StatelessWidget {
           final style = ts.title2;
           if (!mounted()) return const [];
 
-          final topText = await TextAsyncBuilder.oneTextPainter(
+          final topText = await TextCache.oneTextPainter(
               text: top,
               width: topWidth,
               dir: TextDirection.ltr,
@@ -180,7 +180,7 @@ class ItemAsyncLayout extends StatelessWidget {
           await idleWait;
           if (!mounted()) return const [];
 
-          final centerText = await TextAsyncBuilder.oneTextPainter(
+          final centerText = await TextCache.oneTextPainter(
               text: center,
               width: width,
               dir: TextDirection.ltr,
@@ -190,7 +190,7 @@ class ItemAsyncLayout extends StatelessWidget {
 
           await idleWait;
           if (!mounted()) return const [];
-          final bottomText = await TextAsyncBuilder.oneTextPainter(
+          final bottomText = await TextCache.oneTextPainter(
               text: bottom,
               width: width,
               dir: TextDirection.ltr,

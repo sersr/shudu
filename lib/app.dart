@@ -20,7 +20,7 @@ class ShuduApp extends StatelessWidget {
     //     valueListenable: listenable,
     //     builder: (context, list, child) {
     return Cs(() {
-      final List<dynamic> list = listenable.al.value;
+      final List<dynamic> list = listenable.cs.value;
       final themeMode = list[0] ?? mode;
       return MaterialApp.router(
         routerConfig: router,

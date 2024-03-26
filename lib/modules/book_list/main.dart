@@ -208,16 +208,11 @@ class ListMainPage extends StatelessWidget {
                         backgroundChild: Container(
                             color: Colors.cyan,
                             child: Center(child: Text('background'))),
-                        body: ListViewBuilder(
-                          padding: const EdgeInsets.all(8.0),
-                          itemCount: 200,
-                          itemBuilder: (context, index) {
-                            return SizedBox(
-                              height: 50,
-                              child: Text('$index'),
-                            );
-                          },
-                        ),
+                        body: DefaultTabController(
+                            length: 2,
+                            child: TabBarView(
+                              children: const [ListViewSSS(), ListViewSSS()],
+                            )),
                       ),
                     ),
                   );
@@ -378,4 +373,31 @@ Alignment getAlignment(bool rightSide, OverlayAliment align) {
     }
   }
   return _alignment;
+}
+
+class ListViewSSS extends StatefulWidget {
+  const ListViewSSS({super.key});
+
+  @override
+  State<ListViewSSS> createState() => _ListViewSSSState();
+}
+
+class _ListViewSSSState extends State<ListViewSSS>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return ListViewBuilder(
+      padding: const EdgeInsets.all(8.0),
+      itemCount: 200,
+      itemBuilder: (context, index) {
+        return SizedBox(
+          height: 50,
+          child: Text('$index'),
+        );
+      },
+    );
+  }
 }

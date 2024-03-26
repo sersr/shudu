@@ -18,7 +18,7 @@ class BookCacheState {
       }
       current ??= item;
       return current.isTop ?? false;
-    }, key: item.bookId).al; // 自动监听
+    }, key: item.bookId).cs; // 自动监听
   }
 
   final _rawList = AutoListenNotifier<List<Cache>?>(null);
@@ -46,10 +46,10 @@ class BookCacheState {
   });
 
   /// 添加 al 支持自动监听
-  List<Cache> get sortChildren => _sortChildren.al.value;
+  List<Cache> get sortChildren => _sortChildren.cs.value;
 
   late final _showChildren = _sortChildren.select((sortChildren) {
     return sortChildren.value.where((e) => e.isShow == true).toList();
   });
-  List<Cache> get showChildren => _showChildren.al.value;
+  List<Cache> get showChildren => _showChildren.cs.value;
 }
